@@ -6,7 +6,7 @@ Parameters:
 
   BedrockPreviewSdkUrl:
     Type: String
-    Default: https://preview.documentation.bedrock.aws.dev/Documentation/SDK/bedrock-python-sdk.zip
+    Default: https://d2eo22ngex1n9g.cloudfront.net/Documentation/SDK/bedrock-python-sdk.zip
     Description: URL for the Bedrock SDK zip file (Bedrock preview access only)
 
   DeployTestFunction:
