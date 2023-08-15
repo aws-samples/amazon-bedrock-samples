@@ -4,9 +4,9 @@ This repository contains pre-built examples to help customers get started with t
 
 It contains the following components:
 
-- [General Syntax, API and SDK examples](/General%20Syntax,%20API%20and%20SDK%20examples/)
-- [Integrating with other AWS Services](/Integrating%20with%20other%20AWS%20Services/)
-- [End to End Generative AI Solutions](/End%20to%20End%20Generative%20AI%20Solutions/)
+- [General Syntax, API and SDK examples](./syntax-API-and-SDK-examples/)
+- [Integrating with other AWS Services](./integrating-with-other-AWS-services/)
+- [End to End Generative AI Solutions](./end-to-end-generative-ai-solutions/)
 
 ## Security
 
