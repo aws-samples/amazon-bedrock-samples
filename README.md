@@ -2,6 +2,8 @@
 
 This repository contains pre-built examples to help customers get started with the Amazon Bedrock service.
 
+This repository is still under construction check back soon! 
+
 It contains the following components:
 
 - [General Syntax, API and SDK examples](./syntax-api-and-sdk-examples/)
