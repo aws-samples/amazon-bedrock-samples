@@ -29,7 +29,7 @@ accept: str = 'application/json'
 contentType: str = 'application/vnd.amazon.eventstream'
 
 # Define a prompt, endpoint, and the payload for inputs to Bedrock
-prompt: str = "Who is Andy Jassy?"
+prompt: str = "Why is the sky Blue?"
 body: str = json.dumps(
     {   
         "prompt": prompt,
