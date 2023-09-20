@@ -26,7 +26,7 @@ accept: str = 'application/json'
 contentType: str = 'application/json'
 
 # Define a prompt and the payload for inputs to Bedrock
-prompt: str = "Who is Andy Jassy?"
+prompt: str = "Why is the sky Blue?"
 body: str = json.dumps(
     {   "prompt": prompt,
         "max_tokens_to_sample":4096, # Maximum number of tokens to generate. Responses are not guaranteed to fill up to the maximum desired length.
