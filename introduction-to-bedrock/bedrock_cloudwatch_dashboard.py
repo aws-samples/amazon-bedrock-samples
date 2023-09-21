@@ -103,6 +103,24 @@ dashboard_body={
                 "period": 60,
                 "stat": "Average"
             }
+        },
+        {
+            "type": "metric",
+            "x": 6,
+            "y": 12,
+            "width": 6,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    [ "AWS/Bedrock", "OutputImageCount", { "region": region } ]
+                ],
+                "view": "timeSeries",
+                "stacked": False,
+                "region": region,
+                "title": "Output Image Count",
+                "period": 60,
+                "stat": "Average"
+            }
         }
     ]
 }
