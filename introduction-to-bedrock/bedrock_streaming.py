@@ -29,8 +29,6 @@ accept = 'application/json'
 content_type = 'application/json'
 
 #invoke the model with a streamed response 
-
-# Invoke model 
 response = bedrock.invoke_model_with_response_stream(
     body=body, 
     modelId=model_id, 
