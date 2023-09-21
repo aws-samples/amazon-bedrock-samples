@@ -38,4 +38,4 @@ response = bedrock.invoke_model_with_response_stream(
 
 for event in response['body']:
     data = json.loads(event['chunk']['bytes'])
-    print(data['completion'])
+    print(data['outputText'])
