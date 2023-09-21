@@ -9,7 +9,7 @@ bedrock = boto3.client(
 )
 
 
-#Using Titan Text
+# Using Titan Text
 
 # Define prompt and model parameters
 prompt_data = """Write me a poem about apples"""
