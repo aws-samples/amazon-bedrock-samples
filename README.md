@@ -15,7 +15,7 @@ This repository contains pre-built examples to help customers get started with t
 
 ## Getting Started
 
-To get started with the code examples, ensure you have access to [Amazon Bedrock ](https://aws.amazon.com/bedrock/). Then clone this repo and navigate to one of the folders above. Detailed instructions are provided in each folder's README.
+To get started with the code examples, ensure you have access to [Amazon Bedrock](https://aws.amazon.com/bedrock/). Then clone this repo and navigate to one of the folders above. Detailed instructions are provided in each folder's README.
 
 ## Contributing
 
