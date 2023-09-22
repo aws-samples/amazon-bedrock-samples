@@ -1,0 +1,555 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Lambda Layer for boto3 Amazon Bedrock SDK extensions - requires access to Amazon Bedrock Service, currently in limited preview.
+
+Parameters:
+
+  BedrockPreviewSdkUrl:
+    Type: String
+    Default: https://d2eo22ngex1n9g.cloudfront.net/Documentation/SDK/bedrock-python-sdk.zip
+    Description: URL for the Bedrock SDK zip file (Bedrock preview access only)
+
+Resources:
+
+  ## Bedrock SDK Layer
+
+  BedrockBoto3Bucket:
+    Type: AWS::S3::Bucket
+
+  BedrockBoto3ZipFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      Policies:
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                  - 's3:DeleteObject'
+                  - 's3:ListBucket'
+                Resource:
+                  !Sub 'arn:aws:s3:::${BedrockBoto3Bucket}*'
+          PolicyName: S3Policy
+
+  BedrockBoto3ZipFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      Runtime: python3.10
+      Role: !GetAtt 'BedrockBoto3ZipFunctionRole.Arn'
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          SDK_DOWNLOAD_URL: !Ref BedrockPreviewSdkUrl
+          BOTO3_BUCKET: !Ref BedrockBoto3Bucket
+      Code:
+        ZipFile: |
+          import os
+          import sys
+          import re
+          import shutil
+          import subprocess
+          import boto3
+          import zipfile
+          import urllib3
+          from datetime import datetime
+          import cfnresponse
+          bedrock_sdk_url = os.environ['SDK_DOWNLOAD_URL']
+          boto3_bucket = os.environ['BOTO3_BUCKET']
+
+          def download_file_from_url(url, local_path):
+              """Download a file from a URL to a local save path."""
+              http = urllib3.PoolManager()
+              response = http.request('GET', url)
+              if response.status == 200:
+                  with open(local_path, 'wb') as file:
+                      file.write(response.data)
+                  print("File downloaded successfully.")
+              else:
+                  print("Failed to download the file.", response)
+
+          def upload_file_to_s3(file_path, bucket, key):
+              s3 = boto3.client('s3')
+              s3.upload_file(file_path, bucket, key)
+              print(f"Upload successful. {file_path} uploaded to {bucket}/{key}")
+
+          def extract_file_from_zip(zip_file_path, file_name):
+              with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                zip_ref.extract(file_name)
+                print(f"Successfully extracted {file_name} from {zip_file_path}")
+
+          def find_boto_wheels(zipname):
+            zipf = zipfile.ZipFile(zipname, 'r')
+            zip_files = zipf.namelist()
+            b = re.compile('boto3(.*)\.whl')
+            bc = re.compile('botocore(.*)\.whl')
+            boto3_whl_file = [ s for s in zip_files if b.match(s) ][0]
+            botocore_whl_file = [ s for s in zip_files if bc.match(s) ][0]
+            
+            return boto3_whl_file, botocore_whl_file
+
+          def make_zip_filename():
+            now = datetime.now()
+            timestamp = now.strftime('%Y%m%d_%H%M%S')
+            filename = f'BedrockBoto3SDK_{timestamp}.zip'
+            return filename
+
+          def zipdir(path, zipname):
+            zipf = zipfile.ZipFile(zipname, 'w', zipfile.ZIP_DEFLATED)
+            for root, dirs, files in os.walk(path):
+                for file in files:
+                    zipf.write(os.path.join(root, file),
+                              os.path.relpath(os.path.join(root, file), 
+                                              os.path.join(path, '..')))
+            zipf.close()
+
+          def empty_bucket(bucket_name):
+              s3_client = boto3.client('s3')
+              response = s3_client.list_objects_v2(Bucket=bucket_name)
+              if 'Contents' in response:
+                  keys = [{'Key': obj['Key']} for obj in response['Contents']]
+                  s3_client.delete_objects(Bucket=bucket_name, Delete={'Objects': keys})
+              return
+
+          def lambda_handler(event, context):
+            print("Event: ", event)
+            responseData={}
+            reason=""
+            status = cfnresponse.SUCCESS
+            try: 
+              if event['RequestType'] != 'Delete':
+                os.chdir('/tmp')
+                # download Bedrock SDK
+                zip_file_name='bedrock-python-sdk.zip'
+                print(f"downloading from {bedrock_sdk_url} to {zip_file_name}")
+                download_file_from_url(bedrock_sdk_url, zip_file_name)
+                boto3_whl_file, botocore_whl_file = find_boto_wheels(zip_file_name)
+                extract_file_from_zip(zip_file_name, botocore_whl_file)
+                extract_file_from_zip(zip_file_name, boto3_whl_file)
+                if os.path.exists("python"):
+                  shutil.rmtree("python")
+                os.mkdir("python")
+                print(f"running pip install botocore")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", botocore_whl_file, "-t", "python" ])
+                print(f"running pip install boto3")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", boto3_whl_file, "-t", "python" ])
+                boto3_zip_name = make_zip_filename()
+                zipdir("python",boto3_zip_name)
+                print(f"uploading {boto3_zip_name} to s3 bucket {boto3_bucket}")
+                upload_file_to_s3(boto3_zip_name, boto3_bucket, boto3_zip_name)
+                responseData = {"Bucket": boto3_bucket, "Key": boto3_zip_name}
+              else:
+                # delete - empty the bucket so it can be deleted by the stack.
+                empty_bucket(boto3_bucket)
+            except Exception as e:
+              print(e)
+              status = cfnresponse.FAILED
+              reason = f"Exception thrown: {e}"
+            cfnresponse.send(event, context, status, responseData, reason=reason)
+
+  BedrockBoto3Zip:
+    Type: Custom::BedrockBoto3Zip
+    Properties:
+      ServiceToken: !GetAtt BedrockBoto3ZipFunction.Arn
+      # Rerun BedrockBoto3ZipFunction if any of the following parameters change
+      SDK_DOWNLOAD_URL: !Ref BedrockPreviewSdkUrl
+      BOTO3_BUCKET: !Ref BedrockBoto3Bucket
+
+  BedrockBoto3Layer:
+    Type: "AWS::Lambda::LayerVersion"
+    Properties:
+      Content:
+        S3Bucket: !GetAtt BedrockBoto3Zip.Bucket
+        S3Key: !GetAtt BedrockBoto3Zip.Key
+      CompatibleRuntimes:
+        - python3.10
+
+  ## Lambda Function Bedrock
+
+  BedrockFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - bedrock.amazonaws.com
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      Policies:
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'bedrock:*'
+                Resource: '*'
+          PolicyName: BedrockPolicy
+
+  BedrockFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      Runtime: python3.10
+      Role: !GetAtt 'BedrockFunctionRole.Arn'
+      Timeout: 900
+      MemorySize: 512
+      Environment:
+        Variables:
+          AWS_REGION_BEDROCK: !Ref 'AWS::Region'
+      Layers:
+        - !Ref BedrockBoto3Layer
+      Code:
+        ZipFile: |
+          import boto3
+          from botocore.config import Config
+          import json
+          import os
+          import traceback
+          
+          # Lambda client
+          bedrock_region = os.environ.get("AWS_REGION_BEDROCK", None)
+          
+          # Bedrock client
+          bedrock = boto3.client(
+              service_name="bedrock",
+              region_name="us-east-1",
+              endpoint_url="https://bedrock.us-east-1.amazonaws.com",
+              config=Config(retries={"max_attempts": 3, "mode": "adaptive"}),
+          )
+          
+          def invoke_bedrock(provider, model_id, payload, embeddings=False):
+              response = bedrock.invoke_model(
+                  body=payload,
+                  modelId=model_id,
+                  accept="application/json",
+                  contentType="application/json",
+              )
+              if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+                  # Get text reponse from the model
+                  return prepare_output(provider, response, embeddings)
+          
+              else:
+                  raise Exception(
+                      "Bedrock API call failed with status "
+                      + str(response["ResponseMetadata"]["HTTPStatusCode"])
+                  )
+          
+          def prepare_input(provider, prompt, model_kwargs, embeddings=False):
+              try:
+                  if not embeddings:
+                    input_body = {**model_kwargs}
+                  
+                  if provider == "anthropic" or provider == "ai21":
+                      input_body["prompt"] = prompt
+                  elif provider == "amazon":
+                      input_body = dict()
+                      input_body["inputText"] = prompt
+                      
+                      if not embeddings:
+                        input_body["textGenerationConfig"] = {**model_kwargs}
+                  else:
+                      input_body["inputText"] = prompt
+          
+                  if provider == "anthropic" and "max_tokens_to_sample" not in input_body:
+                      input_body["max_tokens_to_sample"] = 256
+              
+                  return input_body
+              except Exception as e:
+                  stacktrace = traceback.format_exc()
+                  
+                  print(stacktrace)
+                  raise e
+          
+          def prepare_output(provider, response, embeddings=False):
+              try:
+                  if provider == "anthropic":
+                      response_body = json.loads(response.get("body").read().decode())
+                      return response_body.get("completion")
+                  else:
+                      response_body = json.loads(response.get("body").read())
+                  
+                  if not embeddings:
+                      if provider == "ai21":
+                          return response_body.get("completions")[0].get("data").get("text")
+                      else:
+                          return response_body.get("results")[0].get("outputText")
+                  else:
+                      return response_body.get("embedding")
+              except Exception as e:
+                  stacktrace = traceback.format_exc()
+                  
+                  print(stacktrace)
+                  raise e
+          
+          def lambda_handler(event, context):
+              try:
+                  print(event)
+                  model_id = event["headers"]["model_id"]
+                  
+                  if "embeddings" in event["headers"] and event["headers"]["embeddings"] in ["True", "true"]:
+                    embeddings = True
+                  else:
+                    embeddings = False
+                  
+                  provider = model_id.split(".")[0]
+          
+                  print("Model ID: ", model_id)
+                  print("Provider: ", provider)
+          
+                  body = json.loads(event["body"])
+          
+                  print("Input body: ", body)
+          
+                  bedrock_body = prepare_input(provider, body["inputs"], body["parameters"] if "parameters" in body else {}, embeddings)
+          
+                  print("Bedrock body: ", bedrock_body)
+          
+                  response = invoke_bedrock(
+                      provider=provider,
+                      model_id=model_id,
+                      payload=json.dumps(bedrock_body),
+                      embeddings=embeddings
+                  )
+          
+                  return {"statusCode": 200, "body": json.dumps([{"generated_text": response}])}
+          
+              except Exception as e:
+                  stacktrace = traceback.format_exc()
+              
+                  print(stacktrace)
+                  return {"statusCode": 500, "body": json.dumps([{"generated_text": stacktrace}])}
+
+  ## API Gateway
+
+  APIGatewayRestApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: bedrock-api-gateway
+
+  APIGatewayCloudWatchRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs'
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+
+  APIGatewayAccount:
+    Type: 'AWS::ApiGateway::Account'
+    Properties:
+      CloudWatchRoleArn: !GetAtt
+        - APIGatewayCloudWatchRole
+        - Arn
+    DependsOn:
+      - APIGatewayRestApi
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+
+  APIGatewayDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref APIGatewayRestApi
+      Description: Automatically created by the RestApi construct
+    DependsOn:
+      - APIGatewayAnyProxy
+      - APIGatewayResourceProxy
+      - APIGatewayAnyProxy2
+
+  APIGatewayStageProd:
+    Type: 'AWS::ApiGateway::Stage'
+    Properties:
+      RestApiId: !Ref APIGatewayRestApi
+      DeploymentId: !Ref APIGatewayDeployment
+      StageName: prod
+    DependsOn:
+      - APIGatewayAccount
+
+  APIGatewayResourceProxy:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      ParentId: !GetAtt
+        - APIGatewayRestApi
+        - RootResourceId
+      PathPart: '{proxy+}'
+      RestApiId: !Ref APIGatewayRestApi
+
+  APIGatewayAnyAnyAPIFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref >-
+        BedrockFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Join
+        - ''
+        - - 'arn:'
+          - !Ref 'AWS::Partition'
+          - ':execute-api:'
+          - !Ref 'AWS::Region'
+          - ':'
+          - !Ref 'AWS::AccountId'
+          - ':'
+          - !Ref APIGatewayRestApi
+          - /
+          - !Ref APIGatewayStageProd
+          - /*/*
+
+  APIGatewayAnyAnyAPITestFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref >-
+        BedrockFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Join
+        - ''
+        - - 'arn:'
+          - !Ref 'AWS::Partition'
+          - ':execute-api:'
+          - !Ref 'AWS::Region'
+          - ':'
+          - !Ref 'AWS::AccountId'
+          - ':'
+          - !Ref APIGatewayRestApi
+          - /test-invoke-stage/*/*
+
+  APIGatewayAnyProxy:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      HttpMethod: ANY
+      ResourceId: !Ref APIGatewayResourceProxy
+      RestApiId: !Ref APIGatewayRestApi
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':apigateway:'
+            - !Ref 'AWS::Region'
+            - ':lambda:path/2015-03-31/functions/'
+            - !GetAtt BedrockFunction.Arn
+            - /invocations
+
+  APIGatewayAnyAPIFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref >-
+        BedrockFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Join
+        - ''
+        - - 'arn:'
+          - !Ref 'AWS::Partition'
+          - ':execute-api:'
+          - !Ref 'AWS::Region'
+          - ':'
+          - !Ref 'AWS::AccountId'
+          - ':'
+          - !Ref APIGatewayRestApi
+          - /
+          - !Ref APIGatewayStageProd
+          - /*/
+
+  APIGatewayAnyAPITestFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref >-
+        BedrockFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Join
+        - ''
+        - - 'arn:'
+          - !Ref 'AWS::Partition'
+          - ':execute-api:'
+          - !Ref 'AWS::Region'
+          - ':'
+          - !Ref 'AWS::AccountId'
+          - ':'
+          - !Ref APIGatewayRestApi
+          - /test-invoke-stage/*/
+
+  APIGatewayAnyProxy2:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      HttpMethod: ANY
+      ResourceId: !GetAtt
+        - APIGatewayRestApi
+        - RootResourceId
+      RestApiId: !Ref APIGatewayRestApi
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':apigateway:'
+            - !Ref 'AWS::Region'
+            - ':lambda:path/2015-03-31/functions/'
+            - !GetAtt BedrockFunction.Arn
+            - /invocations
+
+Outputs:
+  APIGatewayEndpoint:
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !Ref APIGatewayRestApi
+        - .execute-api.
+        - !Ref 'AWS::Region'
+        - .
+        - !Ref 'AWS::URLSuffix'
+        - /
+        - !Ref APIGatewayStageProd
+        - /
+  APIUrl:
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !Ref APIGatewayRestApi
+        - .execute-api.
+        - !Ref 'AWS::Region'
+        - .
+        - !Ref 'AWS::URLSuffix'
+        - /
+        - !Ref APIGatewayStageProd
+        - /
