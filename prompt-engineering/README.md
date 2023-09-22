@@ -1,4 +1,4 @@
-# prompt-engineering-best-practices
+# prompt-engineering
 
 This folder contains examples related to prompt-engineering-best-practices.
 

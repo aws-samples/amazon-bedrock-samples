@@ -5,13 +5,15 @@ This repository contains pre-built examples to help customers get started with t
 ## Contents
 
 - [Introduction to Bedrock](introduction-to-bedrock) - Learn the basics of the Bedrock service
-- [Prompt Engineering Best Practices](prompt-engineering-best-practices) - Tips for crafting effective prompts 
+- [Prompt Engineering ](prompt-engineering) - Tips for crafting effective prompts 
 - [Bedrock Fine-tuning](bedrock-fine-tuning) - Fine-tune Bedrock models for your specific use case
-- [Generative AI Use Cases](generative-ai-use-cases) - Example use cases for generative AI
-- [Bedrock Knowledge Base](bedrock-knowledge-base) - Build a knowledge base with Bedrock
-- [Bedrock Agents](bedrock-agents) - Create conversational agents with Bedrock
-- [Bedrock Security Use Cases](bedrock-security-use-cases) - Secure your Bedrock applications
+- [Generative AI Solutions](generative-ai-solutions) - Example use cases for generative AI
+- [Knowledge Bases](knowledge-bases) - Build knowledge bases with Bedrock
+- [Retrival Augmented Generation (RAG)](rag-solutions) - Implementing RAG with Amazon Bedrock
+- [Agents](agents) - Generative AI agents with Bedrock
+- [Security and Governance](security-and-governance) - Secure your Bedrock applications
 - [Responsible AI](responsible-ai) - Use Bedrock responsibly and ethically
+- [Operational Tooling](ops-tooling) - Helpful samples to help operationalize your useage of Amazon Bedrock
 
 ## Getting Started
 

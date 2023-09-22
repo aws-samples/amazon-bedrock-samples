@@ -1,8 +1,8 @@
-# Using Amazon Bedrock Agents
+# Using Generative AI agents with Amazon Bedrock
 
-Agents for Amazon Bedrock accelerate the delivery of generative AI applications that can manage and perform tasks by making API calls to your company systems. Agents extend FMs to understand user requests, break down complex tasks into multiple steps, carry on a conversation to collect additional information, and take actions to fulfill the request.
+Agents the delivery of generative AI applications that can manage and perform tasks by making API calls to your company systems. Agents extend FMs to understand user requests, break down complex tasks into multiple steps, carry on a conversation to collect additional information, and take actions to fulfill the request.
 
-This repository contains examples and use-cases to get you started with Amazon Bedrock Agents.
+This repository contains examples and use-cases to get you started with Amazon Bedrock Agents and Open Source Agents.
 
 ![Agents Console](images/agents_console.png)
 
