@@ -9,7 +9,12 @@ bedrock = boto3.client(
 )
 
 
-# Using Titan Text
+# Let's see all available Amazon Models
+available_models = bedrock.list_foundation_models()
+
+for model in available_models['modelSummaries']:
+  if 'amazon' in model['modelId']:
+    print(model)
 
 # Define prompt and model parameters
 prompt_data = """Write me a poem about apples"""

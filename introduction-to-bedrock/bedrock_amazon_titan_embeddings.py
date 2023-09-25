@@ -8,7 +8,12 @@ bedrock = boto3.client(
     endpoint_url='https://bedrock.us-west-2.amazonaws.com'
 )
 
-#Using Titan Embeddings
+# Let's see all available Amazon Models
+available_models = bedrock.list_foundation_models()
+
+for model in available_models['modelSummaries']:
+  if 'amazon' in model['modelId']:
+    print(model)
 
 # Define prompt and model parameters
 prompt_data = """Write me a poem about apples"""
@@ -17,7 +22,7 @@ body = json.dumps({
     "inputText": prompt_data,
 })
 
-model_id = 'amazon.titan-embed-g1-text-02'
+model_id = 'amazon.titan-embed-g1-text-02' #look for embeddings in the modelID
 accept = 'application/json' 
 content_type = 'application/json'
 
