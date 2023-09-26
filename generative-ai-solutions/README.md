@@ -1,6 +1,6 @@
 # Generative AI use-cases
 
-This repo explores various generative AI use-cases and integrations with Amazon Bedrock
+This repo explores various generative AI use-cases and integrations with Amazon Bedrock.
 
 ## Contents
 
