@@ -1,10 +1,7 @@
-# ops-tooling
+# Operational Tooling
 
-This folder contains examples related to ops-tooling.
+This folder contains helpful samples to help with operationalizing your work with Amazon Bedrock
 
 ## Contents
 
-- Overview of prompt-engineering-best-practices
-- Use cases
-- Code samples
-- Reference docs
+- [Set up CloudWatch dashboard](bedrock_cloudwatch_dashboard.py) - Create CloudWatch dashboard using AWS Python SDK

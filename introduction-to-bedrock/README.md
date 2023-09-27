@@ -17,7 +17,6 @@ This repository contains examples to get you started with the core Amazon Bedroc
 - [Using models from Anthropic](bedrock_anthropic.py) - Syntax for using models from Anthropic - Claude 
 - [Using models from Stability](bedrock_stability.py) - Syntax for using models from Stability - Stable Diffusion 
 - [Using models from AI21 Labs](bedrock_ai21.py) - Syntax for using models from AI21 Labs - Jurassic
-- [Set up CloudWatch dashboard](bedrock_cloudwatch_dashboard.py) - Create CloudWatch dashboard using AWS Python SDK
 
 ## Contributing
 
