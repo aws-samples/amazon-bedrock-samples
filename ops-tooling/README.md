@@ -5,3 +5,7 @@ This folder contains helpful samples to help with operationalizing your work wit
 ## Contents
 
 - [Set up CloudWatch dashboard](bedrock_cloudwatch_dashboard.py) - Create CloudWatch dashboard using AWS Python SDK
+
+## Contributing
+
+We welcome community contributions! Please ensure your sample aligns with AWS [best practices](https://aws.amazon.com/architecture/well-architected/), and please update the **Contents** section of this README file with a link to your sample, along with a description.
