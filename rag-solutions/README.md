@@ -1,10 +1,13 @@
-# rag-solutions
+# Retrival Augmented Generation Solutions
 
-This folder contains examples related to rag-solutions.
+This folder contains examples and solutions of Retrival Augmented Generation (RAG) applications on Amazon Bedrock
+
 
 ## Contents
 
-- Overview of rag-solutions
-- Use cases
-- Code samples
-- Reference docs
+- [Amazon Bedrock RAG Workshop](amazon-bedrock-rag-workshop) - Workshop designed to deep dive into all elements of RAG with Bedrock
+
+
+## Contributing
+
+We welcome community contributions! Please ensure your sample aligns with AWS [best practices](https://aws.amazon.com/architecture/well-architected/), and please update the **Contents** section of this README file with a link to your sample, along with a description.
