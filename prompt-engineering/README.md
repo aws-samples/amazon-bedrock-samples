@@ -1,19 +1,17 @@
 # Prompt Engineering
 
-This folder contains information to get you started with prompt engineering on Amazon Bedrock.
+This folder contains information to get you started with prompt engineering on Amazon Bedrock. 
 
 ![Prompt Engineering](images/prompt_engineering.png)
 
-
 Prompt engineering is the practice of optimizing the quality and performance of your foundation model's response to your request. Prompt engineering may involve:
 
-    Word choice
-    Phrasing
-    Providing examples (few-shot learning)
-    Use of line breaks and content separators
-    Following established formats that align with how the model was trained
-    Use of stop sequences to help the model know when it should stop generating text
-
+- Word choice
+- Phrasing   
+- Providing examples (few-shot learning)
+- Use of line breaks and content separators 
+- Following established formats that align with how the model was trained
+- Use of stop sequences to help the model know when it should stop generating text
 
 ## Contents
 
@@ -23,10 +21,8 @@ You can learn more about prompt engineering in the [prompt engineering basics la
 
 Below are prompt engineering guides provided by some of Amazon Bedrock's model providers:
 
-[AI21 Prompt Engineering](https://docs.ai21.com/docs/prompt-engineering)
-[Anthropic Claude Prompt Design](https://docs.anthropic.com/claude/docs/introduction-to-prompt-design)
-[Cohere Prompt Engineering](https://docs.cohere.com/docs/prompt-engineering)
-
-
+- [AI21 Prompt Engineering](https://docs.ai21.com/docs/prompt-engineering)
+- [Anthropic Claude Prompt Design](https://docs.anthropic.com/claude/docs/introduction-to-prompt-design) 
+- [Cohere Prompt Engineering](https://docs.cohere.com/docs/prompt-engineering)
 
 
