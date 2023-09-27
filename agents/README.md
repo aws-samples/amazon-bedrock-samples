@@ -8,8 +8,12 @@ This repository contains examples and use-cases to get you started with Amazon B
 
 ## Contents
 
-- [Introduction to Bedrock Agents](introduction-to-bedrock-agents) - A simple agent to get you started with the requirements and the [ReAct](https://arxiv.org/pdf/2210.03629.pdf) reasoning techniques using Amazon Bedrock Agents
-- [Using Popular Open Source Frameworks](open-source-framework-agents) - Examples of using popular open-source (Langchain) agents with Amazon Bedrock LLM's.
+This repo is still under construction, come back soon! 
+
+## Contributing
+
+We welcome community contributions! Please ensure your sample aligns with AWS [best practices](https://aws.amazon.com/architecture/well-architected/), and please update the **Contents** section of this README file with a link to your sample, along with a description.
+
 
 ## Contributing
 

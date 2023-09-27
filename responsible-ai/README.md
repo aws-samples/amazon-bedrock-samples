@@ -1,10 +1,11 @@
-# responsible-ai
+# Responsible AI
 
-This folder contains examples related to responsible-ai.
+This folder contains examples related to Responsible AI on Bedrock
 
 ## Contents
 
-- Overview of responsible-ai
-- Use cases
-- Code samples
-- Reference docs
+This repo is still under construction, come back soon! 
+
+## Contributing
+
+We welcome community contributions! Please ensure your sample aligns with AWS [best practices](https://aws.amazon.com/architecture/well-architected/), and please update the **Contents** section of this README file with a link to your sample, along with a description.
