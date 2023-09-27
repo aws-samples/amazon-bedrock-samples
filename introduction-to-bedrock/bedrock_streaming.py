@@ -2,12 +2,12 @@ import boto3
 import json
 
 #Create the connection to Bedrock
-
-bedrock = boto3.client(
-    service_name='bedrock',
+bedrock_runtime = boto3.client(
+    service_name='bedrock-runtime',
     region_name='us-west-2', 
     endpoint_url='https://bedrock.us-west-2.amazonaws.com'
 )
+
 
 # Define prompt and model parameters
 prompt_data = """Write an essay about why someone should drink coffee"""
@@ -29,7 +29,7 @@ accept = 'application/json'
 content_type = 'application/json'
 
 #invoke the model with a streamed response 
-response = bedrock.invoke_model_with_response_stream(
+response = bedrock_runtime.invoke_model_with_response_stream(
     body=body, 
     modelId=model_id, 
     accept=accept, 

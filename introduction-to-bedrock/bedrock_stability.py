@@ -10,6 +10,13 @@ import boto3
 
 
 #Create the connection to Bedrock
+
+bedrock_runtime = boto3.client(
+    service_name='bedrock-runtime',
+    region_name='us-west-2', 
+    endpoint_url='https://bedrock.us-west-2.amazonaws.com'
+)
+
 bedrock = boto3.client(
     service_name='bedrock',
     region_name='us-west-2', 
@@ -36,7 +43,7 @@ modelId = 'stability.stable-diffusion-xl'
 accept = 'application/json'
 contentType = 'application/json'
 
-response = bedrock.invoke_model(body=body, modelId=modelId, accept=accept, contentType=contentType)
+response = bedrock_runtime.invoke_model(body=body, modelId=modelId, accept=accept, contentType=contentType)
 response = json.loads(response.get('body').read())
 images = response.get('artifacts')
 
@@ -56,7 +63,7 @@ body = json.dumps({"text_prompts":[{"text": prompt_data }], "init_image": base64
 modelId = 'stability.stable-diffusion-xl'
 
 try: 
-    response = bedrock.invoke_model(body=body, modelId=modelId, contentType="application/json", accept="image/png")
+    response = bedrock_runtime.invoke_model(body=body, modelId=modelId, contentType="application/json", accept="image/png")
 except ClientError as error:
     print(error.response)
  

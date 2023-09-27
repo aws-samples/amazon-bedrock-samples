@@ -8,6 +8,12 @@ bedrock = boto3.client(
     endpoint_url='https://bedrock.us-west-2.amazonaws.com'
 )
 
+bedrock_runtime = boto3.client(
+    service_name='bedrock-runtime',
+    region_name='us-west-2', 
+    endpoint_url='https://bedrock.us-west-2.amazonaws.com'
+)
+
 # Let's see all available Amazon Models
 available_models = bedrock.list_foundation_models()
 
@@ -27,7 +33,7 @@ accept = 'application/json'
 content_type = 'application/json'
 
 # Invoke model 
-response = bedrock.invoke_model(
+response = bedrock_runtime.invoke_model(
     body=body, 
     modelId=model_id, 
     accept=accept, 

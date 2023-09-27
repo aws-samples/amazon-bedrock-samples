@@ -8,6 +8,12 @@ bedrock = boto3.client(
     endpoint_url='https://bedrock.us-west-2.amazonaws.com'
 )
 
+bedrock_runtime = boto3.client(
+    service_name='bedrock-runtime',
+    region_name='us-west-2', 
+    endpoint_url='https://bedrock.us-west-2.amazonaws.com'
+)
+
 # Let's see all available AI21 Models
 available_models = bedrock.list_foundation_models()
 
@@ -44,7 +50,7 @@ accept = 'application/json'
 contentType = 'application/json'
 
 #Invoke the model
-response = bedrock.invoke_model(body=body, modelId=modelId, accept=accept, contentType=contentType)
+response = bedrock_runtime.invoke_model(body=body, modelId=modelId, accept=accept, contentType=contentType)
 response_body = json.loads(response.get('body').read())
 
 print(response_body.get('completions')[0].get('data').get('text'))

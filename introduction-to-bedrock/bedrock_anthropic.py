@@ -8,6 +8,12 @@ bedrock = boto3.client(
     endpoint_url='https://bedrock.us-west-2.amazonaws.com'
 )
 
+bedrock_runtime = boto3.client(
+    service_name='bedrock-runtime',
+    region_name='us-west-2', 
+    endpoint_url='https://bedrock.us-west-2.amazonaws.com'
+)
+
 # Let's see all available Anthropic Models
 available_models = bedrock.list_foundation_models()
 
@@ -34,7 +40,7 @@ accept = 'application/json'
 contentType = 'application/json'
 
 #Invoke the model
-response = bedrock.invoke_model(body=body.encode('utf-8'), # Encode to bytes
+response = bedrock_runtime.invoke_model(body=body.encode('utf-8'), # Encode to bytes
                                  modelId=modelId, 
                                  accept=accept, 
                                  contentType=contentType)
@@ -45,7 +51,7 @@ print(response_body.get('completion'))
 
 #We can also call the Anthropic Claude models via the streaming API
 
-response = bedrock.invoke_model_with_response_stream(body=body.encode('utf-8'), # Encode to bytes
+response = bedrock_runtime.invoke_model_with_response_stream(body=body.encode('utf-8'), # Encode to bytes
                                  modelId=modelId, 
                                  accept=accept, 
                                  contentType=contentType)
