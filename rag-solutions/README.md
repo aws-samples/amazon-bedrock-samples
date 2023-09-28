@@ -5,8 +5,7 @@ This folder contains examples and solutions of Retrival Augmented Generation (RA
 
 ## Contents
 
-- [Amazon Bedrock RAG Workshop](amazon-bedrock-rag-workshop) - Workshop designed to deep dive into all elements of RAG with Bedrock.
-
+This repo is under construction come back soon! 
 
 ## Contributing
 
