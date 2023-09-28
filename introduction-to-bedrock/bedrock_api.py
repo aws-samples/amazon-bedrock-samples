@@ -8,7 +8,7 @@ credentials = session.get_credentials()
 
 model_id = "amazon.titan-tg1-large" #change depending on your model of choice
 
-endpoint = f'https://bedrock.us-west-2.amazonaws.com/model/{model_id}/invoke'
+endpoint = f'https://bedrock-runtime.us-west-2.amazonaws.com/model/{model_id}/invoke'
 
 payload = {
   'inputText': 'Why is the sky blue?',
