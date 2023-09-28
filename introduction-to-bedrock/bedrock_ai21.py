@@ -26,7 +26,7 @@ for model in available_models['modelSummaries']:
 prompt_data = """Write me a poem about apples"""
 
 body = {
-  "prompt": "",
+  "prompt": prompt_data,
   "maxTokens": 200,
   "temperature": 0.7,
   "topP": 1,
