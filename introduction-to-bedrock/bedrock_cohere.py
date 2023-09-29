@@ -9,6 +9,12 @@ bedrock = boto3.client(
     
 )
 
+bedrock_runtime = boto3.client(
+    service_name='bedrock-runtime',
+    region_name='us-west-2', 
+    
+)
+
 # Let's see all available Cohere Models
 available_models = bedrock.list_foundation_models()
 
@@ -16,11 +22,7 @@ for model in available_models['modelSummaries']:
   if 'cohere' in model['modelId']:
     print(model)
 
-bedrock_runtime = boto3.client(
-    service_name='bedrock-runtime',
-    region_name='us-west-2', 
-    
-)
+
 
 prompt_data = """Write me a poem about apples""" #edit with your prompt
 
