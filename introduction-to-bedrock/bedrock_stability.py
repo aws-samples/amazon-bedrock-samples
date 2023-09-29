@@ -14,13 +14,13 @@ import boto3
 bedrock_runtime = boto3.client(
     service_name='bedrock-runtime',
     region_name='us-west-2', 
-    endpoint_url='https://bedrock.us-west-2.amazonaws.com'
+    
 )
 
 bedrock = boto3.client(
     service_name='bedrock',
     region_name='us-west-2', 
-    endpoint_url='https://bedrock.us-west-2.amazonaws.com'
+    
 )
 
 # Let's see all available Stability Models

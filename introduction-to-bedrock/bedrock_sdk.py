@@ -6,13 +6,13 @@ import json
 bedrock = boto3.client(
     service_name='bedrock',
     region_name='us-west-2', 
-    endpoint_url='https://bedrock.us-west-2.amazonaws.com'
+    
 )
 
 bedrock_runtime = boto3.client(
     service_name='bedrock-runtime',
     region_name='us-west-2', 
-    endpoint_url='https://bedrock.us-west-2.amazonaws.com'
+    
 )
 
 # List all foundation models
