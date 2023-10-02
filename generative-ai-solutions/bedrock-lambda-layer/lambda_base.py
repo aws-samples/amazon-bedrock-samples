@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-layer_arn = 'arn:aws:lambda:us-east-1:141051459377:layer:bedrock-1-28-57:4' 
-ROLE_arn = 'arn:aws:iam::141051459377:role/service-role/test-bedrock-312-x64-role-c1xwdbyf'
+layer_arn = '<<arn from lambda layer>>' 
+ROLE_arn = '<<role ARN>>'
 REGION = 'us-west-2'
 cur_dir = Path(__file__).parent.absolute()
 
