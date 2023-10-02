@@ -38,6 +38,9 @@ This occurs because the default Boto3 in Lambda does not have the service endpoi
 2. Use Lambda API to publish a layer version 
 3. Specify the layer ARN when creating Lambda functions
 
+
+[Here is a general video](https://www.youtube.com/watch?v=I13FPeC5LTw) showing the steps to create a lambda layer 
+
 See `lambda_base.py` for layer creation code.
 
 ## Lambda Function Code
@@ -67,6 +70,11 @@ The key points are:
     ```python
     response = bedrock.list_foundation_models()
     ```
+There are two clients for Amazon Bedrock. 
+
+The `bedrock` client is for creating and managing Bedrock models. 
+
+The `bedrock-runtime` client is for running inference on Bedrock models. 
 
 ## Equivalent AWS CLI Commands
 
@@ -85,6 +93,7 @@ aws lambda create-function --function-name my-function --zip-file fileb://lamdba
 
 ## Learn More 
 
+- [Overview Video of Lambda and Lambda Layers](https://youtu.be/fDv_RKygOXU?si=7Auq2CwBX9rdpSr2) Until 15:20 in the video
 - [Amazon Bedrock](https://aws.amazon.com/bedrock/)
 - [Bedrock service docs](https://docs.aws.amazon.com/bedrock/latest/APIReference/welcome.html)
 - [Boto3 AWS SDK](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock.html)
