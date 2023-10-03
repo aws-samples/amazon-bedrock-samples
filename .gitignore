@@ -28,3 +28,6 @@ Thumbs.db
 
 # Ignore python notebook checkpoints
 /.ipynb_checkpoints/
+
+# ignore maven builds
+**generative-ai-solutions/java-connection/my-app/target

@@ -1,0 +1,1 @@
+{"prompt": "Human: Tell me a funny story.\n\nAssistant:", "max_tokens_to_sample": 8000, "temperature": 0.9, "top_k": 250, "top_p": 0.5, "stop_sequences": ["\n\nHuman:"]}
