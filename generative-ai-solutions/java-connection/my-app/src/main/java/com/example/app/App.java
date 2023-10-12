@@ -1,16 +1,20 @@
-package main.java.com.example.app;
+package com.example.app;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.temporal.ChronoUnit;
+
+import com.example.app.pojo.ClaudeResponse;
+import com.example.app.utils.Utils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.Duration;
 
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
-import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClientBuilder;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse;
 
@@ -18,7 +22,7 @@ import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse;
 public class App {
     public static void main(String[] args) {
         // read prompt from txt file
-        String filePath = "./example-payload.txt";
+        String filePath = "./my-app/example-payload.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             StringBuilder content = new StringBuilder();
             String line;
@@ -30,6 +34,10 @@ public class App {
             
             // send prompt to bedrock
             String awsRegion = "us-east-1";
+
+            Utils utils = new Utils();
+            utils.listFoundationModels(awsRegion);
+
             BedrockRuntimeClient bedrockClient = BedrockRuntimeClient.builder()
                 .region(Region.of(awsRegion))
                 .httpClient(
@@ -42,7 +50,12 @@ public class App {
                 .modelId("anthropic.claude-v2")
                 .body(SdkBytes.fromString(BEDROCK_JSON_BODY, Charset.defaultCharset()))
                 .build());
-            System.out.println(invokeModel.body().asUtf8String());
+
+
+             ObjectMapper mapper = new ObjectMapper();
+             ClaudeResponse claudeResponse = mapper.readValue(invokeModel.body().asUtf8String(), ClaudeResponse.class);
+
+            System.out.println(claudeResponse.getCompletion());
         }
         catch (IOException e) {
             e.printStackTrace();
