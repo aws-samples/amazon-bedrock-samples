@@ -1,11 +1,12 @@
-# Retrival Augmented Generation Solutions
+# Retrieval Augmented Generation Solutions
 
-This folder contains examples and solutions of Retrival Augmented Generation (RAG) applications on Amazon Bedrock
+This folder contains examples and solutions of Retrieval Augmented Generation (RAG) applications on Amazon Bedrock
 
 
 ## Contents
 
-This repo is under construction come back soon! 
+- [Semantic Search](semantic-search) - Sample embeddings search application with Amazon Titan Embeddings, LangChain, and Streamlit
+
 
 ## Contributing
 
