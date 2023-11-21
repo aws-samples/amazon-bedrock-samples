@@ -1,0 +1,6 @@
+botocore
+boto3
+langchain==0.0.330
+streamlit
+pandas
+chromadb=0.4.14
