@@ -1,5 +1,5 @@
 # Ignore python notebook checkpoints
-/.ipynb_checkpoints/
+.ipynb_checkpoints
 
 # Ignore .DS_Store files
 .DS_Store
@@ -31,3 +31,12 @@ Thumbs.db
 
 # ignore maven builds
 **generative-ai-solutions/java-connection/my-app/target
+
+# multimodal
+multimodal/rag/data/
+multimodal/rag/listings/
+multimodal/rag/*.csv
+multimodal/rag/LICENSE-CC-BY-4.0.txt
+multimodal/rag/listings.json
+multimodal/rag/*.tar
+multimodal/rag/__pycache__/
