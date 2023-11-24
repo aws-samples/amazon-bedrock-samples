@@ -14,6 +14,7 @@ This repository contains pre-built examples to help customers get started with t
 - [Security and Governance](security-and-governance) - Secure your Bedrock applications
 - [Responsible AI](responsible-ai) - Use Bedrock responsibly and ethically
 - [Operational Tooling](ops-tooling) - Helpful samples to help operationalize your useage of Amazon Bedrock
+- [Multimodal](multimodal) - Working with multimodal data using Amazon Bedrock
 
 ## Getting Started
 
