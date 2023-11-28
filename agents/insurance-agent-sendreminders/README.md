@@ -1,48 +1,70 @@
-### Agent for Insurance Claims Processing
+### Insurance Claims Processing Agent
 
-Authors: Maira, Mark, Madhur
+#### Authors: @Maira, @Mark, @Madhur
 
-#### Overview
+##### Side Note: For users interested in deploying agents and knowledge bases with AWS CDK BedrockAgent, check out our npm package repository. Additionally, for advanced users looking to create and link a knowledge base to a new agent, explore our documentation on the same.
 
-The Agent functionality is used here as an automated system designed to handle various tasks related to insurance claims. It integrates email communication with knowledge base (KB) information to provide comprehensive support in insurance claim management with all the open claims and their respective pending documents and missing requirements. This agent can look up claim details, identify outstanding paperwork, determine the requirements for these documents based on a Knowledge Base (KB), and send reminders via email.
+### Description:
 
-### API Paths for Agent to refer to:
+This agent automates insurance claim management tasks. It integrates email communication with a knowledge base (KB), handling claims efficiently by identifying outstanding documents and reminding policyholders via email. 
 
-1. Claim Detail Retrieval
+### Key Functionalities:
+
+1. Claim Detail Retrieval: Fetches detailed insurance claim information.
+
 API Path: /claims/{claimId}/detail
-Purpose: Fetches detailed information about a specific insurance claim, identified by claimId.
-Response: Includes claim ID, creation date, last activity date, status, and policy type.
 
-2. Open Claims Listing
-API Path: /claims
-Purpose: Lists all open insurance claims.
-Response: Provides a list of open claims, including claim ID, policyholder ID, and claim status.
+Response: Claim ID, creation date, last activity date, status, and policy type.
 
-3. Outstanding Paperwork Identification
+Open Claims Listing: Provides a list of all open insurance claims.
+
+2. API Path: /claims
+
+Response: List of open claims with IDs, policyholder IDs, and statuses.
+
+Outstanding Paperwork Identification: Identifies pending documents for a claim.
+
 API Path: /claims/{claimId}/outstanding-paperwork
-Purpose: Identifies any outstanding paperwork for a specific claim.
-Response: Details the pending documents required for the claim.
 
-4. Email Reminder for Outstanding Paperwork
-API Path: /send-reminder
-Purpose: Sends an email reminder to policyholders about outstanding documents and their requirements, based on information from the "insurance-claims-agent-kb" Knowledge Base.
+Response: Details of required documents for the claim.
 
-### Agent's Workflow
+Email Reminder for Outstanding Paperwork: Sends email reminders for missing documents based on the KB.
 
-#### Claim Information Retrieval: 
+3. API Path: /send-reminder
 
-Upon receiving a request, the agent looks up specific claim details or lists open claims.
+Utilizes: "insurance-claims-agent-kb" Knowledge Base.
 
-Outstanding Paperwork Check: The agent checks for any outstanding paperwork related to a claim.
+### Workflow:
 
-Knowledge Base RAG: The agent accesses the "insurance-claims-agent-kb" to find detailed requirements for the outstanding documents.
+1. Claim Information Retrieval: On request, retrieves claim details or lists open claims.
 
-#### Sending Email Reminders: 
+2. Outstanding Paperwork Check: Identifies any pending paperwork for claims.
 
-Utilizing the emailsender action group, the agent composes and sends a detailed email to the relevant recipient(s), including all necessary information about the missing and pending documents.
+3. Knowledge Base Reference: Accesses KB for document requirements.
 
-Confirmation of Task Completion: Once the reminder is successfully sent, the agent confirms with the statement, "Reminder on claims and missing documents and requirements sent successfully."
+4. Email Reminder Composition and Dispatch: Uses the email sender action group to notify relevant parties about missing documents.
 
+5. Confirmation of Task Completion: Confirms successful reminder dispatch.
 
+### Agent Manual Deployment Guide:
 
+1. S3 Bucket Preparation: Ensure an existing S3 bucket in the same region as the agent.
+Agent IAM Role Creation: Follow these instructions for IAM role creation.
 
+2. Initial Agent Setup: Use Amazon Bedrock service for initial agent creation. Instructions are in the Agent Instruction section.
+
+3. Lambda Function Setup: Create a Lambda function with provided code and upload necessary files.
+
+4. Working Draft and Action Group: Set up a working draft, action group, and associate resources.
+
+5. Execution Timeout and IAM Roles: Configure Lambda function settings and attach IAM roles.
+
+6. Resource-Based Policy Attachment: Implement the provided policy for Lambda function access.
+
+### Agent Instruction:
+"You are an agent that can handle various tasks related to insurance claims,including looking up claim details, finding what paperwork is outstanding andgetting the requirements for those based on documents available in a Knowledge Base,and sending reminders. Once you have sent the reminder, say "Reminder on claims and missing documents and requirements sent successfully". Send all of the information on the missing and pending documents you get from the "insurance-claims-agent-kb" knowledge base in the reminder email to the recipients while invoking the emailsender action group."
+
+#### Model Used: Anthropic Claude-V2
+
+### Knowledge Base Instructions for Agent:
+"Use this Knowledge Base to detail the requirements of each missing document in a insurance claim"
