@@ -1,6 +1,6 @@
 # Multimodal RAG example
 
-This example demonstrates how to implement a simple multimodal RAG solution using the `Amazon Titan Embeddings G1 - Image` model for multimodal embeddings and the `Anthropic Claude v2` model for text generation.
+This example demonstrates how to implement a simple multimodal RAG solution using the `Amazon Titan Multimodal Embeddings G1` model for multimodal embeddings and the `Anthropic Claude v2` model for text generation.
 
 ![Multimodal RAG](./images/multimodal-rag-Page-1.drawio.png)
 
@@ -12,7 +12,7 @@ This example demonstrates how to implement a simple multimodal RAG solution usin
 
 1. These embeddings are then ingested into in-memory [FAISS](https://github.com/facebookresearch/faiss) database to store and search for embeddings vectors. In a real-world scenario, you will likely want to use a persistent data store such as the [vector engine for Amazon OpenSearch Service Serverless](https://aws.amazon.com/opensearch-service/serverless-vector-engine/) or the pgvector extension for PostgreSQL.
 
-1. Now for retrieval, we consider the following scenario: a customer is looking for a product and has a text description of the product and, optionally, an image of the product, we do an embeddings based similarity search by converting the text description and the image into embeddings using the `Amazon Titan Embeddings G1 - Image` model and retrieve the most relevant results from the vector database. 
+1. Now for retrieval, we consider the following scenario: a customer is looking for a product and has a text description of the product and, optionally, an image of the product, we do an embeddings based similarity search by converting the text description and the image into embeddings using the `Amazon Titan Multimodal Embeddings G1` model and retrieve the most relevant results from the vector database. 
 
 1. We then further refine these search results by creating a text prompt using the description for the retrieved objects and asking the LLM (`Anthropic Claude v2`) to do the following:
     * Reason through the responses based on the customer's description of what they were looking for and then either accept or reject each of the search results
@@ -23,7 +23,7 @@ This example demonstrates how to implement a simple multimodal RAG solution usin
 
 The example consists of three files:
 
-- [`0_data_prep.ipynb`](./0_data_prep.ipynb) - This notebook contains the data download and data preparation code. It downloads the images and metadata from the [Amazon Berkley Objects](https://amazon-berkeley-objects.s3.amazonaws.com/index.html) dataset, scales these images (if needed) to fit into the 2048x2048 pixel limit as required the `Amazon Titan Embeddings G1 - Image` model and finally converts these images into Base64 encoding,
+- [`0_data_prep.ipynb`](./0_data_prep.ipynb) - This notebook contains the data download and data preparation code. It downloads the images and metadata from the [Amazon Berkley Objects](https://amazon-berkeley-objects.s3.amazonaws.com/index.html) dataset, scales these images (if needed) to fit into the 2048x2048 pixel limit as required the `Amazon Titan Multimodal Embeddings G1` model and finally converts these images into Base64 encoding,
 
 - [`download_images.py`](./download_images.py) - This script downloads the images from `amazon-berkeley-objects` bucket. It uses the Python `asyncio` to download multiple files concurrently. It is called from as part of code cells in the [`0_data_prep.ipynb`](./0_data_prep.ipynb) notebook.
 
