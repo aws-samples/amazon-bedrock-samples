@@ -1,4 +1,4 @@
-### Insurance Claims Processing Agent
+# Insurance Claims Processing Agent
 
 #### Authors: @Maira, @Mark, @Madhur
 
@@ -7,6 +7,9 @@
 ### Description:
 
 This agent automates insurance claim management tasks. It integrates email communication with a knowledge base (KB), handling claims efficiently by identifying outstanding documents and reminding policyholders via email. 
+<img width="1079" alt="Screenshot 2023-11-28 at 12 35 12 PM" src="https://github.com/madhurprash/amazon-bedrock-samples/assets/129979633/92245c0e-c4ef-4463-bbea-eb01d6ba74a5">
+
+
 
 ### Key Functionalities:
 
@@ -44,7 +47,13 @@ Utilizes: "insurance-claims-agent-kb" Knowledge Base.
 
 4. Email Reminder Composition and Dispatch: Uses the email sender action group to notify relevant parties about missing documents.
 
-5. Confirmation of Task Completion: Confirms successful reminder dispatch.
+  Example Email sent:
+    <img width="713" alt="Screenshot 2023-11-28 at 12 39 04 PM" src="https://github.com/madhurprash/amazon-bedrock-samples/assets/129979633/8aa905ea-4dbf-45b1-8f93-be12648e985d">
+
+  
+    <img width="646" alt="Screenshot 2023-11-28 at 12 37 58 PM" src="https://github.com/madhurprash/amazon-bedrock-samples/assets/129979633/10ea9588-f4f7-4f6a-b5b8-aea934901f76">
+
+6. Confirmation of Task Completion: Confirms successful reminder dispatch.
 
 ### Agent Manual Deployment Guide:
 
