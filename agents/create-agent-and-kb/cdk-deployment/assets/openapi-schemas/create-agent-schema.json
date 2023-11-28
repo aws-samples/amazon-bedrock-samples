@@ -1,0 +1,67 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Create Agent API",
+        "version": "1.0.0",
+        "description": "API to create an agent within agent."
+    },
+    "paths": {
+        "/create-agent": {
+            "post": {
+                "description": "Draft code for a Bedrock agent given an agent name, an s3 bucket name, an instruction for the new agent, and a description of the action group apis. Force the user to provide the s3 bucket name instead of making one up. Create an agent afterwards.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "agentName": {
+                                        "type": "string",
+                                        "description": "Name of the agent."
+                                    },
+                                    "s3Bucket": {
+                                        "type": "string",
+                                        "description": "Name of the agent's S3 bucket where to put artifacts."
+                                    },
+                                    "apiDescription": {
+                                        "type": "string",
+                                        "description": "Description of the apis the action group should support."
+                                    },
+                                    "agentInstruction": {
+                                        "type": "string",
+                                        "description": "Instruction to be added to the new agent."
+                                    }
+                                },
+                                "required": [
+                                    "agentName",
+                                    "s3Bucket",
+                                    "apiDescription",
+                                    "agentInstruction"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Response string.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Status of Agent Creation."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,38 @@
+Human: you will be generating an OpenAPI schema document in JSON format.
+here is a brief description of the APIs that must be covered by the
+generated schema:
+
+<apis>
+{api_description}
+</apis>
+    
+Generate an OpenAPI 3.0 schema document in JSON format that satisfies
+the API description provided above. 
+
+Do include:
+- Metadata like title, description, version
+- Paths section with route paths and operations
+- Operations have parameters, request bodies, descriptions, responses;
+Include a "description" property everywhere that the OpenAPI spec permits one to be specified. Do not include "summary" properties.
+it is important to always provide "description" rather than "summary"
+- Responses have status codes, descriptions and schemas
+- Schemas define the data types explicitly
+- Specify the title as "{agent_name} API"
+- Unless the API description says otherwise, use camel case for naming the API paths
+
+Do not include:
+- a server URL
+
+Prefer to create definitions inline without having to use a ref tag and a separate
+components section.
+
+Include a description field on all schema objects, and be verbose in the descriptions.
+
+Only generate the JSON document, without providing any explanations or preamble.
+Start immediately with the open curly brace and end with the closing curly brace,
+without the triple backtick markdown language specifier.
+
+
+Assistant: 
+here is the resulting schema without preamble and without 
+triple backtick prefix:

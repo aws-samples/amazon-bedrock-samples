@@ -1,0 +1,57 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Create Knowledge Base API",
+        "version": "1.0.0",
+        "description": "API to create a knowledge base and associate to a newly created agent."
+    },
+    "paths": {
+        "/create-knowledgebase": {
+            "post": {
+                "description": "Create an Opensearch serverless collection and then create a knowledge base with provided s3 bucket as a datasource. Force the user to provide the s3 bucket name instead of making one up. Associate the knowledge base with newly created agent.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "s3KnowledgeBaseBucketName": {
+                                        "type": "string",
+                                        "description": "Name of the S3 KnowledgeBase bucket that is different from artifact's S3 bucket."
+                                    },
+                                    "agentId": {
+                                        "type": "string",
+                                        "description": "Agent's id that was just created in the previos action group."
+                                    }
+                                },
+                                "required": [
+                                    "s3KnowledgeBaseBucketName",
+                                    "agentId"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Response string.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Status of Knowledge Base Creation."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

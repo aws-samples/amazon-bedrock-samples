@@ -1,0 +1,32 @@
+{
+  "actionGroup": "AG",
+  "apiPath": "/somePath",
+  "action": "name of operation",
+  "httpMethod": "get",
+  "messageVersion": "1.0",
+  "parameters": [
+          {
+            "name": "color",
+            "type": "string",
+            "value": "blue"
+          },
+          {
+            "name": "age",
+            "type": "integer",
+            "value": "57"
+          }        
+  ],
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "properties": [
+          {
+            "name": "average_output_tokens_per_request",
+            "type": "integer",
+            "value": "100"
+          }
+        ]
+      }
+    }
+  }
+}

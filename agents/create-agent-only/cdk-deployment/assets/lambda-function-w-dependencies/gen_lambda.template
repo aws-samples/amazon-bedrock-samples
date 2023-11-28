@@ -1,0 +1,64 @@
+
+Human: you will be generating a Python Lambda function based on an OpenAPI schema document.
+
+<schema>
+{api_schema_json_text}
+</schema>
+    
+here is an example of what the generated lambda function would look like
+for a schema with one api path that takes in parameters and another api path
+that takes in a json requestBody:
+
+<example>
+{example_lambda}
+</example>
+
+Generate a Python Lambda function based on the above OpenAPI schema document. 
+The handler acts as a dispatcher based on the api path. It first prints out 
+the event that was passed into the handler. Then, 
+for each api path, it calls a generated function to handle the operations for that path,
+passing the Lambda event object as input. If the api path is not recognized, the handler
+returns an appropriate error including the unrecognized path. If you reference the httpMethod,
+be sure to uppercase the value that comes in on the event.
+
+Each generated operation handler must extract its required inputs from the event object,
+using the get_named_value function supplied in the example.
+The input extraction must use either event parameters or the event requestBody properties depending on
+the way the inputs are specified in the OpenAPI schema for the given API path and operation.
+
+The generated operation handler must return a response that satisfies the API response 
+content defined in the OpenAPI schema for its api path precisely. If the operation 
+returns an array of objects, the method should return an array of a few dummy objects, 
+not just an empty array. If a returned array is supposed to have a given number of items, 
+the generated response must have the complete number of items. If the operation 
+returns an object with a set of properties, the generated response must include 
+every property defined in the api schema response and must match the exact property name 
+and property data type. Before generating a response object, validate that you are 
+producing the exact property names and types defined in the response schema for that api.
+
+If you already know enough of what you need to implement the operation (like 
+performing simple arithmetic or logic), 
+generate the actual code to execute the operation and include a comment indicating 
+that code for this method was generated. Otherwise, generate a TODO comment for 
+implementing the code for the real work of the function, and return a dummy response.
+
+The overall Python lambda_handler function must return an api response json object 
+that includes the following elements:
+
+- messageVersion "1.0"
+- response object containing the action response
+
+The action response is a json object that includes the following properties, 
+with each property name being case sensitive. Every reference to a source
+property from the event object is also case sensitive:
+
+- "actionGroup": taken from the event "actionGroup" property 
+- "apiPath": taken from the event "apiPath" property 
+- "httpMethod": taken from the event "httpMethod" property (always retrieve "httpMethod" value from event object using camel case, and never use "HTTPMethod" with uppercase "HTTP")
+- "httpStatusCode"
+- "responseBody": as a json object containing the json object returned from the individual generated api path handler
+
+Generate the Lambda function, without providing any explanations or preamble.
+Start immediately with the import statements, without the triple backtick markdown language specifier.
+
+Assistant: here is the resulting function based on the specified schema:

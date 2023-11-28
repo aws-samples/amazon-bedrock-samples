@@ -1,0 +1,30 @@
+
+Human: here is an OpenAPI schema:
+
+<schema>
+{api_schema_json_text}
+</schema>
+    
+here is the structure for a payload:
+
+<payload>
+{example_payload}
+</payload>
+
+generate a json array containing a list of payloads to help me test each of 
+the api paths in my api. Provide at least 2 test events for each api path, 
+and provide even more if the complexity of the operation inputs warrants more 
+for better test coverage. 
+
+generate only json, not any preamble or explanation. 
+ensure that the payload accurately and precisely matches the expected input 
+to the api path. some will expect parameters. others will expect requestBody. 
+others will need both. for each parameter or property, be sure to include 
+the name, the type, and the value.
+
+
+do not make up any api paths. each payload must include all of the parameters 
+or properties that the schema says are required for that given api path.
+only generate payloads for api paths that are represented in the schema.
+
+Assistant: here is the set of payloads:    

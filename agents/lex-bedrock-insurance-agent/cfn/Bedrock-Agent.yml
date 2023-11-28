@@ -1,0 +1,392 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Supporting resources for Insurance Agent powered by Amazon Bedrock"
+Metadata:
+  LICENSE: >-
+    Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this
+    software and associated documentation files (the "Software"), to deal in the Software
+    without restriction, including without limitation the rights to use, copy, modify,
+    merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+    PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Parameters:
+  ArtifactBucket:
+    Description: S3 Bucket Containing Lambda Handler, Lambda Data Loader, and Lex Deployment Packages, along with Customer FAQ and Mortgage Application example documents.
+    Type: String
+    Default: your-code-assets-bucket-name
+  DataLoaderKey:
+    Description: S3 Key for Data Loader
+    Type: String
+    Default: /agent/lambda/data-loader/loader_deployment_package.zip
+  LambdaHandlerKey:
+    Description: S3 Key for Lambda Handler
+    Type: String
+    Default: /agent/lambda/agent-handler/agent_deployment_package.zip
+  CreateClaimKey:
+    Description: S3 Key for create claim function code
+    Type: String
+    Default: /agent/lambda/action-groups/create_claim.zip
+  SendReminderKey:
+    Description: S3 Key for send reminder function code
+    Type: String
+    Default: /agent/lambda/action-groups/send_reminder.zip
+  GatherEvidenceKey:
+    Description: S3 Key for gather evidence function code
+    Type: String
+    Default: /agent/lambda/action-groups/gather_evidence.zip
+  KnowledgeBaseBucket:
+    Description: S3 Bucket Containing Lambda Handler, Lambda Data Loader, and Lex Deployment Packages, along with Customer FAQ and Mortgage Application example documents.
+    Type: String
+    Default: your-bedrock-kb-bucket-name
+  KnowledgeBaseKey:
+    Description: S3 Bucket Containing Lambda Handler, Lambda Data Loader, and Lex Deployment Packages, along with Customer FAQ and Mortgage Application example documents.
+    Type: String
+    Default: your-bedrock-kb-bucket-key
+  LexBotKey:
+    Description: S3 key for Lex chatbot deployment package. 
+    Type: String
+    Default: /agent/bot/lex.zip
+  PythonPandasLayerArn:
+    Description: ARN for Bedrock LangChain PyPDF Lambda layer
+    Type: String
+    Default: "arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python311-Arm64:3"
+  BedrockAgentsLayerArn:
+    Description: Agents for Bedrock Lambda Layer ARN
+    Type: String
+  GitHubTokenSecretName:
+    Description: GitHub PAT. 
+    Type: String
+    NoEcho: true
+    Default: your-github-token-secret-name
+  AmplifyRepository:
+    Description: Source repository for AWS Amplify frontend. 
+    Type: String
+    Default: https://github.com/aws-samples/generative-ai-amazon-bedrock-langchain-agent-example
+  SNSEmail:
+    Description: SNS Email.
+    Type: String
+    Default: "kbuilder@amazon.com"
+
+Resources:
+  ExistingClaimsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-ExistingClaims
+      AttributeDefinitions:
+      - AttributeName: claimId
+        AttributeType: S
+      - AttributeName: policyId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: claimId
+        KeyType: HASH
+      - AttributeName: policyId
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: '3'
+        WriteCapacityUnits: '3'
+      SSESpecification:
+        SSEEnabled: True
+
+  AgentHandlerServiceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-AgentHandlerServiceRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  AgentHandlerServiceRoleDefaultPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub ${AWS::StackName}-AgentHandlerServiceRoleDefaultPolicy
+      PolicyDocument:
+        Statement:
+          - Action:
+              - dynamodb:*
+              - lambda:*
+              - bedrock:*
+              - sns:*
+              - s3:*
+            Effect: Allow
+            Resource: '*'        
+        Version: 2012-10-17
+      Roles:
+        - !Ref AgentHandlerServiceRole
+
+  AgentHandlerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Lambda handler for Bedrock Insurance agent.
+      FunctionName: !Sub ${AWS::StackName}-LexBedrockHandler
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref LambdaHandlerKey
+      Runtime: python3.11
+      MemorySize: 512
+      Timeout: 30
+      Handler: lambda_function.lambda_handler
+      Layers:
+        - !Ref PythonPandasLayerArn
+      Role: !GetAtt AgentHandlerServiceRole.Arn
+      Architectures:
+        - arm64
+
+  LexLambdaPermissions:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AgentHandlerFunction
+      Principal: 'lexv2.amazonaws.com'
+
+  BedrockCreateClaimFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref CreateClaimFunction
+      Principal: 'bedrock.amazonaws.com'
+
+  BedrockSendReminderFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref SendReminderFunction
+      Principal: 'bedrock.amazonaws.com'
+
+  BedrockGatherEvidenceFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref GatherEvidenceFunction
+      Principal: 'bedrock.amazonaws.com'
+
+  DataLoaderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Lambda function to initially load the claims catalog.
+      FunctionName: !Sub ${AWS::StackName}-LexBedrockDataLoader
+      Code: 
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref DataLoaderKey
+      Runtime: nodejs14.x
+      MemorySize: 256
+      Timeout: 20
+      Handler: index.lambda_handler
+      Role: !GetAtt AgentHandlerServiceRole.Arn
+      Environment:
+        Variables:
+          EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
+
+  LoadPlanData:
+    Type: Custom::LoadDynamoDB
+    Properties:
+      ServiceToken: !GetAtt DataLoaderFunction.Arn
+
+  CreateClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Bedrock Insurance agent create claim function
+      FunctionName: !Sub ${AWS::StackName}-CreateClaimFunction
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref CreateClaimKey
+      Runtime: python3.11
+      MemorySize: 512
+      Timeout: 30
+      Handler: create_claim.lambda_handler
+      Layers:
+        - !Ref PythonPandasLayerArn
+        - !Ref BedrockAgentsLayerArn
+      Role: !GetAtt AgentHandlerServiceRole.Arn
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
+          KB_BUCKET_NAME: !Ref KnowledgeBaseBucket
+          KB_BUCKET_KEY: !Ref KnowledgeBaseKey
+
+  SendReminderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Bedrock Insurance agent send reminder function
+      FunctionName: !Sub ${AWS::StackName}-SendReminderFunction
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref SendReminderKey
+      Runtime: python3.11
+      MemorySize: 512
+      Timeout: 30
+      Handler: send_reminder.lambda_handler
+      Layers:
+        - !Ref PythonPandasLayerArn
+        - !Ref BedrockAgentsLayerArn
+      Role: !GetAtt AgentHandlerServiceRole.Arn
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
+          KB_BUCKET_NAME: !Ref KnowledgeBaseBucket
+          KB_BUCKET_KEY: !Ref KnowledgeBaseKey
+          SNS_TOPIC_ARN: !Ref SNSTopic
+
+  GatherEvidenceFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Bedrock Insurance agent gather evidence function.
+      FunctionName: !Sub ${AWS::StackName}-GatherEvidenceFunction
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref GatherEvidenceKey
+      Runtime: python3.11
+      MemorySize: 512
+      Timeout: 30
+      Handler: gather_evidence.lambda_handler
+      Layers:
+        - !Ref PythonPandasLayerArn
+        - !Ref BedrockAgentsLayerArn
+      Role: !GetAtt AgentHandlerServiceRole.Arn
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
+          KB_BUCKET_NAME: !Ref KnowledgeBaseBucket
+          KB_BUCKET_KEY: !Ref KnowledgeBaseKey
+
+  AmplifyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-AmplifyRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - amplify.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: !Sub ${AWS::StackName}-Amplify
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: 
+            - 'amplify:Create*'
+            - 'amplify:Get*'
+            - 'amplify:List*'
+            - 'amplify:Start*'
+            - 'amplify:Stop*'
+            - 'amplify:Update*'
+            Resource: '*'
+
+  AmplifyApp:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: !Sub ${AWS::StackName}-Insurance-Website
+      Repository: !Ref AmplifyRepository
+      BuildSpec: |
+        frontend:
+          phases:
+            # IMPORTANT - Please verify your build commands
+            build:
+              commands: []
+          artifacts:
+            # IMPORTANT - Please verify your build output directory
+            baseDirectory: ./frontend/
+            files:
+              - '**/*'
+          cache:
+            paths: []
+      AccessToken: !Sub "{{resolve:secretsmanager:${GitHubTokenSecretName}}}"
+      Description: Octank Financial website
+      IAMServiceRole: !GetAtt AmplifyRole.Arn
+
+  AmplifyBranch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      AppId: !GetAtt AmplifyApp.AppId
+      BranchName: main
+
+  LexBotRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-LexBotRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lexv2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub ${AWS::StackName}-LexBotRolePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'polly:SynthesizeSpeech'
+                  - 'comprehend:DetectSentiment'
+                Resource: "*"
+
+  LexBot:
+    DependsOn: LexBotRole
+    Type: AWS::Lex::Bot
+    Properties:
+        Name: !Sub ${AWS::StackName}-BedrockAgent
+        BotFileS3Location: 
+          S3Bucket: !Ref ArtifactBucket
+          S3ObjectKey: !Ref LexBotKey
+        DataPrivacy: 
+          ChildDirected: false
+        Description: 'Financial Services Agent'
+        IdleSessionTTLInSeconds: 900
+        RoleArn: !GetAtt LexBotRole.Arn
+
+  SNSTopic:
+    Type: AWS::SNS::Topic
+
+  SNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties: 
+      Endpoint: !Ref SNSEmail
+      Protocol: email
+      TopicArn: !Ref SNSTopic
+
+
+Outputs:
+  AmplifyDemoWebsite:
+    Value: !Join ['', ['main.', !GetAtt AmplifyApp.DefaultDomain]]
+  AmplifyAppID:
+    Value: !GetAtt AmplifyApp.AppId
+  AmplifyBranch:
+    Value: !GetAtt AmplifyBranch.BranchName
+  LambdaARN:
+    Value: !GetAtt AgentHandlerFunction.Arn
+  LexBotID:
+    Value: !GetAtt LexBot.Id
