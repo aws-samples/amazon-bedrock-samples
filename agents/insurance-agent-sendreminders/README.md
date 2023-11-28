@@ -48,10 +48,14 @@ Utilizes: "insurance-claims-agent-kb" Knowledge Base.
 4. Email Reminder Composition and Dispatch: Uses the email sender action group to notify relevant parties about missing documents.
 
   Example Email sent:
-    <img width="713" alt="Screenshot 2023-11-28 at 12 39 04 PM" src="https://github.com/madhurprash/amazon-bedrock-samples/assets/129979633/8aa905ea-4dbf-45b1-8f93-be12648e985d">
 
-  
-    <img width="646" alt="Screenshot 2023-11-28 at 12 37 58 PM" src="https://github.com/madhurprash/amazon-bedrock-samples/assets/129979633/10ea9588-f4f7-4f6a-b5b8-aea934901f76">
+
+  <img width="713" alt="Screenshot 2023-11-28 at 12 39 04 PM" src="https://github.com/madhurprash/amazon-bedrock-samples/assets/129979633/8aa905ea-4dbf-45b1-8f93-be12648e985d">
+
+
+
+<img width="646" alt="Screenshot 2023-11-28 at 12 37 58 PM" src="https://github.com/madhurprash/amazon-bedrock-samples/assets/129979633/10ea9588-f4f7-4f6a-b5b8-aea934901f76">
+
 
 6. Confirmation of Task Completion: Confirms successful reminder dispatch.
 
