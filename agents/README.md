@@ -12,7 +12,7 @@ This repository contains examples and use-cases to get you started with Amazon B
 - [Create Agent and Knowledge Base ](create-agent-and-kb) - IaC to create a Bedrock Agent and Knowledge Base
 - [Create Agent](create-agent-only) - IaC to create a Bedrock Agent
 - [Insurance Agent](insurance-agent-sendreminders) - Agent designed to help with Agent Transactions
-- [Lex Insurance Agent](lex-bedrock-insurance-agent) - Creates a Generative AI-powered Financial Services Agent that can assist users with finding their account information, completing a loan application, or answering any natural language question while also sourcing links for the provided answers.
+
 
 ## Contributing
 
