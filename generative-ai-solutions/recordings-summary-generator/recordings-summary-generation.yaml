@@ -1,0 +1,1053 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Summary Generation for Recordings
+
+#-----------------------------------------------------------
+# Metadata
+#-----------------------------------------------------------
+Metadata:
+  AWS::CloudFormation::Interface:
+
+    ParameterGroups:
+    - Label:
+        default: Configuration
+      Parameters:
+        - EmailAddressForSummary
+        - SummaryInstructions
+
+
+    ParameterLabels:
+      EmailAddressForSummary:
+        default: Email Address Used to Send Summary
+
+      SummaryInstructions:
+        default: Summary Instructions
+
+
+#---------------------------------------------------------------------
+# Parameters
+#---------------------------------------------------------------------
+Parameters:
+
+  EmailAddressForSummary:
+    Type: String
+    Description: The summary will be sent to this address.
+      You must acknowledge the confirmation email before receiving additional notifications.
+
+  SummaryInstructions:
+    Type: String
+    Description: These are the instructions given to the Bedrock model to generate the summary.
+    Default: Provide a summary and next steps if there are any.
+
+
+#---------------------------------------------------------------------
+# Resources
+#---------------------------------------------------------------------
+Resources:
+
+  #------------------------------------------------------------
+  # Asset bucket and policy
+  #------------------------------------------------------------
+  AssetBucket:
+    Type: AWS::S3::Bucket
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W35
+            reason: Access logging not required
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      # BucketName: The bucket name is not excplicit here; otherwise, CloudFormation
+      # stack deletions will fail if the bucket contains any contents.
+      VersioningConfiguration:
+        Status: Enabled
+      # Enable encryption
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: alias/aws/s3
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteRecordings
+            ExpirationInDays: 7
+            Prefix: recordings/
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 2
+          - Id: DeleteTranscriptions
+            ExpirationInDays: 7
+            Prefix: transcriptions/
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 2
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+
+
+  AssetBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AssetBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSSLRequestsOnly
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !Sub '${AssetBucket.Arn}'
+              - !Sub '${AssetBucket.Arn}/*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  #------------------------------------------------------------
+  # KMS key used to encrypt CloudWatch logs
+  #------------------------------------------------------------
+  CloudWatchLogsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: An example symmetric encryption KMS key
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+          - Sid: Allow CloudWatch use
+            Effect: Allow
+            Principal:
+              Service: !Sub logs.${AWS::Region}.amazonaws.com
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt
+              - kms:GenerateDataKey
+              - kms:DescribeKey
+            Resource: '*'
+            Condition:
+              ArnEquals:
+                'kms:EncryptionContext:aws:logs:arn': !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-*'
+
+  CloudWatchLogsKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/summary-generator-cloudwatch-logs-key
+      TargetKeyId: !Ref CloudWatchLogsKey
+
+  #---------------------------------------------------------------------
+  # Folder creation role, function, and log
+  #---------------------------------------------------------------------
+
+  # Prerequisites - Lambda Role
+  PerformPrerequisitesFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Sid: LambdaAccess
+          Effect: Allow
+          Principal:
+            Service:
+              - !Sub lambda.${AWS::Region}.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                    - logs:CreateLogGroup
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-perform-prerequisites
+              - Effect: Allow
+                Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-perform-prerequisites:log-stream:*
+        - PolicyName: S3Permissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource:
+                  - !Sub ${AssetBucket.Arn}/*
+
+
+  # Create the Prerequisites
+  PerformPrerequisitesFunction:
+    Type: AWS::Lambda::Function
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: This function is able to write to its CloudWatch log
+          - id: W89
+            reason: Function doesn't need to be deployed in a VPC
+          - id: W92
+            reason: No concurrency control required
+    Properties:
+      FunctionName: summary-generator-perform-prerequisites
+      Description: Performs prerequisities for the solution
+      Handler: index.lambda_handler
+      Runtime: python3.11
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 300
+      Role: !GetAtt PerformPrerequisitesFunctionRole.Arn
+      Environment:
+        Variables:
+          ASSET_BUCKET_NAME: !Ref AssetBucket
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          import subprocess
+          import zipfile
+          import cfnresponse
+
+          ASSET_BUCKET_NAME = os.getenv('ASSET_BUCKET_NAME')
+
+          # Get the service client.
+          s3_client = boto3.client('s3')
+
+          #--------------------------------------------------
+          # function: create_recordings_folder
+          #--------------------------------------------------
+          def create_recordings_folder():
+
+              status = ''
+              error = ''
+
+              try:
+                  # Create a 'recordings' folder in the bucket.
+                  s3_client.put_object(Bucket=ASSET_BUCKET_NAME, Key='recordings/')
+                  status = cfnresponse.SUCCESS
+              except Exception as e:
+                  error = str(e)
+                  status = cfnresponse.FAILED
+
+              return status, error
+
+
+          #--------------------------------------------------
+          # function: create_boto3_library
+          #--------------------------------------------------
+          def create_boto3_library():
+
+              status = ''
+              error = ''
+
+              try:
+                  boto_directory = '/tmp/boto3/python'
+                  source_dir = '/tmp/boto3'
+                  output_zip = '/tmp/boto3.zip'
+
+                  os.makedirs(boto_directory, exist_ok=True)
+
+                  print('Installing boto3...')
+                  result = subprocess.run(['pip', 'install', 'boto3', '-t', boto_directory], capture_output=True)
+
+                  # Create a ZIP archive
+                  print('Creating zip file...')
+                  with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                      for root, dirs, files in os.walk(source_dir):
+                          for file in files:
+                              file_path = os.path.join(root, file)
+                              zipf.write(file_path, os.path.relpath(file_path, source_dir))
+
+                  # Upload zip file to S3.
+                  s3_client.upload_file(output_zip, ASSET_BUCKET_NAME, 'lambda_layer/boto3.zip')
+
+                  status = cfnresponse.SUCCESS
+
+              except Exception as e:
+                  error = str(e)
+                  status = cfnresponse.FAILED
+
+              return status, error
+
+          #--------------------------------------------------
+          # function: lambda_handler
+          #--------------------------------------------------
+          def lambda_handler(event, context):
+
+              print(json.dumps(event, default=str))
+
+              if event['RequestType'] == 'Create':
+
+                  status = ''
+                  error = ''
+
+                  #--------------------------------------------------
+                  # Create the recordings folder in the S3 bucket.
+                  #--------------------------------------------------
+                  status, error = create_recordings_folder()
+
+                  if status == cfnresponse.SUCCESS:
+                      status, error = create_recordings_folder()
+                  else:
+                      cfnresponse.send(event, context, cfnresponse.FAILED, {"error" : error})
+
+                  #--------------------------------------------------
+                  # Create the boto3 library. This will be used to create the Lambda layer.
+                  #--------------------------------------------------
+                  status, error = create_boto3_library()
+
+                  if status == cfnresponse.SUCCESS:
+                      status, error = create_recordings_folder()
+                  else:
+                      cfnresponse.send(event, context, cfnresponse.FAILED, {"error" : error})
+
+
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+
+  PerformPrerequisites:
+    Type: Custom::PerformPrerequisites
+    Properties:
+      ServiceToken: !GetAtt PerformPrerequisitesFunction.Arn
+
+
+  #----------------------------------------------------------
+  # SNS topic and policy for emailing summaries
+  #----------------------------------------------------------
+  SummaryDeliveryTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Recording Summary
+      TopicName: summary-generator-notification
+      KmsMasterKeyId: alias/aws/sns
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref EmailAddressForSummary
+
+
+  SummaryDeliveryTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref SummaryDeliveryTopic
+      PolicyDocument:
+        Statement:
+          - Sid: Allow Services
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref SummaryDeliveryTopic
+
+
+  #---------------------------------------------------------------------
+  # Lambda layer containing the most recent boto3 library (required for Bedrock)
+  #---------------------------------------------------------------------
+  Boto3LambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    DependsOn: PerformPrerequisites
+    Properties:
+      CompatibleRuntimes:
+        - python3.11
+      Content:
+        S3Bucket: !Ref AssetBucket
+        S3Key: lambda_layer/boto3.zip
+      Description: Layer containing the most recent boto3 library
+      LayerName: summary-generator-boto3-library
+
+
+  #---------------------------------------------------------------------
+  # Input preparation role, function, and log
+  #---------------------------------------------------------------------
+
+  # Prepare input - Lambda Role
+  PrepareInputFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Sid: LambdaAccess
+          Effect: Allow
+          Principal:
+            Service:
+              - !Sub lambda.${AWS::Region}.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                    - logs:CreateLogGroup
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-prepare-input
+              - Effect: Allow
+                Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-prepare-input:log-stream:*
+
+
+  # Prepare the input
+  PrepareInputFunction:
+    Type: AWS::Lambda::Function
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: This function is able to write to its CloudWatch log
+          - id: W89
+            reason: Function doesn't need to be deployed in a VPC
+          - id: W92
+            reason: No concurrency control required
+    Properties:
+      FunctionName: summary-generator-prepare-input
+      Description: Prepares the input for later Step Functions steps by getting basic file values
+      Handler: index.lambda_handler
+      Runtime: python3.11
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 30
+      Role: !GetAtt PrepareInputFunctionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import datetime
+
+          #--------------------------------------------------
+          # function: lambda_handler
+          #--------------------------------------------------
+          def lambda_handler(event, context):
+
+              print(json.dumps(event, default=str))
+
+              key_name = event['detail']['object']['key']
+
+              # Get the filename from the path without the extension.
+              filename_without_extension = key_name.split('/')[-1].split('.')[0]
+
+              # Get the file extension.
+              file_extension = key_name.split('.')[-1]
+
+              # Remove any strings from the name. The transcription job will use the file key
+              # name for its output, but it can't contain spaces.
+              filename_without_extension = filename_without_extension.replace(' ', '_')
+
+              # Get today's date in YYYY-mm-DD format and add hours and minutes using local time.
+              date_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+
+              return {
+                  "SourceBucketName": event['detail']['bucket']['name'],
+                  "SourceKeyName": key_name,
+                  "SourceFileName": f'{filename_without_extension}.{file_extension}',
+                  "SourceFileNameWithDate": f'{filename_without_extension}-{date_time}.{file_extension}'
+              }
+
+
+  PrepareInputFunctionLogGroup:
+    DependsOn: PrepareInputFunction
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PrepareInputFunction}
+      RetentionInDays: 30
+      KmsKeyId: !GetAtt CloudWatchLogsKey.Arn
+
+
+  #---------------------------------------------------------------------
+  # Bedrock model invocation role, function, and log
+  #---------------------------------------------------------------------
+
+  # Invoke Bedrock model - Lambda Role
+  InvokeBedrockModelFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Sid: LambdaAccess
+          Effect: Allow
+          Principal:
+            Service:
+              - !Sub lambda.${AWS::Region}.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                    - logs:CreateLogGroup
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-invoke-bedrock-model
+              - Effect: Allow
+                Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-invoke-bedrock-model:log-stream:*
+        - PolicyName: S3Permissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - !Sub ${AssetBucket.Arn}/transcriptions/*
+        - PolicyName: BedrockPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource:
+                  - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-v2
+
+  # Invoke Bedrock model
+  InvokeBedrockModelFunction:
+    Type: AWS::Lambda::Function
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: This function is able to write to its CloudWatch log
+          - id: W89
+            reason: Function doesn't need to be deployed in a VPC
+          - id: W92
+            reason: No concurrency control required
+    Properties:
+      FunctionName: summary-generator-invoke-bedrock-model
+      Description: Invokes the Bedrock model to create a summary of the recording
+      Handler: index.lambda_handler
+      Runtime: python3.11
+      Layers:
+        - !Sub ${Boto3LambdaLayer}
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 300
+      Role: !GetAtt InvokeBedrockModelFunctionRole.Arn
+      Environment:
+        Variables:
+          SUMMARY_INSTRUCTIONS: !Ref SummaryInstructions
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+
+          # Get the service clients.
+          bedrock_client = boto3.client('bedrock-runtime')
+          s3_client = boto3.client('s3')
+
+          # Use the provided instructions to provide the summary. Use a default if no intructions are provided.
+          SUMMARY_INSTRUCTIONS = os.getenv('SUMMARY_INSTRUCTIONS', 'Provide a summary and next steps if there are any.')
+
+          #--------------------------------------------------
+          # function: lambda_handler
+          #--------------------------------------------------
+          def lambda_handler(event, context):
+
+              print(json.dumps(event))
+
+              result = {"status": "FAILED"}
+
+              # Get transcription URI from the event
+              transcript_uri =  event['TranscriptionJob']['TranscriptionJob']['Transcript']['TranscriptFileUri']
+
+              # The transcript URI will look something like this:
+              # https://s3.[REGION].amazonaws.com/[BUCKET NAME]/transcriptions/bf90bf05-5300-415f-9dc2-a89d2f03a59f.json
+
+              # ...so get the bucket name and filename based on that format.
+              bucket_name = transcript_uri.split('/')[3]
+              file_name = transcript_uri.split('/')[-2] + '/' + transcript_uri.split('/')[-1]
+
+              try:
+                  # Download the file from S3.
+                  file_object = s3_client.get_object(Bucket=bucket_name, Key=file_name)
+                  data = json.loads(file_object['Body'].read())
+
+                  # Get the transcript.
+                  transcript = json.dumps(data['results']['transcripts'][0]['transcript'])
+
+                  # Create the payload to provide to the Anthropic model.
+                  body = {
+                      "prompt": f"\n\nHuman: {SUMMARY_INSTRUCTIONS}{transcript}\n\nAssistant:",
+                      "temperature": 0,
+                      "top_p": 0.999,
+                      "top_k": 250,
+                      "max_tokens_to_sample": 1000,
+                      "stop_sequences": ["\\n\\nHuman:"]
+                  }
+
+                  # Invoke the Anthropic model using the payload.
+                  response = bedrock_client.invoke_model(
+                      modelId="anthropic.claude-v2",
+                      contentType="application/json",
+                      accept="*/*",
+                      body=json.dumps(body)
+                  )
+
+                  # Save the response value.
+                  assistant_response = json.loads(response['body'].read())['completion']
+
+                  summary_file_name =  f"transcriptions/{event['Source']['Payload']['SourceFileName']}-summary.txt"
+
+                  # Save the response value in S3.
+                  s3_client.put_object(
+                      Bucket=bucket_name,
+                      Key=summary_file_name,
+                      Body=assistant_response,
+                      ContentType='text/plain'
+                      )
+
+                  result = {
+                      "bucket_name": bucket_name,
+                      "summary_key_name": summary_file_name,
+                      "status": "SUCCEEDED"
+                  }
+
+              except Exception as e:
+                  result['Error'] = str(e)
+
+              return result
+
+  InvokeBedrockModelFunctionLogGroup:
+    DependsOn: InvokeBedrockModelFunction
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${InvokeBedrockModelFunction}
+      RetentionInDays: 30
+      KmsKeyId: !GetAtt CloudWatchLogsKey.Arn
+
+
+  #---------------------------------------------------------------------
+  # Send recording summary role, function, and log
+  #---------------------------------------------------------------------
+
+  # Send recording summary - Lambda Role
+  SendRecordingSummaryFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Sid: LambdaAccess
+          Effect: Allow
+          Principal:
+            Service:
+              - !Sub lambda.${AWS::Region}.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                    - logs:CreateLogGroup
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-send-recording-summary
+              - Effect: Allow
+                Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/summary-generator-send-recording-summary:log-stream:*
+        - PolicyName: S3Permissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub ${AssetBucket.Arn}/transcriptions/*
+        - PolicyName: SnsPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref SummaryDeliveryTopic
+
+  # Publish the recording summary to SNS.
+  SendRecordingSummaryFunction:
+    Type: AWS::Lambda::Function
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: This function is able to write to its CloudWatch log
+          - id: W89
+            reason: Function doesn't need to be deployed in a VPC
+          - id: W92
+            reason: No concurrency control required
+    Properties:
+      FunctionName: summary-generator-send-recording-summary
+      Description: Sends the recording summary to the recipient(s)
+      Role: !GetAtt SendRecordingSummaryFunctionRole.Arn
+      Handler: index.lambda_handler
+      Runtime: python3.11
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 30
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SummaryDeliveryTopic
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+
+          # Get the service clients.
+          s3_client = boto3.client('s3')
+          sns_client = boto3.client('sns')
+
+          # Get the SNS topic ARN from the environment variable.
+          SNS_TOPIC_ARN = os.environ['SNS_TOPIC_ARN']
+
+          #--------------------------------------------------
+          # function: lambda_handler
+          #--------------------------------------------------
+          def lambda_handler(event, context):
+
+              print(json.dumps(event))
+
+              bucket_name = event['RecordingSummary']['Payload']['bucket_name']
+              summary_key_name = event['RecordingSummary']['Payload']['summary_key_name']
+
+              # Get the name of the original file.
+              source_file_name = event['Source']['Payload']['SourceFileName']
+
+              # Get the object contents.
+              obj = s3_client.get_object(Bucket=bucket_name, Key=summary_key_name)
+
+              # Get the size of the contents. If it's greater than 256 KB, then use the
+              # Extended Client Library for Python:
+              # https://docs.aws.amazon.com/sns/latest/dg/large-message-payloads.html
+              summary_contents = f"{source_file_name}\n\n{obj['Body'].read().decode('utf-8')}"
+
+              if len(summary_contents) <= 256 * 1024:
+                  # Post the summary to the SNS topic.
+                  response = sns_client.publish(TopicArn=SNS_TOPIC_ARN, Message=summary_contents)
+              else:
+                  summary_contents = f"{source_file_name}\n\nThe message exceeds the 256KB message limit."
+
+                  response = sns_client.publish(TopicArn=SNS_TOPIC_ARN, Message=summary_contents)
+                  raise
+
+              return response
+
+
+  SendRecordingSummaryFunctionLogGroup:
+    DependsOn: SendRecordingSummaryFunction
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${SendRecordingSummaryFunction}
+      RetentionInDays: 30
+      KmsKeyId: !GetAtt CloudWatchLogsKey.Arn
+
+
+  #---------------------------------------------------------------------
+  # Step Functions role and state machine
+  #---------------------------------------------------------------------
+  SummaryGeneratorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Sid: LambdaAccess
+          Effect: Allow
+          Principal:
+            Service:
+              - !Sub states.${AWS::Region}.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ServicePermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Sub ${PrepareInputFunction.Arn}:$LATEST
+                  - !Sub ${InvokeBedrockModelFunction.Arn}:$LATEST
+                  - !Sub ${SendRecordingSummaryFunction.Arn}:$LATEST
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref SummaryDeliveryTopic
+              - Effect: Allow
+                Action:
+                  - transcribe:GetTranscriptionJob
+                  - transcribe:StartTranscriptionJob
+                  - transcribe:TagResource
+                Resource:
+                  - !Sub arn:aws:transcribe:${AWS::Region}:${AWS::AccountId}:transcription-job/summary-generator-*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub ${AssetBucket.Arn}/recordings/*
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource:
+                  - !Sub ${AssetBucket.Arn}/transcriptions/*
+
+  SummaryGeneratorStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    DependsOn: PerformPrerequisites
+    Properties:
+      StateMachineName: summary-generator
+      RoleArn: !GetAtt SummaryGeneratorRole.Arn
+      DefinitionString: !Sub |-
+        {
+          "Comment": "Transcribes recordings and generates summaries",
+          "StartAt": "Prepare Input",
+          "States": {
+            "Prepare Input": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "Payload.$": "$",
+                "FunctionName": "${PrepareInputFunction.Arn}:$LATEST"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Next": "Start Transcription Job",
+              "ResultPath": "$.Source",
+              "ResultSelector": {
+                "Payload.$": "$.Payload"
+              }
+            },
+            "Start Transcription Job": {
+              "Type": "Task",
+              "Parameters": {
+                "Media": {
+                  "MediaFileUri.$": "States.Format('s3://{}/{}', $.detail.bucket.name, $.detail.object.key)"
+                },
+                "TranscriptionJobName.$": "States.Format('summary-generator-{}', $.Source.Payload.SourceFileNameWithDate)",
+                "OutputBucketName.$": "$.detail.bucket.name",
+                "OutputKey.$": "States.Format('transcriptions/{}.json', $.Source.Payload.SourceFileName)",
+                "LanguageCode": "en-US",
+                "Tags": [
+                  {
+                    "Key": "SourceBucketName",
+                    "Value.$": "$.Source.Payload.SourceBucketName"
+                  },
+                  {
+                    "Key": "SourceKeyName",
+                    "Value.$": "$.Source.Payload.SourceKeyName"
+                  },
+                  {
+                    "Key": "SourceFileName",
+                    "Value.$": "$.Source.Payload.SourceFileName"
+                  }
+                ]
+              },
+              "Resource": "arn:aws:states:::aws-sdk:transcribe:startTranscriptionJob",
+              "Next": "Wait for Transcription Job",
+              "ResultPath": "$.TranscriptionJob"
+            },
+            "Wait for Transcription Job": {
+              "Type": "Wait",
+              "Seconds": 20,
+              "Next": "Get Transcription Job Status"
+            },
+            "Get Transcription Job Status": {
+              "Type": "Task",
+              "Parameters": {
+                "TranscriptionJobName.$": "$.TranscriptionJob.TranscriptionJob.TranscriptionJobName"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:transcribe:getTranscriptionJob",
+              "Next": "Transcription Job Status",
+              "ResultPath": "$.TranscriptionJob"
+            },
+            "Transcription Job Status": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.TranscriptionJob.TranscriptionJob.TranscriptionJobStatus",
+                  "StringEquals": "COMPLETED",
+                  "Next": "Invoke Bedrock Model"
+                },
+                {
+                  "Variable": "$.TranscriptionJob.TranscriptionJob.TranscriptionJobStatus",
+                  "StringEquals": "FAILED",
+                  "Next": "Send Failure Message"
+                }
+              ],
+              "Default": "Wait for Transcription Job"
+            },
+            "Send Failure Message": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "TopicArn": "${SummaryDeliveryTopic}",
+                "Message": {
+                  "Error.$": "$.RecordingSummary.Payload.Error",
+                  "Link.$": "States.Format('https://${AWS::Region}.console.aws.amazon.com/states/home?region=${AWS::Region}#/v2/executions/details/{}', $$.Execution.Id)"
+                }
+              },
+              "Next": "Process Failed"
+            },
+            "Invoke Bedrock Model": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "Payload.$": "$",
+                "FunctionName": "${InvokeBedrockModelFunction.Arn}:$LATEST"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Next": "Bedrock Model Status",
+              "ResultPath": "$.RecordingSummary"
+            },
+            "Bedrock Model Status": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.RecordingSummary.Payload.status",
+                  "StringMatches": "SUCCEEDED",
+                  "Next": "Send Recording Summary"
+                }
+              ],
+              "Default": "Send Failure Message"
+            },
+            "Send Recording Summary": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "Payload.$": "$",
+                "FunctionName": "${SendRecordingSummaryFunction.Arn}:$LATEST"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Next": "Success"
+            },
+            "Success": {
+              "Type": "Succeed"
+            },
+            "Process Failed": {
+              "Type": "Fail"
+            }
+          }
+        }
+
+
+  #---------------------------------------------------------------------
+  # EventBridge role and rule to invoke the summary generator Step Functions state machine.
+  #---------------------------------------------------------------------
+  TriggerSummaryGeneratorStateMachineEventRuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Sid: EventBridgeAccess
+          Effect: Allow
+          Principal:
+            Service:
+              - events.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionsPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource:
+                  - !GetAtt SummaryGeneratorStateMachine.Arn
+
+  TriggerSummaryGeneratorStateMachineEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: summary-generator-invoke-state-machine
+      Description: Invokes the summary generator state machine when a recording is
+        put in the asset bucket recordings folder
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt SummaryGeneratorStateMachine.Arn
+          Id: InvokeSummaryGeneratorStateMachine
+          RoleArn: !GetAtt TriggerSummaryGeneratorStateMachineEventRuleRole.Arn
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !Ref AssetBucket
+          object:
+            key:
+              - prefix: recordings/
+
+
+#-----------------------------------------------------------
+# Outputs
+#-----------------------------------------------------------
+Outputs:
+  AssetBucketName:
+    Description: Name of the S3 bucket you'll upload recordings to and where transcripts are stored
+    Value: !Ref AssetBucket
