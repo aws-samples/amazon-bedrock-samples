@@ -1,0 +1,16 @@
+Human:
+Extract the folloiwing details from the emails below and provide the information as a structured JSON and ONLY output the JSON. Do not add any introduction to the reply and start directly with the JSON indicated by "{".
+1. Sender Name as "SenderName"
+2. Sender Address as "SenderAddress"
+3. Receiver Name as "ReceiverName"
+4. Receiver Address as "ReceiverAddress"
+5. Number of parcels as "NumberOfParcels"
+6. Weight of each parcel in a list in Grams as "WeightPerParcels"
+7. Total weight of parcels in Grams as "TotalWeightOfParcels"
+8. Price as "Price"
+9. Price currency as "PriceCurrency"
+10. Delivery Timeframe as "DeliveryTimeframe"
+
+<emails></emails>
+
+Assistant:

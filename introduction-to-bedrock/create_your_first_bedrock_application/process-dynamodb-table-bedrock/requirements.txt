@@ -1,0 +1,7 @@
+aws-cdk-lib==2.95.1
+constructs>=10.0.0,<11.0.0
+aws_cdk.aws_lambda_python_alpha
+yamldataclassconfig
+pytest
+importlib_metadata
+boto3
