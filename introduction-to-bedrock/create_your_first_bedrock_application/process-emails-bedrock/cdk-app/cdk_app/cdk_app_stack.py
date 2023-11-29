@@ -20,7 +20,7 @@ class ProcessEmailBedrockStack(Stack):
         table = aws_dynamodb.Table(
             self,
             "ProcessEmailBedrockTable",
-            table_name="order_data",
+            table_name="EmailOrders",
             partition_key=aws_dynamodb.Attribute(
                 name="MessageId", type=aws_dynamodb.AttributeType.STRING
             ),
@@ -38,11 +38,14 @@ class ProcessEmailBedrockStack(Stack):
             code=aws_lambda.Code.from_asset("lambdas/bedrock_boto3_layer.zip"),
             compatible_runtimes=[aws_lambda.Runtime.PYTHON_3_12],
             description="A layer containing a more recent boto3 version that has Bedrock",
+            layer_version_name="boto3-with-bedrock"
         )
+
+        # lambda function that processes the emails and stores the information to dynamoDB
         lambda_function = aws_lambda.Function(
             self,
             "ProcessEmailBedrockFunction",
-            function_name="process-email-bedrock",
+            function_name="emails-processing-with-bedrock",
             runtime=aws_lambda.Runtime.PYTHON_3_12,
             handler="lambda.lambda_handler",
             code=aws_lambda.Code.from_asset("lambdas/process_emails_with_bedrock"),
@@ -71,7 +74,7 @@ class ProcessEmailBedrockStack(Stack):
 
         sns_topic = aws_sns.Topic(
             self,
-            "ProcessEmailBedrockTopic",
+            "ProcessEmailsWithBedrockTopic",
         )
         sns_topic.add_subscription(
             aws_sns_subscriptions.LambdaSubscription(lambda_function)
@@ -91,7 +94,7 @@ class ProcessEmailBedrockStack(Stack):
 
         CfnOutput(
             self,
-            "ProcessEmailBedrockTopicName",
+            "ProcessEmailsWithBedrockTopicName",
             value=sns_topic.topic_name,
             description="The name of the SNS topic",
         )
