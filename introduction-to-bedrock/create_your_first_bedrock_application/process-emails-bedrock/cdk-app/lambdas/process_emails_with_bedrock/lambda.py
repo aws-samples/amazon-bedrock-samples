@@ -4,36 +4,24 @@ import json
 import os
 import quopri
 from decimal import Decimal
-
 import boto3
 
+# get the bedrock client to invoke the foundation models
 bedrock_client = boto3.client("bedrock-runtime")
-
+# read the environment variable containing the dynamoDB table name
 TABLE_NAME = os.getenv("TABLE_NAME")
+# get the dynamoDB table name resource to populate with extracted information
 table = boto3.resource("dynamodb").Table(TABLE_NAME)
-
-PROMPT = """
-Extract the following details from the emails below and provide the information as a structured JSON and ONLY output the JSON. 
-Do not add any introduction to the reply and start directly with the JSON indicated by "{".
-1. Sender Name as "SenderName"
-2. Sender Address as "SenderAddress"
-3. Receiver Name as "ReceiverName"
-4. Receiver Address as "ReceiverAddress"
-5. messageId as "MessageId"
-6. timestamp as "Timestamp"
-7. subject as "Subject"
-8. Thread-Index as "ThreadIndex"
-9. decoded_message as "Message"
-10. Number of parcels as "NumberOfParcels"
-11. Weight of each parcel in a list in Grams as "WeightPerParcels"
-12. Total weight of parcels in Grams as "TotalWeightOfParcels"
-13. Price as "Price"
-14. Price currency as "PriceCurrency"
-15. Delivery Timeframe as "DeliveryTimeframe"
-"""
 
 
 def get_decoded_content_text(message_content):
+    """
+    Decode the email message
+    Args:
+        message_content: encoded message
+    Returns:
+        decoded message
+    """
     content = base64.b64decode(message_content)
     content_msg = email.message_from_string(content.decode("utf-8"))
     content_msg_text = None
@@ -72,6 +60,9 @@ def get_decoded_content_text(message_content):
 
 
 def parse_float(value):
+    """
+    Support function to parse decimal numbers
+    """
     try:
         return Decimal(str(value))
     except ValueError:
@@ -79,8 +70,37 @@ def parse_float(value):
 
 
 def process_emails_with_bedrock(emails):
+    """
+    Process the emails with a Bedrock foundation model
+    Args:
+        emails (list): list of emails to process
+    Returns:
+        Bedrock message
+    """
+    # read the prompt template
+    prompt = open("prompt.txt", "r").read()
+
+    # Prompt engineering: extract the necessary information from the emails to create the optimal prompt
+    emails_str = "<emails>"
+    for e in emails:
+        thread_index = None
+        for header in e["headers"]:
+            if header["name"] == "Thread-Index":
+                thread_index = header["value"]
+        emails_str += "<email>"
+        emails_str += "<messageId>" + str(e["messageId"]) + "</messageId>"
+        emails_str += "<Timestamp>" + str(e["timestamp"]) + "</Timestamp>"
+        emails_str += "<ThreadIndex>" + str(thread_index) + "</ThreadIndex>"
+        emails_str += "<subject>" + str(e["commonHeaders"]["subject"]) + "</subject>"
+        emails_str += "<message>" + str(e["decoded_message"]) + "</message>"
+        emails_str += "</email>"
+    emails_str += "</emails>"
+    prompt = prompt.replace("<emails></emails>", emails_str)
+    print("OUTPUT #4: prompt:", prompt)
+
+    # prepare the parameter to invoke the Antropic Claude on Bedrock
     body = {
-        "prompt": f"Human: \n\nHuman: {PROMPT} <emails>{emails}</emails> \n\nAssistant:",
+        "prompt": prompt,
         "max_tokens_to_sample": 500,
         "temperature": 0,
         "top_k": 250,
@@ -88,6 +108,7 @@ def process_emails_with_bedrock(emails):
         "stop_sequences": ["\n\nHuman:"],
         "anthropic_version": "bedrock-2023-05-31",
     }
+    # invoke the bedrock model
     response = bedrock_client.invoke_model(
         accept="application/json",
         contentType="application/json",
@@ -99,14 +120,13 @@ def process_emails_with_bedrock(emails):
 
 def lambda_handler(event, context):
     print("OUTPUT #1: event:", event)
-
     messages = [
         json.loads(record["Sns"]["Message"])
         for record in event["Records"]
         if record["EventSource"] == "aws:sns"
     ]
     emails = []
-
+    # process the emails from SNS
     for message in messages:
         print("OUTPUT #2: message:", message)
         decoded_message = get_decoded_content_text(message["content"])
@@ -117,10 +137,11 @@ def lambda_handler(event, context):
     print("OUTPUT #3: emails:", emails)
 
     bedrock_response = process_emails_with_bedrock(emails)
-    print("OUTPUT #4: Bedrock response", bedrock_response)
+    print("OUTPUT #5: Bedrock response", bedrock_response)
 
+    # Save the email information to dynamoDB
     parsed_email = json.loads(bedrock_response, parse_float=parse_float)
-    print("OUTPUT #4: Parsed email", parsed_email)
+    print("OUTPUT #6: Parsed email", parsed_email)
     table.put_item(Item=parsed_email)
 
     return {"body": parsed_email}
