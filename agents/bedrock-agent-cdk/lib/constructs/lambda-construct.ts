@@ -1,5 +1,4 @@
 import * as cdk from "aws-cdk-lib";
-import * as lambdaPython from "@aws-cdk/aws-lambda-python-alpha";
 import { Construct } from "constructs";
 
 export interface LambdaProps extends cdk.StackProps {
@@ -19,11 +18,10 @@ export class LambdaConstruct extends Construct {
 
     props = { ...defaultProps, ...props };
 
-    const bedrockAgentLambda = new lambdaPython.PythonFunction(this, "BedrockAgentLambda", {
+    const bedrockAgentLambda = new cdk.aws_lambda.Function(this, "BedrockAgentLambda", {
       runtime: cdk.aws_lambda.Runtime.PYTHON_3_10,
-      handler: "lambda_handler",
-      index: props.lambdaFile,
-      entry: "lib/assets/lambdas/agent",
+      handler: `${props.lambdaFile}.lambda_handler`,
+      code: cdk.aws_lambda.Code.fromAsset("lib/assets/lambdas/agent"),
       timeout: cdk.Duration.seconds(300),
       role: props.iamRole
     });

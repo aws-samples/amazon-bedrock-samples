@@ -9,29 +9,30 @@ import { CustomBedrockAgentConstruct } from './constructs/custom-bedrock-agent-c
 export interface BedrockAgentCdkProps extends cdk.StackProps {
   readonly specFile: string;
   readonly lambdaFile: string;
-  readonly randomPrefix: number;
 }
 
 export class BedrockAgentCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BedrockAgentCdkProps) {
     super(scope, id, props);
 
+    // Generate random number to avoid roles and lambda duplicates
+    const randomPrefix = Math.floor(Math.random() * (10000 - 100) + 100);
     const collectionId = "BEDROCK_AGENT_CUSTOM_RESOURCE";
-    const lambdaName = `bedrock-agent-lambda-${props.randomPrefix}`;
-    const lambdaRoleName = `bedrock-agent-lambda-role-${props.randomPrefix}`;
-    const agentResourceRoleName = `AmazonBedrockExecutionRoleForAgents_${props.randomPrefix}`; 
-    const agentName = this.node.tryGetContext("agentName") || `cdk-agent-${props.randomPrefix}`;
+    const lambdaName = `bedrock-agent-lambda-${randomPrefix}`;
+    const lambdaRoleName = `bedrock-agent-lambda-role-${randomPrefix}`;
+    const agentResourceRoleName = `AmazonBedrockExecutionRoleForAgents_${randomPrefix}`; 
+    const agentName = this.node.tryGetContext("agentName") || `cdk-agent-${randomPrefix}`;
 
-    const lambdaRole = new LambdaIamConstruct(this, `LambdaIamConstruct-${props.randomPrefix}`, { roleName: lambdaRoleName });
-    const s3Construct = new S3Construct(this, `agent-assets-${props.randomPrefix}`, {});
-    const bedrockAgentRole = new BedrockIamConstruct(this, `BedrockIamConstruct-${props.randomPrefix}`, { 
+    const lambdaRole = new LambdaIamConstruct(this, `LambdaIamConstruct-${randomPrefix}`, { roleName: lambdaRoleName });
+    const s3Construct = new S3Construct(this, `agent-assets-${randomPrefix}`, {});
+    const bedrockAgentRole = new BedrockIamConstruct(this, `BedrockIamConstruct-${randomPrefix}`, { 
       roleName: agentResourceRoleName,
       lambdaRoleArn: lambdaRole.lambdaRole.roleArn,
       s3BucketArn: s3Construct.bucket.bucketArn,
     });
     bedrockAgentRole.node.addDependency(lambdaRole);
     bedrockAgentRole.node.addDependency(s3Construct);
-    const agentLambdaConstruct = new LambdaConstruct(this, `LambdaConstruct-${props.randomPrefix}`, {
+    const agentLambdaConstruct = new LambdaConstruct(this, `LambdaConstruct-${randomPrefix}`, {
       lambdaName: lambdaName,
       lambdaFile: props.lambdaFile,
       lambdaRoleName: lambdaRoleName,
@@ -39,7 +40,7 @@ export class BedrockAgentCdkStack extends cdk.Stack {
     });
     agentLambdaConstruct.node.addDependency(lambdaRole);
 
-    const customBedrockAgentConstruct = new CustomBedrockAgentConstruct(this, `custom-bedrock-agent-construct-${props.randomPrefix}`, {
+    const customBedrockAgentConstruct = new CustomBedrockAgentConstruct(this, `custom-bedrock-agent-construct-${randomPrefix}`, {
       collectionId: collectionId,
       agentName: agentName,
       s3BucketName: s3Construct.bucketName,
@@ -50,7 +51,6 @@ export class BedrockAgentCdkStack extends cdk.Stack {
       bedrockAgentRoleName: agentResourceRoleName
     });
     customBedrockAgentConstruct.node.addDependency(bedrockAgentRole);
-    // customBedrockAgentConstruct.node.addDependency(s3Construct);
     customBedrockAgentConstruct.node.addDependency(agentLambdaConstruct);
   }
 }

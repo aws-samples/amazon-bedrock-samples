@@ -1,5 +1,4 @@
 import * as cdk from "aws-cdk-lib";
-import * as lambdaPython from "@aws-cdk/aws-lambda-python-alpha";
 import { Construct } from "constructs";
 
 export interface CustomResourceProps extends cdk.StackProps {
@@ -39,11 +38,10 @@ export class CustomBedrockAgentConstruct extends Construct {
       compatibleRuntimes: [cdk.aws_lambda.Runtime.PYTHON_3_10],
     });
 
-    const onEvent = new lambdaPython.PythonFunction(this, 'BedrockAgentCustomResourceFunction', {
+    const onEvent = new cdk.aws_lambda.Function(this, 'BedrockAgentCustomResourceFunction', {
       runtime: cdk.aws_lambda.Runtime.PYTHON_3_10,
-      handler: 'on_event',
-      index: "cdk-resource-bedrock-agent.py",
-      entry: "lib/assets/lambdas",
+      handler: 'cdk-resource-bedrock-agent.on_event',
+      code: cdk.aws_lambda.Code.fromAsset("lib/assets/lambdas"),
       architecture: cdk.aws_lambda.Architecture.X86_64,
       layers: [layer],
       timeout: cdk.Duration.seconds(300),

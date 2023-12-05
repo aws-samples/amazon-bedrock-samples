@@ -7,9 +7,6 @@ import { BedrockAgentCdkStack } from '../lib/bedrock-agent-cdk-stack';
 
 const app = new cdk.App();
 
-// Generate random number to avoid roles and lambda duplicates
-const randomPrefix = Math.floor(Math.random() * (10000 - 100) + 100);
-
 // Get the spec file found in lambda dir
 const specDir = 'lib/assets/api-schema'; 
 const jsonOrYmlFile = glob.sync('**/*', { cwd: specDir });
@@ -20,10 +17,9 @@ const specFile = path.basename(specFilePath)
 const lambdaDir = 'lib/assets/lambdas/agent'; 
 const pyFile = glob.sync('**/*.py', { cwd: lambdaDir });
 const lambdaFilePath = pyFile[0];
-const lambdaFile = path.basename(lambdaFilePath) 
+const lambdaFile = path.basename(lambdaFilePath.replace(/\.py$/, '')) 
 
-const appStack = new BedrockAgentCdkStack(app, `BedrockAgentCdkStack-${randomPrefix}`, {
+const appStack = new BedrockAgentCdkStack(app, `BedrockAgentCDKStack`, {
   specFile: specFile,
   lambdaFile: lambdaFile,
-  randomPrefix: randomPrefix,
 });

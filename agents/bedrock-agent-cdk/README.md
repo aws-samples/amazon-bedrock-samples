@@ -23,31 +23,26 @@ The tutorial deploys Bedrock agent backed by Anthropic Clause V2 model and creat
 
 * node >= 16.0.0
 * npm >= 8.0.0
-* Docker
 * AWS CLI >= 2.0.0
 * AWS CDK >= 2.66.1
 
 # How to run
 
-Before you start, make sure you upload the python function to ``lib/assets/lambdas/agent`` and api schema to ``lib/assets/api-schema`` that you want your action group within your agent to have. By default it has template lambda ``create-agent.py`` and API schema ``create-agent-schema.json`` that will be used in deployment. Make sure you remove these files if you upload your own schema and Python file for Lambda.
+Before you start, make sure you upload the python function to ``lib/assets/lambdas/agent`` and api schema to ``lib/assets/api-schema`` that you want your action group within your agent to have. By default it has template lambda ``create-agent.py`` and API schema ``create-agent-schema.json`` that will be used in deployment. Make sure you remove these files if you upload your own schema and Python file for Lambda. Your lambda hanlder function must be `lambda_handler()`.
 
 From within the root project folder (``bedrock-agent-cdk``), run the following commands:
 
+```
+npm install
+```
+Note - if you have `npm ERR!` erros related to overlapping dependencies, run `npm install --force`.
 ```
 cdk bootstrap
 ```
 
 ```
-npm install
-```
-
-```
 cdk deploy --require-approval never
 ```
-Note - in rare cases there might be "Access denied" when Docker tries to pull a public image from AWS public ECR Repository. To overcome this run the following command before you start deployment: 
-```
-aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-``` 
 
 Optional - if you want your agent to have a custom name you can do deployment like this (substituting "my-agent-name" with your desired name):
 
@@ -55,10 +50,12 @@ Optional - if you want your agent to have a custom name you can do deployment li
 cdk deploy -c agentName="my-agent-name" --require-approval never
 ```
 
-# How to delete (before GA you need to delete manualy in the console)
+# How to delete
 
 From within the root project folder (``bedrock-agent-cdk``), run the following commands:
 
 ```
 cdk destroy --force
 ```
+
+**Note - if you created any aliases/versions within your agent you would have to manually delete it in the console.**
