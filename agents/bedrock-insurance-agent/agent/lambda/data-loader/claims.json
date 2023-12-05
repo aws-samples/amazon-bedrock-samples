@@ -52,10 +52,10 @@
       "licenseIssueDate": "06-03-2007"
     },
     "claimAmount": {
-      "total": 67800,
-      "injury": 11300,
-      "property": 11300,
-      "vehicle": 45200
+      "total": 2650,
+      "injury": 2000,
+      "property": 250,
+      "vehicle": 400
     },
     "numberWitnesses": 2,
     "suspiciousActivity": false,

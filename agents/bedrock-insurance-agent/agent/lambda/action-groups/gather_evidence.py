@@ -4,9 +4,21 @@ import re
 import json
 import time
 import boto3
+import botocore
 import base64
 import string
 import secrets
+
+# Other boto3 clients and variables
+boto3_session = boto3.Session(region_name=os.environ['AWS_REGION'])
+dynamodb = boto3.resource('dynamodb',region_name=os.environ['AWS_REGION'])
+
+# SNS boto3 clients and variables
+sns_topic_arn = os.environ['SNS_TOPIC_ARN']
+sns_client = boto3.client('sns')
+
+# URL
+url = os.environ['CUSTOMER_WEBSITE_URL']
 
 def generate_upload_id(length):
     print("Generating Upload ID")
@@ -19,8 +31,26 @@ def generate_upload_id(length):
     
     return random_string
 
+def send_reminder():
+    print("Send Reminder")
+
+    subject = "Gathering Evidence"
+    message = "Here is where we will gather evidence."
+
+    sns_client.publish(
+        TopicArn=sns_topic_arn,
+        Subject=subject,
+        Message=message,
+    )
+    
+    # Generate a random string of length 7 (to match the format '12a3456')
+    reminder_id = "123ab45"
+
+    return reminder_id
+
 def gather_evidence(event):
     print("Gathering Evidence")
+    print("event = " + str(event))
 
     # Generate a random string of length 7 (to match the format '12a3456')
     upload_id = generate_upload_id(7)
@@ -28,7 +58,7 @@ def gather_evidence(event):
 
     return {
         "response": {
-            "documentUploadUrl": "https://claimsdev.dkmn9jc6ric9u.amplifyapp.com/",
+            "documentUploadUrl": url,
             "documentUploadTrackingId": upload_id,
             "documentUploadStatus": "InProgress"
         }

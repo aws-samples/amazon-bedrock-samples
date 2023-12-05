@@ -7,11 +7,14 @@
 
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export ARTIFACT_BUCKET_NAME=$STACK_NAME-customer-resources
+export KB_BUCKET_NAME=$STACK_NAME-bedrock-kb
 export DATA_LOADER_KEY="agent/lambda/data-loader/loader_deployment_package.zip"
 export CREATE_CLAIM_KEY="agent/lambda/action-groups/create_claim.zip"
 export GATHER_EVIDENCE_KEY="agent/lambda/action-groups/gather_evidence.zip"
 export SEND_REMINDER_KEY="agent/lambda/action-groups/send_reminder.zip"
-export KB_KEY="knowledge-base-assets/claims-brief.xlsx"
+
+aws s3 mb s3://${KB_BUCKET_NAME} --region us-east-1
+aws s3 cp ../agent/knowledge-base-assets/ s3://${KB_BUCKET_NAME}/knowledge-base-assets/ --recursive --exclude ".DS_Store"
 
 aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region us-east-1
 aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --recursive --exclude ".DS_Store"
@@ -33,11 +36,9 @@ ParameterKey=DataLoaderKey,ParameterValue=${DATA_LOADER_KEY} \
 ParameterKey=CreateClaimKey,ParameterValue=${CREATE_CLAIM_KEY} \
 ParameterKey=GatherEvidenceKey,ParameterValue=${GATHER_EVIDENCE_KEY} \
 ParameterKey=SendReminderKey,ParameterValue=${SEND_REMINDER_KEY} \
-ParameterKey=BedrockKnowledgeBaseBucket,ParameterValue=${KB_BUCKET_NAME} \
-ParameterKey=BedrockKnowledgeBaseKey,ParameterValue=${KB_KEY} \
-ParameterKey=BedrockKnowledgeBaseId,ParameterValue=${KB_ID} \
-ParameterKey=BedrockDataSourceId,ParameterValue=${DS_ID} \
 ParameterKey=BedrockAgentsLayerArn,ParameterValue=${BEDROCK_AGENTS_LAYER_ARN} \
+ParameterKey=SNSEmail,ParameterValue=${SNS_EMAIL} \
+ParameterKey=CustomerWebsiteUrl,ParameterValue=${CUSTOMER_WEBSITE_URL} \
 --capabilities CAPABILITY_NAMED_IAM
 
 aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"

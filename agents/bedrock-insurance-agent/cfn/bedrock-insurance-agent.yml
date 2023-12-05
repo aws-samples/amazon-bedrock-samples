@@ -19,13 +19,6 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Bedrock Configuration Values
-        Parameters:
-          - BedrockKnowledgeBaseBucket
-          - BedrockKnowledgeBaseKey
-          - BedrockKnowledgeBaseId
-          - BedrockDataSourceId
-      - Label:
           default: Code Asset S3 Bucket, Lambda Deployment Package Keys, and Lambda Layer ARNs
         Parameters:
           - ArtifactBucket
@@ -33,12 +26,15 @@ Metadata:
           - CreateClaimKey
           - GatherEvidenceKey
           - SendReminderKey
-          - PythonPandasLayerArn
           - BedrockAgentsLayerArn
       - Label:
           default: SNS Configuration Settings
         Parameters:
           - SNSEmail
+      - Label:
+          default: Customer Website Configuration
+        Parameters:
+          - CustomerWebsiteUrl
     ParameterLabels:
       ArtifactBucket:
         default: your-code-assets-bucket-name
@@ -50,20 +46,12 @@ Metadata:
         default: /agent/lambda/action-groups/gather_evidence.zip
       SendReminderKey:
         default: /agent/lambda/action-groups/send_reminder.zip
-      BedrockKnowledgeBaseBucket:
-        default: your-bedrock-kb-bucket-name
-      BedrockKnowledgeBaseKey:
-        default: your-bedrock-kb-object-key
-      BedrockKnowledgeBaseId:
-        default: your-bedrock-kb-id
-      BedrockDataSourceId:
-        default: your-bedrock-ds-id
-      PythonPandasLayerArn:
-        default: "arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python311-Arm64:3"
       BedrockAgentsLayerArn:
-        default: layer-label-cfn
+        default: bedrock-layer-arn
       SNSEmail:
-        default: "kbuilder@amazon.com"
+        default: your-sns-email
+      CustomerWebsiteUrl:
+        default: your-website-url
 
 Parameters:
   ArtifactBucket:
@@ -78,41 +66,26 @@ Parameters:
     Description: S3 Key for create claim function code
     Type: String
     Default: /agent/lambda/action-groups/create_claim.zip
-  SendReminderKey:
-    Description: S3 Key for send reminder function code
-    Type: String
-    Default: /agent/lambda/action-groups/send_reminder.zip
   GatherEvidenceKey:
     Description: S3 Key for gather evidence function code
     Type: String
     Default: /agent/lambda/action-groups/gather_evidence.zip
-  BedrockKnowledgeBaseBucket:
-    Description: S3 Bucket Containing Bedrock Knowledge Base Assets.
+  SendReminderKey:
+    Description: S3 Key for send reminder function code
     Type: String
-    Default: your-bedrock-kb-bucket-name
-  BedrockKnowledgeBaseKey:
-    Description: S3 Object Key for claims-brief.xlsx in Bedrock Knowledge Base
-    Type: String
-    Default: your-bedrock-kb-object-key
-  PythonPandasLayerArn:
-    Description: Python Pandas Lambda Layer ARN
-    Type: String
-    Default: "arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python311-Arm64:3"
+    Default: /agent/lambda/action-groups/send_reminder.zip
   BedrockAgentsLayerArn:
-    Description: Agents for Bedrock Lambda Layer ARN
+    Description: Agents for Bedrock Lambda Layer
     Type: String
-  BedrockKnowledgeBaseId:
-    Description: Bedrock Knowledge Base ID
-    Type: String
-    Default: "C1SVVCAAX3"
-  BedrockDataSourceId:
-    Description: Bedrock Knowledge Base Data Source ID
-    Type: String
-    Default: "KVP8DR71UW"
+    Default: bedrock-layer-arn
   SNSEmail:
     Description: SNS Email.
     Type: String
-    Default: "kbuilder@amazon.com"
+    Default: your-sns-email
+  CustomerWebsiteUrl:
+    Description: Customer Website URL
+    Type: String
+    Default: your-website-url
 
 Resources:
   ExistingClaimsTable:
@@ -227,7 +200,6 @@ Resources:
       Timeout: 30
       Handler: create_claim.lambda_handler
       Layers:
-        - !Ref PythonPandasLayerArn
         - !Ref BedrockAgentsLayerArn
       Role: !GetAtt AgentActionGroupLambdaRole.Arn
       Architectures:
@@ -235,10 +207,6 @@ Resources:
       Environment:
         Variables:
           EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
-          KB_BUCKET_NAME: !Ref BedrockKnowledgeBaseBucket
-          KB_BUCKET_KEY: !Ref BedrockKnowledgeBaseKey
-          BEDROCK_KB_ID: !Ref BedrockKnowledgeBaseId
-          BEDROCK_DS_ID: !Ref BedrockDataSourceId
 
   SendReminderFunction:
     Type: AWS::Lambda::Function
@@ -253,7 +221,6 @@ Resources:
       Timeout: 30
       Handler: send_reminder.lambda_handler
       Layers:
-        - !Ref PythonPandasLayerArn
         - !Ref BedrockAgentsLayerArn
       Role: !GetAtt AgentActionGroupLambdaRole.Arn
       Architectures:
@@ -261,9 +228,7 @@ Resources:
       Environment:
         Variables:
           EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
-          KB_BUCKET_NAME: !Ref BedrockKnowledgeBaseBucket
           SNS_TOPIC_ARN: !Ref SNSTopic
-          BEDROCK_KB_ID: !Ref BedrockKnowledgeBaseId
 
   GatherEvidenceFunction:
     Type: AWS::Lambda::Function
@@ -278,11 +243,14 @@ Resources:
       Timeout: 30
       Handler: gather_evidence.lambda_handler
       Layers:
-        - !Ref PythonPandasLayerArn
         - !Ref BedrockAgentsLayerArn
       Role: !GetAtt AgentActionGroupLambdaRole.Arn
       Architectures:
         - arm64
+      Environment:
+        Variables:
+          CUSTOMER_WEBSITE_URL: !Ref CustomerWebsiteUrl
+          SNS_TOPIC_ARN: !Ref SNSTopic
 
   SNSTopic:
     Type: AWS::SNS::Topic

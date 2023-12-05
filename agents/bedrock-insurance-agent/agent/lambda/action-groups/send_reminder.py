@@ -9,12 +9,6 @@ import string
 import secrets
 import requests
 
-# Agents for Bedrock boto3 clients and variables
-bedrock_client = boto3.client('bedrock')
-bedrock_runtime_client = boto3.client('bedrock-runtime')
-bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime')
-knowledgeBaseId = os.environ['BEDROCK_KB_ID']
-
 # DynamoDB boto3 clients and variables
 dynamodb = boto3.resource('dynamodb',region_name=os.environ['AWS_REGION'])
 dynamodb_client = boto3.client('dynamodb')
@@ -70,22 +64,11 @@ def send_reminder(claim_id, pending_documents):
 ## Agent runtime Retrieve API with boto3 client ##
 def notify_pending_documents(event):
     print("Notify Pending Documents")
-
-    # Define HTTP request payload (Retrieve API)
-    kb_query = event["inputText"]
-    retrieval_query = {"text": kb_query}
-    print("KB Query: " + str(kb_query))
-
-    response = bedrock_agent_runtime_client.retrieve(knowledgeBaseId=knowledgeBaseId, retrievalQuery=retrieval_query)
-    print("KB Response: " + str(response))
-
-    pending_documents = response['retrievalResults'][0]['content']['text']
-    print("KB Pending Docs: " + str(pending_documents))
-
+    
     # Extracting claimId value from event parameters
     claim_id = None
     for param in event.get('parameters', []):
-        if param.get('name') == 'claimId':
+        if param.get('name') == 'claimId': 
             claim_id = param.get('value')
             break
 
@@ -96,6 +79,24 @@ def notify_pending_documents(event):
             'statusCode': 400,
             'response': 'Missing claimId parameter'
         }
+
+    try:
+        # Define the query parameters
+        response = dynamodb_client.get_item(
+            TableName=existing_claims_table_name,
+            Key={
+                'claimId': {'S': claim_id},  # claimId is the partition key
+                'policyId': {'S': '102130320'}
+            },
+            ProjectionExpression='pendingDocuments'  # Retrieve only the 'pendingDocuments' attribute
+        )
+        
+        # Extract pendingDocuments attribute from the DynamoDB response
+        pending_documents = response.get('Item', {}).get('pendingDocuments', {}).get('L', [])
+
+    except Exception as e:
+        print(f"Error querying DynamoDB table: {e}")
+        return []
 
     # Generate a random string of length 7 (to match the format '12a3456')
     reminder_tracking_id = send_reminder(claim_id, pending_documents)

@@ -30,50 +30,85 @@ To initiate the security scan, run the following command:
 cfn_nag_scan --input-path cfn/bedrock-insurance-agent.yml
 ```
 
+### Deploy CloudFormation Stack to Emulate Existing Customer Resources 
+To emulate the existing customer resources utilized by the agent, this solution uses the [create-customer-resources.sh](../shell/create-customer-resources.sh) shell script to automate provisioning of the parameterized CloudFormation template, [bedrock-insurance-agent.yml](../cfn/bedrock-insurance-agent.yml), to deploy the following resources:
+
+> - [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) table populated with synthetic [claims data](../agent/lambda/data-loader/claims.json).
+> - Three [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions that represent customer business logic for creating claims, sending pending document reminders for open status claims, and gathering evidence on new and existing claims.
+> - Two [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html) buckets: 1/ Containing API documentation in OpenAPI schema format for the preceding Lambda functions and 2/ hosting the repair estimates, claim amounts, company FAQs, and required claim document descriptions to be used as our knowledge base data source.
+> - [Amazon Simple Notification Service (SNS)](https://docs.aws.amazon.com/sns/latest/dg/welcome.html) topic to which policy holders' emails are subscribed for email alerting of claim status and pending actions.
+> - [AWS Identity and Access Management (IAM)](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) permissions for the above resources.
+
+CloudFormation prepopulates stack parameters with the default values provided in the template. To provide alternative input values, you can specify parameters as environment variables that are referenced in the `ParameterKey=<ParameterKey>,ParameterValue=<Value>` pairs in the _create-customer-resources.sh_ shell script's `aws cloudformation create-stack` command. 
+
+&nbsp;&nbsp;&nbsp;a. To execute the _create-customer-resources.sh_ shell script, navigate to the directory where you cloned the _amazon-bedrock-samples_ repository, then change your working directory to [amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/](../agents/bedrock-insurance-agent/shell/). Modify the shell script permissions to executable:
+
+```sh
+# If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to shell folder:
+cd amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/
+chmod u+x create-customer-resources.sh
+```
+
+&nbsp;&nbsp;&nbsp;b. Then execute the _create-customer-resources.sh_ shell script to deploy the [bedrock-insurance-agent.yml](../cfn/bedrock-insurance-agent.yml) CloudFormation stack.
+
+```sh
+source ./create-customer-resources.sh
+```
+
+&nbsp;&nbsp;&nbsp;[_create-customer-resources.sh_](../shell/create-customer-resources.sh) contents:
+
+```sh
+export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export ARTIFACT_BUCKET_NAME=$STACK_NAME-customer-resources
+export KB_BUCKET_NAME=$STACK_NAME-bedrock-kb
+export DATA_LOADER_KEY="agent/lambda/data-loader/loader_deployment_package.zip"
+export CREATE_CLAIM_KEY="agent/lambda/action-groups/create_claim.zip"
+export GATHER_EVIDENCE_KEY="agent/lambda/action-groups/gather_evidence.zip"
+export SEND_REMINDER_KEY="agent/lambda/action-groups/send_reminder.zip"
+
+aws s3 mb s3://${KB_BUCKET_NAME} --region us-east-1
+aws s3 cp ../agent/knowledge-base-assets/ s3://${KB_BUCKET_NAME}/knowledge-base-assets/ --recursive --exclude ".DS_Store"
+
+aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region us-east-1
+aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --recursive --exclude ".DS_Store"
+
+export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
+    --layer-name bedrock-agents \
+    --description "Agents for Bedrock Layer" \
+    --license-info "MIT" \
+    --content S3Bucket=${ARTIFACT_BUCKET_NAME},S3Key=agent/lambda/lambda-layer/bedrock-agents-layer.zip \
+    --compatible-runtimes python3.11 \
+    --query LayerVersionArn --output text)
+
+aws cloudformation create-stack \
+--stack-name ${STACK_NAME} \
+--template-body file://../cfn/bedrock-insurance-agent.yml \
+--parameters \
+ParameterKey=ArtifactBucket,ParameterValue=${ARTIFACT_BUCKET_NAME} \
+ParameterKey=DataLoaderKey,ParameterValue=${DATA_LOADER_KEY} \
+ParameterKey=CreateClaimKey,ParameterValue=${CREATE_CLAIM_KEY} \
+ParameterKey=GatherEvidenceKey,ParameterValue=${GATHER_EVIDENCE_KEY} \
+ParameterKey=SendReminderKey,ParameterValue=${SEND_REMINDER_KEY} \
+ParameterKey=BedrockAgentsLayerArn,ParameterValue=${BEDROCK_AGENTS_LAYER_ARN} \
+ParameterKey=SNSEmail,ParameterValue=${SNS_EMAIL} \
+ParameterKey=CustomerWebsiteUrl,ParameterValue=${CUSTOMER_WEBSITE_URL} \
+--capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
+aws cloudformation wait stack-create-complete --stack-name $STACK_NAME
+```
+
 ## Create Knowledge Base for Amazon Bedrock
 
 Knowledge Bases for Amazon Bedrock leverage Retrieval Augmented Generation (RAG), a technique that harnesses data stores to enhance responses generated by foundation models (FMs). By employing knowledge bases, applications gain enriched contextual information, streamlining development through a fully-managed RAG solution. This level of abstraction accelerates time-to-market by minimizing the effort of incorporating your data into agent functionality and it optimizes cost by negating the necessity for continuous model retraining to leverage private data. Knowledge base functionality is delineated through two key processes:
 - **Pre-Processing Data:** Documents undergo segmentation ("chunking") into manageable sections before conversion into embeddings. These embeddings are utilized to create a vector index, enabling semantic similarity comparisons between queries and data source text.
 - **Runtime Execution:** During runtime, user queries are transformed into vectors using an Amazon Bedrock embedding model. The vector index is queried for chunks related to the user's query, augmenting the user prompt with additional context retrieved from the vector index. The augmented prompt, coupled with this context, is then used to generate a response for the user.
-
 <p align="center">
   <img src="../design/kb-embeddings.png">
   <em>Diagram 2: Knowledge Base for Amazon Bedrock Architecture Overview</em>
 </p>
 
-### 1. Deploy Knowledge Base Data Source
-
-Knowledge Bases for Amazon Bedrock allow agents to access existing customer data repositories without extensive administrator overhead. To connect a knowledge base to your data, you specify an S3 bucket as the [data source](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-ingest.html). To mimic an existing customer data repository, this solution uses the [create-kb-data-source.sh](../shell/create-kb-data-source.sh) shell script to create an [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html) bucket containing claims data (.xlxs) and descriptions of the different types of pending documents for a claim. All knowledge base assets are uploaded to S3 from the [knowledge-base-assets folder](../agent/knowledge-base-assets).
-
-&nbsp;&nbsp;&nbsp;a. To execute the _create-kb-data-source.sh_ shell script, navigate to the directory where you cloned the _amazon-bedrock-samples_ repository, then change your working directory to [amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/](../agents/bedrock-insurance-agent/shell/). Modify the shell script permissions to executable:
-
-```sh
-# If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to shell folder:
-cd amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/
-chmod u+x create-kb-data-source.sh
-```
-
-&nbsp;&nbsp;&nbsp;b. Next, specify your _STACK_NAME_ environment variable, which will be used to form your S3 bucket name:
-
-```sh
-export STACK_NAME=bedrock-insurance-agent
-```
-
-&nbsp;&nbsp;&nbsp;c. Finally, execute the shell script to create the S3 bucket and upload knowledge base assets:
-
-```sh
-source ./create-kb-data-source.sh
-```
-
-&nbsp;&nbsp;&nbsp;_create-kb-data-source.sh_ contents:
-
-```sh
-export KB_BUCKET_NAME=$STACK_NAME-bedrock-kb
-aws s3 mb s3://${KB_BUCKET_NAME} --region us-east-1
-aws s3 cp ../agent/knowledge-base-assets/ s3://${KB_BUCKET_NAME}/knowledge-base-assets/ --recursive --exclude ".DS_Store"
-```
-
-### 2. Deploy Knowledge Base
+### Deploy Knowledge Base
 
 &nbsp;&nbsp;&nbsp;a. Navigate to the [Amazon Bedrock > Knowledge base > Create knowledge base console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases/create-knowledge-base):
 
@@ -140,75 +175,7 @@ Agents operate through a build-time execution process, comprising several key co
 
 The agent in this sample solution will use an Anthropic Claude V2 foundation model, a set of instructions, three action groups, and one knowledge base.
 
-### 1. Deploy CloudFormation Stack to Emulate Existing Customer Resources 
-
-To emulate the existing customer resources utilized by the agent, this solution uses the [create-customer-resources.sh](../shell/create-customer-resources.sh) shell script to automate provisioning of the parameterized CloudFormation template, [bedrock-insurance-agent.yml](../cfn/bedrock-insurance-agent.yml), which defines the following resources:
-
-> - [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) table populated with synthetic [claims data](../agent/lambda/data-loader/claims.json).
-> - Three [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions that represent customer business logic for creating claims, sending pending document reminders for open status claims, and gathering evidence on new and existing claims.
-> - [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html) bucket containing API documentation in OpenAPI schema format for the preceding Lambda functions.
-> - [Amazon Simple Notification Service (SNS)](https://docs.aws.amazon.com/sns/latest/dg/welcome.html) topic to which policy holders' emails are subscribed for email alerting of claim status and pending actions.
-> - [AWS Identity and Access Management (IAM)](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) permissions for the above resources.
-
-CloudFormation prepopulates stack parameters with the default values provided in the template. To provide alternative input values, you can specify parameters as environment variables that are referenced in the `ParameterKey=<ParameterKey>,ParameterValue=<Value>` pairs in the _create-customer-resources.sh_ shell script's `aws cloudformation create-stack` command. 
-
-&nbsp;&nbsp;&nbsp;a. To execute the _create-customer-resources.sh_ shell script, navigate to the directory where you cloned the _amazon-bedrock-samples_ repository, then change your working directory to [amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/](../agents/bedrock-insurance-agent/shell/). Modify the shell script permissions to executable:
-
-```sh
-# If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to shell folder:
-cd amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/
-chmod u+x create-customer-resources.sh
-```
-
-&nbsp;&nbsp;&nbsp;b. Ensure you have set your Knowledge base ID and Data source ID environment variables, then execute the _create-customer-resources.sh_ shell script to deploy the [bedrock-insurance-agent.yml](../cfn/bedrock-insurance-agent.yml) CloudFormation stack.
-
-```sh
-export KB_ID=<YOUR-KNOWLEDGE-BASE-ID>
-export DS_ID=<YOUR-DATA-SOURCE-ID>
-source ./create-customer-resources.sh
-```
-
-&nbsp;&nbsp;&nbsp;[_create-customer-resources.sh_](../shell/create-customer-resources.sh) contents:
-
-```sh
-export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export ARTIFACT_BUCKET_NAME=$STACK_NAME-customer-resources
-export DATA_LOADER_KEY="agent/lambda/data-loader/loader_deployment_package.zip"
-export CREATE_CLAIM_KEY="agent/lambda/action-groups/create_claim.zip"
-export GATHER_EVIDENCE_KEY="agent/lambda/action-groups/gather_evidence.zip"
-export SEND_REMINDER_KEY="agent/lambda/action-groups/send_reminder.zip"
-export KB_KEY="claims-brief.xlsx"
-
-aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region us-east-1
-aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --recursive --exclude ".DS_Store"
-
-export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
-    --layer-name bedrock-agents \
-    --description "Agents for Bedrock Layer" \
-    --license-info "MIT" \
-    --content S3Bucket=${ARTIFACT_BUCKET_NAME},S3Key=agent/lambda/lambda-layer/bedrock-agents-layer.zip \
-    --compatible-runtimes python3.11 \
-    --query LayerVersionArn --output text)
-
-aws cloudformation create-stack \
---stack-name ${STACK_NAME} \
---template-body file://../cfn/bedrock-insurance-agent.yml \
---parameters \
-ParameterKey=ArtifactBucket,ParameterValue=${ARTIFACT_BUCKET_NAME} \
-ParameterKey=DataLoaderKey,ParameterValue=${DATA_LOADER_KEY} \
-ParameterKey=CreateClaimKey,ParameterValue=${CREATE_CLAIM_KEY} \
-ParameterKey=GatherEvidenceKey,ParameterValue=${GATHER_EVIDENCE_KEY} \
-ParameterKey=SendReminderKey,ParameterValue=${SEND_REMINDER_KEY} \
-ParameterKey=BedrockKnowledgeBaseBucket,ParameterValue=${KB_BUCKET_NAME} \
-ParameterKey=BedrockKnowledgeBaseKey,ParameterValue=${KB_KEY} \
-ParameterKey=BedrockAgentsLayerArn,ParameterValue=${BEDROCK_AGENTS_LAYER_ARN} \
---capabilities CAPABILITY_NAMED_IAM
-
-aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
-aws cloudformation wait stack-create-complete --stack-name $STACK_NAME
-```
-
-### 2. Deploy Agent
+### Deploy Agent
 
 &nbsp;&nbsp;&nbsp;a. Navigate to the [Amazon Bedrock > Agents > Create Agent console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/agents/create):
 
@@ -268,7 +235,7 @@ Use this action group to check claim status, identify missing or pending documen
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ii. Under **Knowledge base instructions for Agent**, enter the following then select **Next**:
 ```
-Use this knowledge base to access insurance claims data, including incident type/severity, number of vehicles, relationship to insured, claim amounts, number of witnesses, status, pending documents  
+Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
 ```
 
 Your knowledge base configuration should resemble the below:

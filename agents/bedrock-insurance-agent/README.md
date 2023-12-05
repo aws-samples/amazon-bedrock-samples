@@ -39,7 +39,7 @@ Together, Agents and Knowledge Base for Amazon Bedrock functionality encompasses
 1. Users provide natural language inputs to the agent.
 
   Sample Prompts:
-  • Create a claim.
+  • Create a new claim.
   • Send a pending documents reminder to the policy holder of claim 2s34w-8x.
   • Send reminders to all policy holders with open claims.
   • Gather evidence for claim 5t16u-7v.

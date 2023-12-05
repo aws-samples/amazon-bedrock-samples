@@ -1,6 +1,6 @@
 # cd generative-ai-amazon-bedrock-langchain-agent-example/shell/
-# chmod u+x delete-stack.sh
-# ./delete-stack.sh
+# chmod u+x delete-customer-resources.sh
+# ./delete-customer-resources.sh
 
 echo "Emptying and Deleting S3 Bucket: $ARTIFACT_BUCKET_NAME"
 
