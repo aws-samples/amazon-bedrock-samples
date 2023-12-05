@@ -18,11 +18,12 @@ Provisioning will take somewhere from 5 to 7 minutes.
 Download current directory or clone repo and cd into ``cdk-deployment``. From within the root project folder (``cdk-deployment``), run the following commands:
 
 ```
-cdk bootstrap
+npm install
 ```
+Note - if you have `npm ERR!` erros related to overlapping dependencies, run `npm install --force`.
 
 ```
-npm install
+cdk bootstrap
 ```
 
 ```
