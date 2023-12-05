@@ -23,7 +23,7 @@ def on_event(event, context):
                                                 bedrock_agent_lambda_arn=bedrock_agent_lambda_arn,
                                                 s3_bucket_key=s3_bucket_key, physical_id=physical_id)
   if request_type == 'Update': return on_update(event, physical_id=physical_id)
-  if request_type == 'Delete': return on_delete(event, physical_id=physical_id)
+  if request_type == 'Delete': return on_delete(event, physical_id=physical_id, agent_name=agent_name)
   raise Exception("Invalid request type: %s" % request_type)
 
 
@@ -50,10 +50,10 @@ def on_update(event, physical_id):
   return { 'PhysicalResourceId': physical_id } 
 
 
-def on_delete(event, agent_id, physical_id):
+def on_delete(event, agent_name, physical_id):
   # physical_id = event["PhysicalResourceId"]
   print("delete resource %s" % physical_id)
-  delete_agent(agent_id)
+  delete_agent(agent_name)
 
   return { 'PhysicalResourceId': physical_id } 
 
@@ -70,10 +70,6 @@ def create_agent(agent_resource_role_arn, agent_name):
   )
 
   return response['agent']['agentId']
-
-
-def delete_agent(agent_id):
-  return agent_client.delete_agent(agentId=agent_id)
 
 
 def create_agent_action_group(agent_id, lambda_arn, bucket, key):
@@ -96,7 +92,16 @@ def create_agent_action_group(agent_id, lambda_arn, bucket, key):
     return
 
 
-def delete_agent_action_group(agent_id):
-    return agent_client.delete_agent_action_group(agentId=agent_id)
+def delete_agent(agent_name):
+    # Get list of all agents
+    response = agent_client.list_agents()
+    print('This is agent name from delete: ', agent_name)
+    # Find agent with the given name
+    for agent in response["agentSummaries"]:
+        if agent["agentName"] == agent_name:
+            agent_id = agent["agentId"]
+            return agent_client.delete_agent(agentId=agent_id)
+    
+    return None
 
 

@@ -23,7 +23,6 @@
     "aws-cdk-lib": "2.87.0",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21",
-    "@aws-cdk/aws-lambda-python-alpha": "^2.108.0-alpha.0",
     "glob": "^10.3.10"
   }
 }
