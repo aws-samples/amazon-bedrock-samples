@@ -10,6 +10,10 @@
 
 - [4_customized-rag-retrieve-api-titan-lite-evaluation.ipynb](./4\_customized-rag-retrieve-api-titan-lite-evaluation.ipynb) - If you are interested in evaluating your RAG application, try this sample code where we are using the `Amazon Titan Lite` model for generating responses and `Anthropic Claude V2` for evaluating the response.
 
+- [5_eval_claudeV2_instant_llamaindex.ipynb] - If you are interested in evaluating your RAG application, try this sample code where we are using the `Amazon Titan embed test model` to create embeddings, and we are testing and evaluating results of claude V2 versus claude instant on the retrieve API from the knowledge base.
+
+- [6_retrieveAndGenerateAPI_eval_llamaindex.ipynb] - If you are interested in evaluating your RAG application using retrieveAndGenerate APIs, try this sample code where we are using the `Amazon Titan embed test model` to create embeddings, and we are testing and evaluating results of claude V2 versus claude instant on the retrieve and generate API from the knowledge base.
+
 ***
 
 ## Contributing
