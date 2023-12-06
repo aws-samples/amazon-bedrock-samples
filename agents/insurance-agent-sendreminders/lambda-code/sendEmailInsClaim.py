@@ -3,7 +3,7 @@ import time
 import boto3
 
 # Define the email source
-EMAIL_SOURCE = 'madhurpt@amazon.com'
+EMAIL_SOURCE = ''
 client = boto3.client("ses")
 
 
