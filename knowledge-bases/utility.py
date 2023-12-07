@@ -8,10 +8,11 @@ boto3_session = boto3.session.Session()
 region_name = boto3_session.region_name
 iam_client = boto3_session.client('iam')
 account_number = boto3.client('sts').get_caller_identity().get('Account')
+identity = boto3.client('sts').get_caller_identity()['Arn']
+
 encryption_policy_name = f"bedrock-sample-rag-sp-{suffix}"
 network_policy_name = f"bedrock-sample-rag-np-{suffix}"
 access_policy_name = f'bedrock-sample-rag-ap-{suffix}'
-identity = boto3.client('sts').get_caller_identity()['Arn']
 bedrock_execution_role_name = f'AmazonBedrockExecutionRoleForKnowledgeBase_{suffix}'
 fm_policy_name = f'AmazonBedrockFoundationModelPolicyForKnowledgeBase_{suffix}'
 s3_policy_name = f'AmazonBedrockS3PolicyForKnowledgeBase_{suffix}'
