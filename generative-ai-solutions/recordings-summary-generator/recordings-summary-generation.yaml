@@ -509,7 +509,7 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                 Resource:
-                  - !Sub ${AssetBucket.Arn}/transcriptions/*
+                  - !Sub ${AssetBucket.Arn}/*
         - PolicyName: BedrockPermissions
           PolicyDocument:
             Version: 2012-10-17
@@ -677,7 +677,7 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource:
-                  - !Sub ${AssetBucket.Arn}/transcriptions/*
+                  - !Sub ${AssetBucket.Arn}/*
         - PolicyName: SnsPermissions
           PolicyDocument:
             Version: 2012-10-17
@@ -811,12 +811,12 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource:
-                  - !Sub ${AssetBucket.Arn}/recordings/*
+                  - !Sub ${AssetBucket.Arn}/*
               - Effect: Allow
                 Action:
                   - s3:PutObject
                 Resource:
-                  - !Sub ${AssetBucket.Arn}/transcriptions/*
+                  - !Sub ${AssetBucket.Arn}/*
 
   SummaryGeneratorStateMachine:
     Type: AWS::StepFunctions::StateMachine
