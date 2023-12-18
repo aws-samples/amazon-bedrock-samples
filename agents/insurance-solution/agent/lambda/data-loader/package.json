@@ -1,0 +1,15 @@
+
+{
+  "name": "load-data",
+  "version": "1.0.0",
+  "description": "load account plan data to DynamoDB table",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kyle T. Blocksom",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "cfn-response": "^1.0.1"
+  }
+}
