@@ -38,18 +38,15 @@ Together, Agents and Knowledge Base for Amazon Bedrock functionality encompasses
 
 1. Users provide natural language inputs to the agent.
 
-  Sample Prompts:
-  • Create a new claim.
-  
-  • Send a pending documents reminder to the policy holder of claim 2s34w-8x.
-  • Gather evidence for claim 5t16u-7v.
-  • What is the total claims amount for claim 3b45c-9d?
-
-  • What factors determine my car insurance premium?
-  • How can I lower my car insurance rates?
-
-  • Send reminders to all policy holders with open claims.
-  • Create a new claim, provide the injury claim amount for claim 2s34w-8x, and sending pending document reminders to claim 
+>> **Sample Prompts:**
+- _Create a new claim.
+- _Send a pending documents reminder to the policy holder of claim 2s34w-8x.
+- _Gather evidence for claim 5t16u-7v.
+- _What is the total claims amount for claim 3b45c-9d?
+- _What factors determine my car insurance premium?
+- _How can I lower my car insurance rates?
+- _Send reminders to all policy holders with open claims.
+- Create a new claim, provide the injury claim amount for claim 2s34w-8x, and sending pending document reminders to claim_
 
 2. The agent is configured with [instructions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html), which are descriptive guidelines outlining the agent's intended actions. Additionally, you can optionally configure [advanced prompts](https://docs.aws.amazon.com/bedrock/latest/userguide/advanced-prompts.html), which allow you to boost your agent's precision by employing more detailed configurations and offering manually selected examples for few-shot prompting. This method allows you to enhance the model's performance by providing labeled examples associated with a particular task. The user input is interpreted by the agent using its instructions and underlying foundation model, specified during [agent creation](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-create.html). The response workflow is as follows:
 
