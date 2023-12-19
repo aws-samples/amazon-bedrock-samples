@@ -39,7 +39,7 @@ Agents and Knowledge Base for Amazon Bedrock work together to provide the follow
 1. Users provide natural language inputs to the agent.
 
   **Sample Prompts:**
-    - _Create a new claim._
+    - _BCreate a new claim._
     - _Send a pending documents reminder to the policy holder of claim 2s34w-8x._
     - _Gather evidence for claim 5t16u-7v._
     - _What is the total claims amount for claim 3b45c-9d?_
