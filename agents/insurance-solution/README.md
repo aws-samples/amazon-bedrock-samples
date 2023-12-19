@@ -20,12 +20,12 @@ This Insurance agent sample solution creates an Agent for Amazon Bedrock that ca
 ## Agents and Knowledge Base for Amazon Bedrock
 
 ### Agents and Knowledge Base Functionality
-Together, Agents and Knowledge Base for Amazon Bedrock functionality encompasses several capabilities:
+Agents and Knowledge Base for Amazon Bedrock work together to provide the following set of capabilities:
 
 - **Task Decomposition:** Agents expand foundation models to comprehend user inquiries and dissect tasks into manageable steps for execution.
 - **Interactive Data Collection:** Agents engage in natural conversations to gather supplementary information from users.
-- **Task Execution:** Agents fulfill customer requests through chain-of-thought reasoning and a series of actions.
-- **System Integration:** Agents make API calls to internal company systems to execute specific actions.
+- **Task Execution:** Agents fulfill customer requests through chain-of-thought reasoning with action group and knowledge base tools.
+- **System Integration:** Agents make API calls to internal company systems to execute specific action groups.
 - **Data Querying:** Knowledge bases enhance accuracy and performance through fully-managed [retrieval augmented generation (RAG)](https://docs.aws.amazon.com/sagemaker/latest/dg/jumpstart-foundation-models-customize-rag.html) using customer specific data sources.
 - **Source Attribution:** Agents conduct source attribution, identifying and tracing the origin of information or actions.
 
@@ -38,11 +38,11 @@ Together, Agents and Knowledge Base for Amazon Bedrock functionality encompasses
 
 1. Users provide natural language inputs to the agent.
 
->> **Sample Prompts:**
-- _Create a new claim._
-- _Send a pending documents reminder to the policy holder of claim 2s34w-8x._
-- _Gather evidence for claim 5t16u-7v._
-- _What is the total claims amount for claim 3b45c-9d?_
+**Sample Prompts:**
+  - _Create a new claim._
+  - _Send a pending documents reminder to the policy holder of claim 2s34w-8x._
+  - _Gather evidence for claim 5t16u-7v._
+  - _What is the total claims amount for claim 3b45c-9d?_
 - _What factors determine my car insurance premium?_
 - _How can I lower my car insurance rates?_
 - _Send reminders to all policy holders with open claims._
