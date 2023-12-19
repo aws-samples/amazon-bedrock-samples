@@ -12,7 +12,7 @@
 
 You can now use [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) and [Knowledge base for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) to configure specialized agents that seamlessly execute actions based on user input and your organization's data. These managed agents play conductor, orchestrating interactions between foundation models, API integrations, user conversations, and knowledge bases loaded with your data. Agents and knowledge bases allow you to **build on existing enterprise resources** to enhance user experience and automate repetitive tasks.
 
-This Insurance agent sample solution creates an Agent for Amazon Bedrock that can assist human Insurance agents by creating a new claim, sending pending document reminders for open claims, and gathering evidence on existing claims.
+This Insurance agent sample solution combines an Agent and Knowledge base for Amazon Bedrock to automate Insurance claim lifecycle actions like creating a new claim, sending pending document reminders for open claims, querying claims data, and gathering evidence on existing claims.
 
 ### Demo Recording
 [<img src="design/thumbnail.png" width="100%">](https://www.youtube.com/watch?v=bv4XV7epeik "Task Automation Using Agents for Amazon Bedrock - YouTube")
@@ -48,15 +48,19 @@ Agents and Knowledge Base for Amazon Bedrock work together to provide the follow
     - _Send reminders to all policy holders with open claims._
     - _Create a new claim, provide the injury claim amount for claim 2s34w-8x, and sending pending document reminders to claim_
 
-2. The agent is configured with [instructions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html), which are descriptive guidelines outlining the agent's intended actions. Additionally, you can optionally configure [advanced prompts](https://docs.aws.amazon.com/bedrock/latest/userguide/advanced-prompts.html), which allow you to boost your agent's precision by employing more detailed configurations and offering manually selected examples for few-shot prompting. This method allows you to enhance the model's performance by providing labeled examples associated with a particular task. The user input is interpreted by the agent using its instructions and underlying foundation model, specified during [agent creation](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-create.html). The response workflow is as follows:
+2. During **pre-processing**, the agent validates, contextualizes, and categorizes user input. The user input (or _Task_) is interpreted by the agent using chat history and the instructions and underlying foundation model that were specified during [agent creation](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-create.html). The agent's [instructions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) are descriptive guidelines outlining the agent's intended actions.  
 
-    - **Pre-processing:** The agent validates, contextualizes, and categorizes user input. 
-    - **Orchestration:** The agent develops a _rational_ with the logical steps of which action group API invocations and knowledge base queries are needed to generate an _observation_ that can be used to augment the base prompt for the underlying foundation model. 
-    - **Post-processing:** Once all orchestration iterations are complete, the agent curates a final response.
+Additionally, you can optionally configure [advanced prompts](https://docs.aws.amazon.com/bedrock/latest/userguide/advanced-prompts.html), which allow you to boost your agent's precision by employing more detailed configurations and offering manually selected examples for few-shot prompting. This method allows you to enhance the model's performance by providing labeled examples associated with a particular task. 
 
-3. [Action groups](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-setup.html) are a set of APIs and corresponding business logic, whose OpenAPI schema is defined as JSON files stored in S3. The schema allows the agent to reason around the function of each API. Each action group can specify one or more API paths, whose business logic is executed through the Lambda function associated with the action group.
+3. During **orchestration**, the agent develops a _rational_ with the logical steps of which action group API invocations and knowledge base queries are needed to generate an _observation_ that can be used to augment the base prompt for the underlying foundation model.
 
-4. [Knowledge bases](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) provide fully-managed RAG to supply the agent with access to your data. You first configure the knowledge base by specifying a description that instructs the agent when to use your knowledge base. Then you point the knowledge base to your Amazon S3 data source. Finally, you specify your existing vector store or allow Bedrock to create the vector store on your behalf. Once configured, each [data source sync](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-ingest.html) creates vector embeddings of your data that the agent can use to return information to the user or augment subsequent foundation model prompts.
+This enhanced prompt serves as the input for activating the foundation model, which then anticipates the most optimal sequence of actions to complete the user's task.
+
+4. [Action groups](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-setup.html) are a set of APIs and corresponding business logic, whose OpenAPI schema is defined as JSON files stored in S3. The schema allows the agent to reason around the function of each API. Each action group can specify one or more API paths, whose business logic is executed through the Lambda function associated with the action group.
+
+5. [Knowledge bases](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) provide fully-managed RAG to supply the agent with access to your data. You first configure the knowledge base by specifying a description that instructs the agent when to use your knowledge base. Then you point the knowledge base to your Amazon S3 data source. Finally, you specify your existing vector store or allow Bedrock to create the vector store on your behalf. Once configured, each [data source sync](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-ingest.html) creates vector embeddings of your data that the agent can use to return information to the user or augment subsequent foundation model prompts.
+
+6. During **post-processing**, once all _orchestration_ iterations are complete, the agent curates a final response. 
 
 ## Deployment Guide
 see [Deployment Guide](documentation/deployment-guide.md)
