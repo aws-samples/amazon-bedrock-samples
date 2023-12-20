@@ -5,7 +5,7 @@
 - [Pre-Deployment](#pre-deployment)
 - [Create Knowledge Base](#create-knowledge-base)
 - [Create Agent](#create-agent)
-- [Testing and Validation](#testing-and-validation)
+- [Post-Deployment](#post-deployment)
 
 ## Pre-Deployment
 
@@ -240,7 +240,7 @@ Use this knowledge base to access information on claim amounts, general insuranc
 ```
 
 <p align="center">
-  <img src="../design/agent-kb-configuration.png" width="85%" height="85%">
+  <img src="../design/agent-kb-configuration.png" width="70%" height="70%">
 </p>
 <p align="center">
   <em>Figure 6: Agent Knowledge Base Configuration</em>
@@ -255,6 +255,26 @@ Once your agent is created, you will see a green "created successfully" banner. 
 </p>
 <p align="center">
   <em>Figure 7: Agent Successfully Created Banner</em>
+</p>
+
+## Post-Deployment
+
+### Deploy Streamlit Web UI for Your Agent
+[Streamlit](https://streamlit.io/) is a Python library designed to streamline and simplify the process of building frontend applications. We use Streamlit in this solution to launch an example frontend, intended to emulate what would be a customer's Production application.
+
+The application provides an Agent for Amazon Bedrock - Prompt Input feature that allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input. The application's second feature is Knowledge Base for Amazon Bedrock - File Upload, which enables the user to upload their local files to the Amazon S3 bucket that is being used as the customer's Knowledge base for Amazon data source. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
+
+To run your Streamlit application, execute the below command then continue to [Testing and Validation](../documentation/testing-and-validation.md).
+
+```sh 
+streamlit run agent_streamlit.py
+```
+
+<p align="center">
+  <img src="../design/streamlit-app.png" width="85%" height="85%">
+</p>
+<p align="center">
+  <em>Figure 8: Streamlit Agent Application</em>
 </p>
 
 ## Testing and Validation
