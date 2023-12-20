@@ -240,7 +240,7 @@ Use this knowledge base to access information on claim amounts, general insuranc
 ```
 
 <p align="center">
-  <img src="../design/agent-kb-configuration.png" width="70%" height="70%">
+  <img src="../design/agent-kb-configuration.png" width="55%" height="55%">
 </p>
 <p align="center">
   <em>Figure 6: Agent Knowledge Base Configuration</em>

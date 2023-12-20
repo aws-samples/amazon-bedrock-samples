@@ -26,8 +26,8 @@ agent_url = f'https://bedrock-agent-runtime.us-east-1.amazonaws.com/agents/{agen
 kb_url = f'https://bedrock-agent.us-east-1.amazonaws.com/knowledgebases/{knowledgeBaseId}/datasources/{dataSourceId}/ingestionjobs/'
 # AWS Session and Clients Instantiation
 session = boto3.Session(region_name=os.environ['AWS_REGION'])
-# agent_client = boto3.client('bedrock-agent-runtime')
-agent_client = boto3.client('bedrock-agent')
+agent_client = boto3.client('bedrock-agent-runtime')
+# agent_client = boto3.client('bedrock-agent')
 s3_client = boto3.client('s3',region_name=os.environ['AWS_REGION'],config=boto3.session.Config(signature_version='s3v4',))
 
 # Streamlit CSS
