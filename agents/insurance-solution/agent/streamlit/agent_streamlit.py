@@ -27,7 +27,7 @@ kb_url = f'https://bedrock-agent.us-east-1.amazonaws.com/knowledgebases/{knowled
 # AWS Session and Clients Instantiation
 session = boto3.Session(region_name=os.environ['AWS_REGION'])
 # agent_client = boto3.client('bedrock-agent-runtime')
-# agent_client = boto3.client('bedrock-agent')
+agent_client = boto3.client('bedrock-agent')
 s3_client = boto3.client('s3',region_name=os.environ['AWS_REGION'],config=boto3.session.Config(signature_version='s3v4',))
 
 # Streamlit CSS
@@ -162,6 +162,33 @@ def update_knowledge_base(file_content, bucket_name, s3_file_name):
     print("Finished Ingestion Job: " + str(response))
     return response
 
+def check_ingestion_job_status():
+    headers = {
+        "Content-type": "application/json",
+        # Add any necessary headers here
+    }
+
+    status = ""
+    while status != "complete":
+        try:
+            response = agent_client.list_ingestion_jobs(
+                knowledgeBaseId=knowledgeBaseId,
+                dataSourceId=dataSourceId,
+            )
+
+            if response.status_code == 200:
+                job_status = response.json()["ingestionJobSummaries"][0]["status"]
+                if job_status == "complete":
+                    st.write(f"Ingestion Job Status: {job_status}")
+                    break
+                else:
+                    st.write(f"Polling... Current Job Status: {job_status}")
+            else:
+                st.write(f"Error: {response.status_code} - {response.text}")
+        except Exception as e:
+            st.write(f"An error occurred: {e}")
+
+        time.sleep(5)  # Poll every 5 seconds (adjust as needed)
 
 def main():
     # Main Execution Block
@@ -169,7 +196,7 @@ def main():
         st.session_state["valid_inputs_received"] = False
 
     # --- Agent Q&A ---
-    st.subheader('Agent for Amazon Bedrock - Question & Answering')
+    st.subheader('Agent for Amazon Bedrock - Prompt Input')
     query = st.text_input("User Input", value="", placeholder="What can the agent help you with?", label_visibility="visible")
     agent_response = None  # Initialize agent_response variable
     
@@ -200,6 +227,7 @@ def main():
         print("Uploading document to Amazon S3")
         file_contents = uploaded_file.getvalue()
         update_knowledge_base(file_contents, knowledge_base_s3_bucket, file_name)
+        check_ingestion_job_status()
 
 # Call the main function to run the app
 if __name__ == "__main__":
