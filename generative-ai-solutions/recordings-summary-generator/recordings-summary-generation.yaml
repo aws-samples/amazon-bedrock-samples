@@ -205,7 +205,7 @@ Resources:
       FunctionName: summary-generator-perform-prerequisites
       Description: Performs prerequisities for the solution
       Handler: index.lambda_handler
-      Runtime: python3.11
+      Runtime: python3.12
       Architectures:
         - x86_64
       MemorySize: 128
@@ -246,44 +246,6 @@ Resources:
 
               return status, error
 
-
-          #--------------------------------------------------
-          # function: create_boto3_library
-          #--------------------------------------------------
-          def create_boto3_library():
-
-              status = ''
-              error = ''
-
-              try:
-                  boto_directory = '/tmp/boto3/python'
-                  source_dir = '/tmp/boto3'
-                  output_zip = '/tmp/boto3.zip'
-
-                  os.makedirs(boto_directory, exist_ok=True)
-
-                  print('Installing boto3...')
-                  result = subprocess.run(['pip', 'install', 'boto3', '-t', boto_directory], capture_output=True)
-
-                  # Create a ZIP archive
-                  print('Creating zip file...')
-                  with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                      for root, dirs, files in os.walk(source_dir):
-                          for file in files:
-                              file_path = os.path.join(root, file)
-                              zipf.write(file_path, os.path.relpath(file_path, source_dir))
-
-                  # Upload zip file to S3.
-                  s3_client.upload_file(output_zip, ASSET_BUCKET_NAME, 'lambda_layer/boto3.zip')
-
-                  status = cfnresponse.SUCCESS
-
-              except Exception as e:
-                  error = str(e)
-                  status = cfnresponse.FAILED
-
-              return status, error
-
           #--------------------------------------------------
           # function: lambda_handler
           #--------------------------------------------------
@@ -300,16 +262,6 @@ Resources:
                   # Create the recordings folder in the S3 bucket.
                   #--------------------------------------------------
                   status, error = create_recordings_folder()
-
-                  if status == cfnresponse.SUCCESS:
-                      status, error = create_recordings_folder()
-                  else:
-                      cfnresponse.send(event, context, cfnresponse.FAILED, {"error" : error})
-
-                  #--------------------------------------------------
-                  # Create the boto3 library. This will be used to create the Lambda layer.
-                  #--------------------------------------------------
-                  status, error = create_boto3_library()
 
                   if status == cfnresponse.SUCCESS:
                       status, error = create_recordings_folder()
@@ -352,22 +304,6 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sns:Publish
             Resource: !Ref SummaryDeliveryTopic
-
-
-  #---------------------------------------------------------------------
-  # Lambda layer containing the most recent boto3 library (required for Bedrock)
-  #---------------------------------------------------------------------
-  Boto3LambdaLayer:
-    Type: AWS::Lambda::LayerVersion
-    DependsOn: PerformPrerequisites
-    Properties:
-      CompatibleRuntimes:
-        - python3.11
-      Content:
-        S3Bucket: !Ref AssetBucket
-        S3Key: lambda_layer/boto3.zip
-      Description: Layer containing the most recent boto3 library
-      LayerName: summary-generator-boto3-library
 
 
   #---------------------------------------------------------------------
@@ -419,7 +355,7 @@ Resources:
       FunctionName: summary-generator-prepare-input
       Description: Prepares the input for later Step Functions steps by getting basic file values
       Handler: index.lambda_handler
-      Runtime: python3.11
+      Runtime: python3.12
       Architectures:
         - x86_64
       MemorySize: 128
@@ -536,9 +472,7 @@ Resources:
       FunctionName: summary-generator-invoke-bedrock-model
       Description: Invokes the Bedrock model to create a summary of the recording
       Handler: index.lambda_handler
-      Runtime: python3.11
-      Layers:
-        - !Sub ${Boto3LambdaLayer}
+      Runtime: python3.12
       Architectures:
         - x86_64
       MemorySize: 128
@@ -705,7 +639,7 @@ Resources:
       Description: Sends the recording summary to the recipient(s)
       Role: !GetAtt SendRecordingSummaryFunctionRole.Arn
       Handler: index.lambda_handler
-      Runtime: python3.11
+      Runtime: python3.12
       Architectures:
         - x86_64
       MemorySize: 128
