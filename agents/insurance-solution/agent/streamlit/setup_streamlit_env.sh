@@ -18,12 +18,11 @@ fi
 # Activate the virtual environment
 source "$VENV_NAME/bin/activate"
 
-export BEDROCK_AGENT_ID=U8TWVNTXPJ
-export BEDROCK_AGENT_ALIAS_ID=TSTALIASID
-export SESSION_ID=12345
-export BEDROCK_KB_ID=9VFKA9OKIZ
-export BEDROCK_DS_ID=U4YRTDTOCD
-export KB_BUCKET_NAME=bedrock-bedrock-kb
+export BEDROCK_AGENT_ID=<YOUR-AGENT-ID>
+export BEDROCK_AGENT_ALIAS_ID=<YOUR-AGENT-ALIAS-ID>
+export BEDROCK_KB_ID=<YOUR-KNOWLEDGE-BASE-ID>
+export BEDROCK_DS_ID=<YOUR-DATA-SOURCE-ID>
+export KB_BUCKET_NAME=<YOUR-KNOWLEDGE-BASE-S3-BUCKET-NAME>
 export AWS_REGION=us-east-1
 
 # Install packages listed in requirements.txt using pip within the virtual environment
