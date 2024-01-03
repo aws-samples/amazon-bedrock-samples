@@ -72,7 +72,7 @@ def notify_pending_documents(event):
             claim_id = param.get('value')
             break
 
-    print("claimId = " + str(claim_id))
+    print("Claim ID: " + str(claim_id))
 
     if not claim_id:
         return {

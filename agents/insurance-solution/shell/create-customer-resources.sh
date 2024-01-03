@@ -38,7 +38,7 @@ ParameterKey=GatherEvidenceKey,ParameterValue=${GATHER_EVIDENCE_KEY} \
 ParameterKey=SendReminderKey,ParameterValue=${SEND_REMINDER_KEY} \
 ParameterKey=BedrockAgentsLayerArn,ParameterValue=${BEDROCK_AGENTS_LAYER_ARN} \
 ParameterKey=SNSEmail,ParameterValue=${SNS_EMAIL} \
-ParameterKey=CustomerWebsiteUrl,ParameterValue=${CUSTOMER_WEBSITE_URL} \
+ParameterKey=EvidenceUploadUrl,ParameterValue=${EVIDENCE_UPLOAD_URL} \
 --capabilities CAPABILITY_NAMED_IAM
 
 aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Name for the virtual environment
-VENV_NAME="agentenv"
+VENV_NAME="agent-env"
 
 # Check if virtual environment already exists
 if [ ! -d "$VENV_NAME" ]; then

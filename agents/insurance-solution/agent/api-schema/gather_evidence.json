@@ -5,11 +5,20 @@
         "description": "API for gathering evidence like driver's license, vehicle registration, and vehicle and accident photos for an insurance claim with pending documents"
     },
     "paths": {
-        "/gather-evidence": {
+        "/claims/{claimId}/gather-evidence": {
             "post": {
                 "summary": "Gather evidence from the policy holder for their Open status insurance claim with pending documents",
                 "description": "Send the policy holder a link where they can upload their pending documents",
                 "operationId": "gatherEvidence",
+                "parameters": [{
+                    "name": "claimId",
+                    "in": "path",
+                    "description": "Unique ID of the open insurance claim",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                }],
                 "responses": {
                     "200": {
                         "description": "Collects insurance claim evidence from the policy holder through a pending documents upload URL",

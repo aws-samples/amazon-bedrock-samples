@@ -34,7 +34,7 @@ Metadata:
       - Label:
           default: Customer Website Configuration
         Parameters:
-          - CustomerWebsiteUrl
+          - EvidenceUploadUrl
     ParameterLabels:
       ArtifactBucket:
         default: your-code-assets-bucket-name
@@ -50,8 +50,8 @@ Metadata:
         default: bedrock-layer-arn
       SNSEmail:
         default: your-sns-email
-      CustomerWebsiteUrl:
-        default: your-website-url
+      EvidenceUploadUrl:
+        default: your-evidence-upload-url
 
 Parameters:
   ArtifactBucket:
@@ -82,10 +82,10 @@ Parameters:
     Description: SNS Email.
     Type: String
     Default: your-sns-email
-  CustomerWebsiteUrl:
-    Description: Customer Website URL
+  EvidenceUploadUrl:
+    Description: Customer Evidence Upload Website URL
     Type: String
-    Default: your-website-url
+    Default: your-evidence-upload-url
 
 Resources:
   ExistingClaimsTable:
@@ -249,7 +249,7 @@ Resources:
         - arm64
       Environment:
         Variables:
-          CUSTOMER_WEBSITE_URL: !Ref CustomerWebsiteUrl
+          CUSTOMER_WEBSITE_URL: !Ref EvidenceUploadUrl
           SNS_TOPIC_ARN: !Ref SNSTopic
 
   SNSTopic:

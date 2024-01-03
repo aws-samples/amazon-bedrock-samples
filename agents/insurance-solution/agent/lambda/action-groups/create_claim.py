@@ -5,7 +5,7 @@ import json
 import time
 import boto3
 import base64
-import randomchat
+import random
 import string
 import decimal
 import requests

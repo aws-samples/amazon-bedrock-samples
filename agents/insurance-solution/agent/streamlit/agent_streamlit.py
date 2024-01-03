@@ -5,15 +5,28 @@ import json
 import time
 import boto3
 import base64
+import string
+import random
+import requests
 import streamlit as st
 
 from requests import request
 from sigv4 import SigV4HttpRequester
 
+def session_generator():
+    # Generate random characters and digits
+    digits = ''.join(random.choice(string.digits) for _ in range(4))  # Generating 4 random digits
+    chars = ''.join(random.choice(string.ascii_lowercase) for _ in range(3))  # Generating 3 random characters
+    
+    # Construct the pattern (1a23b-4c)
+    pattern = f"{digits[0]}{chars[0]}{digits[1:3]}{chars[1]}-{digits[3]}{chars[2]}"
+    print("Session ID: " + str(pattern))
+
+    return pattern
+
 # Bedrock Variable
 agentId = os.environ['BEDROCK_AGENT_ID']
 agentAliasId = os.environ['BEDROCK_AGENT_ALIAS_ID']
-sessionId = os.environ['SESSION_ID']
 knowledgeBaseId = os.environ['BEDROCK_KB_ID']
 dataSourceId = os.environ['BEDROCK_DS_ID']
 
@@ -22,8 +35,8 @@ knowledge_base_s3_bucket = os.environ['KB_BUCKET_NAME']
 
 # agents = bedrock-agent-runtime.us-east-1.amazonaws.com
 # knowledgebases = bedrock-agent.us-east-1.amazonaws.com
-agent_url = f'https://bedrock-agent-runtime.us-east-1.amazonaws.com/agents/{agentId}/agentAliases/{agentAliasId}/sessions/{sessionId}/text'
 kb_url = f'https://bedrock-agent.us-east-1.amazonaws.com/knowledgebases/{knowledgeBaseId}/datasources/{dataSourceId}/ingestionjobs/'
+
 # AWS Session and Clients Instantiation
 session = boto3.Session(region_name=os.environ['AWS_REGION'])
 agent_client = boto3.client('bedrock-agent-runtime')
@@ -64,7 +77,7 @@ def show_pdf(uploaded_file):
         st.markdown(pdf_display, unsafe_allow_html=True)
 
 # Invoke Agent
-def bedrock_agent(query):
+def bedrock_agent(query, sessionId):
     if query is not None:
 
         agent_query = {
@@ -74,6 +87,7 @@ def bedrock_agent(query):
 
         # send request
         print("Invoking Agent with query: " + query)
+        agent_url = f'https://bedrock-agent-runtime.us-east-1.amazonaws.com/agents/{agentId}/agentAliases/{agentAliasId}/sessions/{sessionId}/text'
         requester = SigV4HttpRequester()
         response = requester.send_signed_request(
             url=agent_url,
@@ -86,42 +100,45 @@ def bedrock_agent(query):
             region='us-east-1',
             body=json.dumps(agent_query)
         )
-
-        # Check if 'generatedResponsePart' exists in the response
-        if 'generatedResponsePart' in response:
-            # Access and assign the value to a variable
-            generated_response_part = response['generatedResponsePart']
-            # Now, 'generated_response_part' holds the value of 'generatedResponsePart'
-            print("generatedResponsePart = " + generated_response_part)  # Printing the value for demonstration
-        else:
-            print("generatedResponsePart not found in the response")
         
-        # Parse sig4_request Response
-        string = ""
-        for line in response.iter_content():
+        if response.status_code == 200:
+            # Parse sig4_request Response
+            response_string = ""
+            for line in response.iter_content():
+                try:
+                    response_string += line.decode(encoding='utf-8')
+                except:
+                    continue
+
+            split_response = response_string.split(":message-type")
+            last_response = split_response[-1]
             try:
-                string += line.decode(encoding='utf-8')
-            except:
-                continue
+                encoded_last_response = last_response.split("\"")[3]
+                print("encoded_last_response: " + str(encoded_last_response))
+                if encoded_last_response == "citations":
+                    # Find the start and end indices of the JSON content
+                    start_index = last_response.find('{')
+                    end_index = last_response.rfind('}')
 
-        split_response = string.split(":message-type")
-        last_response = split_response[-1]
-        if "bytes" in last_response:
-            encoded_last_response = last_response.split("\"")[3]
-            decoded = base64.b64decode(encoded_last_response)
-            final_response = decoded.decode('utf-8')
-        else:
-            part1 = string[string.find('finalResponse')+len('finalResponse":'):] 
-            part2 = part1[:part1.find('"}')+2]
-            final_response = json.loads(part2)['text']
+                    # Extract the JSON content
+                    json_content = last_response[start_index:end_index + 1]
 
-        final_response = final_response.replace("\"", "")
-        final_response = final_response.replace("{input:{value:", "")
-        final_response = final_response.replace(",source:null}}", "")
-        agent_response = final_response
+                    try:
+                        data = json.loads(json_content)
+                        final_response = data['attribution']['citations'][0]['generatedResponsePart']['textResponsePart']['text']
+                    except json.decoder.JSONDecodeError as e:
+                        print(f"JSON decoding error: {e}")
+                    except KeyError as e:
+                        print(f"KeyError: {e}")
+                else:
+                    decoded = base64.b64decode(encoded_last_response)
+                    final_response = decoded.decode('utf-8')
+            except base64.binascii.Error as e:
+                print(f"Base64 decoding error: {e}")
+                final_response = last_response  # Or assign a default value
 
-        print("Agent Response:: " + agent_response)
-        return agent_response
+        print("Agent Response: " + final_response)
+        return final_response
 
 def update_knowledge_base(file_content, bucket_name, s3_file_name):
     print("Syncing Knowledge Base Data Source")
@@ -201,7 +218,12 @@ def main():
     agent_response = None  # Initialize agent_response variable
     
     if st.session_state.get("previous_query") != query and query != "":
-        agent_response = bedrock_agent(query)
+        if "session_id" not in st.session_state:
+            st.session_state["session_id"] = session_generator()
+
+        sessionId = st.session_state["session_id"]
+
+        agent_response = bedrock_agent(query, sessionId)
         st.session_state["previous_query"] = query  # Update previous_query if query changes
 
     if agent_response is not None:
