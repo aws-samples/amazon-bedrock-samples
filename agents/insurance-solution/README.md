@@ -24,7 +24,7 @@ Agents and Knowledge Base for Amazon Bedrock work together to provide the follow
 
 - **Task Decomposition:** Agents expand foundation models to comprehend user inquiries and dissect tasks into manageable steps for execution.
 - **Interactive Data Collection:** Agents engage in natural conversations to gather supplementary information from users.
-- **Task Execution:** Agents fulfill customer requests through chain-of-thought reasoning with action group and knowledge base tools.
+- **Task Execution:** Agents fulfill customer requests through series of reasoning steps and corresponding actions based on [ReAct prompting](https://www.promptingguide.ai/techniques/react).
 - **System Integration:** Agents make API calls to internal company systems to execute specific action groups.
 - **Data Querying:** Knowledge bases enhance accuracy and performance through fully-managed [retrieval augmented generation (RAG)](https://docs.aws.amazon.com/sagemaker/latest/dg/jumpstart-foundation-models-customize-rag.html) using customer specific data sources.
 - **Source Attribution:** Agents conduct source attribution, identifying and tracing the origin of information or actions.
@@ -50,7 +50,7 @@ Agents and Knowledge Base for Amazon Bedrock work together to provide the follow
 
 2. During **pre-processing**, the agent validates, contextualizes, and categorizes user input. The user input (or _Task_) is interpreted by the agent using chat history and the instructions and underlying foundation model that were specified during [agent creation](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-create.html). The agent's [instructions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) are descriptive guidelines outlining the agent's intended actions. Also, you can optionally configure [advanced prompts](https://docs.aws.amazon.com/bedrock/latest/userguide/advanced-prompts.html), which allow you to boost your agent's precision by employing more detailed configurations and offering manually selected examples for few-shot prompting. This method allows you to enhance the model's performance by providing labeled examples associated with a particular task. 
 
-3. During **orchestration**, the agent develops a _rational_ with the logical steps of which action group API invocations and knowledge base queries are needed to generate an _observation_ that can be used to augment the base prompt for the underlying foundation model. This enhanced prompt serves as the input for activating the foundation model, which then anticipates the most optimal sequence of actions to complete the user's task.
+3. During **orchestration**, the agent develops a _rational_ with the logical steps of which action group API invocations and knowledge base queries are needed to generate an _observation_ that can be used to augment the base prompt for the underlying foundation model. This ReAct style of prompting serves as the input for activating the foundation model, which then anticipates the most optimal sequence of actions to complete the user's task.
 
 4. [Action groups](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-setup.html) are a set of APIs and corresponding business logic, whose OpenAPI schema is defined as JSON files stored in S3. The schema allows the agent to reason around the function of each API. Each action group can specify one or more API paths, whose business logic is executed through the Lambda function associated with the action group.
 
