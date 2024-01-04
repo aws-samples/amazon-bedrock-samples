@@ -3,7 +3,7 @@
 
 ## Content
 - [Overview](#overview)
-- [Agent Architecture](#agent-architecture)
+- [Agents and Knowledge Base Architecture](#agents-and-knowledge-base-architecture)
 - [Deployment Guide](#deployment-guide)
 - [Testing and Validation](#testing-and-validation)
 - [Clean Up](#clean-up)
