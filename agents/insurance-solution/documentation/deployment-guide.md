@@ -10,7 +10,7 @@
 ## Pre-Implementation
 
 ### Clone [_amazon-bedrock-samples_](https://github.com/aws-samples/amazon-bedrock-samples) Repository
-Create a local copy of the **amazon-bedrock-samples** repository using _git clone_:
+1. Create a local copy of the **amazon-bedrock-samples** repository using _git clone_:
 
 ```sh
 git clone https://github.com/aws-samples/amazon-bedrock-samples.git
@@ -42,7 +42,7 @@ To emulate the existing customer resources utilized by the agent, this solution 
 
 CloudFormation prepopulates stack parameters with the default values provided in the template. To provide alternative input values, you can specify parameters as environment variables that are referenced in the `ParameterKey=<ParameterKey>,ParameterValue=<Value>` pairs in the _create-customer-resources.sh_ shell script's `aws cloudformation create-stack` command. 
 
-&nbsp;&nbsp;&nbsp;a. To execute the _create-customer-resources.sh_ shell script, navigate to the directory where you cloned the _amazon-bedrock-samples_ repository, then change your working directory to [amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/](../agents/bedrock-insurance-agent/shell/). Modify the shell script permissions to executable:
+&nbsp;&nbsp;&nbsp;2. To execute the _create-customer-resources.sh_ shell script, navigate to the directory where you cloned the _amazon-bedrock-samples_ repository, then change your working directory to [amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/](../agents/bedrock-insurance-agent/shell/). Modify the shell script permissions to executable:
 
 ```sh
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to shell folder:
@@ -50,7 +50,7 @@ cd amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/
 chmod u+x create-customer-resources.sh
 ```
 
-&nbsp;&nbsp;&nbsp;b. Set your SNS email and evidence upload URL environment variables, then run the _create-customer-resources.sh_ shell script to deploy the emulated customers resources defined in the [bedrock-insurance-agent.yml](../cfn/bedrock-insurance-agent.yml) CloudFormation template. These are the resources on which the Bedrock Agent and Knowledge base will be built. Then execute the shell script to deploy the CloudFormation stack.
+&nbsp;&nbsp;&nbsp;3. Set your SNS email and evidence upload URL environment variables, then run the _create-customer-resources.sh_ shell script to deploy the emulated customers resources defined in the [bedrock-insurance-agent.yml](../cfn/bedrock-insurance-agent.yml) CloudFormation template. These are the resources on which the Bedrock Agent and Knowledge base will be built. Then execute the shell script to deploy the CloudFormation stack.
 
 ```sh
 export SNS_EMAIL=<YOUR-POLICY-HOLDER-EMAIL> # Email used for SNS notifications
