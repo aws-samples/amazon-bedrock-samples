@@ -111,9 +111,10 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
 
 - **Pre-Processing Data:** Documents undergo segmentation ("chunking") into manageable sections before conversion into embeddings. These embeddings are utilized to create a vector index, enabling semantic similarity comparisons between queries and data source text.
 - **Runtime Execution:** During runtime, user queries are transformed into vectors using an Amazon Bedrock embedding model. The vector index is queried for chunks related to the user's query, augmenting the user prompt with additional context retrieved from the vector index. The augmented prompt, coupled with this context, is then used to generate a response for the user.
+
 <p align="center">
-  <img src="../design/kb-embeddings.png">
-  <em>Diagram 2: Knowledge Base for Amazon Bedrock Architecture Overview</em>
+  <img src="../design/kb-embeddings.png"><br>
+  <span style="display: block; text-align: center;"><em>Diagram 2: Knowledge Base for Amazon Bedrock Architecture Overview</em></span>
 </p>
 
 ### Deploy Knowledge Base
@@ -211,12 +212,13 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
     d. Add Knowledge base:
 
-        i. Under **Select knowledge base**, select the knowledge base you created in the preceding deployment step (e.g., claims-knowledge-base).
+    > i. Under **Select knowledge base**, select the knowledge base you created in the preceding deployment step (e.g., claims-knowledge-base).
+    >
+    > ii. Under **Knowledge base instructions for Agent**, enter the following then select **Next**:
 
-        ii. Under **Knowledge base instructions for Agent**, enter the following then select **Next**:
-        ```
-        Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
-        ```
+```
+Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
+```
    
         <p align="center">
           <img src="../design/agent-kb-configuration.png" width="55%" height="55%"><br>
