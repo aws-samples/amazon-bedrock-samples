@@ -57,7 +57,7 @@ export SNS_EMAIL=<YOUR-POLICY-HOLDER-EMAIL> # Email used for SNS notifications
 export EVIDENCE_UPLOAD_URL=<YOUR-EVIDENCE-UPLOAD-URL> # URL provided by the agent to the policy holder for evidence upload
 ```
 
-4. Run the _create-customer-resources.sh_ shell script to deploy the emulated customers resources defined in the [bedrock-insurance-agent.yml](../cfn/bedrock-insurance-agent.yml) CloudFormation template. These are the resources on which the Bedrock Agent and Knowledge base will be built:
+4. Run the _create-customer-resources.sh_ shell script to deploy the emulated customers resources defined in the _bedrock-insurance-agent.yml_ CloudFormation template. These are the resources on which the Bedrock Agent and Knowledge base will be built:
 
 ```sh
 source ./create-customer-resources.sh
