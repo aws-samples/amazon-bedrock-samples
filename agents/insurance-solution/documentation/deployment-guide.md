@@ -199,53 +199,52 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
         iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g, \<YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_:
 
-<p align="center">
-  <img src="../design/ag-configuration.png" width="85%" height="85%">
-</p>
-<p align="center">
-  <em>Figure 5: Action Group Configuration</em>
-</p>
+        <p align="center">
+          <img src="../design/ag-configuration.png" width="85%" height="85%">
+        </p>
+        <p align="center">
+          <em>Figure 5: Action Group Configuration</em>
+        </p>
     
-**Action group 1 - create-claim:**
     **Action group 2 - gather-evidence:**
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i. Description:
-```
-Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor    
-```
+        i. Description:
+        ```
+        Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor    
+        ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-GatherEvidenceFunction_.
+        ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-GatherEvidenceFunction_.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/gather_evidence.json_.
+        iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/gather_evidence.json_.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Action group 3 - send-reminder:**
+    **Action group 3 - send-reminder:**
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i. Description:
-```
-Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders   
-```
+        i. Description:
+        ```
+        Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders   
+        ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-SendReminderFunction_.
+        ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-SendReminderFunction_.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/send_reminder.json_.
+        iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/send_reminder.json_.
 
-&nbsp;&nbsp;&nbsp;d. Add Knowledge base:
+    d. Add Knowledge base:
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i. Under **Select knowledge base**, select the knowledge base you created in the preceding deployment step (e.g., claims-knowledge-base).
+        i. Under **Select knowledge base**, select the knowledge base you created in the preceding deployment step (e.g., claims-knowledge-base).
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ii. Under **Knowledge base instructions for Agent**, enter the following then select **Next**:
-```
-Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
-```
+        ii. Under **Knowledge base instructions for Agent**, enter the following then select **Next**:
+        ```
+        Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
+        ```
+        
+        <p align="center">
+          <img src="../design/agent-kb-configuration.png" width="55%" height="55%">
+        </p>
+        <p align="center">
+          <em>Figure 6: Agent Knowledge Base Configuration</em>
+        </p>
 
-<p align="center">
-  <img src="../design/agent-kb-configuration.png" width="55%" height="55%">
-</p>
-<p align="center">
-  <em>Figure 6: Agent Knowledge Base Configuration</em>
-</p>
-
-&nbsp;&nbsp;&nbsp;e. Verify your configuration settings then select **Create agent**. 
+    e. Verify your configuration settings then select **Create agent**. 
 
 Once your agent is created, you will see a green "created successfully" banner. Remain on the Agent Console and continue to Testing and Validation.
 
