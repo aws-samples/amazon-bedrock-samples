@@ -174,7 +174,7 @@ Agents operate through a build-time execution process, comprising several key co
 - **(Optional) Action Groups:** Users define actions for the agent, leveraging an OpenAPI schema to define APIs for task execution and Lambda functions to process API inputs and outputs.
 - **(Optional) Knowledge Bases:** Users can associate agents with knowledge bases, granting access to additional context for response generation and orchestration steps.
 
-The agent in this sample solution will use an Anthropic Claude V2 foundation model, a set of instructions, three action groups, and one knowledge base.
+The agent in this sample solution will use an Anthropic Claude V2.1 foundation model, a set of instructions, three action groups, and one knowledge base.
 
 ### Deploy Agent
 
@@ -182,7 +182,7 @@ The agent in this sample solution will use an Anthropic Claude V2 foundation mod
 
 a. Enter an _Agent name_ and optional _Description_, leaving all other default settings.
 
-b. Select **Anthropic Claude V2** for _Model details_ and specify the below _Instructions for the Agent_, then select **Next**:
+b. Select **Anthropic Claude V2.1** for _Model details_ and specify the below _Instructions for the Agent_, then select **Next**:
 
 ```
 You are an agent designed to help with processing insurance claims and managing pending paper work
