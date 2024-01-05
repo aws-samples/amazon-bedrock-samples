@@ -188,17 +188,16 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     ```
     c. Add the following three action groups then select **Next**:
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Action group 1 - create-claim:**
+    **Action group 1 - create-claim:**
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i. Description:
+        i. Description:
+        ```
+        Use this action group to create an insurance claim 
+        ```
 
-```
-Use this action group to create an insurance claim 
-```
+        ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-CreateClaimFunction_.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-CreateClaimFunction_.
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g, \<YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_:
+        iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g, \<YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_:
 
 <p align="center">
   <img src="../design/ag-configuration.png" width="85%" height="85%">
@@ -206,8 +205,9 @@ Use this action group to create an insurance claim
 <p align="center">
   <em>Figure 5: Action Group Configuration</em>
 </p>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Action group 2 - gather-evidence:**
+    
+**Action group 1 - create-claim:**
+    **Action group 2 - gather-evidence:**
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i. Description:
 ```
