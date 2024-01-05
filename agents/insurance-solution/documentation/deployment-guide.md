@@ -172,7 +172,7 @@ Agents operate through a build-time execution process, comprising several key co
 - **Foundation Model:** Users select a foundation model that guides the agent in interpreting user inputs, generating responses, and directing subsequent actions during its orchestration process.
 - **Instructions:** Users craft detailed instructions that outline the agent's intended functions. Optional advanced prompts allow customization at each orchestration step, incorporating Lambda functions to parse outputs.
 - **(Optional) Action Groups:** Users define actions for the agent, leveraging an OpenAPI schema to define APIs for task execution and Lambda functions to process API inputs and outputs.
-- **(Optional) Knowledge Bases:** Agents can be associated with knowledge bases, granting access to additional context for response generation and orchestration steps.
+- **(Optional) Knowledge Bases:** Users can associate agents with knowledge bases, granting access to additional context for response generation and orchestration steps.
 
 The agent in this sample solution will use an Anthropic Claude V2 foundation model, a set of instructions, three action groups, and one knowledge base.
 
