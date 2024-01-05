@@ -237,9 +237,10 @@ Once your agent is created, you will see a green "created successfully" banner.
 ## Post-Implementation
 
 ### Deploy Streamlit Web UI for Your Agent
-[Streamlit](https://streamlit.io/) is a Python library designed to streamline and simplify the process of building frontend applications. We use Streamlit in this solution to launch an example frontend, intended to emulate what would be a customer's Production application.
+[Streamlit](https://streamlit.io/) is a Python library designed to streamline and simplify the process of building frontend applications. We use Streamlit in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. The application provides two features:
 
-The application provides an Agent for Amazon Bedrock - Prompt Input feature that allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input. The application's second feature is Knowledge Base for Amazon Bedrock - File Upload, which enables the user to upload their local files to the Amazon S3 bucket that is being used as the customer's Knowledge base for Amazon data source. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
+- **Agent for Amazon Bedrock - Prompt Input:** Allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input.
+- **Knowledge Base for Amazon Bedrock - File Upload:** Enables the user to upload their local files to the Amazon S3 bucket that is being used as the customer's Knowledge base for Amazon data source. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
 
 10. To run your Streamlit application, execute the following command then continue to [Testing and Validation](../documentation/testing-and-validation.md).
 
