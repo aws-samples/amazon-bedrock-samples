@@ -131,19 +131,15 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
     d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
 
 <p align="center">
-  <img src="../design/kb-configuration.png" width="60%" height="60%">
-</p>
-<p align="center">
-  <em>Figure 1: Knowledge Base for Amazon Bedrock Configuration Settings</em>
+  <img src="../design/kb-configuration.png" width="60%" height="60%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base for Amazon Bedrock Configuration Settings</em></span>
 </p>
 
 6. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
 
 <p align="center">
-  <img src="../design/kb-creation-banner.png" width="90%" height="90%">
-</p>
-<p align="center">
-  <em>Figure 2: Knowledge Base Data Source Sync</em>
+  <img src="../design/kb-creation-banner.png" width="90%" height="90%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Data Source Sync</em></span>
 </p>
 
 7. Navigate to the [Knowledge Base Console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
@@ -194,8 +190,8 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., <YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
 
     <p align="center">
-      <img src="../design/ag-configuration.png" width="85%" height="85%">
-      <em>Figure 5: Action Group Configuration</em>
+      <img src="../design/ag-configuration.png" width="85%" height="85%"><br>
+      <span style="display: block; text-align: center;"><em>Figure 5: Action Group Configuration</em></span>
     </p>
 
     **Action group 2 - gather-evidence:**
@@ -221,10 +217,10 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
         ```
         Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
         ```
-
+   
         <p align="center">
-          <img src="../design/agent-kb-configuration.png" width="55%" height="55%">
-          <em>Figure 6: Agent Knowledge Base Configuration</em>
+          <img src="../design/agent-kb-configuration.png" width="55%" height="55%"><br>
+          <span style="display: block; text-align: center;"><em>Figure 6: Agent Knowledge Base Configuration</em></span>
         </p>
 
     e. Verify your configuration settings then select **Create agent**. 
@@ -232,10 +228,8 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 Once your agent is created, you will see a green "created successfully" banner. Remain on the Agent Console and continue to Testing and Validation.
 
 <p align="center">
-  <img src="../design/agent-creation-banner.png" width="85%" height="85%">
-</p>
-<p align="center">
-  <em>Figure 7: Agent Successfully Created Banner</em>
+  <img src="../design/agent-creation-banner.png" width="85%" height="85%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 7: Agent Successfully Created Banner</em></span>
 </p>
 
 ## Post-Implementation
@@ -250,12 +244,9 @@ The application provides an Agent for Amazon Bedrock - Prompt Input feature that
 ```sh 
 streamlit run agent_streamlit.py
 ```
-
 <p align="center">
-  <img src="../design/streamlit-app.png" width="95%" height="95%">
-</p>
-<p align="center">
-  <em>Figure 8: Streamlit Agent Application</em>
+  <img src="../design/streamlit-app.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 8: Streamlit Agent Application</em></span>
 </p>
 
 ## Testing and Validation
