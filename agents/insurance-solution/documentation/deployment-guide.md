@@ -227,7 +227,7 @@ Use this knowledge base to access information on claim amounts, general insuranc
 
     e. Verify your configuration settings then select **Create agent**. 
 
-Once your agent is created, you will see a green "created successfully" banner. Remain on the Agent Console and continue to Testing and Validation.
+Once your agent is created, you will see a green "created successfully" banner.
 
 <p align="center">
   <img src="../design/agent-creation-banner.png" width="85%" height="85%"><br>
