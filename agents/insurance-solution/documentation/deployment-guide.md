@@ -38,7 +38,7 @@ To emulate the existing customer resources utilized by the agent, this solution 
 > - Three [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions that represent customer business logic for creating claims, sending pending document reminders for open status claims, and gathering evidence on new and existing claims.
 > - Two [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html) buckets: 1/ Containing API documentation in OpenAPI schema format for the preceding Lambda functions and 2/ hosting the repair estimates, claim amounts, company FAQs, and required claim document descriptions to be used as our knowledge base data source.
 > - [Amazon Simple Notification Service (SNS)](https://docs.aws.amazon.com/sns/latest/dg/welcome.html) topic to which policy holders' emails are subscribed for email alerting of claim status and pending actions.
-> - [AWS Identity and Access Management (IAM)](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) permissions for the above resources.
+> - [AWS Identity and Access Management (IAM)](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) permissions for the preceding resources.
 
 CloudFormation prepopulates stack parameters with the default values provided in the template. To provide alternative input values, you can specify parameters as environment variables that are referenced in the `ParameterKey=<ParameterKey>,ParameterValue=<Value>` pairs in the _create-customer-resources.sh_ shell script's `aws cloudformation create-stack` command. 
 
@@ -180,14 +180,13 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
 9. Navigate to the [Amazon Bedrock > Agents > Create Agent console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/agents/create):
 
-a. Enter an _Agent name_ and optional _Description_, leaving all other default settings.
+    a. Enter an _Agent name_ and optional _Description_, leaving all other default settings.
 
-b. Select **Anthropic Claude V2.1** for _Model details_ and specify the below _Instructions for the Agent_, then select **Next**:
-
-```
-You are an agent designed to help with processing insurance claims and managing pending paper work
-```
-c. Add the following three action groups then select **Next**:
+    b. Select **Anthropic Claude V2.1** for _Model details_ and specify the following _Instructions for the Agent_, then select **Next**:
+    ```
+    You are an insurance agent that has access to domain-specific insurance knowledge. You can create new insurance claims, send pending document reminders to policy holders with open claims, answer questions about claims, claim amounts, claim proof, accidents, rates, premiums, deductibles, and insurance in general. You also gather evidence from policy holders.
+    ```
+    c. Add the following three action groups then select **Next**:
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Action group 1 - create-claim:**
 
@@ -264,7 +263,7 @@ Once your agent is created, you will see a green "created successfully" banner. 
 
 The application provides an Agent for Amazon Bedrock - Prompt Input feature that allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input. The application's second feature is Knowledge Base for Amazon Bedrock - File Upload, which enables the user to upload their local files to the Amazon S3 bucket that is being used as the customer's Knowledge base for Amazon data source. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
 
-10. To run your Streamlit application, execute the below command then continue to [Testing and Validation](../documentation/testing-and-validation.md).
+10. To run your Streamlit application, execute the following command then continue to [Testing and Validation](../documentation/testing-and-validation.md).
 
 ```sh 
 streamlit run agent_streamlit.py
