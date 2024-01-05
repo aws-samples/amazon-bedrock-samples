@@ -128,7 +128,7 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
 
     c. Under **Configure vector store**, leave the default settings. An [OpenSearch Serverless vector store](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html) will be created for you. This vector store is where the knowledge base pre-processing embeddings are stored and later used for semantic similarity search between queries and data source text.
 
-    d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**.
+    d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
 
 <p align="center">
   <img src="../design/kb-configuration.png" width="70%" height="70%">
