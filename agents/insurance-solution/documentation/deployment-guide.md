@@ -186,10 +186,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
     **Action group 1 - create-claim:**
 
-        i. Description:
-    ```
-    Use this action group to create an insurance claim 
-    ```
+        i. Description: Use this action group to create an insurance claim 
 
         ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-CreateClaimFunction_.
 
@@ -204,10 +201,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     
     **Action group 2 - gather-evidence:**
 
-        i. Description:
-    ```
-    Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor    
-    ```
+        i. Description: ```Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor```  
 
         ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-GatherEvidenceFunction_.
 
@@ -215,10 +209,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
     **Action group 3 - send-reminder:**
 
-        i. Description:
-    ```
-    Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders   
-    ```
+        i. Description: Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders
 
         ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-SendReminderFunction_.
 
