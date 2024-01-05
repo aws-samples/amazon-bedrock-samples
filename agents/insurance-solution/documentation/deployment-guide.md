@@ -147,11 +147,8 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
 </p>
 
 7. Navigate to the [Knowledge Base Console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
-
 <p align="center">
   <img src="../design/kb-overview.png" width="70%" height="70%">
-</p>
-<p align="center">
   <em>Figure 3: Knowledge Base Overview</em>
 </p>
 
