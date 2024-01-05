@@ -220,10 +220,10 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
 ```
    
-        <p align="center">
-          <img src="../design/agent-kb-configuration.png" width="55%" height="55%"><br>
-          <span style="display: block; text-align: center;"><em>Figure 6: Agent Knowledge Base Configuration</em></span>
-        </p>
+<p align="center">
+  <img src="../design/agent-kb-configuration.png" width="55%" height="55%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 6: Agent Knowledge Base Configuration</em></span>
+</p>
 
     e. Verify your configuration settings then select **Create agent**. 
 
