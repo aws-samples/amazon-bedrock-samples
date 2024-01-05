@@ -188,7 +188,9 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     **Action group 1 - create-claim:**
    
     > i. Description: Use this action group to create an insurance claim
+    > 
     > ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-CreateClaimFunction_.
+    > 
     > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., <YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
 
 <p align="center">
