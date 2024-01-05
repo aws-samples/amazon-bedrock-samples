@@ -120,9 +120,9 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
 
 5. Navigate to the [Amazon Bedrock > Knowledge base > Create knowledge base console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases/create-knowledge-base):
 
-    a. Under **Provide knowledge base details**, enter a _Knowledge base name_ and optional _Description_, leaving all other default settings:
+    a. Under **Provide knowledge base details**, enter a _Knowledge base name_ and the following optional _Description_, leaving all other default settings:
     ```sh
-    Description: Use this knowledge base to access information on claim amounts, general insurance and accident-related questions, repair estimates, and required claim documents
+    Use this knowledge base to access information on claim amounts, general insurance and accident-related questions, repair estimates, and required claim documents
     ```
     b. Under **Set up data source**, enter a _Data source name_ then choose _Browse S3_ and select the knowledge base data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-knowledge-base).
 
@@ -193,26 +193,25 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     > 
     > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., <YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
 
-<p align="center">
-  <img src="../design/ag-configuration.png" width="85%" height="85%">
-  <em>Figure 5: Action Group Configuration</em>
-</p>
+    <p align="center">
+      <img src="../design/ag-configuration.png" width="85%" height="85%">
+      <em>Figure 5: Action Group Configuration</em>
+    </p>
 
-        **Action group 2 - gather-evidence:**
+    **Action group 2 - gather-evidence:**
 
-            i. Description: Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor
+    > i. Description: Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor
+    > 
+    > ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-GatherEvidenceFunction_.
+    > 
+    > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/gather_evidence.json_.
 
-            ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-GatherEvidenceFunction_.
+    **Action group 3 - send-reminder:**
 
-            iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/gather_evidence.json_.
-
-        **Action group 3 - send-reminder:**
-
-            i. Description: Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders
-
-            ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-SendReminderFunction_.
-
-            iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/send_reminder.json_.
+    > i. Description: Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders
+    >
+    > ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-SendReminderFunction_.
+    > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/send_reminder.json_.
 
     d. Add Knowledge base:
 
