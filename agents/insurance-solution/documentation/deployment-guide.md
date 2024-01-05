@@ -182,38 +182,37 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     ```
     You are an insurance agent that has access to domain-specific insurance knowledge. You can create new insurance claims, send pending document reminders to policy holders with open claims, answer questions about claims, claim amounts, claim proof, accidents, rates, premiums, deductibles, and insurance in general. You also gather evidence from policy holders.
     ```
+
     c. Add the following three action groups then select **Next**:
 
-    **Action group 1 - create-claim:**
+        **Action group 1 - create-claim:**
 
-        i. Description: Use this action group to create an insurance claim 
+            i. Description: Use this action group to create an insurance claim 
 
-        ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-CreateClaimFunction_.
+            ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-CreateClaimFunction_.
 
-        iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g, \<YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_:
+            iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., <YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
 
-        <p align="center">
-          <img src="../design/ag-configuration.png" width="85%" height="85%">
-        </p>
-        <p align="center">
-          <em>Figure 5: Action Group Configuration</em>
-        </p>
-    
-    **Action group 2 - gather-evidence:**
+            <p align="center">
+              <img src="../design/ag-configuration.png" width="85%" height="85%">
+              <em>Figure 5: Action Group Configuration</em>
+            </p>
 
-        i. Description: Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor
+        **Action group 2 - gather-evidence:**
 
-        ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-GatherEvidenceFunction_.
+            i. Description: Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor
 
-        iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/gather_evidence.json_.
+            ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-GatherEvidenceFunction_.
 
-    **Action group 3 - send-reminder:**
+            iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/gather_evidence.json_.
 
-        i. Description: Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders
+        **Action group 3 - send-reminder:**
 
-        ii. Under **Select Lambda function**, choose _\<YOUR-STACK-NAME>-SendReminderFunction_.
+            i. Description: Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders
 
-        iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/send_reminder.json_.
+            ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-SendReminderFunction_.
+
+            iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/send_reminder.json_.
 
     d. Add Knowledge base:
 
@@ -223,11 +222,9 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
         ```
         Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
         ```
-        
+
         <p align="center">
           <img src="../design/agent-kb-configuration.png" width="55%" height="55%">
-        </p>
-        <p align="center">
           <em>Figure 6: Agent Knowledge Base Configuration</em>
         </p>
 
