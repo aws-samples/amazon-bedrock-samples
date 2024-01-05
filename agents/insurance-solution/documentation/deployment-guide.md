@@ -131,7 +131,7 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
     d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
 
 <p align="center">
-  <img src="../design/kb-configuration.png" width="70%" height="70%">
+  <img src="../design/kb-configuration.png" width="60%" height="60%">
 </p>
 <p align="center">
   <em>Figure 1: Knowledge Base for Amazon Bedrock Configuration Settings</em>
@@ -184,19 +184,15 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     ```
 
     c. Add the following three action groups then select **Next**:
-
         **Action group 1 - create-claim:**
+           i. Description: Use this action group to create an insurance claim
+           ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-CreateClaimFunction_.
+           iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., <YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
 
-            i. Description: Use this action group to create an insurance claim 
-
-            ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-CreateClaimFunction_.
-
-            iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., <YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
-
-            <p align="center">
-              <img src="../design/ag-configuration.png" width="85%" height="85%">
-              <em>Figure 5: Action Group Configuration</em>
-            </p>
+<p align="center">
+  <img src="../design/ag-configuration.png" width="85%" height="85%">
+  <em>Figure 5: Action Group Configuration</em>
+</p>
 
         **Action group 2 - gather-evidence:**
 
