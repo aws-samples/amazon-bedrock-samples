@@ -125,7 +125,9 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
     Description: Use this knowledge base to access information on claim amounts, general insurance and accident-related questions, repair estimates, and required claim documents
     ```
     b. Under **Set up data source**, enter a _Data source name_ then choose _Browse S3_ and select the knowledge base data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-bedrock-kb).
+
     c. Under **Configure vector store**, leave the default settings. An [OpenSearch Serverless vector store](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html) will be created for you. This vector store is where the knowledge base pre-processing embeddings are stored and later used for semantic similarity search between queries and data source text.
+
     d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**.
 
 <p align="center">
