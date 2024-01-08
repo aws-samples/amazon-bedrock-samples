@@ -132,28 +132,28 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
     d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
 
 <p align="center">
-  <img src="../design/kb-configuration.png" width="90%" height="90%"><br>
+  <img src="../design/kb-configuration.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base Configuration Settings</em></span>
 </p>
 
 6. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
 
 <p align="center">
-  <img src="../design/kb-creation-banner.png" width="90%" height="90%"><br>
+  <img src="../design/kb-creation-banner.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Data Source Sync</em></span>
 </p>
 
 7. Navigate to the [Knowledge Base Console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
 
 <p align="center">
-  <img src="../design/kb-overview.png" width="90%" height="90%"><br>
+  <img src="../design/kb-overview.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Overview</em></span>
 </p>
 
 8. With your knowledge base still selected in the Knowledge Base Console, select your knowledge base data source listed under **Data source**, then note the **Data source ID** under _Data source overview_:
 
 <p align="center">
-  <img src="../design/kb-ds-overview.png" width="90%" height="90%"><br>
+  <img src="../design/kb-ds-overview.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 4: Knowledge Base Data Source Overview</em></span>
 </p>
 
@@ -191,7 +191,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., <YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
 
     <p align="center">
-      <img src="../design/ag-configuration.png" width="85%" height="85%"><br>
+      <img src="../design/ag-configuration.png" width="95%" height="95%"><br>
       <span style="display: block; text-align: center;"><em>Figure 5: Action Group Configuration</em></span>
     </p>
 
@@ -221,7 +221,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     ```
    
     <p align="center">
-      <img src="../design/agent-kb-configuration.png" width="55%" height="55%"><br>
+      <img src="../design/agent-kb-configuration.png" width="65%" height="65%"><br>
       <span style="display: block; text-align: center;"><em>Figure 6: Agent Knowledge Base Configuration</em></span>
     </p>
 
@@ -253,7 +253,7 @@ Once your agent is created, you will see a green "created successfully" banner.
 streamlit run agent_streamlit.py
 ```
 <p align="center">
-  <img src="../design/streamlit-app.png" width="95%" height="95%"><br>
+  <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
   <span style="display: block; text-align: center;"><em>Figure 8: Streamlit Agent Application</em></span>
 </p>
 
