@@ -203,7 +203,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
     **Action group 2 - gather-evidence:**
 
-    > i. Description: Use this action group to gather evidence for Open status insurance claims with pending documents. Return the documentUploadUrl to the requestor
+    > i. Description: Use this action group to send the user a URL for evidence upload on open status claims with pending documents. Return the documentUploadUrl to the user
     > 
     > ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-GatherEvidenceFunction_.
     > 
