@@ -7,14 +7,10 @@
 
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export ARTIFACT_BUCKET_NAME=$STACK_NAME-customer-resources
-export KB_BUCKET_NAME=$STACK_NAME-knowledge-base
 export DATA_LOADER_KEY="agent/lambda/data-loader/loader_deployment_package.zip"
 export CREATE_CLAIM_KEY="agent/lambda/action-groups/create_claim.zip"
 export GATHER_EVIDENCE_KEY="agent/lambda/action-groups/gather_evidence.zip"
 export SEND_REMINDER_KEY="agent/lambda/action-groups/send_reminder.zip"
-
-aws s3 mb s3://${KB_BUCKET_NAME} --region us-east-1
-aws s3 cp ../agent/knowledge-base-assets/ s3://${KB_BUCKET_NAME}/knowledge-base-assets/ --recursive --exclude ".DS_Store"
 
 aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region us-east-1
 aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --recursive --exclude ".DS_Store"
