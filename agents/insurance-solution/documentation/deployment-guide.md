@@ -223,7 +223,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     > ii. Under **Knowledge base instructions for Agent**, enter the following then select **Next**:
 
     ```
-    Use this knowledge base to access information on claim amounts, general insurance questions, repair estimates, and required claim documents 
+    Use this knowledge base to answer general question about car insurance premiums and access claim amounts, repair estimates, document details, and rates, policy, accident, and coverage questions 
     ```
    
     <p align="center">
