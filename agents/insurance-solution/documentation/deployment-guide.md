@@ -132,14 +132,14 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
     d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
 
 <p align="center">
-  <img src="../design/kb-configuration.png" width="60%" height="60%"><br>
+  <img src="../design/kb-configuration.png" width="80%" height="80%"><br>
   <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base Configuration Settings</em></span>
 </p>
 
 6. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
 
 <p align="center">
-  <img src="../design/kb-creation-banner.png" width="90%" height="90%"><br>
+  <img src="../design/kb-creation-banner.png" width="80%" height="80%"><br>
   <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Data Source Sync</em></span>
 </p>
 
