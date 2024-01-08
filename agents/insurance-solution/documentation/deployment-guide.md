@@ -129,7 +129,7 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
     b. Under **Set up data source**, enter a _Data source name_ then choose _Browse S3_ and select the 'knowledge-base-assets' folder of the data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-customer-resources/agent/knowledge-base-assets/).
 
     <p align="center">
-      <img src="../design/kb-ds-s3-configuration.png" width="95%" height="95%"><br>
+      <img src="../design/kb-ds-s3-configuration.png"><br>
       <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base Data Source Configuration</em></span>
     </p>
 
