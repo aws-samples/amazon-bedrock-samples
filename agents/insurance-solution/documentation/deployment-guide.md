@@ -194,7 +194,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     > 
     > ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-CreateClaimFunction_.
     > 
-    > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., <YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
+    > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step (e.g., \<YOUR-STACK-NAME>-customer-resources), then select _agent/api-schema/create_claim.json_.
 
     <p align="center">
       <img src="../design/ag-configuration.png" width="95%" height="95%"><br>
