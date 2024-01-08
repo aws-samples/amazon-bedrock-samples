@@ -128,34 +128,39 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
     ```
     b. Under **Set up data source**, enter a _Data source name_ then choose _Browse S3_ and select the 'knowledge-base-assets' folder of the data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-customer-resources/agent/knowledge-base-assets/).
 
+    <p align="center">
+      <img src="../design/kb-ds-s3-configuration.png" width="95%" height="95%"><br>
+      <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base Data Source Configuration</em></span>
+    </p>
+
     c. Under **Configure vector store**, leave the default settings. An [OpenSearch Serverless vector store](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html) will be created for you. This vector store is where the knowledge base pre-processing embeddings are stored and later used for semantic similarity search between queries and data source text.
 
     d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
 
 <p align="center">
   <img src="../design/kb-configuration.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base Configuration Settings</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Configuration Settings</em></span>
 </p>
 
 6. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
 
 <p align="center">
   <img src="../design/kb-creation-banner.png" width="90%" height="90%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Data Source Sync</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Data Source Sync</em></span>
 </p>
 
 7. Navigate to the [Knowledge Base Console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
 
 <p align="center">
   <img src="../design/kb-overview.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Overview</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 4: Knowledge Base Overview</em></span>
 </p>
 
 8. With your knowledge base still selected in the Knowledge Base Console, select your knowledge base data source listed under **Data source**, then note the **Data source ID** under _Data source overview_:
 
 <p align="center">
   <img src="../design/kb-ds-overview.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 4: Knowledge Base Data Source Overview</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 5: Knowledge Base Data Source Overview</em></span>
 </p>
 
 ❗ Knowledge base ID and Data source ID will be used as environment variables in the later Post-Implementation step.
@@ -193,7 +198,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
     <p align="center">
       <img src="../design/ag-configuration.png" width="95%" height="95%"><br>
-      <span style="display: block; text-align: center;"><em>Figure 5: Action Group Configuration</em></span>
+      <span style="display: block; text-align: center;"><em>Figure 6: Action Group Configuration</em></span>
     </p>
 
     **Action group 2 - gather-evidence:**
@@ -223,21 +228,21 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
    
     <p align="center">
       <img src="../design/agent-kb-configuration.png" width="65%" height="65%"><br>
-      <span style="display: block; text-align: center;"><em>Figure 6: Agent Knowledge Base Configuration</em></span>
+      <span style="display: block; text-align: center;"><em>Figure 7: Agent Knowledge Base Configuration</em></span>
     </p>
 
     e. Under **Review and create**, confirm your configuration settings then select **Create Agent**: 
 
 <p align="center">
   <img src="../design/agent-configuration.png" width="85%" height="85%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 7: Agent Configruation Settings</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 8: Agent Configruation Settings</em></span>
 </p>
 
 Once your agent is created, you will see a green "created successfully" banner.
 
 <p align="center">
   <img src="../design/agent-creation-banner.png" width="80%" height="80%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 8: Agent Successfully Created Banner</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 9: Agent Successfully Created Banner</em></span>
 </p>
 
 ## Post-Implementation
@@ -255,7 +260,7 @@ streamlit run agent_streamlit.py
 ```
 <p align="center">
   <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 8: Streamlit Agent Application</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 10: Streamlit Agent Application</em></span>
 </p>
 
 ## Testing and Validation
