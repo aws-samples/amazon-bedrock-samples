@@ -124,7 +124,7 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
 
     a. Under **Provide knowledge base details**, enter a _Knowledge base name_ and the following optional _Description_, leaving all other default settings:
     ```sh
-    Use this knowledge base to access information on claim amounts, general insurance and accident-related questions, repair estimates, and required claim documents
+    Use this knowledge base to answer general question about car insurance premiums and access claim amounts, repair estimates, document details, and rate, policy, accident, and coverage questions
     ```
     b. Under **Set up data source**, enter a _Data source name_ then choose _Browse S3_ and select the 'knowledge-base-assets' folder of the data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-customer-resources/agent/knowledge-base-assets/).
 
