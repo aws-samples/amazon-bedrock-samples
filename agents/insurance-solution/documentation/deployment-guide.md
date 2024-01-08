@@ -139,7 +139,7 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
 6. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
 
 <p align="center">
-  <img src="../design/kb-creation-banner.png" width="95%" height="95%"><br>
+  <img src="../design/kb-creation-banner.png" width="90%" height="90%"><br>
   <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Data Source Sync</em></span>
 </p>
 
@@ -235,7 +235,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 Once your agent is created, you will see a green "created successfully" banner.
 
 <p align="center">
-  <img src="../design/agent-creation-banner.png" width="85%" height="85%"><br>
+  <img src="../design/agent-creation-banner.png" width="80%" height="80%"><br>
   <span style="display: block; text-align: center;"><em>Figure 8: Agent Successfully Created Banner</em></span>
 </p>
 
