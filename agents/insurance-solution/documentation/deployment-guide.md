@@ -256,7 +256,8 @@ When you create an agent, it appears in the **Agents** section of the Bedrock co
   <span style="display: block; text-align: center;"><em>Figure 10: Agents for Amazon Bedrock Console</em></span>
 </p>
 
-10. To begin testing, select your agent in the Agents section, then choose its **Working draft**. Initially, you have a _working draft_ and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development.
+10. To begin testing, select your agent in the Agents section, then choose **Working draft**.
+    Initially, you have a _working draft_ and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development.
 
 <p align="center">
   <img src="../design/agent-console-2.png"><br>
