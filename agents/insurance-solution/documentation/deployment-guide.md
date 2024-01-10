@@ -252,28 +252,28 @@ Following the successful creation of your agent and knowledge base, the next dev
 When you create an agent, it appears in the **Agents** section of the Bedrock console. Initially, you have a "working draft" and a default "TestAlias" pointing to this draft. The working draft allows for iterative development.
 
 <p align="center">
-  <img src="../design/agent-console-1.png" width="80%" height="80%"><br>
+  <img src="../design/agent-console-1.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 10: Agents for Amazon Bedrock Console</em></span>
 </p>
 
 10. To begin testing, select your agent in the Agents section, then choose its **Working draft**.
 
 <p align="center">
-  <img src="../design/agent-console-2.png" width="80%" height="80%"><br>
+  <img src="../design/agent-console-2.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 11: Agent Overview Console</em></span>
 </p>
     
 11. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations.
 
 <p align="center">
-  <img src="../design/agent-console-3.png" width="80%" height="80%"><br>
+  <img src="../design/agent-console-3.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 12: Agent Working Draft Console</em></span>
 </p>
 
 12. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the TestAlias to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window.
 
 <p align="center">
-  <img src="../design/agent-prepare.png" width="80%" height="80%"><br>
+  <img src="../design/agent-prepare.png" width="60%" height="60%"><br>
   <span style="display: block; text-align: center;"><em>Figure 13: Agent Prepare Message</em></span>
 </p>
 
