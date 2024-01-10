@@ -23,7 +23,7 @@ The following testing procedure aims to verify that the agent correctly identifi
 
 <p align="center">
   <img src="../design/console-testing.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 10: Agent and Knowledge Base Testing and Validation</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 14: Agent and Knowledge Base Testing and Validation</em></span>
 </p>
 
 Response Analysis and Debugging Tools:
@@ -43,8 +43,13 @@ Always select "Prepare" after making changes to apply them before testing the ag
 This process involves iterative development and testing of the agent, using tools like the test window and trace feature for effective debugging and optimization.
 
 <p align="center">
-  <img src="../design/console-testing.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 11: Agent and Knowledge Base Tracing</em></span>
+  <img src="../design/ag-tracing.png"><br>
+  <span style="display: block; text-align: center;"><em>Figure 15: Agent Tracing</em></span>
+</p>
+
+<p align="center">
+  <img src="../design/kb-tracing.png"><br>
+  <span style="display: block; text-align: center;"><em>Figure 16: Knowledge Base Tracing</em></span>
 </p>
 
 7.  Performance and Scaling Tests:
@@ -72,7 +77,7 @@ streamlit run agent_streamlit.py
 ```
 <p align="center">
   <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 10: Streamlit Agent Application</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 17: Streamlit Agent Application</em></span>
 </p>
 
 ## Resources
