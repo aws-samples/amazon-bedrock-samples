@@ -259,14 +259,14 @@ When you create an agent, it appears in the **Agents** section of the Bedrock co
 10. To begin testing, select your agent in the Agents section, then choose its **Working draft**.
 
 <p align="center">
-  <img src="../design/agent-console-2.png" width="95%" height="95%"><br>
+  <img src="../design/agent-console-2.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 11: Agent Overview Console</em></span>
 </p>
     
 11. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations.
 
 <p align="center">
-  <img src="../design/agent-console-3.png" width="95%" height="95%"><br>
+  <img src="../design/agent-console-3.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 12: Agent Working Draft Console</em></span>
 </p>
 
