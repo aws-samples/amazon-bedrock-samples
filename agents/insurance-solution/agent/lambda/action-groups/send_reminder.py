@@ -30,7 +30,11 @@ def open_claims():
         }
     )
 
-    return response['Items'] if 'Items' in response else []
+    items = response.get('Items', [])
+    # Extracting the 'claimId' attribute for items with 'status' equal to 'Open'
+    open_claim_ids = [item['claimId']['S'] for item in items if 'claimId' in item]
+
+    return open_claim_ids
 
 def generate_reminder_id(length):
     print("Generate Reminder ID")
@@ -85,28 +89,33 @@ def notify_pending_documents(event):
         response = dynamodb_client.get_item(
             TableName=existing_claims_table_name,
             Key={
-                'claimId': {'S': claim_id},  # claimId is the partition key
-                'policyId': {'S': '102130320'}
+                'claimId': {'S': claim_id}
             },
             ProjectionExpression='pendingDocuments'  # Retrieve only the 'pendingDocuments' attribute
         )
         
         # Extract pendingDocuments attribute from the DynamoDB response
-        pending_documents = response.get('Item', {}).get('pendingDocuments', {}).get('L', [])
+        pending_documents_response = response.get('Item', {}).get('pendingDocuments', {}).get('L', [])
+
+        # Transform the list of dictionaries to a list of strings
+        pending_documents = [doc['S'] for doc in pending_documents_response]
+
+        # Join the list of strings into a single string, separated by ", "
+        formatted_pending_documents = ", ".join(pending_documents)
 
     except Exception as e:
         print(f"Error querying DynamoDB table: {e}")
         return []
 
     # Generate a random string of length 7 (to match the format '12a3456')
-    reminder_tracking_id = send_reminder(claim_id, pending_documents)
+    reminder_tracking_id = send_reminder(claim_id, formatted_pending_documents)
     print("Reminder tracking ID = " + str(reminder_tracking_id))
 
     return {
         'response': {
             'sendReminderTrackingId': reminder_tracking_id,  # Add appropriate tracking ID
             'sendReminderStatus': 'InProgress',  # Modify based on the actual reminder status
-            'pendingDocuments': pending_documents
+            'pendingDocuments': formatted_pending_documents
         }
     }
  
@@ -118,7 +127,6 @@ def lambda_handler(event, context):
     if api_path == '/open-claims':
         body = open_claims() 
     elif api_path == '/claims/{claimId}/notify-pending-documents':
-        # parameters = event['parameters']
         body = notify_pending_documents(event)
     else:
         response_code = 400

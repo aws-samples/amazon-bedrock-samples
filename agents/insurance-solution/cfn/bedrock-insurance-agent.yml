@@ -93,15 +93,11 @@ Resources:
     Properties:
       TableName: !Sub ${AWS::StackName}-ExistingClaims
       AttributeDefinitions:
-      - AttributeName: claimId
-        AttributeType: S
-      - AttributeName: policyId
-        AttributeType: S
+        - AttributeName: claimId
+          AttributeType: S
       KeySchema:
-      - AttributeName: claimId
-        KeyType: HASH
-      - AttributeName: policyId
-        KeyType: RANGE
+        - AttributeName: claimId
+          KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: '3'
         WriteCapacityUnits: '3'
@@ -206,7 +202,9 @@ Resources:
         - arm64
       Environment:
         Variables:
+          CUSTOMER_WEBSITE_URL: !Ref EvidenceUploadUrl
           EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
+          SNS_TOPIC_ARN: !Ref SNSTopic
 
   SendReminderFunction:
     Type: AWS::Lambda::Function

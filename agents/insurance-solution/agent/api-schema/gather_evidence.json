@@ -7,8 +7,8 @@
     "paths": {
         "/claims/{claimId}/gather-evidence": {
             "post": {
-                "summary": "Gather evidence from the policy holder for their Open status insurance claim with pending documents",
-                "description": "Send the policy holder a link where they can upload their pending documents",
+                "summary": "Gather evidence from the policy holder for the specified claim",
+                "description": "Send the policy holder for the provided claim ID a plaintext URL that they can use to upload their pending documents. Also, return the tracking ID and status in plaintext.",
                 "operationId": "gatherEvidence",
                 "parameters": [{
                     "name": "claimId",

@@ -14,6 +14,13 @@ import requests
 dynamodb = boto3.resource('dynamodb',region_name=os.environ['AWS_REGION'])
 existing_claims_table_name = os.environ['EXISTING_CLAIMS_TABLE_NAME']
 
+# SNS boto3 clients and variables
+sns_topic_arn = os.environ['SNS_TOPIC_ARN']
+sns_client = boto3.client('sns')
+
+# URL
+url = os.environ['CUSTOMER_WEBSITE_URL']
+
 def claim_generator():
     print("Generating Claim ID")
 
@@ -25,6 +32,18 @@ def claim_generator():
     pattern = f"{digits[0]}{chars[0]}{digits[1:3]}{chars[1]}-{digits[3]}{chars[2]}"
 
     return pattern
+
+def collect_documents(claim_id):
+    print("Collecting Claim Documents")
+
+    subject = "New Claim ID: " + claim_id
+    message = "Please upload your claim evidence and required documents in the AnyCompany Insurance Portal: " + url
+
+    sns_client.publish(
+        TopicArn=sns_topic_arn,
+        Subject=subject,
+        Message=message,
+    )
 
 def create_claim(event):
     print("Creating Claim")
@@ -44,6 +63,8 @@ def create_claim(event):
     response = existing_claims_table.put_item(
         Item=dynamodb_item
     ) 
+
+    collect_documents(generated_claim)
 
     return {
         "response": [new_claim_data]   

@@ -31,22 +31,17 @@ def generate_upload_id(length):
     
     return random_string
 
-def send_reminder(claim_id):
-    print("Send Reminder")
+def send_evidence_url(claim_id):
+    print("Send Evidence URL")
 
     subject = "Gathering Evidence for Claim ID: " + claim_id
-    message = "Please upload your claim evidence in our Insurance Portal:" + url
+    message = "Please upload your claim evidence in the AnyCompany Insurance Portal: " + url
 
     sns_client.publish(
         TopicArn=sns_topic_arn,
         Subject=subject,
         Message=message,
     )
-    
-    # Generate a random string of length 7 (to match the format '12a3456')
-    reminder_id = "123ab45"
-
-    return reminder_id
 
 def gather_evidence(event):
     print("Gathering Evidence")
@@ -60,7 +55,7 @@ def gather_evidence(event):
 
     print("Claim ID: " + str(claim_id))
 
-    send_reminder(claim_id)
+    send_evidence_url(claim_id)
 
     # Generate a random string of length 7 (to match the format '12a3456')
     upload_id = generate_upload_id(7)
@@ -80,7 +75,7 @@ def lambda_handler(event, context):
     api_path = event['apiPath']
     
     # API path routing
-    if api_path == '/gather-evidence':
+    if api_path == '/claims/{claimId}/gather-evidence':
         body = gather_evidence(event)
     else:
         response_code = 400
