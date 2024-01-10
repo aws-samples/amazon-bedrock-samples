@@ -270,7 +270,7 @@ When you create an agent, it appears in the **Agents** section of the Bedrock co
   <span style="display: block; text-align: center;"><em>Figure 12: Agent Working Draft Console</em></span>
 </p>
 
-12. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the TestAlias to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window.
+12. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the _TestAlias_ to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window.
 
 <p align="center">
   <img src="../design/agent-prepare.png" width="60%" height="60%"><br>
