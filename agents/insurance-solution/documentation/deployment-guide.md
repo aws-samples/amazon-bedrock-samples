@@ -277,7 +277,7 @@ When you create an agent, it appears in the **Agents** section of the Bedrock co
   <span style="display: block; text-align: center;"><em>Figure 13: Agent Prepare Message</em></span>
 </p>
 
-Once you have accessed the testing window with your agent prepared, continue to [Testing and Validation](../documentation/testing-and-validation.md).
+Once you have accessed the testing window and prepared your agent, continue to [Testing and Validation](../documentation/testing-and-validation.md).
 
 ## Testing and Validation
 see [Testing and Validation](../documentation/testing-and-validation.md)
