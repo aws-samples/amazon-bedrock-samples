@@ -246,22 +246,38 @@ Once your agent is created, you will see a green "created successfully" banner.
 </p>
 
 ## Post-Implementation
+Following the successful creation of your agent and knowledge base, the next development phase involves the preparation and testing of your agent's functionality. Preparing the agent involves packaging the latest changes, while testing provides a critical opportunity to interact with and evaluate the agent's behavior. Through this process, you can refine its capabilities, enhance its efficiency, and address any potential issues or improvements necessary for optimal performance.
 
-### Deploy Streamlit Web UI for Your Agent
-[Streamlit](https://streamlit.io/) is a Python library designed to streamline and simplify the process of building frontend applications. We use Streamlit in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. The application provides two features:
+### Prepare and Test Your Agent
+When you create an agent, it appears in the **Agents** section of the Bedrock console. Initially, you have a "working draft" and a default "TestAlias" pointing to this draft. The working draft allows for iterative development.
 
-- **Agent for Amazon Bedrock - Prompt Input:** Allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input.
-- **Knowledge Base for Amazon Bedrock - File Upload:** Enables the user to upload their local files to the Amazon S3 bucket that is being used as the data source for the customer's knowledge base. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
-
-10. To run your Streamlit application, execute the following command then continue to [Testing and Validation](../documentation/testing-and-validation.md).
-
-```sh 
-streamlit run agent_streamlit.py
-```
 <p align="center">
-  <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 10: Streamlit Agent Application</em></span>
+  <img src="../design/agent-console-1.png" width="80%" height="80%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 10: Agents for Amazon Bedrock Console</em></span>
 </p>
+
+10. To begin testing, select your agent in the Agents section, then choose its **Working draft**.
+
+<p align="center">
+  <img src="../design/agent-console-2.png" width="80%" height="80%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 11: Agent Overview Console</em></span>
+</p>
+    
+11. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations.
+
+<p align="center">
+  <img src="../design/agent-console-3.png" width="80%" height="80%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 12: Agent Working Draft Console</em></span>
+</p>
+
+12. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the TestAlias to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window.
+
+<p align="center">
+  <img src="../design/agent-prepare.png" width="80%" height="80%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 13: Agent Prepare Message</em></span>
+</p>
+
+Once you have accessed the testing window with your agent prepared, continue to [Testing and Validation](../documentation/testing-and-validation.md).
 
 ## Testing and Validation
 see [Testing and Validation](../documentation/testing-and-validation.md)
