@@ -249,7 +249,7 @@ Once your agent is created, you will see a green "created successfully" banner.
 Following the successful creation of your agent and knowledge base, the next development phase involves the preparation and testing of your agent's functionality. Preparing the agent involves packaging the latest changes, while testing provides a critical opportunity to interact with and evaluate the agent's behavior. Through this process, you can refine its capabilities, enhance its efficiency, and address any potential issues or improvements necessary for optimal performance.
 
 ### Prepare and Test Your Agent
-When you create an agent, it appears in the **Agents** section of the Bedrock console. Initially, you have a "working draft" and a default "TestAlias" pointing to this draft. The working draft allows for iterative development.
+When you create an agent, it appears in the **Agents** section of the Bedrock console. Initially, you have a _working draft_ and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development.
 
 <p align="center">
   <img src="../design/agent-console-1.png" width="95%" height="95%"><br>
