@@ -252,7 +252,7 @@ Following the successful creation of your agent and knowledge base, the next dev
 When you create an agent, it appears in the **Agents** section of the Bedrock console. Initially, you have a _working draft_ and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development.
 
 <p align="center">
-  <img src="../design/agent-console-1.png" width="95%" height="95%"><br>
+  <img src="../design/agent-console-1.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 10: Agents for Amazon Bedrock Console</em></span>
 </p>
 
