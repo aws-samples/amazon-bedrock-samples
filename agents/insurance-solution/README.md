@@ -12,7 +12,7 @@
 
 You can now use [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) and [Knowledge base for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) to configure specialized agents that seamlessly execute actions based on user input and your organization's data. These managed agents play conductor, orchestrating interactions between foundation models, API integrations, user conversations, and knowledge bases loaded with your data. Agents and knowledge bases allow you to **build on existing enterprise resources** to enhance user experience and automate repetitive tasks.
 
-This Insurance agent sample solution combines an Agent and Knowledge base for Amazon Bedrock to automate Insurance claim lifecycle actions like creating new claims, sending pending document reminders for open claims, gathering claims evidence, and searching for information on existing claims.
+This insurance agent sample solution combines an Agent and Knowledge base for Amazon Bedrock to automate insurance claim lifecycle actions like creating new claims, sending pending document reminders for open claims, gathering claims evidence, and searching for information on existing claims.
 
 ### Demo Recording
 [<img src="design/thumbnail.png" width="100%">](https://www.youtube.com/watch?v=bv4XV7epeik "Task Automation Using Agents for Amazon Bedrock - YouTube")
