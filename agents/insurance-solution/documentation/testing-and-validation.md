@@ -203,7 +203,7 @@ see [Clean Up](../documentation/clean-up.md)
 
 ---
 
-## README
+## Deployment Guide
 see [Deployment Guide](../documentation/deployment-guide.md)
 
 ---
