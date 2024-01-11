@@ -42,7 +42,7 @@ To emulate the existing customer resources utilized by the agent, this solution 
 
 CloudFormation prepopulates stack parameters with the default values provided in the template. To provide alternative input values, you can specify parameters as environment variables that are referenced in the `ParameterKey=<ParameterKey>,ParameterValue=<Value>` pairs in the _create-customer-resources.sh_ shell script's `aws cloudformation create-stack` command. 
 
-2. Before you run the shell script, navigate to the directory where you cloned the _amazon-bedrock-samples_ repository and modify the shell script permissions to executable:
+1. Before you run the shell script, navigate to the directory where you cloned the _amazon-bedrock-samples_ repository and modify the shell script permissions to executable:
 
 ```sh
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to shell folder:
@@ -50,7 +50,7 @@ cd amazon-bedrock-samples/agents/insurance-solution/shell/
 chmod u+x create-customer-resources.sh
 ```
 
-3. Set your CloudFormation stack name, SNS email, and evidence upload URL environment variables. The SNS email will be used for policy holder notifications and the evidence upload URL will be shared with policy holders to upload their claims evidence. The [insurance claims processing sample](https://github.com/aws-samples/serverless-eda-insurance-claims-processing/tree/main) provides an example frontend for the evidence upload URL:
+2. Set your CloudFormation stack name, SNS email, and evidence upload URL environment variables. The SNS email will be used for policy holder notifications and the evidence upload URL will be shared with policy holders to upload their claims evidence. The [insurance claims processing sample](https://github.com/aws-samples/serverless-eda-insurance-claims-processing/tree/main) provides an example frontend for the evidence upload URL:
 
 ```sh
 export STACK_NAME=<YOUR-STACK-NAME> # Stack name must be lower case for S3 bucket naming convention
@@ -58,7 +58,7 @@ export SNS_EMAIL=<YOUR-POLICY-HOLDER-EMAIL> # Email used for SNS notifications
 export EVIDENCE_UPLOAD_URL=<YOUR-EVIDENCE-UPLOAD-URL> # URL provided by the agent to the policy holder for evidence upload
 ```
 
-4. Run the _create-customer-resources.sh_ shell script to deploy the emulated customers resources defined in the _bedrock-customer-resources.yml_ CloudFormation template. These are the resources on which the Bedrock Agent and Knowledge base will be built:
+3. Run the _create-customer-resources.sh_ shell script to deploy the emulated customers resources defined in the _bedrock-customer-resources.yml_ CloudFormation template. These are the resources on which the Bedrock Agent and Knowledge base will be built:
 
 ```sh
 source ./create-customer-resources.sh
@@ -126,7 +126,7 @@ Knowledge base functionality is delineated through two key processes:
 
 ### Deploy Knowledge Base
 
-5. Navigate to the [Amazon Bedrock > Knowledge base > Create knowledge base console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases/create-knowledge-base):
+1. Navigate to the [Amazon Bedrock > Knowledge base > Create knowledge base console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases/create-knowledge-base):
 
     a. Under **Provide knowledge base details**, enter a _Knowledge base name_ and the following optional _Description_, leaving all other default settings:
     ```sh
@@ -148,21 +148,21 @@ Knowledge base functionality is delineated through two key processes:
   <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Configuration Settings</em></span>
 </p>
 
-6. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
+2. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
 
 <p align="center">
   <img src="../design/kb-creation-banner.png" width="90%" height="90%"><br>
   <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Data Source Sync</em></span>
 </p>
 
-7. Navigate to the [Knowledge base Console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
+3. Navigate to the [Knowledge base Console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
 
 <p align="center">
   <img src="../design/kb-overview.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 4: Knowledge Base Overview</em></span>
 </p>
 
-8. With your knowledge base still selected in the Knowledge Base Console, select your knowledge base data source listed under **Data source**, then note the **Data source ID** under _Data source overview_:
+4. With your knowledge base still selected in the Knowledge Base Console, select your knowledge base data source listed under **Data source**, then note the **Data source ID** under _Data source overview_:
 
 <p align="center">
   <img src="../design/kb-ds-overview.png" width="95%" height="95%"><br>
@@ -183,7 +183,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
 ### Deploy Agent
 
-9. Navigate to the [Amazon Bedrock > Agents > Create Agent console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/agents/create):
+1. Navigate to the [Amazon Bedrock > Agents > Create Agent console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/agents/create):
 
     a. Enter an _Agent name_ and optional _Description_, leaving all other default settings.
 
