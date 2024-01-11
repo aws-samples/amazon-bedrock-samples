@@ -51,17 +51,17 @@ Your agent will sort user input into one of the following:
 
     In the following action group tracing example, the agent maps the user input to the create-claim action group's createClaim function during pre-processing. The agent possesses an understanding of this function based on the agent instructions, action group description, and OpenAPI schema. During the orchestration process, which is two steps in this case, the agent invokes the createClaim function and receives a final response that includes the newly created claim ID and list of pending documents.
 
-<p align="center">
-  <img src="../design/ag-tracing.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 15: Agent Tracing</em></span>
-</p>
+    <p align="center">
+      <img src="../design/ag-tracing.png"><br>
+      <span style="display: block; text-align: center;"><em>Figure 15: Agent Tracing</em></span>
+    </p>
 
     In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. 
 
-<p align="center">
-  <img src="../design/kb-tracing.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 16: Knowledge Base Tracing</em></span>
-</p>
+    <p align="center">
+      <img src="../design/kb-tracing.png"><br>
+      <span style="display: block; text-align: center;"><em>Figure 16: Knowledge Base Tracing</em></span>
+    </p>
 
 ### Knowledge Base Testing
 After setting up your knowledge base in Amazon Bedrock, you can test its behavior directly to assess its responses before integrating it into an agent. This testing process enables you to evaluate the knowledge base's performance, inspect responses, and troubleshoot by exploring the source chunks from which information is retrieved.
