@@ -20,15 +20,15 @@ The following testing procedure aims to verify that the agent correctly identifi
     - **Response Quality Assessment:** Evaluate the overall accuracy, relevancy, and coherence of the agent's responses in diverse contexts and scenarios.
 
  13. Test the agent using the following sample prompts and various inputs of your own:
-    - _Create a new claim._
-    - _Send a pending documents reminder to the policy holder of claim ID 2s34w-8x._
-    - _Gather evidence for claim ID 5t16u-7v._
-    - _What is the total claims amount for claim ID 3b45c-9d?_
-    - _What is the total repair estimate for claim ID 3b45c-9d?_
-    - _What factors determine my car insurance premium?_
-    - _How can I lower my car insurance rates?_
-    - _Which claims have open status?_
-    - _Send pending document reminders to all policy holders with open claims._
+     - _Create a new claim._
+     - _Send a pending documents reminder to the policy holder of claim ID 2s34w-8x._
+     - _Gather evidence for claim ID 5t16u-7v._
+     - _What is the total claims amount for claim ID 3b45c-9d?_
+     - _What is the total repair estimate for claim ID 3b45c-9d?_
+     - _What factors determine my car insurance premium?_
+     - _How can I lower my car insurance rates?_
+     - _Which claims have open status?_
+     - _Send pending document reminders to all policy holders with open claims._
 
 ❗ Always select **Prepare** after making changes to apply them before testing the agent.
 
@@ -47,12 +47,16 @@ Your agent will sort user input into one of the following:
 - Category D: Questions that can be answered or assisted by our function calling agent using ONLY the functions it has been provided and arguments from within conversation_history or relevant arguments it can gather using the askuser function.
 - Category E: Inputs that are not questions but instead are answers to a question that the function calling agent asked the user. Inputs are only eligible for this category when the _askuser_ function is the last function that the function calling agent called in the conversation. You can check this by reading through the conversation_history.
 
-14. Select "Show trace" under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations. Please refer to the following action group and knowledge base tracing examples:
+14. Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations.
+
+In the following action group tracing example, the agent maps the user input to the create-claim action group's createClaim function during pre-processing. The agent possesses an understanding of this function based on the agent instructions, action group description, and OpenAPI schema. During the orchestration process, which is two steps in this case, the agent invokes the createClaim function and receives a final response that includes the newly created claim ID and list of pending documents.
 
 <p align="center">
   <img src="../design/ag-tracing.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 15: Agent Tracing</em></span>
 </p>
+
+In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. 
 
 <p align="center">
   <img src="../design/kb-tracing.png"><br>
