@@ -67,7 +67,7 @@ To inspect knowledge base responses and source chunks, you can select the corres
 ## Test Agent
 Following the successful testing of your knowledge base, the next development phase involves the preparation and testing of your agent's functionality. Preparing the agent involves packaging the latest changes, while testing provides a critical opportunity to interact with and evaluate the agent's behavior. Through this process, you can refine its capabilities, enhance its efficiency, and address any potential issues or improvements necessary for optimal performance.
 
-14. Navigate to the **Agents** section of the [Bedrock console](https://console.aws.amazon.com/bedrock/):
+14. Navigate to the **Agents** section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
 
 <p align="center">
   <img src="../design/agent-console-1.png"><br>
