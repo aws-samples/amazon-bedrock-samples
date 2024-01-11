@@ -3,7 +3,7 @@
 
 To avoid charges in your AWS account, please clean up the solution's provisioned resources.
 
-## Delete bedrock-customer-resources.yml CloudFormation Stack
+## Delete Emulated Customer Resources
 The following commands use the default stack name. If you customized the stack name, adjust the commands accordingly.
 
 ```sh
