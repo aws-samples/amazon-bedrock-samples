@@ -66,20 +66,33 @@ Your agent will sort user input into one of the following:
 ### Knowledge Base Testing
 After setting up your knowledge base in Amazon Bedrock, you can test its behavior directly to assess its responses before integrating it into an agent. This testing process enables you to evaluate the knowledge base's performance, inspect responses, and troubleshoot by exploring the source chunks from which information is retrieved.
 
-Access the Knowledge Base Testing Interface:
+1. Navigate to the **Knowledge base* section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
 
-Open the Amazon Bedrock console at https://console.aws.amazon.com/bedrock/.
-Navigate to the Knowledge base section from the left navigation pane.
-Initiate Testing:
+<p align="center">
+  <img src="../design/kb-console-1.png"><br>
+  <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
+</p>
 
 Choose the knowledge base you want to test.
 Select "Test knowledge base" or click on the left arrow in the top right corner of the page to expand a chat window.
+
+<p align="center">
+  <img src="../design/kb-console-2.png"><br>
+  <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
+</p>
+
 Query Execution:
 
 Enter a query in the chat window and select "Run" to receive responses from the knowledge base.
 Two modes for response retrieval:
 Turn off "Generate responses for your query" to get information directly from your knowledge base.
 Turn on "Generate responses for your query" to generate responses based on your data sources.
+
+<p align="center">
+  <img src="../design/kb-select-model.png"><br>
+  <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
+</p>
+
 Response Inspection:
 
 If generating responses, choose the model for response generation and apply. Footnotes cite information, and you can select them to view the corresponding source chunk.
@@ -91,11 +104,17 @@ Change the model for response generation.
 Toggle between generating responses and returning direct quotations.
 Clear the chat window or copy all output using icons provided.
 
+ 13. Test the agent using the following sample prompts and various inputs of your own:
 - What is the diagnosis on the repair estimate for claim ID 2s34w-8x?
 - What is the resolution and repair estimate for that same claim?
 - What should the driver do after an accident?
 - What is recommended for the accident report and images?
 - What is a deductible and how does it work?
+
+<p align="center">
+  <img src="../design/kb-console-testing.png"><br>
+  <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
+</p>
 
 ### Deploy Streamlit Web UI for Your Agent
 [Streamlit](https://streamlit.io/) is a Python library designed to streamline and simplify the process of building frontend applications. We use Streamlit in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. The application provides two features:
