@@ -28,28 +28,28 @@ The following testing procedure aims to verify that the agent correctly identifi
 ## Test Knowledge Base
 After setting up your knowledge base in Amazon Bedrock, you can test its behavior directly to assess its responses before integrating it into an agent. This testing process enables you to evaluate the knowledge base's performance, inspect responses, and troubleshoot by exploring the source chunks from which information is retrieved.
 
-10. Navigate to the **Knowledge base** section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
+1. Navigate to the **Knowledge base** section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
 
 <p align="center">
   <img src="../design/kb-console-1.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 10: Knowledge Base for Amazon Bedrock Console</em></span>
 </p>
 
-11. Select the knowledge base you want to test, then select **Test knowledge base** or click on the left arrow in the top right corner of the page to expand a chat window:
+2. Select the knowledge base you want to test, then select **Test knowledge base** or click on the left arrow in the top right corner of the page to expand a chat window:
 
 <p align="center">
   <img src="../design/kb-console-2.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 11: Knowledge Base Console</em></span>
 </p>
 
-12. In the test window, select your foundation model for response generation. You can toggle between generating responses and returning direct quotations in the chat window, and you have the option to clear the chat window or copy all output using the provided icons:
+3. In the test window, select your foundation model for response generation. You can toggle between generating responses and returning direct quotations in the chat window, and you have the option to clear the chat window or copy all output using the provided icons:
 
 <p align="center">
   <img src="../design/kb-select-model.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 12: Knowledge Base Select Model</em></span>
 </p>
 
-13. Test your knowledge using the following sample queries and other various inputs of your own:
+4. Test your knowledge using the following sample queries and other various inputs of your own:
     
 - What is the diagnosis on the repair estimate for claim ID 2s34w-8x?
 - What is the resolution and repair estimate for that same claim?
@@ -67,14 +67,14 @@ To inspect knowledge base responses and source chunks, you can select the corres
 ## Test Agent
 Following the successful testing of your knowledge base, the next development phase involves the preparation and testing of your agent's functionality. Preparing the agent involves packaging the latest changes, while testing provides a critical opportunity to interact with and evaluate the agent's behavior. Through this process, you can refine its capabilities, enhance its efficiency, and address any potential issues or improvements necessary for optimal performance.
 
-14. Navigate to the **Agents** section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
+1. Navigate to the **Agents** section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
 
 <p align="center">
   <img src="../design/agent-console-1.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 14: Agents for Amazon Bedrock Console</em></span>
 </p>
 
-15. To begin testing, select your agent in the Agents section, then choose **Working draft**. Initially, you have a working draft and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development:
+2. To begin testing, select your agent in the Agents section, then choose **Working draft**. Initially, you have a working draft and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development:
 
 <p align="center">
   <img src="../design/agent-console-2.png"><br>
@@ -83,21 +83,21 @@ Following the successful testing of your knowledge base, the next development ph
 
 ❗ Note your Agent ID which will be used as environment variables in the later _Deploy Streamlit Web UI for Your Agent_ section.
 
-16. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
+3. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
 
 <p align="center">
   <img src="../design/agent-console-3.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 16: Agent Working Draft Console</em></span>
 </p>
 
-17. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the _TestAlias_ to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window:
+4. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the _TestAlias_ to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window:
 
 <p align="center">
   <img src="../design/agent-prepare.png" width="40%" height="40%"><br>
   <span style="display: block; text-align: center;"><em>Figure 17: Agent Prepare Message</em></span>
 </p>
 
- 18. Test your agent using the following sample prompts and other various inputs of your own:
+ 5. Test your agent using the following sample prompts and other various inputs of your own:
      
      - _Create a new claim._
      - _Send a pending documents reminder to the policy holder of claim ID 2s34w-8x._
@@ -126,7 +126,7 @@ Your agent will sort user input into one of the following:
 - **Category D:** Questions that can be answered or assisted by our function calling agent using ONLY the functions it has been provided and arguments from within conversation_history or relevant arguments it can gather using the askuser function.
 - **Category E:** Inputs that are not questions but instead are answers to a question that the function calling agent asked the user. Inputs are only eligible for this category when the _askuser_ function is the last function that the function calling agent called in the conversation. You can check this by reading through the conversation_history.
 
-19. Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations:
+1. Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations:
 
     <p align="center">
       <img src="../design/ag-tracing.png"><br>
