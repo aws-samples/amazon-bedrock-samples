@@ -120,7 +120,7 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
 
     a. Under **Provide knowledge base details**, enter a _Knowledge base name_ and the following optional _Description_, leaving all other default settings:
     ```sh
-    Use this knowledge base to answer general question about car insurance premiums and access claim amounts, repair estimates, document details, and rate, policy, accident, and coverage questions
+    Use this knowledge base to answer general question about car insurance premiums and access claim amounts, repair estimates, document details, rate, policy, accident, and coverage questions
     ```
     b. Under **Set up data source**, enter a _Data source name_ then choose _Browse S3_ and select the 'knowledge-base-assets' folder of the data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-customer-resources/agent/knowledge-base-assets/):
 
@@ -179,7 +179,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
     b. Select **Anthropic Claude V2.1** for _Model details_ and specify the following _Instructions for the Agent_, then select **Next**:
     ```
-    You are an insurance agent that has access to domain-specific insurance knowledge. You can create new insurance claims, send pending document reminders to policy holders with open claims, answer questions about claims, claim amounts, claim proof, accidents, rates, premiums, deductibles, and insurance in general. You also gather evidence from policy holders.
+    You are an insurance agent that has access to domain-specific insurance knowledge. You can create new insurance claims, send pending document reminders to policy holders with open claims, gather claim evidence, retrieve claim amounts and repair estimates for a specific claim ID, or answer general insurance questions about things like coverage, premium, policy, rate, deductible, accident, and documents. You can respond to questions about multiple claim IDs within a single conversation
     ```
 
     c. Add the following three action groups then select **Next**:
@@ -219,7 +219,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
     > ii. Under **Knowledge base instructions for Agent**, enter the following then select **Next**:
 
     ```
-    Use this knowledge base to answer general question about car insurance premiums and access claim amounts, repair estimates, document details, and rates, policy, accident, and coverage questions 
+    Use to retrieve claim amounts and repair estimates for a specific claim ID, or answer general insurance questions about things like coverage, premium, policy, rate, deductible, accident, and documents 
     ```
    
     <p align="center">
