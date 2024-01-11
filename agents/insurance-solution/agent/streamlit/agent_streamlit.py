@@ -231,7 +231,7 @@ def main():
 
     # --- Knowledge Base Update ---
     st.subheader("Knowledge Base for Amazon Bedrock - File Upload")
-    uploaded_file = st.file_uploader("Upload Document", type=["pdf", "txt", "docx"])
+    uploaded_file = st.file_uploader("Upload Document", type=["csv", "doc", "docx", "html", "md", "pdf", "txt", "xls", "xlsx"])
 
     if uploaded_file is not None:
         with st.expander("Uploaded File 📁"):

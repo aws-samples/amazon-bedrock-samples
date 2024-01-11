@@ -1,4 +1,5 @@
-# cd generative-ai-amazon-bedrock-langchain-agent-example/shell/
+# If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
+# cd amazon-bedrock-samples/agents/insurance-solution/shell/
 # chmod u+x delete-customer-resources.sh
 # ./delete-customer-resources.sh
 

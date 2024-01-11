@@ -1,8 +1,9 @@
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
-# cd amazon-bedrock-samples/agents/bedrock-insurance-agent/shell/
+# cd amazon-bedrock-samples/agents/insurance-solution/shell/
 # chmod u+x create-customer-resources.sh
-# export KB_ID=<YOUR-KNOWLEDGE-BASE-ID>
-# export DS_ID=<YOUR-DATA-SOURCE-ID>
+# export STACK_NAME=<YOUR-STACK-NAME> # Stack name must be lower case for S3 bucket naming convention
+# export SNS_EMAIL=<YOUR-POLICY-HOLDER-EMAIL> # Email used for SNS notifications
+# export EVIDENCE_UPLOAD_URL=<YOUR-EVIDENCE-UPLOAD-URL> # URL provided by the agent to the policy holder for evidence upload
 # source ./create-customer-resources.sh
 
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -25,7 +26,7 @@ export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
 
 aws cloudformation create-stack \
 --stack-name ${STACK_NAME} \
---template-body file://../cfn/bedrock-insurance-agent.yml \
+--template-body file://../cfn/bedrock-customer-resources.yml \
 --parameters \
 ParameterKey=ArtifactBucket,ParameterValue=${ARTIFACT_BUCKET_NAME} \
 ParameterKey=DataLoaderKey,ParameterValue=${DATA_LOADER_KEY} \
