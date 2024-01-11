@@ -148,11 +148,36 @@ Once you are satisfied with the performance of your agent and knowledge base, yo
 - **Agent for Amazon Bedrock - Prompt Input:** Allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input.
 - **Knowledge Base for Amazon Bedrock - File Upload:** Enables the user to upload their local files to the Amazon S3 bucket that is being used as the data source for the customer's knowledge base. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
 
-20. To run your Streamlit application, execute the following command then continue to [Testing and Validation](../documentation/testing-and-validation.md).
+To isolate our Streamlit application dependencies and for ease of deployment, we use the setup-streamlit-env.sh shell script to create a virtual Python environment with the requirements installed.
+
+1.	Before you run the shell script, navigate to the directory where you cloned the amazon-bedrock-samples repository and modify the Streamlit shell script permissions to executable:
+
+```sh 
+# If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
+cd amazon-bedrock-samples/agents/bedrock-insurance-agent/agent/streamlit/
+chmod u+x setup-streamlit-env.sh
+```
+
+2.	Run the shell script to activate the virtual Python environment with the required dependencies:
+
+```sh 
+source ./setup-streamlit-env.sh
+```
+
+3.	Set your Bedrock agent ID, agent alias ID, knowledge base ID, data source ID, and knowledge base bucket name environment variables.
+
+export BEDROCK_AGENT_ID=<YOUR-AGENT-ID> # Collected in Deploy knowledge base section and available in knowledge base console
+export BEDROCK_AGENT_ALIAS_ID=<YOUR-AGENT-ALIAS-ID> # Collected in Deploy knowledge base section and available in knowledge base console
+export BEDROCK_KB_ID=<YOUR-KNOWLEDGE-BASE-ID> # Collected in Test agent knowledge base section and available in agent base console
+export BEDROCK_DS_ID=<YOUR-DATA-SOURCE-ID> # Use TSTALIASID for current working draft
+export KB_BUCKET_NAME=<YOUR-KNOWLEDGE-BASE-S3-BUCKET-NAME> # Deployed during pre-implementation phase (e.g., <YOUR-STACK-NAME>-customer-resources
+
+4.	Run your Streamlit application and begin testing in your local web browser:
 
 ```sh 
 streamlit run agent_streamlit.py
 ```
+
 <p align="center">
   <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
   <span style="display: block; text-align: center;"><em>Figure 21: Streamlit Agent Application</em></span>
