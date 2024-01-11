@@ -42,7 +42,7 @@ After setting up your knowledge base in Amazon Bedrock, you can test its behavio
   <span style="display: block; text-align: center;"><em>Figure 11: Knowledge Base Console</em></span>
 </p>
 
-12. In the test window, select your foundation model for response generation. You can toggle between generating responses and returning direct quotations in the chat window, and you have the option to clear the chat window or copy all output using the provided icons.
+12. In the test window, select your foundation model for response generation. You can toggle between generating responses and returning direct quotations in the chat window, and you have the option to clear the chat window or copy all output using the provided icons:
 
 <p align="center">
   <img src="../design/kb-select-model.png"><br>
