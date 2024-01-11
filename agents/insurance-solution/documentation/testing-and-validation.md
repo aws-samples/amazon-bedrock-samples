@@ -80,7 +80,9 @@ Following the successful testing of your knowledge base, the next development ph
   <img src="../design/agent-console-2.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 15: Agent Overview Console</em></span>
 </p>
-    
+
+❗ Note your Agent ID which will be used as environment variables in the later _Deploy Streamlit Web UI for Your Agent_ section.
+
 16. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
 
 <p align="center">
