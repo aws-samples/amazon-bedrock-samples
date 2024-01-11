@@ -166,11 +166,13 @@ source ./setup-streamlit-env.sh
 
 3.	Set your Bedrock agent ID, agent alias ID, knowledge base ID, data source ID, and knowledge base bucket name environment variables.
 
+```sh 
 export BEDROCK_AGENT_ID=<YOUR-AGENT-ID> # Collected in Deploy knowledge base section and available in knowledge base console
 export BEDROCK_AGENT_ALIAS_ID=<YOUR-AGENT-ALIAS-ID> # Collected in Deploy knowledge base section and available in knowledge base console
 export BEDROCK_KB_ID=<YOUR-KNOWLEDGE-BASE-ID> # Collected in Test agent knowledge base section and available in agent base console
 export BEDROCK_DS_ID=<YOUR-DATA-SOURCE-ID> # Use TSTALIASID for current working draft
-export KB_BUCKET_NAME=<YOUR-KNOWLEDGE-BASE-S3-BUCKET-NAME> # Deployed during pre-implementation phase (e.g., <YOUR-STACK-NAME>-customer-resources
+export KB_BUCKET_NAME=<YOUR-KNOWLEDGE-BASE-S3-BUCKET-NAME> # Deployed during pre-implementation phase (e.g., <YOUR-STACK-NAME>-customer-resources)
+```
 
 4.	Run your Streamlit application and begin testing in your local web browser:
 
