@@ -5,7 +5,7 @@
 - [Pre-Implementation](#pre-Implementation)
 - [Create Knowledge Base](#create-knowledge-base)
 - [Create Agent](#create-agent)
-- [Post-Implementation](#post-Implementation)
+- [Testing and Validation](#testing-and-validation)
 
 ## Pre-Implementation
 
@@ -245,39 +245,7 @@ Once your agent is created, you will see a green "created successfully" banner.
   <span style="display: block; text-align: center;"><em>Figure 9: Agent Successfully Created Banner</em></span>
 </p>
 
-## Post-Implementation
-Following the successful creation of your agent and knowledge base, the next development phase involves the preparation and testing of your agent's functionality. Preparing the agent involves packaging the latest changes, while testing provides a critical opportunity to interact with and evaluate the agent's behavior. Through this process, you can refine its capabilities, enhance its efficiency, and address any potential issues or improvements necessary for optimal performance.
-
-### Prepare and Test Your Agent
-When you create an agent, it appears in the **Agents** section of the [Bedrock console](https://console.aws.amazon.com/bedrock/):
-
-<p align="center">
-  <img src="../design/agent-console-1.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 10: Agents for Amazon Bedrock Console</em></span>
-</p>
-
-10. To begin testing, select your agent in the Agents section, then choose **Working draft**. Initially, you have a working draft and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development:
-
-<p align="center">
-  <img src="../design/agent-console-2.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 11: Agent Overview Console</em></span>
-</p>
-    
-11. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
-
-<p align="center">
-  <img src="../design/agent-console-3.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 12: Agent Working Draft Console</em></span>
-</p>
-
-12. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the _TestAlias_ to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window:
-
-<p align="center">
-  <img src="../design/agent-prepare.png" width="40%" height="40%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 13: Agent Prepare Message</em></span>
-</p>
-
-Once you have accessed the testing window and prepared your agent, continue to [Testing and Validation](../documentation/testing-and-validation.md).
+With your agent and knowledge base successfully created, continue to [Testing and Validation](../documentation/testing-and-validation.md).
 
 ## Testing and Validation
 see [Testing and Validation](../documentation/testing-and-validation.md)
