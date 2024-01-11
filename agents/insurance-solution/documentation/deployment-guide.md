@@ -28,11 +28,11 @@ To initiate the security scan, run the following command:
 ```sh
 # git clone https://github.com/aws-samples/amazon-bedrock-samples
 # cd amazon-bedrock-samples
-cfn_nag_scan --input-path agents/insurance-solution/cfn/bedrock-insurance-agent.yml
+cfn_nag_scan --input-path agents/insurance-solution/cfn/bedrock-customer-resources.yml
 ```
 
 ### Deploy CloudFormation Stack to Emulate Existing Customer Resources 
-To emulate the existing customer resources utilized by the agent, this solution uses the [create-customer-resources.sh](../shell/create-customer-resources.sh) shell script to automate provisioning of the parameterized CloudFormation template, [bedrock-insurance-agent.yml](../cfn/bedrock-insurance-agent.yml), to deploy the following resources:
+To emulate the existing customer resources utilized by the agent, this solution uses the [create-customer-resources.sh](../shell/create-customer-resources.sh) shell script to automate provisioning of the parameterized CloudFormation template, [bedrock-customer-resources.yml](../cfn/bedrock-customer-resources.yml), to deploy the following resources:
 
 > - [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) table populated with synthetic [claims data](../agent/lambda/data-loader/claims.json).
 > - Three [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions that represent customer business logic for creating claims, sending pending document reminders for open status claims, and gathering evidence on new and existing claims.
@@ -58,7 +58,7 @@ export SNS_EMAIL=<YOUR-POLICY-HOLDER-EMAIL> # Email used for SNS notifications
 export EVIDENCE_UPLOAD_URL=<YOUR-EVIDENCE-UPLOAD-URL> # URL provided by the agent to the policy holder for evidence upload
 ```
 
-4. Run the _create-customer-resources.sh_ shell script to deploy the emulated customers resources defined in the _bedrock-insurance-agent.yml_ CloudFormation template. These are the resources on which the Bedrock Agent and Knowledge base will be built:
+4. Run the _create-customer-resources.sh_ shell script to deploy the emulated customers resources defined in the _bedrock-customer-resources.yml_ CloudFormation template. These are the resources on which the Bedrock Agent and Knowledge base will be built:
 
 ```sh
 source ./create-customer-resources.sh
@@ -91,7 +91,7 @@ export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
 
 aws cloudformation create-stack \
 --stack-name ${STACK_NAME} \
---template-body file://../cfn/bedrock-insurance-agent.yml \
+--template-body file://../cfn/bedrock-customer-resources.yml \
 --parameters \
 ParameterKey=ArtifactBucket,ParameterValue=${ARTIFACT_BUCKET_NAME} \
 ParameterKey=DataLoaderKey,ParameterValue=${DATA_LOADER_KEY} \
