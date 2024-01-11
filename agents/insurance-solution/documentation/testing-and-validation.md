@@ -95,8 +95,6 @@ Following the successful testing of your knowledge base, the next development ph
   <span style="display: block; text-align: center;"><em>Figure 17: Agent Prepare Message</em></span>
 </p>
 
-Once you have accessed the testing window and prepared your agent, continue to [Testing and Validation](../documentation/testing-and-validation.md).
-
  18. Test your agent using the following sample prompts and other various inputs of your own:
      
      - _Create a new claim._
