@@ -66,43 +66,37 @@ Your agent will sort user input into one of the following:
 ### Knowledge Base Testing
 After setting up your knowledge base in Amazon Bedrock, you can test its behavior directly to assess its responses before integrating it into an agent. This testing process enables you to evaluate the knowledge base's performance, inspect responses, and troubleshoot by exploring the source chunks from which information is retrieved.
 
-1. Navigate to the **Knowledge base* section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
+17. Navigate to the **Knowledge base** section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
 
 <p align="center">
   <img src="../design/kb-console-1.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
 </p>
 
-Choose the knowledge base you want to test.
-Select "Test knowledge base" or click on the left arrow in the top right corner of the page to expand a chat window.
+18. Select the knowledge base you want to test, then select **Test knowledge base** or click on the left arrow in the top right corner of the page to expand a chat window:
 
 <p align="center">
   <img src="../design/kb-console-2.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
 </p>
 
-Query Execution:
-
-Enter a query in the chat window and select "Run" to receive responses from the knowledge base.
-Two modes for response retrieval:
-Turn off "Generate responses for your query" to get information directly from your knowledge base.
-Turn on "Generate responses for your query" to generate responses based on your data sources.
+19. In the test window, select your foundation model for response generation. You can toggle between generating responses and returning direct quotations in the chat window, and you have the option to clear the chat window or copy all output using the provided icons.
 
 <p align="center">
   <img src="../design/kb-select-model.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
 </p>
 
+Enter a query in the chat window and select "Run" to receive responses from the knowledge base.
+Two modes for response retrieval:
+Turn off "Generate responses for your query" to get information directly from your knowledge base.
+Turn on "Generate responses for your query" to generate responses based on your data sources.
+
 Response Inspection:
 
 If generating responses, choose the model for response generation and apply. Footnotes cite information, and you can select them to view the corresponding source chunk.
 The Source chunks window allows actions like viewing, copying, and navigating to the S3 object of the data source.
 Additional Testing Actions:
-
-In the chat window:
-Change the model for response generation.
-Toggle between generating responses and returning direct quotations.
-Clear the chat window or copy all output using icons provided.
 
  13. Test the agent using the following sample prompts and various inputs of your own:
 - What is the diagnosis on the repair estimate for claim ID 2s34w-8x?
