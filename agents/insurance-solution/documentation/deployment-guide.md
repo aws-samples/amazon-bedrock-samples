@@ -117,7 +117,7 @@ Knowledge base functionality is delineated through two key processes:
 
 1. Documents undergo segmentation ("chunking") into manageable sections.
 2. Those chunks are then converted into embeddings using an Amazon Bedrock embedding model.
-3. The embeddings are utilized to create a vector index, enabling semantic similarity comparisons between queries and data source text.
+3. The embeddings are utilized to create a vector index, enabling semantic similarity comparisons between user queries and data source text.
      
 **Runtime Execution:**
 
