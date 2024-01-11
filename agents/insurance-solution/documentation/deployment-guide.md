@@ -69,14 +69,10 @@ source ./create-customer-resources.sh
 ```sh
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export ARTIFACT_BUCKET_NAME=$STACK_NAME-customer-resources
-export KB_BUCKET_NAME=$STACK_NAME-bedrock-kb
 export DATA_LOADER_KEY="agent/lambda/data-loader/loader_deployment_package.zip"
 export CREATE_CLAIM_KEY="agent/lambda/action-groups/create_claim.zip"
 export GATHER_EVIDENCE_KEY="agent/lambda/action-groups/gather_evidence.zip"
 export SEND_REMINDER_KEY="agent/lambda/action-groups/send_reminder.zip"
-
-aws s3 mb s3://${KB_BUCKET_NAME} --region us-east-1
-aws s3 cp ../agent/knowledge-base-assets/ s3://${KB_BUCKET_NAME}/knowledge-base-assets/ --recursive --exclude ".DS_Store"
 
 aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region us-east-1
 aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --recursive --exclude ".DS_Store"
@@ -100,7 +96,7 @@ ParameterKey=GatherEvidenceKey,ParameterValue=${GATHER_EVIDENCE_KEY} \
 ParameterKey=SendReminderKey,ParameterValue=${SEND_REMINDER_KEY} \
 ParameterKey=BedrockAgentsLayerArn,ParameterValue=${BEDROCK_AGENTS_LAYER_ARN} \
 ParameterKey=SNSEmail,ParameterValue=${SNS_EMAIL} \
-ParameterKey=CustomerWebsiteUrl,ParameterValue=${CUSTOMER_WEBSITE_URL} \
+ParameterKey=EvidenceUploadUrl,ParameterValue=${EVIDENCE_UPLOAD_URL} \
 --capabilities CAPABILITY_NAMED_IAM
 
 aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
@@ -149,7 +145,7 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
   <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Data Source Sync</em></span>
 </p>
 
-7. Navigate to the [Knowledge Base Console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
+7. Navigate to the [Knowledge base Console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
 
 <p align="center">
   <img src="../design/kb-overview.png" width="95%" height="95%"><br>
