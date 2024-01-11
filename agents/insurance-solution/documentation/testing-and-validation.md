@@ -185,7 +185,7 @@ streamlit run agent_streamlit.py
   <span style="display: block; text-align: center;"><em>Figure 21: Streamlit Agent Application</em></span>
 </p>
 
-While the demonstrated solution showcases the capabilities of Agents and Knowledge base for Amazon Bedrock, it is important to understand that this solution is not Production-ready. Rather, it serves as a conceptual guide for developers aiming to create personalized agents for their own specific tasks and automated workflows. Developers aiming for production deployment should refine and adapt this initial model, keeping in mind the several key considerations outlined in this [Amazon Bedrock generative AI agent blog](https://aws.amazon.com/blogs/machine-learning/build-generative-ai-agents-with-amazon-bedrock-amazon-dynamodb-amazon-kendra-amazon-lex-and-langchain/).
+While the demonstrated solution showcases the capabilities of Agents and Knowledge base for Amazon Bedrock, it is important to understand that this solution is not Production-ready. Rather, it serves as a conceptual guide for developers aiming to create personalized agents for their own specific tasks and automated workflows. Developers aiming for production deployment should refine and adapt this initial model, keeping in mind the several key considerations outlined in the [Amazon Bedrock generative AI agent blog](https://aws.amazon.com/blogs/machine-learning/build-generative-ai-agents-with-amazon-bedrock-amazon-dynamodb-amazon-kendra-amazon-lex-and-langchain/).
 
 ## Resources
 - [Generative AI on AWS](https://aws.amazon.com/generative-ai/)
