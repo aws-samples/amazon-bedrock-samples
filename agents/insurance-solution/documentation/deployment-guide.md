@@ -3,8 +3,8 @@
 
 ## Content
 - [Pre-Implementation](#pre-Implementation)
-- [Create Knowledge Base](#create-knowledge-base)
-- [Create Agent](#create-agent)
+- [Create Knowledge Base](#create-knowledge-base-for-amazon-bedrock)
+- [Create Agent](#create-agent-for-amazon-bedrock)
 - [Testing and Validation](#testing-and-validation)
 
 ## Pre-Implementation
