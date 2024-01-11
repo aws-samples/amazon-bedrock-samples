@@ -67,28 +67,28 @@ To inspect knowledge base responses and source chunks, you can select the corres
 ## Test Agent
 Following the successful testing of your knowledge base, the next development phase involves the preparation and testing of your agent's functionality. Preparing the agent involves packaging the latest changes, while testing provides a critical opportunity to interact with and evaluate the agent's behavior. Through this process, you can refine its capabilities, enhance its efficiency, and address any potential issues or improvements necessary for optimal performance.
 
-When you create an agent, it appears in the **Agents** section of the [Bedrock console](https://console.aws.amazon.com/bedrock/):
+14. Navigate to the **Agents** section of the [Bedrock console](https://console.aws.amazon.com/bedrock/):
 
 <p align="center">
   <img src="../design/agent-console-1.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 14: Agents for Amazon Bedrock Console</em></span>
 </p>
 
-14. To begin testing, select your agent in the Agents section, then choose **Working draft**. Initially, you have a working draft and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development:
+15. To begin testing, select your agent in the Agents section, then choose **Working draft**. Initially, you have a working draft and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development:
 
 <p align="center">
   <img src="../design/agent-console-2.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 15: Agent Overview Console</em></span>
 </p>
     
-15. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
+16. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
 
 <p align="center">
   <img src="../design/agent-console-3.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 16: Agent Working Draft Console</em></span>
 </p>
 
-16. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the _TestAlias_ to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window:
+17. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the _TestAlias_ to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window:
 
 <p align="center">
   <img src="../design/agent-prepare.png" width="40%" height="40%"><br>
@@ -97,7 +97,7 @@ When you create an agent, it appears in the **Agents** section of the [Bedrock c
 
 Once you have accessed the testing window and prepared your agent, continue to [Testing and Validation](../documentation/testing-and-validation.md).
 
- 17. Test your agent using the following sample prompts and other various inputs of your own:
+ 18. Test your agent using the following sample prompts and other various inputs of your own:
      
      - _Create a new claim._
      - _Send a pending documents reminder to the policy holder of claim ID 2s34w-8x._
@@ -126,7 +126,7 @@ Your agent will sort user input into one of the following:
 - **Category D:** Questions that can be answered or assisted by our function calling agent using ONLY the functions it has been provided and arguments from within conversation_history or relevant arguments it can gather using the askuser function.
 - **Category E:** Inputs that are not questions but instead are answers to a question that the function calling agent asked the user. Inputs are only eligible for this category when the _askuser_ function is the last function that the function calling agent called in the conversation. You can check this by reading through the conversation_history.
 
-18. Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations.
+19. Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations.
 
     In the following action group tracing example, the agent maps the user input to the create-claim action group's createClaim function during pre-processing. The agent possesses an understanding of this function based on the agent instructions, action group description, and OpenAPI schema. During the orchestration process, which is two steps in this case, the agent invokes the createClaim function and receives a final response that includes the newly created claim ID and list of pending documents.
 
@@ -148,7 +148,7 @@ Once you are satisfied with the performance of your agent and knowledge base, yo
 - **Agent for Amazon Bedrock - Prompt Input:** Allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input.
 - **Knowledge Base for Amazon Bedrock - File Upload:** Enables the user to upload their local files to the Amazon S3 bucket that is being used as the data source for the customer's knowledge base. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
 
-19. To run your Streamlit application, execute the following command then continue to [Testing and Validation](../documentation/testing-and-validation.md).
+20. To run your Streamlit application, execute the following command then continue to [Testing and Validation](../documentation/testing-and-validation.md).
 
 ```sh 
 streamlit run agent_streamlit.py
