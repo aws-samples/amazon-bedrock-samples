@@ -49,14 +49,14 @@ Your agent will sort user input into one of the following:
 
 14. Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations.
 
-In the following action group tracing example, the agent maps the user input to the create-claim action group's createClaim function during pre-processing. The agent possesses an understanding of this function based on the agent instructions, action group description, and OpenAPI schema. During the orchestration process, which is two steps in this case, the agent invokes the createClaim function and receives a final response that includes the newly created claim ID and list of pending documents.
+    In the following action group tracing example, the agent maps the user input to the create-claim action group's createClaim function during pre-processing. The agent possesses an understanding of this function based on the agent instructions, action group description, and OpenAPI schema. During the orchestration process, which is two steps in this case, the agent invokes the createClaim function and receives a final response that includes the newly created claim ID and list of pending documents.
 
 <p align="center">
   <img src="../design/ag-tracing.png"><br>
   <span style="display: block; text-align: center;"><em>Figure 15: Agent Tracing</em></span>
 </p>
 
-In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. 
+    In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. 
 
 <p align="center">
   <img src="../design/kb-tracing.png"><br>
