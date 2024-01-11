@@ -32,21 +32,21 @@ After setting up your knowledge base in Amazon Bedrock, you can test its behavio
 
 <p align="center">
   <img src="../design/kb-console-1.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 10: Knowledge Base for Amazon Bedrock Console</em></span>
 </p>
 
 11. Select the knowledge base you want to test, then select **Test knowledge base** or click on the left arrow in the top right corner of the page to expand a chat window:
 
 <p align="center">
   <img src="../design/kb-console-2.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 11: Knowledge Base Console</em></span>
 </p>
 
 12. In the test window, select your foundation model for response generation. You can toggle between generating responses and returning direct quotations in the chat window, and you have the option to clear the chat window or copy all output using the provided icons.
 
 <p align="center">
   <img src="../design/kb-select-model.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 17: Agents for Amazon Bedrock Console</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 12: Knowledge Base Select Model</em></span>
 </p>
 
 13. Test your knowledge using the following sample queries and other various inputs of your own:
@@ -58,8 +58,8 @@ After setting up your knowledge base in Amazon Bedrock, you can test its behavio
 - What is a deductible and how does it work?
 
 <p align="center">
-  <img src="../design/kb-console-testing.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 17: Knowledge Base for Amazon Bedrock Console</em></span>
+  <img src="../design/kb-console-testing.png" width="40%" height="40%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 13: Knowledge Base Testing and Validation</em></span>
 </p>
 
 To inspect knowledge base responses and source chunks, you can select the corresponding footnote and a **Source chunks** window appears. Within the **Source chunks** window, you can copy the chunk text, navigate to the S3 data source, and use the search bar to search the text.
@@ -71,28 +71,28 @@ When you create an agent, it appears in the **Agents** section of the [Bedrock c
 
 <p align="center">
   <img src="../design/agent-console-1.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 10: Agents for Amazon Bedrock Console</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 14: Agents for Amazon Bedrock Console</em></span>
 </p>
 
 14. To begin testing, select your agent in the Agents section, then choose **Working draft**. Initially, you have a working draft and a default _TestAlias_ pointing to this draft. The working draft allows for iterative development:
 
 <p align="center">
   <img src="../design/agent-console-2.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 11: Agent Overview Console</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 15: Agent Overview Console</em></span>
 </p>
     
 15. Select **Prepare** to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
 
 <p align="center">
   <img src="../design/agent-console-3.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 12: Agent Working Draft Console</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 16: Agent Working Draft Console</em></span>
 </p>
 
 16. Access the test window from any page within the agent's working draft console by selecting the left arrow icon at the top right. In the test window, select an alias and its version for testing. We will use the _TestAlias_ to invoke the draft version of our agent. If the agent is not prepared, a prompt appears in the test window:
 
 <p align="center">
   <img src="../design/agent-prepare.png" width="40%" height="40%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 13: Agent Prepare Message</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 17: Agent Prepare Message</em></span>
 </p>
 
 Once you have accessed the testing window and prepared your agent, continue to [Testing and Validation](../documentation/testing-and-validation.md).
@@ -113,7 +113,7 @@ Once you have accessed the testing window and prepared your agent, continue to [
 
 <p align="center">
   <img src="../design/agent-console-testing.png"><br>
-  <span style="display: block; text-align: center;"><em>Figure 14: Agent and Knowledge Base Testing and Validation</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 18: Agent Testing and Validation</em></span>
 </p>
 
 ### Agent Analysis and Debugging Tools
@@ -132,14 +132,14 @@ Your agent will sort user input into one of the following:
 
     <p align="center">
       <img src="../design/ag-tracing.png"><br>
-      <span style="display: block; text-align: center;"><em>Figure 15: Agent Tracing</em></span>
+      <span style="display: block; text-align: center;"><em>Figure 19: Agent Tracing</em></span>
     </p>
 
     In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. Throughout orchestration, the agent searches the knowledge base, pulls the relevant chunks using embeddings, then passes that text to the foundation model to generate a final response.
 
     <p align="center">
       <img src="../design/kb-tracing.png"><br>
-      <span style="display: block; text-align: center;"><em>Figure 16: Knowledge Base Tracing</em></span>
+      <span style="display: block; text-align: center;"><em>Figure 20: Knowledge Base Tracing</em></span>
     </p>
 
 ## Deploy Streamlit Web UI for Your Agent
@@ -155,7 +155,7 @@ streamlit run agent_streamlit.py
 ```
 <p align="center">
   <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 17: Streamlit Agent Application</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 21: Streamlit Agent Application</em></span>
 </p>
 
 While the demonstrated solution showcases the capabilities of Agents and Knowledge base for Amazon Bedrock, it is important to understand that this solution is not Production-ready. Rather, it serves as a conceptual guide for developers aiming to create personalized agents for their own specific tasks and automated workflows. Developers aiming for production deployment should refine and adapt this initial model, keeping in mind the several key considerations outlined in this [Amazon Bedrock generative AI agent blog](https://aws.amazon.com/blogs/machine-learning/build-generative-ai-agents-with-amazon-bedrock-amazon-dynamodb-amazon-kendra-amazon-lex-and-langchain/).
