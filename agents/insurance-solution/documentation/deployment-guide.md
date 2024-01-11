@@ -163,7 +163,7 @@ Knowledge base for Amazon Bedrock leverages Retrieval Augmented Generation (RAG)
   <span style="display: block; text-align: center;"><em>Figure 5: Knowledge Base Data Source Overview</em></span>
 </p>
 
-❗ Knowledge base ID and Data source ID will be used as environment variables in the later Testing and Validation phase.
+❗ Knowledge base ID and Data source ID will be used as environment variables in the later _Deploy Streamlit Web UI for Your Agent_ section.
 
 ## Create Agent for Amazon Bedrock
 Agents operate through a build-time execution process, comprising several key components:
