@@ -56,7 +56,7 @@ Your agent will sort user input into one of the following:
       <span style="display: block; text-align: center;"><em>Figure 15: Agent Tracing</em></span>
     </p>
 
-    In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. 
+    In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. Throughout orchestration, the agent searches the knowledge base, pulls the relevant chunks using embeddings, then passes that text to the foundation model to generate a final response.
 
     <p align="center">
       <img src="../design/kb-tracing.png"><br>
