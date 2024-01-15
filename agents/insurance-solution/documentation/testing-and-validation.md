@@ -102,7 +102,7 @@ Following the successful testing of your knowledge base, the next development ph
      - _Create a new claim._
      - _Send a pending documents reminder to the policy holder of claim ID 2s34w-8x._
      - _Gather evidence for claim ID 5t16u-7v._
-     - _What is the total claims amount for claim ID 3b45c-9d?_
+     - _What is the total claim amount for claim ID 3b45c-9d?_
      - _What is the total repair estimate for claim ID 3b45c-9d?_
      - _What factors determine my car insurance premium?_
      - _How can I lower my car insurance rates?_
