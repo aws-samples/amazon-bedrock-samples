@@ -1,0 +1,212 @@
+[
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Pop",
+    "year": 2022,
+    "price": 16500
+  },
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Trekking",
+    "year": 2022,
+    "price": 19995
+  },
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Lounge",
+    "year": 2022,
+    "price": 20745
+  },
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Pop",
+    "year": 2021,
+    "price": 16495
+  },
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Trekking",
+    "year": 2021,
+    "price": 20390
+  },
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Lounge",
+    "year": 2021,
+    "price": 21140
+  },
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Pop",
+    "year": 2020,
+    "price": 16245
+  },
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Trekking",
+    "year": 2020,
+    "price": 20140
+  },
+  {
+    "model_name": "Fiat 500",
+    "model_id": "Lounge",
+    "year": 2020,
+    "price": 20895
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "S",
+    "year": 2022,
+    "price": 24995
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "SE",
+    "year": 2022,
+    "price": 28695
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "R",
+    "year": 2022,
+    "price": 44990
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "S",
+    "year": 2021,
+    "price": 23195
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "SE",
+    "year": 2021,
+    "price": 28395
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "GTI",
+    "year": 2021,
+    "price": 29690
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "R",
+    "year": 2021,
+    "price": 44990
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "S",
+    "year": 2020,
+    "price": 22740
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "SE",
+    "year": 2020,
+    "price": 27595
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "GTI",
+    "year": 2020,
+    "price": 28695
+  },
+  {
+    "model_name": "Volkswagen Golf",
+    "model_id": "R",
+    "year": 2020,
+    "price": 41290
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X1",
+    "year": 2022,
+    "price": 36600
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X3",
+    "year": 2022,
+    "price": 43700
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X5",
+    "year": 2022,
+    "price": 59400
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X6",
+    "year": 2022,
+    "price": 65100
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X7",
+    "year": 2022,
+    "price": 74900
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X1",
+    "year": 2021,
+    "price": 35400
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X3",
+    "year": 2021,
+    "price": 42500
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X5",
+    "year": 2021,
+    "price": 58800
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X6",
+    "year": 2021,
+    "price": 64300
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X7",
+    "year": 2021,
+    "price": 73900
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X1",
+    "year": 2020,
+    "price": 34950
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X3",
+    "year": 2020,
+    "price": 41950
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X5",
+    "year": 2020,
+    "price": 58500
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X6",
+    "year": 2020,
+    "price": 63550
+  },
+  {
+    "model_name": "BMW",
+    "model_id": "X7",
+    "year": 2020,
+    "price": 73900
+  }
+]
