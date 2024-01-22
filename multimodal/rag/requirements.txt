@@ -1,6 +1,6 @@
 requests==2.31.0
 pandas==2.1.3
 boto3==1.29.5
-pillow==10.1.0
+pillow==10.2.0
 faiss-cpu==1.7.4
 langchain==0.0.340
