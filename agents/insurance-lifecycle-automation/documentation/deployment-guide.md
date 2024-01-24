@@ -132,7 +132,7 @@ Knowledge base functionality is delineated through two key processes:
 
     a. Under **Provide knowledge base details**, enter a _Knowledge base name_ and the following optional _Description_, leaving all other default settings:
     ```sh
-    Use this knowledge base to answer general question about car insurance premiums and access claim amounts, repair estimates, document details, rate, policy, accident, and coverage questions
+    Use to retrieve claim amount and repair estimate information for claim ID, or answer general insurance questions about things like coverage, premium, policy, rate, deductible, accident, and documents
     ```
     b. Under **Set up data source**, enter a _Data source name_ then choose _Browse S3_ and select the 'knowledge-base-assets' folder of the data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-customer-resources/agent/knowledge-base-assets/):
 
