@@ -1,4 +1,4 @@
-# Task Automation Using Agents and Knowledge Base for Amazon Bedrock - Insurance Agent. 
+# Insurance Lifecycle Automation Using Agents and Knowledge Base for Amazon Bedrock 
 ---
 
 ## Content
