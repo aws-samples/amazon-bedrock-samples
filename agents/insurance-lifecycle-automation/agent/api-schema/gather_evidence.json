@@ -1,0 +1,52 @@
+{"openapi": "3.0.0",
+    "info": {
+        "title": "Insurance Claim Evidence Gathering API",
+        "version": "1.0.0",
+        "description": "API for gathering evidence like driver's license, vehicle registration, and vehicle and accident photos for an insurance claim with pending documents"
+    },
+    "paths": {
+        "/claims/{claimId}/gather-evidence": {
+            "post": {
+                "summary": "Gather evidence from the policy holder for the specified claim",
+                "description": "Send the policy holder for the provided claim ID a plaintext URL that they can use to upload their pending documents. Also, return the tracking ID and status in plaintext.",
+                "operationId": "gatherEvidence",
+                "parameters": [{
+                    "name": "claimId",
+                    "in": "path",
+                    "description": "Unique ID of the open insurance claim",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Collects insurance claim evidence from the policy holder through a pending documents upload URL",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "documentUploadUrl": {
+                                            "type": "string",
+                                            "format": "uri",
+                                            "description": "URL for the policy holder to upload their pending documents"
+                                        },
+                                        "documentUploadTrackingId": {
+                                            "type": "string",
+                                            "description": "Unique ID to track the status of the pending documents upload"
+                                        },
+                                        "documentUploadStatus": {
+                                            "type": "string",
+                                            "description": "Status of pending documents upload"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
