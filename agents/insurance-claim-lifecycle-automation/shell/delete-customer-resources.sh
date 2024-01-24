@@ -1,5 +1,5 @@
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
-# cd amazon-bedrock-samples/agents/insurance-solution/shell/
+# cd amazon-bedrock-samples/agents/insurance-claim-lifecycle-automation/shell/
 # chmod u+x delete-customer-resources.sh
 # ./delete-customer-resources.sh
 
