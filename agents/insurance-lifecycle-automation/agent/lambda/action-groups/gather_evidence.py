@@ -20,6 +20,12 @@ sns_client = boto3.client('sns')
 # URL
 url = os.environ['CUSTOMER_WEBSITE_URL']
 
+def get_named_parameter(event, name):
+    return next(item for item in event['parameters'] if item['name'] == name)['value']
+
+def get_named_property(event, name):
+    return next(item for item in event['requestBody']['content']['application/json']['properties'] if item['name'] == name)['value']
+
 def generate_upload_id(length):
     print("Generating Upload ID")
 
@@ -47,11 +53,12 @@ def gather_evidence(event):
     print("Gathering Evidence")
 
     # Extracting claimId value from event parameters
-    claim_id = None
+    claim_id = get_named_parameter(event, 'claimId')
+    '''
     for param in event.get('parameters', []):
         if param.get('name') == 'claimId': 
             claim_id = param.get('value')
-            break
+            break'''
 
     print("Claim ID: " + str(claim_id))
 

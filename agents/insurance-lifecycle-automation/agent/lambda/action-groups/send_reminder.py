@@ -18,6 +18,12 @@ existing_claims_table_name = os.environ['EXISTING_CLAIMS_TABLE_NAME']
 sns_topic_arn = os.environ['SNS_TOPIC_ARN']
 sns_client = boto3.client('sns')
 
+def get_named_parameter(event, name):
+    return next(item for item in event['parameters'] if item['name'] == name)['value']
+
+def get_named_property(event, name):
+    return next(item for item in event['requestBody']['content']['application/json']['properties'] if item['name'] == name)['value']
+
 def open_claims():
     print("Finding Open Claims")
 
@@ -70,11 +76,12 @@ def notify_pending_documents(event):
     print("Notify Pending Documents")
     
     # Extracting claimId value from event parameters
-    claim_id = None
+    claim_id = get_named_parameter(event, 'claimId')
+    '''claim_id = None
     for param in event.get('parameters', []):
         if param.get('name') == 'claimId': 
             claim_id = param.get('value')
-            break
+            break'''
 
     print("Claim ID: " + str(claim_id))
 
