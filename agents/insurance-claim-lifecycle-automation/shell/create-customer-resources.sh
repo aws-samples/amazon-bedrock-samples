@@ -1,5 +1,5 @@
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
-# cd amazon-bedrock-samples/agents/insurance-solution/shell/
+# cd amazon-bedrock-samples/agents/insurance-claim-lifecycle-automation/shell/
 # chmod u+x create-customer-resources.sh
 # export STACK_NAME=<YOUR-STACK-NAME> # Stack name must be lower case for S3 bucket naming convention
 # export SNS_EMAIL=<YOUR-POLICY-HOLDER-EMAIL> # Email used for SNS notifications
