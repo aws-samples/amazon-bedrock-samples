@@ -141,7 +141,7 @@ Knowledge base functionality is delineated through two key processes:
       <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base Data Source Configuration</em></span>
     </p>
 
-    c. Under **Configure vector store**, leave the default settings. An [OpenSearch Serverless vector store](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html) will be created for you. This vector store is where the knowledge base pre-processing embeddings are stored and later used for semantic similarity search between queries and data source text.
+    c. Under **Select embeddings model and configure vector store**, select Titan Embeddings G1 - Text and leave the other default settings. An [OpenSearch Serverless vector store](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html) will be created for you. This vector store is where the knowledge base pre-processing embeddings are stored and later used for semantic similarity search between queries and data source text.
 
     d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
 
