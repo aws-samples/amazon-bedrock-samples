@@ -1,4 +1,4 @@
-# Task Automation Using Agents and Knowledge Base for Amazon Bedrock - Insurance Agent. 
+# Insurance Claim Lifecycle Automation Using Agents and Knowledge Base for Amazon Bedrock
 ---
 
 ## Content
@@ -10,9 +10,9 @@
 
 ## Overview
 
-You can now use [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) and [Knowledge base for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) to configure specialized agents that seamlessly execute actions based on user input and your organization's data. These managed agents play conductor, orchestrating interactions between foundation models, API integrations, user conversations, and knowledge bases loaded with your data. Agents and knowledge bases allow you to **build on existing enterprise resources** to enhance user experience and automate repetitive tasks.
+You can now use [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) and [Knowledge base for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) to configure specialized agents that seamlessly execute actions based on user input and your organization's data. These managed agents play conductor, orchestrating interactions between foundation models (FMs), API integrations, user conversations, and knowledge bases loaded with your data. 
 
-This insurance agent sample solution combines an Agent and Knowledge base for Amazon Bedrock to automate insurance claim lifecycle actions like creating new claims, sending pending document reminders for open claims, gathering claims evidence, and searching for information on existing claims.
+This sample solution highlights how you can use Agents and Knowledge base for Amazon Bedrock to **build on existing enterprise resources** to automate the tasks associated with the insurance claim lifecycle, efficiently scale and improve customer service, and enhance decision support through improved knowledge management. Your Bedrock-powered insurance agent can assist human agents by creating new claims, sending pending document reminders for open claims, gathering claims evidence, and searching for information across existing claims and customer knowledge repositories.
 
 ## Agents and Knowledge Base for Amazon Bedrock
 
@@ -40,7 +40,7 @@ Agents and Knowledge Base for Amazon Bedrock work together to provide the follow
     - _Send a pending documents reminder to the policy holder of claim ID 2s34w-8x._
     - _Gather evidence for claim ID 5t16u-7v._
     - _What is the total claim amount for claim ID 3b45c-9d?_
-    - _What is the total repair estimate for claim ID 3b45c-9d?_
+    - _What is the total repair estimate for that same claim?_
     - _What factors determine my car insurance premium?_
     - _How can I lower my car insurance rates?_
     - _Which claims have open status?_
@@ -50,11 +50,11 @@ Agents and Knowledge Base for Amazon Bedrock work together to provide the follow
 
 3. During **orchestration**, the agent develops a _rational_ with the logical steps of which action group API invocations and knowledge base queries are needed to generate an _observation_ that can be used to augment the base prompt for the underlying foundation model. This ReAct style of prompting serves as the input for activating the foundation model, which then anticipates the most optimal sequence of actions to complete the user's task.
 
-4. [Action groups](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-setup.html) are a set of APIs and corresponding business logic, whose OpenAPI schema is defined as JSON files stored in S3. The schema allows the agent to reason around the function of each API. Each action group can specify one or more API paths, whose business logic is executed through the Lambda function associated with the action group.
+4. [Action groups](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-setup.html) are a set of APIs and corresponding business logic, whose OpenAPI schema is defined as JSON files stored in [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html). The schema allows the agent to reason around the function of each API. Each action group can specify one or more API paths, whose business logic is executed through the Lambda function associated with the action group.
 
-5. [Knowledge bases](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) provide fully-managed RAG to supply the agent with access to your data. You first configure the knowledge base by specifying a description that instructs the agent when to use your knowledge base. Then you point the knowledge base to your Amazon S3 data source. Finally, you specify your existing vector store or allow Bedrock to create the vector store on your behalf. Once configured, each [data source sync](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-ingest.html) creates vector embeddings of your data that the agent can use to return information to the user or augment subsequent foundation model prompts.
+5. [Knowledge bases](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) provide fully-managed RAG to supply the agent with access to your data. You first configure the knowledge base by specifying a description that instructs the agent when to use your knowledge base. Then you point the knowledge base to your Amazon S3 data source. Finally, you specify an embedding model and choose to use your existing vector store or allow Bedrock to create the vector store on your behalf. Once configured, each [data source sync](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-ingest.html) creates vector embeddings of your data that the agent can use to return information to the user or augment subsequent foundation model prompts.
 
-6. During **post-processing**, once all _orchestration_ iterations are complete, the agent curates a final response. 
+6. During **post-processing**, once all _orchestration_ iterations are complete, the agent curates a final response. Post-processing is disabled by default.
 
 ## Deployment Guide
 see [Deployment Guide](documentation/deployment-guide.md)
