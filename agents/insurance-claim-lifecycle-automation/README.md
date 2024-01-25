@@ -16,7 +16,7 @@ This sample solution highlights how you can use Agents and Knowledge base for Am
 
 ### Demo Recording
 
-[<img src="design/demo-thumbnail.png" width="100%">](https://www.youtube.com/watch?v=nx0EemFD7ic "Automate the insurance claim lifecycle using Agents and Knowledge base for Amazon Bedrock  - YouTube")
+[<img src="design/demo-thumbnail.png" width="100%">](https://youtu.be/RFygzPr7qfw "Automate the insurance claim lifecycle using Agents and Knowledge base for Amazon Bedrock  - YouTube")
 
 ## Agents and Knowledge Base for Amazon Bedrock
 
