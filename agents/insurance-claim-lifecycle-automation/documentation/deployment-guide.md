@@ -8,6 +8,11 @@
 - [Testing and Validation](#testing-and-validation)
 
 ## Pre-Implementation
+By default, AWS CloudFormation uses a temporary session that it generates from your user credentials for stack operations. If you specify a service role, CloudFormation will instead use that role's credentials.
+
+To deploy this solution, your IAM user/role or service role must have permissions to deploy the resources specified in the CloudFormation template. For more details on AWS Identity and Access Management (IAM) with CloudFormation, please refer to the AWS CloudFormation User Guide.
+
+You must also have AWS CLI installed. For instructions on installing AWS CLI, please see Installing, updating, and uninstalling the AWS CLI.
 
 ### Clone [_amazon-bedrock-samples_](https://github.com/aws-samples/amazon-bedrock-samples) Repository
 1. Create a local copy of the **amazon-bedrock-samples** repository using _git clone_:
