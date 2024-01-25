@@ -126,6 +126,8 @@ Knowledge base functionality is delineated through two key processes:
 6. The vector index is queried for chunks related to the user's query, augmenting the user prompt with additional context retrieved from the vector index.
 7. The augmented prompt, coupled with the additional context, is then used to generate a response for the user.
 
+---
+
 ### Deploy Knowledge Base
 
 1. Navigate to the [Amazon Bedrock > Knowledge base > Create knowledge base console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases/create-knowledge-base):
