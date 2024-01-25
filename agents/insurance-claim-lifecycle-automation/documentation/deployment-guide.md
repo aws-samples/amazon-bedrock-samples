@@ -115,18 +115,16 @@ Knowledge base functionality is delineated through two key processes:
 
 **Pre-Processing Data:**
 
-1. Documents undergo segmentation ("chunking") into manageable sections.
-2. Those chunks are then converted into embeddings using an Amazon Bedrock embedding model.
-3. The embeddings are utilized to create a vector index, enabling semantic similarity comparisons between user queries and data source text.
+> 1. Documents undergo segmentation ("chunking") into manageable sections.
+> 2. Those chunks are then converted into embeddings using an Amazon Bedrock embedding model.
+> 3. The embeddings are utilized to create a vector index, enabling semantic similarity comparisons between user queries and data source text.
      
 **Runtime Execution:**
 
-4. During runtime, users provide their text input as a prompt.
-5. User input text is transformed into vectors using an Amazon Bedrock embedding model.
-6. The vector index is queried for chunks related to the user's query, augmenting the user prompt with additional context retrieved from the vector index.
-7. The augmented prompt, coupled with the additional context, is then used to generate a response for the user.
-
----
+> 4. During runtime, users provide their text input as a prompt.
+> 5. User input text is transformed into vectors using an Amazon Bedrock embedding model.
+> 6. The vector index is queried for chunks related to the user's query, augmenting the user prompt with additional context retrieved from the vector index.
+> 7. The augmented prompt, coupled with the additional context, is then used to generate a response for the user.
 
 ### Deploy Knowledge Base
 
