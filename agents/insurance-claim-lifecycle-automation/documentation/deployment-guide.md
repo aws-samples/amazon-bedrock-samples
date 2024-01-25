@@ -252,7 +252,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
   <span style="display: block; text-align: center;"><em>Figure 8: Agent Configuration Settings</em></span>
 </p>
 
-Once your agent is created, you will see a green "created successfully" banner.
+Once your agent is created, you will see a green "successfully created" banner.
 
 <p align="center">
   <img src="../design/agent-creation-banner.png" width="80%" height="80%"><br>
