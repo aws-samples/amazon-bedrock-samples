@@ -141,6 +141,7 @@ Resources:
               - dynamodb:Query
               - dynamodb:Scan
               - dynamodb:UpdateItem
+              - lambda:Get*
               - lambda:InvokeFunction
               - bedrock:InvokeModel
               - sns:Publish
