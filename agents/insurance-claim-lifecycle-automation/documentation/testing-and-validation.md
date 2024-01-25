@@ -25,7 +25,7 @@ The following testing procedure aims to verify that the agent correctly identifi
     - **Response Quality Assessment:** Evaluate the overall accuracy, relevancy, and coherence of the agent's responses in diverse contexts and scenarios.
 
 ## Test Knowledge Base
-After setting up your knowledge base in Amazon Bedrock, you can test its behavior directly to assess its responses before integrating it into an agent. This testing process enables you to evaluate the knowledge base's performance, inspect responses, and troubleshoot by exploring the source chunks from which information is retrieved.
+After setting up your knowledge base in Amazon Bedrock, you can test its behavior directly to assess its responses before integrating it with an agent. This testing process enables you to evaluate the knowledge base's performance, inspect responses, and troubleshoot by exploring the source chunks from which information is retrieved.
 
 1. Navigate to the **Knowledge base** section of the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/):
 
