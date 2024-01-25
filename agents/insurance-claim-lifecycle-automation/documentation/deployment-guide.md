@@ -192,18 +192,18 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
 1. Navigate to the [Amazon Bedrock > Agents > Create Agent console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/agents/create):
 
-    a. Enter an _Agent name_ and optional _Description_, leaving all other default settings.
+    a. Under **Provide Agent details**, enter an agent name and optional description, leaving all other default settings.
 
-    b. Select **Anthropic Claude V2.1** for _Model details_ and specify the following _Instructions for the Agent_, then select **Next**:
+    b. Under **Select model**, select _Anthropic Claude V2.1_ and specify the following instructions for the agent, then select **Next**:
     ```
     You are an insurance agent that has access to domain-specific insurance knowledge. You can create new insurance claims, send pending document reminders to policy holders with open claims, and gather claim evidence. You can also retrieve claim amount and repair estimate information for a specific claim ID or answer general insurance questions about things like coverage, premium, policy, rate, deductible, accident, documents, resolution, and condition. You can answer internal questions about things like which steps an agent should follow and the company's internal processes. You can respond to questions about multiple claim IDs within a single conversation.
     ```
 
-    c. Add the following three action groups then select **Next**:
+    c. Under **Add Action groups**, add the following three action groups then select **Next**:
 
     **Action group 1 - create-claim:**
    
-    > i. Description: Use this action group to create an insurance claim.
+    > i. **Description:** Use this action group to create an insurance claim.
     > 
     > ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-CreateClaimFunction_.
     > 
@@ -216,7 +216,7 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
     **Action group 2 - gather-evidence:**
 
-    > i. Description: Use this action group to send the user a URL for evidence upload on open status claims with pending documents. Return the documentUploadUrl to the user.
+    > i. **Description:** Use this action group to send the user a URL for evidence upload on open status claims with pending documents. Return the documentUploadUrl to the user.
     > 
     > ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-GatherEvidenceFunction_.
     > 
@@ -224,9 +224,10 @@ The agent in this sample solution will use an Anthropic Claude V2.1 foundation m
 
     **Action group 3 - send-reminder:**
 
-    > i. Description: Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders.
+    > i. **Description:** Use this action group to check claim status, identify missing or pending documents, and send reminders to policy holders.
     >
     > ii. Under **Select Lambda function**, choose _<YOUR-STACK-NAME>-SendReminderFunction_.
+    > 
     > iii. Under **Select API schema**, choose _Browse S3_, pick the bucket created during the preceding deployment step, then select _agent/api-schema/send_reminder.json_.
 
     d. Add Knowledge base:
