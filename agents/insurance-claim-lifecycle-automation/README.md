@@ -14,6 +14,10 @@ You can now use [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/
 
 This sample solution highlights how you can use Agents and Knowledge base for Amazon Bedrock to **build on existing enterprise resources** to automate the tasks associated with the insurance claim lifecycle, efficiently scale and improve customer service, and enhance decision support through improved knowledge management. Your Bedrock-powered insurance agent can assist human agents by creating new claims, sending pending document reminders for open claims, gathering claims evidence, and searching for information across existing claims and customer knowledge repositories.
 
+### Demo Recording
+
+[<img src="design/demo-thumbnail.png" width="100%">](https://www.youtube.com/watch?v=nx0EemFD7ic "Automate the insurance claim lifecycle using Agents and Knowledge base for Amazon Bedrock  - YouTube")
+
 ## Agents and Knowledge Base for Amazon Bedrock
 
 ### Agents and Knowledge Base Functionality
