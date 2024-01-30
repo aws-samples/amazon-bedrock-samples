@@ -47,6 +47,7 @@ s3_client = boto3.client('s3',region_name=os.environ['AWS_REGION'],config=boto3.
 custom_css = """
     <style>
         .text-with-bg {
+        color: white;
             background-color: #1c2e4a; /* Change this to your desired background color */
             padding: 10px;
             border-radius: 5px;
