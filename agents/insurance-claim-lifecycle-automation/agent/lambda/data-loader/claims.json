@@ -2,7 +2,7 @@
   {
     "claimId": "9x87y-3z",
     "policyId": "101604237",
-    "email": "kbuilder@amazon.com",
+    "email": "example@amazon.com",
     "claimDatetime": "2016-11-22 15:21:00",
     "incident": {
       "date": "06-08-2016",
@@ -34,7 +34,7 @@
   {
     "claimId": "5t16u-7v",
     "policyId": "102078763",
-    "email": "kbuilder@amazon.com",
+    "email": "example@amazon.com",
     "claimDatetime": "2016-11-30 14:15:00",
     "incident": {
       "date": "17-11-2016",
@@ -66,7 +66,7 @@
   {
     "claimId": "2s34w-8x",
     "policyId": "102130320",
-    "email": "kbuilder@amazon.com",
+    "email": "example@amazon.com",
     "claimDatetime": "2016-11-27 11:07:00",
     "incident": {
       "date": "07-06-2016",
@@ -98,7 +98,7 @@
   {
     "claimId": "6y78z-1a",
     "policyId": "102095953",
-    "email": "kbuilder@amazon.com",
+    "email": "example@amazon.com",
     "claimDatetime": "2016-12-14 10:23:00",
     "incident": {
       "date": "13-12-2016",
@@ -130,7 +130,7 @@
   {
     "claimId": "3b45c-9d",
     "policyId": "102080578",
-    "email": "kbuilder@amazon.com",
+    "email": "example@amazon.com",
     "claimDatetime": "2016-11-15 11:10:00",
     "incident": {
       "date": "15-11-2016",

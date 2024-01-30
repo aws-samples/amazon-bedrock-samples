@@ -18,8 +18,6 @@ fi
 # Activate the virtual environment
 source "$VENV_NAME/bin/activate"
 
-export AWS_REGION=us-east-1
-
 # Install packages listed in requirements.txt using pip within the virtual environment
 pip install -r requirements.txt
 
