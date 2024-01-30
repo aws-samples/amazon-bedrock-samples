@@ -173,7 +173,7 @@ export BEDROCK_AGENT_ALIAS_ID=<YOUR-AGENT-ALIAS-ID> # Use TSTALIASID for current
 export BEDROCK_KB_ID=<YOUR-KNOWLEDGE-BASE-ID> # Collected in Deploy knowledge base section and available in knowledge base console
 export BEDROCK_DS_ID=<YOUR-DATA-SOURCE-ID> # Collected in Deploy knowledge base section and available in knowledge base console
 export KB_BUCKET_NAME=<YOUR-KNOWLEDGE-BASE-S3-BUCKET-NAME> # Deployed during pre-implementation phase (e.g., <YOUR-STACK-NAME>-customer-resources
-export AWS_REGION=us-east-1
+export AWS_REGION=<YOUR-AWS-REGION> # Region into which you deployed the stack
 
 ```
 
