@@ -28,7 +28,7 @@ aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].S
 aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME
 ```
 
-## Delete Agent and Knowledge base
+## Delete Agent and Knowledge Base
 Follow the instructions for [deleting an agent](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-edit.html#agents-delete) and [deleting a knowledge base](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-manage.html).
 
 ---
