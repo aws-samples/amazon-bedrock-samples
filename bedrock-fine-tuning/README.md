@@ -1,6 +1,6 @@
 # Fine-Tuning Foundation Models with Amazon Bedrock
 
-You can customize Foundation Models(FMs) on Bedrock through fine-tuning. We provide the examples on how to set up the resources, fine-tune and evaluate the customized model, and clean up the resources after running the examples. 
+You can customize Foundation Models(FMs) on Bedrock through fine-tuning. We provide examples on how to set up the resources, fine-tune and evaluate the customized model, and clean up the resources after running the examples. 
 
 ## Contents
 
