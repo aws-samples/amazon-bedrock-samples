@@ -1,40 +1,40 @@
-# Insurance Claim Lifecycle Automation Using Agents and Knowledge Base for Amazon Bedrock
+# Insurance Claim Lifecycle Automation Using Agents and Knowledge Bases for Amazon Bedrock
 ---
 
 ## Content
 - [Overview](#overview)
-- [Agents and Knowledge Base Architecture](#agents-and-knowledge-base-architecture)
+- [Agents and Knowledge Bases Architecture](#agents-and-knowledge-bases-architecture)
 - [Deployment Guide](#deployment-guide)
 - [Testing and Validation](#testing-and-validation)
 - [Clean Up](#clean-up)
 
 ## Overview
 
-You can now use [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) and [Knowledge base for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) to configure specialized agents that seamlessly execute actions based on user input and your organization's data. These managed agents play conductor, orchestrating interactions between foundation models (FMs), API integrations, user conversations, and knowledge bases loaded with your data. 
+You can now use [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) and [Knowledge Bases for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) to configure specialized agents that seamlessly execute actions based on user input and your organization's data. These managed agents play conductor, orchestrating interactions between foundation models (FMs), API integrations, user conversations, and knowledge bases loaded with your data. 
 
-This sample solution highlights how you can use Agents and Knowledge base for Amazon Bedrock to **build on existing enterprise resources** to automate the tasks associated with the insurance claim lifecycle, efficiently scale and improve customer service, and enhance decision support through improved knowledge management. Your Bedrock-powered insurance agent can assist human agents by creating new claims, sending pending document reminders for open claims, gathering claims evidence, and searching for information across existing claims and customer knowledge repositories.
+This sample solution highlights how you can use Agents and Knowledge Bases for Amazon Bedrock to **build on existing enterprise resources** to automate the tasks associated with the insurance claim lifecycle, efficiently scale and improve customer service, and enhance decision support through improved knowledge management. Your Bedrock-powered insurance agent can assist human agents by creating new claims, sending pending document reminders for open claims, gathering claims evidence, and searching for information across existing claims and customer knowledge repositories.
 
 ### Demo Recording
 
 [<img src="design/demo-thumbnail.png" width="100%">](https://youtu.be/RFygzPr7qfw "Automate the insurance claim lifecycle using Agents and Knowledge base for Amazon Bedrock  - YouTube")
 
-## Agents and Knowledge Base for Amazon Bedrock
+## Agents and Knowledge Bases for Amazon Bedrock
 
-### Agents and Knowledge Base Functionality
-Agents and Knowledge Base for Amazon Bedrock work together to provide the following set of capabilities:
+### Agents and Knowledge Bases Functionality
+Agents and Knowledge Bases for Amazon Bedrock work together to provide the following set of capabilities:
 
-- **Task Decomposition:** Agents expand foundation models to comprehend user inquiries and dissect tasks into manageable steps for execution.
+- **Task Orchestration:** Agents expand foundation models to comprehend natural language user inquiries and dissect multi-step tasks into smaller, more manageable steps for execution.
 - **Interactive Data Collection:** Agents engage in natural conversations to gather supplementary information from users.
 - **Task Execution:** Agents fulfill customer requests through series of reasoning steps and corresponding actions based on [ReAct prompting](https://www.promptingguide.ai/techniques/react).
 - **System Integration:** Agents make API calls to internal company systems to execute specific action groups.
 - **Data Querying:** Knowledge bases enhance accuracy and performance through fully-managed [retrieval augmented generation (RAG)](https://docs.aws.amazon.com/sagemaker/latest/dg/jumpstart-foundation-models-customize-rag.html) using customer specific data sources.
-- **Source Attribution:** Agents conduct source attribution, identifying and tracing the origin of information or actions.
+- **Source Attribution:** Agents conduct source attribution, identifying and tracing the origin of information or actions through chain-of-thought reasoning.
 
-### Agents and Knowledge Base Architecture
+### Agents and Knowledge Bases Architecture
 
 <p align="center">
   <img src="design/agent-overview.png">
-  <em>Diagram 1: Agents and Knowledge Base for Amazon Bedrock Architecture Overview</em>
+  <em>Diagram 1: Agents and Knowledge Bases for Amazon Bedrock Architecture Overview</em>
 </p>
 
 1. Users provide natural language inputs to the agent.
