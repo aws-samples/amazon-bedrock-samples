@@ -9,8 +9,8 @@ Parameters:
     Default: ''
 
 Resources:
-  LambdaExecutionRole:
-    Type: "AWS::IAM::Role"
+  LambdaExecutionRoleForKnowledgeBase:
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -23,44 +23,18 @@ Resources:
               - "sts:AssumeRole"
       Path: /
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess'
-        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
-        - 'arn:aws:iam::aws:policy/IAMFullAccess'
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-  
-  LambdaExecutionPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      Path: /
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: CloudWatchLogsPermissions
-            Effect: Allow
-            Action:
-              - 'logs:CreateLogGroup'
-              - 'logs:CreateLogStream'
-              - 'logs:PutLogEvents'
-            Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
-      Roles:
-        - !Ref LambdaExecutionRole
-
-  KnowledgeBaseExecutionPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      Path: /
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: KnowledgeBasePermissions
-            Effect: Allow
-            Action:
-              - 'bedrock:InvokeModel'
-              - 'bedrock:Retrieve'
-              - 'bedrock:RetrieveAndGenerate'
-            Resource: '*'
-      Roles:
-        - !Ref LambdaExecutionRole
+      Policies:
+        - PolicyName: KnowledgeBaseExecutionPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'bedrock:InvokeModel'
+                  - 'bedrock:Retrieve'
+                  - 'bedrock:RetrieveAndGenerate'
+                Resource: '*'
 
   DeployKnowledgeBaseLambdaLayer:
     Type: AWS::Lambda::LayerVersion
@@ -147,7 +121,7 @@ Resources:
       Description: Create KnowledgeBase Lambda
       Handler: index.lambda_handler
       MemorySize: 256
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !GetAtt LambdaExecutionRoleForKnowledgeBase.Arn
       Runtime: python3.12
       Timeout: 60
       Layers: 
