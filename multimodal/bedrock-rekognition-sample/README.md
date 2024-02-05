@@ -31,6 +31,8 @@ Reason: The current day is Tuesday and the current time is 19:02. Since the rest
 ### Pre-requisites
 1. Install [NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. Install [CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)
+3. Configure your AWS CLI with the necessary permissions to deploy the resources in the architecture diagram above (Lambda, Rekognition, Bedrock, S3, DynamoDB, CloudWatch Logs, CloudWatch Events, IAM, etc). We strongly recommend following principle of least privileges.
+
 
 ### Steps to deploy
 1. Clone this repository
