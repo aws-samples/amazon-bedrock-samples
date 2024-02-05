@@ -35,10 +35,19 @@ Reason: The current day is Tuesday and the current time is 19:02. Since the rest
 ### Steps to deploy
 1. Clone this repository
 2. `cd` into the `cdk` directory
-3. Run `npm install` to install dependencies
+3. Run `sudo npm install --legacy-peer-deps` to install dependencies
 4. If necessary  run `cdk bootstrap` to bootstrap your environment
 5. Run `cdk deploy` to deploy the stack
 
+### Running the Solution
+
+1. Choose any image from the `images` folder under `bedrock-rekognition-sample`
+2. Drop the image in the S3 bucket named `multi-modal-landing-bucket`
+3. An event is generated that triggers the Lambda function 
+4. The Lambda function processes the image text and stores the final outcome in 
+   DynamoDB table called `restaurant-results-table`
+
+### Cleanup
 
 ## Authors
 
