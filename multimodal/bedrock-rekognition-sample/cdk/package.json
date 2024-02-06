@@ -22,7 +22,6 @@
   "dependencies": {
     "@aws-cdk/aws-lambda-python-alpha": "^2.110.0-alpha.0",
     "aws-cdk-lib": "2.102.0",
-    "cdk-nag": "^2.28.7",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21"
   }
