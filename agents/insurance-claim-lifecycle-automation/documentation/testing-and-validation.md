@@ -129,19 +129,19 @@ Your agent will sort user input into one of the following categories:
 
 1. Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations:
 
+    In the following action group tracing example, the agent maps the user input to the create-claim action group's createClaim function during pre-processing. The agent possesses an understanding of this function based on the agent instructions, action group description, and OpenAPI schema. During the orchestration process, which is two steps in this case, the agent invokes the createClaim function and receives a response that includes the newly created claim ID and list of pending documents.
+
     <p align="center">
       <img src="../design/ag-tracing.png"><br>
       <span style="display: block; text-align: center;"><em>Figure 19: Agent Tracing</em></span>
     </p>
 
-    In the preceding action group tracing example, the agent maps the user input to the create-claim action group's createClaim function during pre-processing. The agent possesses an understanding of this function based on the agent instructions, action group description, and OpenAPI schema. During the orchestration process, which is two steps in this case, the agent invokes the createClaim function and receives a response that includes the newly created claim ID and list of pending documents.
+    In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. Throughout orchestration, the agent searches the knowledge base, pulls the relevant chunks using embeddings, then passes that text to the foundation model to generate a final response.
 
     <p align="center">
       <img src="../design/kb-tracing.png"><br>
       <span style="display: block; text-align: center;"><em>Figure 20: Knowledge Base Tracing</em></span>
     </p>
-
-    In the preceding knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. Throughout orchestration, the agent searches the knowledge base, pulls the relevant chunks using embeddings, then passes that text to the foundation model to generate a final response.
 
 ## Deploy Streamlit Web UI for Your Agent
 Once you are satisfied with the performance of your agent and knowledge base, you are ready to productize their capabilities. We use [Streamlit](https://streamlit.io/) in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. Streamlit is a Python library designed to streamline and simplify the process of building frontend applications. Our application provides two features:
