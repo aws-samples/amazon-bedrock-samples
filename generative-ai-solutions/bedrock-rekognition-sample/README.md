@@ -1,13 +1,15 @@
 # AWS Serverless Multi-Modal Image Text Validation
 Repository hosting sample AWS CDK code for the AWS Serverless Multi-Modal Image Text Validation sample code. 
 
-This sample code demonstrates an approach to image recognition and explanation using AWS Rekognition, AWS Lambda, and Amazon Bedrock.
+# Use Case
+There are scenarios when delivery drivers take the picture of restaurant operating hours as a proof to show that its closed. However, it's hard to detect if its actually the case leading to potential fraud.
 
-In the example use case, we process storefront hours signs to determine if the store is open or closed, given the current timestamp. We use Amazon Rekognition to detect text in the image, and then use Amazon Bedrock to explain the results of the text detection. 
+In this sample solution, we demonstrate the use of Amazon AI service (Rekognition) and LLM (Large Language Models) hosted on Amazon Bedrock to determine whether the restaurant open or based on the picture of storefront's hours sign and the timestamp when the picture was taken. The LLM also provides detailed reasoning that led to the decision. The result is stored in DynamoDB along with metadata which can be used for further analysis.
 
 We use single shot prompting technique to enable complex reasoning capabilities of the large language model (LLM).
 
 The diagram below shows the overall architecture. Once images are dropped into an S3 bucket, an event triggers a Lambda function (rek-bedrock.py). The function then orchestrates the calls to AWS Rekognition, Amazon Bedrock and then finally stores the outcome in an Amazon DynamoDB table.
+
 
 ![Architecture Diagram](./cdk/architecture.png)
 
