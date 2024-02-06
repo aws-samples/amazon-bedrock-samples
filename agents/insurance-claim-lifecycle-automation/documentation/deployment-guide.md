@@ -69,7 +69,7 @@ export EVIDENCE_UPLOAD_URL=<YOUR-EVIDENCE-UPLOAD-URL> # URL provided by the agen
 source ./create-customer-resources.sh
 ```
 
-&nbsp;&nbsp;&nbsp;[_create-customer-resources.sh_](../shell/create-customer-resources.sh) contents:
+The preceding `source ./create-customer-resources.sh` shell command runs the following [AWS Command Line Interface](http://aws.amazon.com/cli) (AWS CLI) commands to deploy the emulated customer resources stack:
 
 ```sh
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
