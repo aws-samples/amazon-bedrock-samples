@@ -2,9 +2,9 @@
 Repository hosting sample AWS CDK code for the AWS Serverless Multi-Modal Image Text Validation sample code. 
 
 # Use Case
-There are scenarios when delivery drivers take the picture of restaurant operating hours as a proof to show that its closed. However, it's hard to detect if its actually the case leading to potential fraud.
+There are scenarios when delivery drivers take the picture of restaurant operating hours as a proof to show that its closed. However, given the wide variety of store operating hours signs, it can be challenging to validate the driver's claim, leading to potential fraud.
 
-In this sample solution, we demonstrate the use of Amazon AI service (Rekognition) and LLM (Large Language Models) hosted on Amazon Bedrock to determine whether the restaurant open or based on the picture of storefront's hours sign and the timestamp when the picture was taken. The LLM also provides detailed reasoning that led to the decision. The result is stored in DynamoDB along with metadata which can be used for further analysis.
+We aim to solve this use case in this sample solution. We demonstrate the use of Amazon AI service (Rekognition) and LLM (Large Language Models) hosted on Amazon Bedrock to determine whether the restaurant open or based on the picture of storefront's hours sign and the timestamp when the picture was taken. The LLM also provides detailed reasoning that led to the decision. The result is stored in DynamoDB along with metadata which can be used for further analysis.
 
 We use single shot prompting technique to enable complex reasoning capabilities of the large language model (LLM).
 
@@ -52,6 +52,9 @@ Reason: The current day is Tuesday and the current time is 19:02. Since the rest
    DynamoDB table called `restaurant-results-table`
 
 ### Cleanup
+
+1. `cd` into `cdk` directory
+2. Run `sudo cdk destroy` to delete all the deployed resources
 
 ## Authors
 
