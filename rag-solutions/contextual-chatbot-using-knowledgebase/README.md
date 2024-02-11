@@ -34,7 +34,7 @@ This enables you to focus on your core business applications and removes the und
 
 ## Solution overview
 
-The solution presented in this post uses a chatbot created using a [Streamlit](http://streamlit/) application and includes the following AWS services:
+The solution presented in this example uses a chatbot created using a [Streamlit](http://streamlit/) application and includes the following AWS services:
 
 * [Amazon Simple Storage Service)](https://aws.amazon.com/s3/) (Amazon S3) as source
 * Knowledge Bases for Amazon Bedrock for data ingestion
@@ -55,12 +55,12 @@ Amazon Bedrock users need to request access to foundation models before they are
 
 ## Clone the GitHub repo
 
-The solution presented in this post is available in the following [GitHub repo](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag-solutions/contextual-chatbot-using-knowledgebase). You need to clone the GitHub repository to your local machine. Open a terminal window and run the following command. Note this is one single ```git clone``` command.
+To clone this GitHub repository run the following command. Note this is one single ```git clone``` command.
 
 ```git clone --depth 2 --filter=blob:none --no-checkout https://github.com/aws-samples/amazon-bedrock-samples && cd amazon-bedrock-samples && git checkout main rag-solutions/contextual-chatbot-using-knowledgebase```
 
 ### Upload your knowledge dataset to Amazon S3
-We download the dataset for our knowledge base and upload it into a S3 bucket. This dataset will feed and power knowledge base. Complete the following steps:
+Now download the dataset for knowledge base and upload it into a S3 bucket. This dataset will feed and power knowledge base. Complete the following steps:
 
 1. Navigate to [Amazon Annual reports, proxies and shareholder letters data repository](https://ir.aboutamazon.com/annual-reports-proxies-and-shareholder-letters/default.aspx) data repository and download the last few years of Amazon shareholder letters.
 
@@ -81,13 +81,12 @@ We download the dataset for our knowledge base and upload it into a S3 bucket. T
 </br><img src="images/s3-objects.jpg" alt="s3-objects" width="800" align="center"/></br>
 
 13. Navigate to the ```lambdalayer``` folder.
-14. Upload the ```knowledgebase-lambdalayer.zip``` file available under the ```/lambda/layer``` folder in the GitHub repo you cloned earlier and choose **Upload**. You will use this Lambda layer code later to create the Lambda function.
+14. Upload the ```knowledgebase-lambdalayer.zip``` file available under the ```/lambda/layer``` folder in the code base you cloned earlier and choose **Upload**. You will use this Lambda layer code later to create the Lambda function.
 
 </br><img src="images/lambda-layer.jpg" alt="lambda-layer" width="800" align="center"/></br>
 
 ### Create a Knowledge Base
-
-In this step, we create a knowledge base using the Amazon shareholder letters dataset we uploaded to our S3 bucket in the previous step.
+In this step, create a knowledge base using the Amazon shareholder letters dataset we uploaded to S3 bucket in the previous step.
 
 1. On the Amazon Bedrock console, under **Orchestration** in the navigation pane, choose **Knowledge base**.
 
@@ -140,11 +139,10 @@ In this step, we create a knowledge base using the Amazon shareholder letters da
 
 Congratulations, your Knowledge base is ready. 
 
-Note that you can also use Knowledge Bases for Amazon Bedrock service APIs and the [AWS Command Line Interface](http://aws.amazon.com/cli) (AWS CLI) to programmatically create a knowledge base. You will need to run various sections of the Jupyter notebook provided under the /notebook folder in the GitHub repo.
+Note that you can also use Knowledge Bases for Amazon Bedrock service APIs and the [AWS Command Line Interface](http://aws.amazon.com/cli) (AWS CLI) to programmatically create a knowledge base. You will need to run various sections of the Jupyter notebook provided under the /notebook folder in the code base you cloned earlier.
 
 ### Create AWS Lambda function
-
-This Lambda function is deployed using an [AWS CloudFormation](http://aws.amazon.com/cloudformation) template available in the GitHub repo under the ```/cfn``` folder. The template requires two parameters: the S3 bucket name and the knowledge base ID.
+This Lambda function is deployed using an [AWS CloudFormation](http://aws.amazon.com/cloudformation) template available under the ```/cfn``` folder. The template requires two parameters: the S3 bucket name and the knowledge base ID.
 
 1. On the AWS CloudFormation service home page, choose Create stack to create a new stack.
    
@@ -152,7 +150,7 @@ This Lambda function is deployed using an [AWS CloudFormation](http://aws.amazon
 
 2.	Select **Template is ready** for **Prepare template**. 
 3.	Select **Upload the template** file for **Template source**. 
-4.	Choose **Choose file**, navigate to the GitHub repo you cloned earlier, and choose the .yaml file under the ```/cfn``` folder. 
+4.	Choose **Choose file**, navigate to the code base you cloned earlier, and choose the .yaml file under the ```/cfn``` folder. 
 5.	Choose **Next**.
 
 </br><img src="images/cfn-create.jpg" alt="cfn-create" width="800" align="center"/></br>
@@ -168,9 +166,8 @@ This Lambda function is deployed using an [AWS CloudFormation](http://aws.amazon
 
 Congratulations, you have created a Lambda function, related roles, and policies successfully.
 
-
 ### Test the Contextual Chatbot Application
-To test your chatbot application, complete the following steps:
+To test the chatbot application, complete the following steps:
 
 1. Open a new terminal or a command line window on your machine.
 2.	Run the following command to install the [AWS SDK for Python](https://aws.amazon.com/sdk-for-python/) (Boto3). Boto3 makes it straightforward to integrate a Python application, library, or script with AWS services.
@@ -181,7 +178,7 @@ To test your chatbot application, complete the following steps:
 
 ```pip install streamlit```
 
-4.	Navigate to the /streamlit folder in the GitHub repository folder you cloned earlier.
+4.	Navigate to the /streamlit folder in the code base you cloned earlier.
 5.	Run the following command to instantiate the chatbot application:
 
 ```python -m streamlit run chatbot.py```
@@ -218,7 +215,7 @@ Failing to delete resources such as the S3 bucket, OpenSearch Serverless collect
 
 ### Conclusion
 
-This example provided an overview of contextual chatbots and explained why they’re important. It described the complexities involved in data ingestion and text generation workflows for a RAG architecture. It then introduced how Knowledge Bases for Amazon Bedrock creates a fully managed serverless RAG system, including a vector store. Finally, it provided a solution architecture and sample code in a GitHub repo to retrieve and generate contextual responses for a chatbot application using a knowledge base. 
+This example provided an overview of contextual chatbots and explained why they’re important. It described the complexities involved in data ingestion and text generation workflows for a RAG architecture. It then introduced how Knowledge Bases for Amazon Bedrock creates a fully managed serverless RAG system, including a vector store. Finally, it provided a solution architecture and sample code in this GitHub repo to retrieve and generate contextual responses for a chatbot application using a knowledge base. 
 
 By explaining the value of contextual chatbots, the challenges of RAG systems, and how Knowledge Bases for Amazon Bedrock addresses those challenges, this example aimed to showcase how Amazon Bedrock enables you to build sophisticated conversational AI applications with minimal effort.
 
