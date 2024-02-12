@@ -26,55 +26,14 @@ bedrock_client = boto3.client(
     endpoint_url=f"https://bedrock-runtime.{region}.amazonaws.com"
 )
 
-# Define other variables
-s3_bucket = 'my-bucket'
-s3_key = 'data/titan-embed'
-emb_local_dir = 'data/titan-embed'
 
 # Bedrock models
-# Select Amazon titan as the Image generation model
-image_gen_model = f'amazon.titan-image-generator-v1'
 # Select Amazon titan-embed-image-v1 as Embedding model for multimodal indexing
 multimodal_embed_model = f'amazon.titan-embed-image-v1'
 
-# function calls bedrock to generated images using "amazon.titan-image-generator-v1" model.
-def generate_titan_image(
-    payload:dict, 
-    num_image:int=2, 
-    cfg:float=10.0, 
-    seed:int=2024
-) -> list:
-
-    body = json.dumps(
-        {
-            **payload,
-            "imageGenerationConfig": {
-                "numberOfImages": num_image,   # Number of images to be generated. Range: 1 to 5 
-                "quality": "premium",          # Quality of generated images. Can be standard or premium.
-                "height": 1024,                # Height of output image(s)
-                "width": 1024,                 # Width of output image(s)
-                "cfgScale": cfg,               # Scale for classifier-free guidance. Range: 1.0 (exclusive) to 10.0
-                "seed": seed                   # The seed to use for re-producibility. Range: 0 to 214783647
-            }
-        }
-    )
-
-    response = bedrock_client.invoke_model(
-        body=body, 
-        modelId=image_gen_model, 
-        accept="application/json", 
-        contentType="application/json"
-    )
-
-    response_body = json.loads(response.get("body").read())
-    images = [
-        Image.open(
-            BytesIO(base64.b64decode(base64_image))
-        ) for base64_image in response_body.get("images")
-    ]
-
-    return images
-
+"""
+Function to generate Embeddings from image or text
+"""
 
 def get_titan_multimodal_embedding(
     image_path:str=None,  # maximum 2048 x 2048 pixels
@@ -120,7 +79,9 @@ def get_titan_multimodal_embedding(
 
 
 
-# Function to plot heatmap from embeddings
+""" 
+Function to plot heatmap from embeddings
+"""
 
 def plot_similarity_heatmap(embeddings_a, embeddings_b):
     inner_product = np.inner(embeddings_a, embeddings_b)
@@ -132,7 +93,9 @@ def plot_similarity_heatmap(embeddings_a, embeddings_b):
         cmap="OrRd",
     )
 
-
+""" 
+Function to fetch the image based on image id from dataset
+"""
 def get_image_from_item_id( item_id = "0", dataset = None, return_image=True):
  
     item_idx = dataset.query(f"item_id == {item_id}").index[0]
@@ -145,9 +108,13 @@ def get_image_from_item_id( item_id = "0", dataset = None, return_image=True):
         return img_path, dataset.iloc[item_idx].item_desc
     print(item_idx,img_path)
 
+
+""" 
+Function to fetch the image based on image id from S3 bucket
+"""
     
 def get_image_from_item_id_s3(item_id = "B0896LJNLH", dataset = None, image_path = None,  return_image=True):
-    # s3_data_root = "s3://amazon-berkeley-objects/images/small/"
+
     item_idx = dataset.query(f"item_id == '{item_id}'").index[0]
     img_loc =  dataset.iloc[item_idx].img_full_path
     
@@ -166,8 +133,9 @@ def get_image_from_item_id_s3(item_id = "B0896LJNLH", dataset = None, image_path
     else:
         return local_image_path, dataset.iloc[item_idx].item_name_in_en_us
 
-
-
+""" 
+Function to display the images.
+"""
 def display_images(
     images: [Image], 
     columns=2, width=20, height=8, max_images=15, 
@@ -191,9 +159,11 @@ def display_images(
         if hasattr(image, 'name_and_score'):
             plt.title(image.name_and_score, fontsize=label_font_size); 
             
-            
-    
-def find_similar_items(query_prompt: str, k: int, num_results: int, index_name: str, image_path: str, dataset, open_search_client ) -> []:
+
+""" 
+Function for semantic search capability using knn on input query prompt.
+"""
+def find_similar_items_from_query(query_prompt: str, k: int, num_results: int, index_name: str, image_root_path: str, dataset, open_search_client ) -> []:
     """
     Main semantic search capability using knn on input query prompt.
     Args:
@@ -206,11 +176,11 @@ def find_similar_items(query_prompt: str, k: int, num_results: int, index_name: 
     body = {
         "size": num_results,
         "_source": {
-            "exclude": ["embeddings"],
+            "exclude": ["image_vector"],
         },
         "query": {
             "knn": {
-                "embeddings": {
+                "image_vector": {
                     "vector": query_emb,
                     "k": k,
                 }
@@ -223,63 +193,51 @@ def find_similar_items(query_prompt: str, k: int, num_results: int, index_name: 
     
     for hit in res["hits"]["hits"]:
         id_ = hit["_id"]
+        item_id_ = hit["_source"]["item_id"]
         # image, item_name = get_image_from_item_id(item_id = id_, dataset = dataset )
-        image, item_name = get_image_from_item_id_s3(item_id = id_, dataset = dataset,image_path = image_path)
+        image, item_name = get_image_from_item_id_s3(item_id = item_id_, dataset = dataset,image_path = image_root_path)
         image.name_and_score = f'{hit["_score"]}:{item_name}'
         images.append(image)
         
     return images
 
-
-
-
-from io import BytesIO
-import numpy as np
-from urllib.parse import urlparse
-import boto3
-client = boto3.client("s3")
-
-def to_s3_npy(data: np.array, s3_uri: str):
-    # s3_uri looks like f"s3://{BUCKET_NAME}/{KEY}"
-    bytes_ = BytesIO()
-    np.save(bytes_, data, allow_pickle=True)
-    bytes_.seek(0)
-    parsed_s3 = urlparse(s3_uri)
-    client.upload_fileobj(
-        Fileobj=bytes_, Bucket=parsed_s3.netloc, Key=parsed_s3.path[1:]
-    )
-    return True
-
-def from_s3_npy(s3_uri: str):
-    bytes_ = BytesIO()
-    parsed_s3 = urlparse(s3_uri)
-    client.download_fileobj(
-        Fileobj=bytes_, Bucket=parsed_s3.netloc, Key=parsed_s3.path[1:]
-    )
-    bytes_.seek(0)
-    return np.load(bytes_, allow_pickle=True)
-
-    ## TBD and TEST
-def write_embeddings(embeddings, output_path, is_s3=False):
-    
-    """Writes embeddings to local or S3.
-
-    Args:
-    embeddings: A NumPy array of embeddings.
-    output_path: The path to the output file, either local or S3.
-    is_s3: A boolean indicating whether to write the embeddings to S3.
-    
+""" 
+Function for semantic search capability using knn on input image prompt.
+"""
+def find_similar_items_from_image(image_path: str, k: int, num_results: int, index_name: str, image_root_path: str, dataset, open_search_client  ) -> []:
     """
-    if is_s3:
-        s3 = boto3.client('s3')
-        s3.put_object(Bucket=s3_bucket, Key='embeddings.npy', Body=embeddings)
-    else:
-        with open(output_path, 'wb') as f:
-            f.write(embeddings.tobytes())
-            
-    # Save embeddings to a txt file
-    #     emb_file_name = f"{embed_dir}/{path.split('/')[-1][:-4]}_img.txt"
-    #     np.savetxt(emb_file_name, np.array(embedding), delimiter=',')
+    Main semantic search capability using knn on input image prompt.
+    Args:
+        k: number of top-k similar vectors to retrieve from OpenSearch index
+        num_results: number of the top-k similar vectors to retrieve
+        index_name: index name in OpenSearch
+    """
+    query_emb = get_titan_multimodal_embedding(image_path=image_path, dimension=1024)["embedding"]
 
-    #     # Read embedding from a file - for testing
+    body = {
+        "size": num_results,
+        "_source": {
+            "exclude": ["image_vector"],
+        },
+        "query": {
+            "knn": {
+                "image_vector": {
+                    "vector": query_emb,
+                    "k": k,
+                }
+            }
+        },
+    }     
+
+    res = open_search_client.search(index=index_name, body=body)
+    images = []
     
+    for hit in res["hits"]["hits"]:
+        id_ = hit["_id"]
+        item_id_ = hit["_source"]["item_id"]
+        # image, item_name = get_image_from_item_id(item_id = id_, dataset = dataset )
+        image, item_name = get_image_from_item_id_s3(item_id = item_id_, dataset = dataset,image_path = image_root_path)
+        image.name_and_score = f'{hit["_score"]}:{item_name}'
+        images.append(image)
+        
+    return images
