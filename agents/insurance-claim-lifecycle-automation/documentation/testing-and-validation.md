@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Testing and Validation
 ---
 
@@ -143,11 +144,14 @@ Your agent will sort user input into one of the following categories:
 
     In the preceding knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. Throughout orchestration, the agent searches the knowledge base, pulls the relevant chunks using embeddings, then passes that text to the foundation model to generate a final response.
 
+=======
+>>>>>>> Stashed changes
 ## Deploy Streamlit Web UI for Your Agent
-Once you are satisfied with the performance of your agent and knowledge base, you are ready to productize their capabilities. We use [Streamlit](https://streamlit.io/) in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. Streamlit is a Python library designed to streamline and simplify the process of building frontend applications. Our application provides two features:
+We use [Streamlit](https://streamlit.io/) in this solution to launch an example frontend, intended to emulate a production application. Streamlit is a Python library designed to streamline and simplify the process of building frontend applications. Our application provides two features:
 
-- **Agent for Amazon Bedrock - Prompt Input:** Allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input.
-- **Knowledge Base for Amazon Bedrock - File Upload:** Enables the user to upload their local files to the Amazon S3 bucket that is being used as the data source for the customer's knowledge base. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
+
+- **AOH - File Upload:** Enables the user to upload their local AOH document to the Amazon S3 bucket that is being used as the [AmazonTextractPDFLoader](https://api.python.langchain.com/en/latest/document_loaders/langchain_community.document_loaders.pdf.AmazonTextractPDFLoader.html) data source.
+- **AOH - Agent Analysis:** Once a file is uploaded, this option becomes visible, allowing the user to automate the interpretation and fulfillment of AOH work instructions on a specific AOH document to determine compliance with FA requirements. 
 
 To isolate our Streamlit application dependencies and for ease of deployment, we use the [setup-streamlit-env.sh](../agent/streamlit/setup-streamlit-env.sh) shell script to create a virtual Python environment with the requirements installed.
 
@@ -155,37 +159,31 @@ To isolate our Streamlit application dependencies and for ease of deployment, we
 
 ```sh 
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
-cd amazon-bedrock-samples/agents/insurance-claim-lifecycle-automation/agent/streamlit/
-chmod u+x setup-streamlit-env.sh
+cd aoh-automation/
+chmod u+x create-streamlit-env.sh
 ```
 
 2.	Run the shell script to activate the virtual Python environment with the required dependencies:
 
 ```sh 
-source ./setup-streamlit-env.sh
+source ./create-streamlit-env.sh
 ```
 
 3.	Set your Bedrock agent ID, agent alias ID, knowledge base ID, data source ID, and knowledge base bucket name environment variables.
 
 ```sh 
-export BEDROCK_AGENT_ID=<YOUR-AGENT-ID> # Collected in Test agent section and available in agents console
-export BEDROCK_AGENT_ALIAS_ID=<YOUR-AGENT-ALIAS-ID> # Use TSTALIASID for current working draft
-export BEDROCK_KB_ID=<YOUR-KNOWLEDGE-BASE-ID> # Collected in Deploy knowledge base section and available in knowledge base console
-export BEDROCK_DS_ID=<YOUR-DATA-SOURCE-ID> # Collected in Deploy knowledge base section and available in knowledge base console
-export KB_BUCKET_NAME=<YOUR-KNOWLEDGE-BASE-S3-BUCKET-NAME> # Deployed during pre-implementation phase (e.g., <YOUR-STACK-NAME>-customer-resources
 export AWS_REGION=<YOUR-AWS-REGION> # Region into which you deployed the stack
-
 ```
 
 4.	Run your Streamlit application and begin testing in your local web browser:
 
 ```sh 
-streamlit run agent_streamlit.py
+streamlit run aoh_streamlit.py
 ```
 
 <p align="center">
   <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 21: Streamlit Agent Application</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 1: Streamlit Agent Application</em></span>
 </p>
 
 While the demonstrated solution showcases the capabilities of Agents and Knowledge Bases for Amazon Bedrock, it is important to understand that this solution is not Production-ready. Rather, it serves as a conceptual guide for developers aiming to create personalized agents for their own specific tasks and automated workflows. Developers aiming for production deployment should refine and adapt this initial model, keeping in mind the several key considerations outlined in the [Amazon Bedrock generative AI agent blog](https://aws.amazon.com/blogs/machine-learning/build-generative-ai-agents-with-amazon-bedrock-amazon-dynamodb-amazon-kendra-amazon-lex-and-langchain/).
@@ -193,21 +191,20 @@ While the demonstrated solution showcases the capabilities of Agents and Knowled
 ## Resources
 - [Generative AI on AWS](https://aws.amazon.com/generative-ai/)
 - [Amazon Bedrock](https://aws.amazon.com/bedrock/)
+<<<<<<< Updated upstream
 - [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html)
 - [Knowledge Bases for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)
 - [Amazon DynamoDB](https://aws.amazon.com/dynamodb/)
 - [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html)
 - [Amazon Simple Notification Service (SNS)](https://docs.aws.amazon.com/sns/latest/dg/welcome.html)
+=======
+- [LangChain LLMChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.llm.LLMChain.html#langchain.chains.llm.LLMChain)
+>>>>>>> Stashed changes
 
 ---
 
 ## Clean Up
 see [Clean Up](../documentation/clean-up.md)
-
----
-
-## Deployment Guide
-see [Deployment Guide](../documentation/deployment-guide.md)
 
 ---
 
