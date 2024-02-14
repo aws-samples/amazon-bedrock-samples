@@ -127,21 +127,21 @@ Your agent will sort user input into one of the following categories:
 - **Category D:** Questions that can be answered or assisted by our function calling agent using ONLY the functions it has been provided and arguments from within conversation_history or relevant arguments it can gather using the askuser function.
 - **Category E:** Inputs that are not questions but instead are answers to a question that the function calling agent asked the user. Inputs are only eligible for this category when the _askuser_ function is the last function that the function calling agent called in the conversation. You can check this by reading through the conversation_history.
 
-1. Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations:
+Select **Show trace** under a response to view the agent's configurations and reasoning process, including knowledge base and action group usage. Traces can be expanded or collapsed for detailed analysis. Responses with sourced information also contain footnotes for citations:
 
 In the following action group tracing example, the agent maps the user input to the create-claim action group's createClaim function during pre-processing. The agent possesses an understanding of this function based on the agent instructions, action group description, and OpenAPI schema. During the orchestration process, which is two steps in this case, the agent invokes the createClaim function and receives a response that includes the newly created claim ID and list of pending documents.
 
-    <p align="center">
-      <img src="../design/ag-tracing.png"><br>
-      <span style="display: block; text-align: center;"><em>Figure 19: Agent Tracing</em></span>
-    </p>
+<p align="center">
+  <img src="../design/ag-tracing.png"><br>
+  <span style="display: block; text-align: center;"><em>Figure 19: Agent Tracing</em></span>
+</p>
 
-    In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. Throughout orchestration, the agent searches the knowledge base, pulls the relevant chunks using embeddings, then passes that text to the foundation model to generate a final response.
+In the following knowledge base tracing example, the agent maps the user input to Category D during pre-processing, meaning one of the agent's available functions should be able to provide a response. Throughout orchestration, the agent searches the knowledge base, pulls the relevant chunks using embeddings, then passes that text to the foundation model to generate a final response.
 
-    <p align="center">
-      <img src="../design/kb-tracing.png"><br>
-      <span style="display: block; text-align: center;"><em>Figure 20: Knowledge Base Tracing</em></span>
-    </p>
+<p align="center">
+  <img src="../design/kb-tracing.png"><br>
+  <span style="display: block; text-align: center;"><em>Figure 20: Knowledge Base Tracing</em></span>
+</p>
 
 ## Deploy Streamlit Web UI for Your Agent
 We use [Streamlit](https://streamlit.io/) in this solution to launch an example frontend, intended to emulate a production application. Streamlit is a Python library designed to streamline and simplify the process of building frontend applications. Our application provides two features:
