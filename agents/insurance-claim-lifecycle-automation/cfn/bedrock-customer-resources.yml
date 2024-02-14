@@ -182,7 +182,7 @@ Resources:
       Code: 
         S3Bucket: !Ref ArtifactBucket
         S3Key: !Ref DataLoaderKey
-      Runtime: nodejs14.x
+      Runtime: nodejs20.x
       MemorySize: 256
       Timeout: 20
       Handler: index.lambda_handler
