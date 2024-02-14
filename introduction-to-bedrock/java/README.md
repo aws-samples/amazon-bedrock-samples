@@ -10,8 +10,8 @@ This repository contains sample of how you can call `invokeModel` REST API and s
 
 To get started with the samples, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/your-username/your-repo.git`
-2. Navigate to the `src` folder: `cd src`
+1. Clone the repository: `git clone https://github.com/aws-samples/amazon-bedrock-samples.git`
+2. Navigate to the `introduction-to-bedrock/java/src/my-app` folder: `cd introduction-to-bedrock/java/src/my-app`
 3. Open the `App.java` file in your preferred Java IDE.
 4. Make sure you have your AWS credentials stored in the `credentials` file on your local machine.
 5. Make sure you have Java and Maven installed on your machine.
