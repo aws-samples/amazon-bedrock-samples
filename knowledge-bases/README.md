@@ -5,7 +5,7 @@
 
 - [1_managed-rag-kb-retrieve-generate-api.ipynb](./1\_managed-rag-kb-retrieve-generate-api.ipynb) - Code sample for managed retrieval augmented generation (RAG) using `RetrieveAndGenerate` API from Knowledge Bases for Amazon Bedrock.
 
-- [2_customized-rag-retrieve-api-claude-v2.ipynb](./2_customized-rag-retreive-api-claude-v2) - If you want to customize your RAG workflow, you can use the `retrieve` API provided by Knowledge Bases for Amazon Bedrock. Use this code sample as a starting point.
+- [2_customized-rag-retrieve-api-claude-v2.ipynb](./2_customized-rag-retreive-api-claude-v2.ipynb) - If you want to customize your RAG workflow, you can use the `retrieve` API provided by Knowledge Bases for Amazon Bedrock. Use this code sample as a starting point.
 
 - [3_customized-rag-retrieve-api-langchain-claude-v2.ipynb](./3_customized-rag-retreive-api-langchain-claude-v2.ipynb) - Code sample for using the `RetrieveQA` chain from LangChain and Amazon Knowledge Base as the retriever.
 
