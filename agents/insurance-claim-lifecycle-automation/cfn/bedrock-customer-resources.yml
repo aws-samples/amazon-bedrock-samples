@@ -49,7 +49,7 @@ Metadata:
         default: /agent/lambda/action-groups/send_reminder.zip
       BedrockAgentsLayerArn:
         default: bedrock-layer-arn
-      BedrockAgentsLayerArn:
+      CfnresponseLayerArn:
         default: cfnresponse-layer-arn
       SNSEmail:
         default: your-sns-email
@@ -154,7 +154,6 @@ Resources:
               - sns:Publish
               - s3:GetObject
               - s3:PutObject
-              - '*'
             Effect: Allow
             Resource: '*'        
         Version: 2012-10-17
