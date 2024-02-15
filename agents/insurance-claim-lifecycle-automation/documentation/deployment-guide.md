@@ -41,6 +41,7 @@ To emulate the existing customer resources utilized by the agent, this solution 
 
 > - [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) table populated with synthetic [claims data](../agent/lambda/data-loader/claims.json).
 > - Three [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions that represent customer business logic for creating claims, sending pending document reminders for open status claims, and gathering evidence on new and existing claims.
+> - Two Lambda layers for Amazon Bedrock Boto3 and [cfnresponse](https://pypi.org/project/cfnresponse/) libraries.
 > - [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html) bucket containing API documentation in OpenAPI schema format for the preceding Lambda functions and the repair estimates, claim amounts, company FAQs, and required claim document descriptions to be used as our [knowledge base data source assets](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents/insurance-lifecycle-automation/agent/knowledge-base-assets).
 > - [Amazon Simple Notification Service (SNS)](https://docs.aws.amazon.com/sns/latest/dg/welcome.html) topic to which policy holders' emails are subscribed for email alerting of claim status and pending actions.
 > - [AWS Identity and Access Management (IAM)](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) permissions for the preceding resources.
@@ -90,6 +91,14 @@ export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
     --compatible-runtimes python3.11 \
     --query LayerVersionArn --output text)
 
+export CFNRESPONSE_LAYER_ARN=$(aws lambda publish-layer-version \
+    --layer-name cfnresponse \
+    --description "cfnresponse Layer" \
+    --license-info "MIT" \
+    --content S3Bucket=${ARTIFACT_BUCKET_NAME},S3Key=agent/lambda/lambda-layer/cfnresponse-layer.zip \
+    --compatible-runtimes python3.11 \
+    --query LayerVersionArn --output text)
+
 aws cloudformation create-stack \
 --stack-name ${STACK_NAME} \
 --template-body file://../cfn/bedrock-customer-resources.yml \
@@ -100,6 +109,7 @@ ParameterKey=CreateClaimKey,ParameterValue=${CREATE_CLAIM_KEY} \
 ParameterKey=GatherEvidenceKey,ParameterValue=${GATHER_EVIDENCE_KEY} \
 ParameterKey=SendReminderKey,ParameterValue=${SEND_REMINDER_KEY} \
 ParameterKey=BedrockAgentsLayerArn,ParameterValue=${BEDROCK_AGENTS_LAYER_ARN} \
+ParameterKey=CfnresponseLayerArn,ParameterValue=${CFNRESPONSE_LAYER_ARN} \
 ParameterKey=SNSEmail,ParameterValue=${SNS_EMAIL} \
 ParameterKey=EvidenceUploadUrl,ParameterValue=${EVIDENCE_UPLOAD_URL} \
 --capabilities CAPABILITY_NAMED_IAM

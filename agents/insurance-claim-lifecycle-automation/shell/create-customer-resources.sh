@@ -24,6 +24,14 @@ export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
     --compatible-runtimes python3.11 \
     --query LayerVersionArn --output text)
 
+export CFNRESPONSE_LAYER_ARN=$(aws lambda publish-layer-version \
+    --layer-name cfnresponse \
+    --description "cfnresponse Layer" \
+    --license-info "MIT" \
+    --content S3Bucket=${ARTIFACT_BUCKET_NAME},S3Key=agent/lambda/lambda-layer/cfnresponse-layer.zip \
+    --compatible-runtimes python3.11 \
+    --query LayerVersionArn --output text)
+
 aws cloudformation create-stack \
 --stack-name ${STACK_NAME} \
 --template-body file://../cfn/bedrock-customer-resources.yml \
@@ -34,6 +42,7 @@ ParameterKey=CreateClaimKey,ParameterValue=${CREATE_CLAIM_KEY} \
 ParameterKey=GatherEvidenceKey,ParameterValue=${GATHER_EVIDENCE_KEY} \
 ParameterKey=SendReminderKey,ParameterValue=${SEND_REMINDER_KEY} \
 ParameterKey=BedrockAgentsLayerArn,ParameterValue=${BEDROCK_AGENTS_LAYER_ARN} \
+ParameterKey=CfnresponseLayerArn,ParameterValue=${CFNRESPONSE_LAYER_ARN} \
 ParameterKey=SNSEmail,ParameterValue=${SNS_EMAIL} \
 ParameterKey=EvidenceUploadUrl,ParameterValue=${EVIDENCE_UPLOAD_URL} \
 --capabilities CAPABILITY_NAMED_IAM
