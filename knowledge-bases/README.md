@@ -11,6 +11,11 @@
 
 - [4_customized-rag-retrieve-api-titan-lite-evaluation.ipynb](./4\_customized-rag-retrieve-api-titan-lite-evaluation.ipynb) - If you are interested in evaluating your RAG application, try this sample code where we are using the `Amazon Titan Lite` model for generating responses and `Anthropic Claude V2` for evaluating the response.
 
+- [5_customized-rag-retreive-api-langchain-claude-v2-evaluation-ragas.ipynb](./5_customized-rag-retreive-api-langchain-claude-v2-evaluation-ragas.ipynb) - If you are interested in evaluating your RAG application, try this sample code where we are using the `Amazon Titan Lite` model for generating responses and `Anthropic Claude V2` along with Langchain and RAGAS for evaluating the responses effectively using Ragas evaluation metrics, such as faithfulness, answer relevancy, context precision based expectations.
+
+- [6_customized-rag-retreive-api-langchain-claude-v2-online-evaluation-ragas.ipynb](./6_customized-rag-retreive-api-langchain-claude-v2-online-evaluation-ragas.ipynb) - If you are interested in evaluating your RAG application, try this sample code where we are using the `Amazon Titan Lite` model for generating responses and `Anthropic Claude V2` along with Langchain and RAGAS for evaluating the responses effectively using Ragas evaluation metrics, such as faithfulness, answer relevancy, context precision, harmfulness based expectations. Score your traces and spans then ingest traces to Langfuse.
+
+
 ***
 
 ### Note
