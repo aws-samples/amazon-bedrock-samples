@@ -27,6 +27,7 @@ Metadata:
           - GatherEvidenceKey
           - SendReminderKey
           - BedrockAgentsLayerArn
+          - CfnresponseLayerArn
       - Label:
           default: SNS Configuration Settings
         Parameters:
@@ -48,6 +49,8 @@ Metadata:
         default: /agent/lambda/action-groups/send_reminder.zip
       BedrockAgentsLayerArn:
         default: bedrock-layer-arn
+      CfnresponseLayerArn:
+        default: cfnresponse-layer-arn
       SNSEmail:
         default: your-sns-email
       EvidenceUploadUrl:
@@ -78,6 +81,10 @@ Parameters:
     Description: Agents for Bedrock Lambda Layer
     Type: String
     Default: bedrock-layer-arn
+  CfnresponseLayerArn:
+    Description: Agents for Bedrock Lambda Layer
+    Type: String
+    Default: cfnresponse-layer-arn
   SNSEmail:
     Description: SNS Email.
     Type: String
@@ -178,14 +185,16 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Description: Lambda function to initially load the claims catalog.
-      FunctionName: !Sub ${AWS::StackName}-LexBedrockDataLoader
+      FunctionName: !Sub ${AWS::StackName}-DDBDataLoader
       Code: 
         S3Bucket: !Ref ArtifactBucket
         S3Key: !Ref DataLoaderKey
-      Runtime: nodejs14.x
+      Runtime: python3.11
       MemorySize: 256
       Timeout: 20
       Handler: index.lambda_handler
+      Layers:
+        - !Ref CfnresponseLayerArn
       Role: !GetAtt AgentActionGroupLambdaRole.Arn
       Environment:
         Variables:

@@ -5,11 +5,13 @@
 
 - [1_managed-rag-kb-retrieve-generate-api.ipynb](./1\_managed-rag-kb-retrieve-generate-api.ipynb) - Code sample for managed retrieval augmented generation (RAG) using `RetrieveAndGenerate` API from Knowledge Bases for Amazon Bedrock.
 
-- [2_customized-rag-retrieve-api-claude-v2.ipynb](./2\_customized-rag-retrieve-api-claude-v2.ipynb) - If you want to customize your RAG workflow, you can use the `retrieve` API provided by Knowledge Bases for Amazon Bedrock. Use this code sample as a starting point.
+- [2_customized-rag-retrieve-api-claude-v2.ipynb](./2_customized-rag-retreive-api-claude-v2.ipynb) - If you want to customize your RAG workflow, you can use the `retrieve` API provided by Knowledge Bases for Amazon Bedrock. Use this code sample as a starting point.
 
-- [3_customized-rag-retrieve-api-langchain-claude-v2.ipynb](./3\_customized-rag-retrieve-api-langchain-claude-v2.ipynb) - Code sample for using the `RetrieveQA` chain from LangChain and Amazon Knowledge Base as the retriever.
+- [3_customized-rag-retrieve-api-langchain-claude-v2.ipynb](./3_customized-rag-retreive-api-langchain-claude-v2.ipynb) - Code sample for using the `RetrieveQA` chain from LangChain and Amazon Knowledge Base as the retriever.
 
-- [4_customized-rag-retrieve-api-titan-lite-evaluation.ipynb](./4\_customized-rag-retrieve-api-titan-lite-evaluation.ipynb) - If you are interested in evaluating your RAG application, try this sample code where we are using the `Amazon Titan Lite` model for generating responses and `Anthropic Claude V2` for evaluating the response.
+- [4_customized-rag-retrieve-api-titan-lite-evaluation.ipynb](./4_customized-rag-retreive-api-titan-lite-evaluation.ipynb) - If you are interested in evaluating your RAG application, try this sample code where we are using the `Amazon Titan Lite` model for generating responses and `Anthropic Claude V2` for evaluating the response.
+
+- [5_customized-rag-retreive-api-langchain-claude-v2-evaluation-ragas.ipynb](./5_customized-rag-retreive-api-langchain-claude-v2-evaluation-ragas.ipynb) - If you are interested in building Q&A application using Retrieve API provide by Knowledge Bases for Amazon Bedrock, along with LangChain and RAGAS for evaluating the responses, try this sample.
 
 ***
 
