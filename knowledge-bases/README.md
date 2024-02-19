@@ -22,6 +22,8 @@ In this notebook, We will use Ragas to run the evaluations for each trace item a
 
 ### Vidoe : Langfuse Dashboard and Traces view
 [Langfuse Dashboard and Traces view recording](./videos/LangfuseDashboardrec.mov)
+
+
 https://github.com/langfuse/langfuse/assets/2834609/6041347a-b517-4a11-8737-93ef8f8af49f
     
 
