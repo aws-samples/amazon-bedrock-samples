@@ -20,8 +20,8 @@ Langfuse aims to provide granular visibility into model invocation traces and me
 In this notebook, We will use Ragas to run the evaluations for each trace item and score them. This gives you better idea of how each call to RAG pipelines is performing. You compute the score with each request from getting question from the user and fetch context from the Knoweldge base then pass the question and the contexts to the LLM to generate the answer. All these step are logged as spans in a single trace in langfuse. You can read more about traces and spans from the [langfuse documentation](https://langfuse.com/docs/tracing/overview).
 
 
-    ### Vidoe : Langfuse Dashboard and Traces view
-    [Langfuse Dashboard and Traces view recording](./videos/LangfuseDashboardrec.mov)
+### Vidoe : Langfuse Dashboard and Traces view
+[Langfuse Dashboard and Traces view recording](./videos/LangfuseDashboardrec.mov)
 
     
 
