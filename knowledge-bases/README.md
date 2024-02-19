@@ -22,7 +22,7 @@
 
     ### Vidoe : Langfuse Dashboard and Traces view
     
-    https://github.com/aws-samples/amazon-bedrock-samples/assets/136643863/2380aafe-8936-4fd1-b9c9-3462de007b11
+    https://github.com/aws-samples/amazon-bedrock-samples/assets/136643863/3277e195-faa4-4c36-8acf-d7d967b20cb5
 
 
 
