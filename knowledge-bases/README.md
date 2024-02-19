@@ -21,9 +21,10 @@
 
 
     ### Vidoe : Langfuse Dashboard and Traces view
-    [Langfuse Dashboard and Traces view recording](./videos/LangfuseDashboardrec.mov)
-
     
+    https://github.com/aws-samples/amazon-bedrock-samples/assets/136643863/2380aafe-8936-4fd1-b9c9-3462de007b11
+
+
 
 
 ***
