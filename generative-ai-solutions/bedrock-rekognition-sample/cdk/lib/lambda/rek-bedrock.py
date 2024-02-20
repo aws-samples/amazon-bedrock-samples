@@ -100,8 +100,8 @@ def lambda_handler(event, context):
     response = s3_client.head_object(Bucket=bucket, Key=object_key)
     print(response)
     # Extract metadata
-    metadata = response['Metadata']['json']
-    metadata = json.loads(metadata)
+    metadata = response['ResponseMetadata']
+    metadata = json.dumps(metadata)
    
     now = datetime.now()
     current_time = now.strftime("%A %B %d, %Y %H:%M:%S")
