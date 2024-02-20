@@ -1,5 +1,5 @@
 # AWS Serverless Multi-Modal Image Text Validation
-Repository hosting sample AWS CDK code for the AWS Serverless Multi-Modal Image Text Validation sample code. 
+Repository hosting sample AWS CDK code for the AWS Serverless Image Text Validation sample code. 
 
 # Use Case
 There are scenarios when delivery drivers take the picture of restaurant operating hours as a proof to show that its closed. However, given the wide variety of store operating hours signs, it can be challenging to validate the driver's claim, leading to potential fraud.
@@ -8,7 +8,10 @@ We aim to solve this use case in this sample solution. We demonstrate the use of
 
 We use single shot prompting technique to enable complex reasoning capabilities of the large language model (LLM).
 
-The diagram below shows the overall architecture. Once images are dropped into an S3 bucket, an event triggers a Lambda function (rek-bedrock.py). The function then orchestrates the calls to AWS Rekognition, Amazon Bedrock and then finally stores the outcome in an Amazon DynamoDB table.
+The diagram below shows the overall architecture. Once images are dropped into an S3 bucket,
+1. An event triggers a Lambda function (rek-bedrock.py)
+2. The function then orchestrates the calls to AWS Rekognition, Amazon Bedrock 
+3. And finally stores the outcome in an Amazon DynamoDB table
 
 
 ![Architecture Diagram](./cdk/architecture.png)
