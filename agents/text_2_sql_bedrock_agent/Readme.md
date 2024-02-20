@@ -1,3 +1,6 @@
+<h1 align="center">Text to SQL Bedrock Agent</h1>
+
+
 ## Authors:
 Pedram Jahangiri @jpedram, Sawyer Hirt @sawyehir, Suyin Wang @suyinwa, Zeek Granston @zeekg 
 
