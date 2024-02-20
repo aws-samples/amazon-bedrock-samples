@@ -235,7 +235,6 @@ lambda_function = lambda_client.create_function(
 
 
 # Create IAM policies for agent
-
 bedrock_agent_bedrock_allow_policy_statement = {
     "Version": "2012-10-17",
     "Statement": [
@@ -244,7 +243,7 @@ bedrock_agent_bedrock_allow_policy_statement = {
             "Effect": "Allow",
             "Action": "bedrock:InvokeModel",
             "Resource": [
-                f"arn:aws:bedrock:{region}::foundation-model/anthropic.claude-v2:1"
+                f"arn:aws:bedrock:{region}::foundation-model/{foundation_Model}"
             ]
         }
     ]
@@ -339,8 +338,8 @@ response = bedrock_agent_client.create_agent(
     agentName=agent_name,
     agentResourceRoleArn=agent_role['Role']['Arn'],
     description="Agent for performing sql queries.",
-    idleSessionTTLInSeconds=3600,
-    foundationModel="anthropic.claude-v2:1",
+    idleSessionTTLInSeconds=idleSessionTTLInSeconds,
+    foundationModel=foundation_Model,
     instruction=agent_instruction,
     promptOverrideConfiguration={
     #Disable preprocessing prompt

@@ -10,7 +10,7 @@ Pedram Jahangiri @jpedram, Sawyer Hirt @sawyehir, Suyin Wang @suyinwa, Zeek Gran
 
 Before you begin, ensure you have the following:
 - An AWS account with the following permissions:
-  - `IAMFullAccess`
+  - `IAM access to create roles and policy`
   - `AWSLambda_FullAccess`
   - `AmazonS3FullAccess`
   - `AmazonBedrockFullAccess`

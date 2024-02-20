@@ -8,6 +8,11 @@ import json
 import uuid
 import pprint
 import os
+
+
+
+
+
 # setting logger
 logging.basicConfig(format='[%(asctime)s] p%(process)s {%(filename)s:%(lineno)d} %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,14 +30,6 @@ athena = boto3.client('athena')
 sts = boto3.client('sts')
 iam_client = boto3.client('iam')
 
-
-
-import boto3
-import os
-
-os.environ['AWS_PROFILE'] = '456667773660-virginia'
-
-sts_client = boto3.client('sts')
 
 
 session = boto3.session.Session()
@@ -62,12 +59,13 @@ s3_loc = "s3://" + bucket_name + "/" + bucket_key
 s3_bucket=bucket_name
 db_loc = "s3://" + s3_bucket + "/db/"
 athena_result_loc = "s3://" + s3_bucket + "/athena_result/" 
-print(db_loc)
+foundation_Model='anthropic.claude-v2:1'
+idleSessionTTLInSeconds=3600
+#print(db_loc)
 #glue_crawler_name='TheHistoryOfBaseball'
 
 zip_data = "./data/TheHistoryofBaseball.zip"
 ext_data = "./data/extracted/"
-#s3_bucket = "text-2-sql-agent-us-east-1-456667773660"
 
 s3_prefix = "data"
 s3_path = "s3://" + s3_bucket + "/" +s3_prefix

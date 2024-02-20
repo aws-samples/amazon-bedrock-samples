@@ -1,9 +1,5 @@
 from config import *
 
-
-# This is not needed, you can delete agent successfully after deleting alias only
-# Additionaly, you need to disable it first
-
 # Initialize the Glue client
 glue_client = boto3.client('glue')
 
@@ -40,13 +36,26 @@ def delete_database(database_name):
         print(f"Error deleting database '{database_name}':", e)
 
 
-delete_crawler(glue_crawler_name)
-delete_tables(glue_database_name)
-delete_database(glue_database_name)
+# Empty and delete S3 Bucket
+try:
+    objects = s3_client.list_objects(Bucket=bucket_name)  
+    if 'Contents' in objects:
+        for obj in objects['Contents']:
+            s3_client.delete_object(Bucket=bucket_name, Key=obj['Key']) 
+    s3_client.delete_bucket(Bucket=bucket_name)
+except:
+    pass
 
 
 
-#agent_name = "text-2-sql-agent"
+try:
+    delete_crawler(glue_crawler_name)
+    delete_tables(glue_database_name)
+    delete_database(glue_database_name)
+except:
+    pass
+
+
 
 
 
@@ -54,42 +63,42 @@ delete_database(glue_database_name)
 
 list_agent=bedrock_agent_client.list_agents()['agentSummaries']
 list_agent
+#print(list_agent)
 # Search for the agent with the name 'text2sql' and extract its ID
 agent_id = next((agent['agentId'] for agent in list_agent if agent['agentName'] == agent_name), None)
 
 print(agent_id)
+try:
+    response = bedrock_agent_client.list_agent_action_groups(
+        agentId=agent_id,
+        agentVersion='1',
 
-response = bedrock_agent_client.list_agent_action_groups(
-    agentId=agent_id,
-    agentVersion='1',
+    )
+    list_action_group=response['actionGroupSummaries']
+    print(list_action_group)
 
-)
-list_action_group=response['actionGroupSummaries']
-print(list_action_group)
+    action_group_name='QueryAthenaActionGroup'
 
-action_group_name='QueryAthenaActionGroup'
+    action_group_id=next((agent['actionGroupId'] for agent in list_action_group if agent['actionGroupName'] == action_group_name), None)
+    print(action_group_id)
 
-action_group_id=next((agent['actionGroupId'] for agent in list_action_group if agent['actionGroupName'] == action_group_name), None)
-print(action_group_id)
-
-response = bedrock_agent_client.list_agent_aliases(
-    agentId=agent_id,
-)
-response['agentAliasSummaries']
-print(type(response['agentAliasSummaries']))
-agentAliasId=next((agent['agentAliasId'] for agent in response['agentAliasSummaries'] if agent['agentAliasName'] == agent_alias_name), None)
-agentAliasId
-
-
-agent_name = "text-2-sql-agent"
+    response = bedrock_agent_client.list_agent_aliases(
+        agentId=agent_id,
+    )
+    response['agentAliasSummaries']
+    print(type(response['agentAliasSummaries']))
+    agentAliasId=next((agent['agentAliasId'] for agent in response['agentAliasSummaries'] if agent['agentAliasName'] == agent_alias_name), None)
+    agentAliasId
+except:
+    pass
 
 lambda_name = f'{agent_name}-{suffix}'
 print(lambda_name)
-
-resp=lambda_client.get_function(FunctionName=lambda_name)
-print(resp['Configuration']['FunctionArn'])
-FunctionArn=resp['Configuration']['FunctionArn']
 try:
+    resp=lambda_client.get_function(FunctionName=lambda_name)
+    print(resp['Configuration']['FunctionArn'])
+    FunctionArn=resp['Configuration']['FunctionArn']
+
     response = bedrock_agent_client.update_agent_action_group(
        agentId=agent_id,
        agentVersion='DRAFT',
@@ -116,37 +125,31 @@ try:
 except:
     print('can not delete')
 
-
-agent_alias_deletion = bedrock_agent_client.delete_agent_alias(
-   agentId=agent_id,
-   agentAliasId=agentAliasId
-)
-
-
-agent_deletion = bedrock_agent_client.delete_agent(
-   agentId=agent_id
-)
-
-
-
-
-
-# Delete Lambda function
-lambda_client.delete_function(
-    FunctionName=lambda_name
-)
+try:
+    agent_alias_deletion = bedrock_agent_client.delete_agent_alias(
+    agentId=agent_id,
+    agentAliasId=agentAliasId
+    )
+except:
+    pass
+try:
+    agent_deletion = bedrock_agent_client.delete_agent(
+    agentId=agent_id
+    )
+except:
+    pass
 
 
 
+try:
+    # Delete Lambda function
+    lambda_client.delete_function(
+        FunctionName=lambda_name
+    )
+except:
+    pass
 
 
-# Empty and delete S3 Bucket
-
-objects = s3_client.list_objects(Bucket=bucket_name)  
-if 'Contents' in objects:
-    for obj in objects['Contents']:
-        s3_client.delete_object(Bucket=bucket_name, Key=obj['Key']) 
-s3_client.delete_bucket(Bucket=bucket_name)
 
 
 
@@ -159,63 +162,59 @@ policy_arns = [
     'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole',
     'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
 ]  
-for policy_arn in policy_arns:
-    iam_client.detach_role_policy(
-        RoleName=lambda_role_name,
-        PolicyArn=policy_arn
-    )    
+try:
+    for policy_arn in policy_arns:
+        iam_client.detach_role_policy(
+            RoleName=lambda_role_name,
+            PolicyArn=policy_arn
+        )    
 
-policy_arns = [
-    'arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess',
-    'arn:aws:iam::aws:policy/AmazonS3FullAccess',
-]  
-for policy_arn in policy_arns:
-    iam_client.detach_role_policy(
-        RoleName=glue_role_name,
-        PolicyArn=policy_arn
-    )    
-    
+    policy_arns = [
+        'arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess',
+        'arn:aws:iam::aws:policy/AmazonS3FullAccess',
+    ]  
+    for policy_arn in policy_arns:
+        iam_client.detach_role_policy(
+            RoleName=glue_role_name,
+            PolicyArn=policy_arn
+        )    
 
-
-bedrock_agent_s3_allow_policy_name
-for policy in [bedrock_agent_bedrock_allow_policy_name]:
-    iam_client.detach_role_policy(RoleName=agent_role_name, PolicyArn=f'arn:aws:iam::{account_id}:policy/{policy}')
-
+    bedrock_agent_s3_allow_policy_name
+    for policy in [bedrock_agent_bedrock_allow_policy_name]:
+        iam_client.detach_role_policy(RoleName=agent_role_name, PolicyArn=f'arn:aws:iam::{account_id}:policy/{policy}')
 
 
+    for policy in [bedrock_agent_s3_allow_policy_name]:
+        iam_client.detach_role_policy(RoleName=agent_role_name, PolicyArn=f'arn:aws:iam::{account_id}:policy/{policy}')
 
-
-for policy in [bedrock_agent_s3_allow_policy_name]:
-    iam_client.detach_role_policy(RoleName=agent_role_name, PolicyArn=f'arn:aws:iam::{account_id}:policy/{policy}')
-
-
-
-
-
-agent_role_name
+except:
+    pass
 
 
 
 
 
-for role_name in [agent_role_name]:
-    iam_client.delete_role(
-        RoleName=role_name
-    )
-    
+
+try:
+
+    for role_name in [agent_role_name]:
+        iam_client.delete_role(
+            RoleName=role_name
+        )
+        
 
 
 
 
 
-for role_name in [lambda_role_name]:
-    iam_client.delete_role(
-        RoleName=role_name
-    )
-    
+    for role_name in [lambda_role_name]:
+        iam_client.delete_role(
+            RoleName=role_name
+        )
+except:
+    pass    
 
 # Initialize the IAM client
-iam_client = boto3.client('iam')
 
 # The name of the policy you want to delete
 #bedrock_agent_bedrock_allow_policy_name = 'YourPolicyNameHere'
@@ -236,16 +235,19 @@ def delete_policy_by_name(policy_name):
                     print(f"Error deleting policy '{policy_name}':", e)
                     return
     print(f"Policy '{policy_name}' not found.")
-
-# Example usage
-delete_policy_by_name(bedrock_agent_bedrock_allow_policy_name)
-delete_policy_by_name(bedrock_agent_s3_allow_policy_name)
-
-
-for role_name in [glue_role_name]:
-    iam_client.delete_role(
-        RoleName=role_name
-    )
+try:
+    # Example usage
+    delete_policy_by_name(bedrock_agent_bedrock_allow_policy_name)
+    delete_policy_by_name(bedrock_agent_s3_allow_policy_name)
+except:
+    pass
+try:
+    for role_name in [glue_role_name]:
+        iam_client.delete_role(
+            RoleName=role_name
+        )
+except:
+    pass   
 
 
 
