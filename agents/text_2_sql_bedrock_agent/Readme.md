@@ -11,9 +11,9 @@ Pedram Jahangiri @jpedram, Sawyer Hirt @sawyehir, Suyin Wang @suyinwa, Zeek Gran
 Before you begin, ensure you have the following:
 - An AWS account with the following permissions:
   - `IAM access to create roles and policy`
-  - `AWSLambda function creation`
-  - `AmazonS3 bucket creation, reading and writting`
-  - `AmazonBedrock agent and model access`
+  - `AWS Lambda function creation`
+  - `Amazon S3 bucket creation, reading and writting`
+  - `Amazon Bedrock agent and model access`
 - For local setup, 
         - Python and Jupyter Notebooks installed
         - AWS CLI installed and configured

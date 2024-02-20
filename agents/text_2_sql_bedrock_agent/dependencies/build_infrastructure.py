@@ -10,7 +10,6 @@ from config import *
 # Create S3 bucket for Open API schema
 s3bucket = s3_client.create_bucket(
     Bucket=bucket_name
-    #CreateBucketConfiguration={ 'LocationConstraint': region } 
 )
 
 
@@ -81,10 +80,8 @@ for policy_arn in policy_arns:
   
 
     #crawler = glue.get_crawler(
-#     Name='TheHistoryofBaseball'
 # )
 # pprint.pprint(crawler)
-#s3_target = "text-2-sql-agent-us-east-1-456667773660/data/TheHistoryofBaseball/"
 print(s3_target)
 glue.create_crawler(
         Name=glue_crawler_name,
@@ -371,7 +368,6 @@ response = bedrock_agent_client.create_agent(
 
 
 
-response
 
 
 # Let's now store the agent id in a local variable to use it on the next steps
