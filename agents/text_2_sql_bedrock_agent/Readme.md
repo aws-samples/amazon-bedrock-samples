@@ -11,9 +11,9 @@ Pedram Jahangiri @jpedram, Sawyer Hirt @sawyehir, Suyin Wang @suyinwa, Zeek Gran
 Before you begin, ensure you have the following:
 - An AWS account with the following permissions:
   - `IAM access to create roles and policy`
-  - `AWSLambda_FullAccess`
-  - `AmazonS3FullAccess`
-  - `AmazonBedrockFullAccess`
+  - `AWSLambda function creation`
+  - `AmazonS3 bucket creation, reading and writting`
+  - `AmazonBedrock agent and model access`
 - For local setup, 
         - Python and Jupyter Notebooks installed
         - AWS CLI installed and configured
@@ -23,17 +23,14 @@ Before you begin, ensure you have the following:
 
 ## Installation
 
-Clone the repository to your local machine or AWS environment:
-
-git clone git@ssh.gitlab.aws.dev:jpedram/text_2_sql_bedrock_agent.git
-
+Clone the repository to your local machine or AWS environment
 
 ## Usage
 
 1. Start by opening the `create_and_invoke_sql_agent.ipynb` Jupyter Notebook.
 2. Run the notebook cells in order. The notebook will:
    - Import configurations from `config.py`.
-   - Set your own 'AWS_PROFILE' if running locally, if using AWS sagemaker notebook just comment "os.environ['AWS_PROFILE']" 
+   - Set your own 'AWS_PROFILE' 
    - Build the necessary infrastructure using `build_infrastructure.py`, which includes:
      - S3 buckets
      - Lambda functions
