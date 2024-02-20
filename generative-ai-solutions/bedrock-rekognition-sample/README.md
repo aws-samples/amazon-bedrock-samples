@@ -33,7 +33,8 @@ Reason: The current day is Tuesday and the current time is 19:02. Since the rest
 ### Pre-requisites
 1. Install [NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. Install [CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)
-3. Configure your AWS CLI with the necessary permissions to deploy the resources in the architecture diagram above (Lambda, Rekognition, Bedrock, S3, DynamoDB, CloudWatch Logs, CloudWatch Events, IAM, etc). We strongly recommend following principle of least privileges.
+3. Ensure docker is up and runninng
+4. Configure your AWS CLI with the necessary permissions to deploy the resources in the architecture diagram above (Lambda, Rekognition, Bedrock, S3, DynamoDB, CloudWatch Logs, CloudWatch Events, IAM, etc). We strongly recommend following principle of least privileges
 
 
 ### Steps to deploy
@@ -41,15 +42,33 @@ Reason: The current day is Tuesday and the current time is 19:02. Since the rest
 2. `cd` into the `cdk` directory
 3. Run `sudo npm install --legacy-peer-deps` to install dependencies
 4. If necessary  run `cdk bootstrap` to bootstrap your environment
-5. Run `cdk deploy` to deploy the stack
+5. Run `cdk deploy` to deploy the stack. The deployment typically takes 10-15 minutes
 
 ### Running the Solution
 
 1. Choose any image from the `images` folder under `bedrock-rekognition-sample`
-2. Drop the image in the S3 bucket named `multi-modal-landing-bucket`
-3. An event is generated that triggers the Lambda function 
-4. The Lambda function processes the image text and stores the final outcome in 
-   DynamoDB table called `restaurant-results-table`
+2. Navigate to the cloudformation stack named `MultiModalLLMStack` deployed afer running `cdk deploy`
+
+   ![CloudFormationStack](./cdk/cloud-formation-stack.png)
+
+
+3. Click on the stack name and navigate to the resources tab
+
+   ![CloudFormationStackResources](./cdk/cloudformation-resources.png)
+
+4. Expand `multi-modal-landing-bucket` and click through the S3 bucket link
+
+   ![CloudFormationStackS3Bucket](./cdk/cloudformation-s3-bucket.png)
+
+
+5. Drop the image in the S3 bucket selected in step# 4
+6. An event is generated that triggers the Lambda function 
+7. The Lambda function processes the image text and stores the final outcome in 
+   DynamoDB table called `restaurant-results-table`. See the screenshot below.
+
+   ![DynamoDBTable](./cdk/ddb-table-results.png)
+
+
 
 ### Cleanup
 
