@@ -2,10 +2,11 @@
 
 
 ## Authors:
-Pedram Jahangiri @jpedram, Sawyer Hirt @sawyehir, Suyin Wang @suyinwa, Zeek Granston @zeekg 
+**Pedram Jahangiri** @jpedram, **Sawyer Hirt** @sawyehir, **Zeek Granston** @zeekg, **Suyin Wang** @suyinwa
 
 ## Reviewer:
-Maira Ladeira Tanke @mttanke
+**Maira Ladeira Tanke** @mttanke
+
 
 
 
