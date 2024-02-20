@@ -10,10 +10,13 @@ Pedram Jahangiri @jpedram, Sawyer Hirt @sawyehir, Suyin Wang @suyinwa, Zeek Gran
 
 Before you begin, ensure you have the following:
 - An AWS account with the following permissions:
-  - `IAM access to create roles and policy`
-  - `AWS Lambda function creation`
-  - `Amazon S3 bucket creation, reading and writting`
-  - `Amazon Bedrock agent and model access`
+  - Create and manage IAM roles and policies.
+  - Create and invoke AWS Lambda functions.
+  - Create, read from, and write to Amazon S3 buckets.
+  - Access and manage Amazon Bedrock agents and models.
+  - Create and manage Amazon Glue databases and crawlers.
+  - Execute queries and manage workspaces in Amazon Athena.
+
 - For local setup, 
         - Python and Jupyter Notebooks installed
         - AWS CLI installed and configured
