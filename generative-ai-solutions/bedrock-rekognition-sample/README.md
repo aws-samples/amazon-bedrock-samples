@@ -32,8 +32,8 @@ Reason: The current day is Tuesday and the current time is 19:02. Since the rest
 
 ### Pre-requisites
 1. Install [NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-2. Install [CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)
-3. Ensure docker is up and runninng
+2. Install latest CDK version [CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)
+3. Ensure docker is up and running
 4. Configure your AWS CLI with the necessary permissions to deploy the resources in the architecture diagram above (Lambda, Rekognition, Bedrock, S3, DynamoDB, CloudWatch Logs, CloudWatch Events, IAM, etc). We strongly recommend following principle of least privileges
 
 
@@ -64,7 +64,10 @@ Reason: The current day is Tuesday and the current time is 19:02. Since the rest
 5. Drop the image in the S3 bucket selected in step# 4
 6. An event is generated that triggers the Lambda function 
 7. The Lambda function processes the image text and stores the final outcome in 
-   DynamoDB table called `restaurant-results-table`. See the screenshot below.
+   DynamoDB table called `restaurant-results-table`
+8. Click on `Explore items` under Tables tab. See the screenshots below.
+
+   ![DynamoDBTable](./cdk/ddb-restaurant-explore.png)
 
    ![DynamoDBTable](./cdk/ddb-table-results.png)
 
