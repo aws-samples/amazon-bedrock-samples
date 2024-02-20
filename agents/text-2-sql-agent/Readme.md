@@ -11,9 +11,16 @@ Pedram Jahangiri @jpedram, Sawyer Hirt @sawyehir, Suyin Wang @suyinwa, Zeek Gran
 Harnessing the power of natural language processing, the "Text to SQL Bedrock Agent" facilitates the automatic transformation of natural language questions into executable SQL queries. This tool bridges the gap between complex database structures and intuitive human inquiries, enabling users to effortlessly extract insights from data using simple English prompts. It leverages AWS Bedrock's cutting-edge agent technology and exemplifies the synergy between AWS's robust infrastructure and advanced large language models offered in AWS bedrock, making sophisticated data analysis accessible to a wider audience.
 This repository contains the necessary files to set up and test a Text to SQL conversion using the Bedrock Agent with AWS services.
 
+![sequence-flow-agent](images/text-to-sql-architecture-Athena.png)
+
+## Use case
+we will be using an agent to create sql queries to answer questions the user is asking in natural language. The agent will create the sql query then get the response from the database to accurately respond to the users question. The following  diagram depicts a high-level architecture of this solution.
 
 
 
+The Agent created can handle the follow tasks:
+- Get Database Schema
+- Run SQL Query 
 ## Prerequisites
 
 Before you begin, ensure you have the following:
