@@ -1,9 +1,14 @@
-# Text to SQL Bedrock Agent
-
-This repository contains the necessary files to set up and test a Text to SQL conversion using the Bedrock Agent with AWS services.
-
 ## Authors:
 Pedram Jahangiri @jpedram, Sawyer Hirt @sawyehir, Suyin Wang @suyinwa, Zeek Granston @zeekg 
+
+
+
+
+## Introduction
+Harnessing the power of natural language processing, the "Text to SQL Bedrock Agent" facilitates the automatic transformation of natural language questions into executable SQL queries. This tool bridges the gap between complex database structures and intuitive human inquiries, enabling users to effortlessly extract insights from data using simple English prompts. It leverages AWS Bedrock's cutting-edge agent technology and exemplifies the synergy between AWS's robust infrastructure and advanced large language models offered in AWS bedrock, making sophisticated data analysis accessible to a wider audience.
+This repository contains the necessary files to set up and test a Text to SQL conversion using the Bedrock Agent with AWS services.
+
+
 
 
 ## Prerequisites
