@@ -14,13 +14,16 @@ This repository contains the necessary files to set up and test a Text to SQL co
 ![sequence-flow-agent](images/text-to-sql-architecture-Athena.png)
 
 ## Use case
-we will be using an agent to create sql queries to answer questions the user is asking in natural language. The agent will create the sql query then get the response from the database to accurately respond to the users question. The following  diagram depicts a high-level architecture of this solution.
+The code here sets up an agent capable of crafting SQL queries from natural language questions. It then retrieves responses from the database, providing accurate answers to user inquiries. The diagram below outlines the high-level architecture of this solution.
 
 
 
-The Agent created can handle the follow tasks:
-- Get Database Schema
-- Run SQL Query 
+
+The Agent is designed to:
+- Retrieve database schemas
+- Execute SQL queries
+
+
 ## Prerequisites
 
 Before you begin, ensure you have the following:
