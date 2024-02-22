@@ -12,6 +12,7 @@ This repository contains examples and use-cases to get you started with Amazon B
 - [Create Agent and Knowledge Base ](create-agent-and-kb) - IaC to create a Bedrock Agent and Knowledge Base
 - [Create Agent](create-agent-only) - IaC to create a Bedrock Agent
 - [Insurance Agent](insurance-agent-sendreminders) - Agent designed to help with Agent Transactions
+- [Text to SQL Agent](text-2-sql-agent) - Agent designed to generate and execute SQL queries using Natural Language
 
 
 ## Contributing
