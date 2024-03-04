@@ -28,8 +28,8 @@ prompt = """<s>[INST]Craft a Python function to convert Celsius to Fahrenheit. I
 body = json.dumps({ 
     'prompt': prompt,
     'max_tokens': 200,
-	'top_p': 0.9,
-	'temperature': 0.2,
+    'top_p': 0.9,
+    'temperature': 0.2,
 })
 
 
@@ -76,10 +76,10 @@ Just generate the JSON object without explanations:
 [/INST]"""
 
 body = json.dumps({ 
-	'prompt': prompt,
+    'prompt': prompt,
     'max_tokens': 200,
-	'top_p': 0.9,
-	'temperature': 0.2,
+    'top_p': 0.9,
+    'temperature': 0.2,
     'top_k' : 2
 })
 
