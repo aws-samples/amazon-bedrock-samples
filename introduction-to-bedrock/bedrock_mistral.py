@@ -30,7 +30,6 @@ body = json.dumps({
     'max_tokens': 200,
 	'top_p': 0.9,
 	'temperature': 0.2,
-    #'frequency_penalty': 2
 })
 
 modelId = 'mistral.mistral-7b-instruct-v0:2'
@@ -78,15 +77,14 @@ Just generate the JSON object without explanations:
 [/INST]"""
 
 body = json.dumps({ 
-	'prompt': prompt,
+    'prompt': prompt,
     'max_tokens': 200,
 	'top_p': 0.9,
 	'temperature': 0.2,
-    #'frequency_penalty': 2
+    'top_k' : 2
 })
 
 modelId = 'mistral.mistral-7b-instruct-v0:2'
-#modelId = 'mistral.mixtral-8x7b-instruct-v0:1'
 accept = 'application/json'
 contentType = 'application/json'
 

@@ -26,11 +26,10 @@ for model in available_models['modelSummaries']:
 prompt = """<s>[INST]Craft a Python function to convert Celsius to Fahrenheit. If water boils at 100°C, what's that in Fahrenheit?[/INST]"""
 
 body = json.dumps({ 
-	'prompt': prompt,
+    'prompt': prompt,
     'max_tokens': 200,
 	'top_p': 0.9,
 	'temperature': 0.2,
-    #'frequency_penalty': 2
 })
 
 
@@ -81,7 +80,7 @@ body = json.dumps({
     'max_tokens': 200,
 	'top_p': 0.9,
 	'temperature': 0.2,
-    #'frequency_penalty': 2
+    'top_k' : 2
 })
 
 modelId = 'mistral.mixtral-8x7b-instruct-v0:1'
