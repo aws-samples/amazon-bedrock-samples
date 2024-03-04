@@ -2,6 +2,7 @@ import boto3
 import json
 
 #Create the connection to Bedrock
+# - These are available in us-west-2 for now 
 bedrock = boto3.client(
     service_name='bedrock',
     region_name='us-west-2', 
