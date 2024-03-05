@@ -13,6 +13,22 @@
 
 - [5_customized-rag-retreive-api-langchain-claude-v2-evaluation-ragas.ipynb](./5_customized-rag-retreive-api-langchain-claude-v2-evaluation-ragas.ipynb) - If you are interested in building Q&A application using Retrieve API provide by Knowledge Bases for Amazon Bedrock, along with LangChain and RAGAS for evaluating the responses, try this sample.
 
+- [5_customized-rag-retreive-api-langchain-claude-v2-evaluation-ragas.ipynb](./5_customized-rag-retreive-api-langchain-claude-v2-evaluation-ragas.ipynb) - If you are interested in building Q&A application using Retrieve API provide by Knowledge Bases for Amazon Bedrock, along with LangChain and RAGAS for evaluating the responses, try this sample.
+
+- [6_customized-rag-retreive-api-langchain-claude-v2-online-evaluation-ragas.ipynb](./6_customized-rag-retreive-api-langchain-claude-v2-online-evaluation-ragas.ipynb) - The popularity of large language models (LLMs) is skyrocketing, and with it the    need to observe and analyze their performance. Tracing model usage in production and getting detailed insights on quality, cost and speed are crucial for the continued growth of generative AI apps.  Now let's explore Langfuse, another emerging project tackling observability for these complex systems.  
+
+    Langfuse aims to provide granular visibility into model invocation traces and metrics like accuracy, latency and cost per query. With advanced analytics and visualization, it can help teams optimize performance, reduce expenses and identify issues early. As generative AI enters the mainstream, Langfuse and similar tools will be key enablers for delivering reliable, cost-effective services at scale. 
+
+    In this notebook, we will use RAGAS to run the evaluations for each trace item and score them. This gives you better idea of how each call to RAG pipelines is performing. You compute the score with each request from getting question from the user and fetch context from the Knoweldge base then pass the question and the contexts to the LLM to generate the answer. All these step are logged as spans in a single trace in langfuse. You can read more about traces and spans from the [langfuse documentation](https://langfuse.com/docs/tracing/overview).
+
+
+    ### Vidoe : Langfuse Dashboard and Traces view
+    
+    https://github.com/aws-samples/amazon-bedrock-samples/assets/136643863/3277e195-faa4-4c36-8acf-d7d967b20cb5
+
+
+
+
 ***
 
 ### Note
