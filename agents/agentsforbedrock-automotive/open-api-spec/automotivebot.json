@@ -1,0 +1,77 @@
+{
+"openapi": "3.0.0",
+    "info": {
+        "title": "Customer Service Automotive Bot API",
+        "version": "1.0.0",
+        "description": "Customer service APIs for an automotive agent that provides car information"
+    },
+    "paths": {
+        "/get_car_info": {
+            "get": {
+                "summary": "Sub task to get car information of behalf of the customer",
+                "description": "Get info of the car by using model_name, year and model_id if provider and return the price to the customer",
+                "operationId": "get_car_info",
+                "parameters": [{
+                    "name": "model_name",
+                    "in": "query",
+                    "description": "model_name of the car",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "model_id",
+                    "in": "query",
+                    "description": "model_id of the car",
+                    "required": false,
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "year",
+                    "in": "query",
+                    "description": "year of the car",
+                    "required": true,
+                    "schema": {
+                        "type": "int"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Car information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "model_name": {
+                                                "type": "string",
+                                                "description": "This is the model_name of the car"
+                                            },
+                                            "model_id": {
+                                                "type": "string",
+                                                "description": "This is the model_id of the car"
+                                            },
+                                            "year": {
+                                                "type": "int",
+                                                "description": "This is the production year of the car"
+                                            },
+                                            "price": {
+                                                "type": "string",
+                                                "description": "This is the price in $ of the car with model_name, model_id, and year"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }    
+}
