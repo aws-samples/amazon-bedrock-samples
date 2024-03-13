@@ -13,7 +13,7 @@ Metadata:
       Parameters:
         - EmailAddressForSummary
         - SummaryInstructions
-
+        - BedrockModelId
 
     ParameterLabels:
       EmailAddressForSummary:
@@ -21,6 +21,9 @@ Metadata:
 
       SummaryInstructions:
         default: Summary Instructions
+
+      BedrockModelId:
+        default: Bedrock Model ID
 
 
 #---------------------------------------------------------------------
@@ -37,6 +40,11 @@ Parameters:
     Type: String
     Description: These are the instructions given to the Bedrock model to generate the summary.
     Default: Provide a summary and next steps if there are any.
+
+  BedrockModelId:
+    Type: String
+    Description: This is the ID of the model that will generate the summary (note that the API parameters will depend on the model).
+    Default: anthropic.claude-3-sonnet-20240229-v1:0
 
 
 #---------------------------------------------------------------------
@@ -462,7 +470,7 @@ Resources:
       FunctionName: summary-generator-format-transcription
       Description: Formats the transcription produced by Transcribe using diarization for the recorded speakers
       Handler: index.lambda_handler
-      Runtime: python3.11
+      Runtime: python3.12
       Architectures:
         - x86_64
       MemorySize: 128
@@ -473,7 +481,9 @@ Resources:
           import json
           import boto3
 
+          # Get the service clients.
           s3_client = boto3.client('s3')
+
           #--------------------------------------------------
           # function: lambda_handler
           #--------------------------------------------------
@@ -499,30 +509,37 @@ Resources:
               # Download the file from S3.
               file_object = s3_client.get_object(Bucket=bucket_name, Key=file_name)
               data = json.loads(file_object['Body'].read())
-       
+
               try:
                 speaker_labels = data['results']['speaker_labels']
-              except KeyError:  # speaker labels are off in processing; shouldn't happen given TranscribeJob setting above but in case?
+              except KeyError:
+                # Speaker labels are off in processing; shouldn't happen given TranscribeJob setting above but catch in case.
                 return
-              
+
+              # Loop through the speakers and add them to the transcription.
               items = data['results']['items']
               for item in items:
+
                 if item.get('start_time'):  # This is a spoken item
                   speaker = item['speaker_label']
+
                   if speaker == most_recent_speaker:
-                    line+=f" {item['alternatives'][0]['content']}"  # Append the content to line and repeat
-                  else:  # New speaker
-                    lines.append(line)
-                    lines.append("\n\n")
+                    # Append the content to line and repeat
+                    line+=f" {item['alternatives'][0]['content']}"
+
+                  else:
+                    # New speaker
+                    lines.append(f'{line}\n\n')
                     most_recent_speaker = speaker
                     line=f" {item['start_time']} {speaker} {item['alternatives'][0]['content']}"
-                elif item['type'] == "punctuation":
+
+                elif item['type'] == 'punctuation':
                   line+=item['alternatives'][0]['content']
+
               lines.append(line)
 
-              speaker_formatted_content = ""
+              speaker_formatted_content = ''
               for line in lines:
-                print(line)
                 speaker_formatted_content+=line
 
               speaker_transcription_file_name =  f"transcriptions/{event['Source']['Payload']['SourceFileName']}-speaker-transcription.txt"
@@ -535,15 +552,16 @@ Resources:
                   ContentType='text/plain'
                   )
 
-              result = { 
-                "bucket_name": bucket_name,
-                "speaker_transcription_key_name": speaker_transcription_file_name
+              result = {
+                f"bucket_name": "{bucket_name}",
+                f"speaker_transcription_key_name": "{speaker_transcription_file_name}"
               }
 
             except Exception as e:
               result['Error'] = str(e)
-            
+
             return result
+
 
   FormatTranscriptionFunctionLogGroup:
     DependsOn: FormatTranscriptionFunction
@@ -630,6 +648,7 @@ Resources:
       Environment:
         Variables:
           SUMMARY_INSTRUCTIONS: !Ref SummaryInstructions
+          BEDROCK_MODEL_ID:  !Ref BedrockModelId
       Code:
         ZipFile: |
           import json
@@ -641,7 +660,11 @@ Resources:
           s3_client = boto3.client('s3')
 
           # Use the provided instructions to provide the summary. Use a default if no intructions are provided.
-          SUMMARY_INSTRUCTIONS = os.getenv('SUMMARY_INSTRUCTIONS', 'Provide a summary and next steps if there are any.')
+          SUMMARY_INSTRUCTIONS = os.getenv('SUMMARY_INSTRUCTIONS', 'Your task is list Key Stakeholders and highlight Key Discussion Points and list Decisions and outline Action Items and provide meeting notes and create a concise summary.')
+
+          # Use the provided model ID to invoke the model.
+          # NOTE: The Bedrock invocation parameters will depend on the specific model.
+          BEDROCK_MODEL_ID = os.getenv('BEDROCK_MODEL_ID')
 
           #--------------------------------------------------
           # function: lambda_handler
@@ -654,8 +677,7 @@ Resources:
 
               transcript_uri =  event['TranscriptionJob']['TranscriptionJob']['Transcript']['TranscriptFileUri']
 
-                # Get transcription URI from the event
-            # The transcript URI will look something like this:
+              # Get transcription URI from the event; it will look something like this:
               # https://s3.[REGION].amazonaws.com/[BUCKET NAME]/transcriptions/bf90bf05-5300-415f-9dc2-a89d2f03a59f.json
 
               # ...so get the bucket name and filename based on that format.
@@ -671,33 +693,38 @@ Resources:
                   transcript = json.dumps(data['results']['transcripts'][0]['transcript'])
 
                   # Create the payload to provide to the Anthropic model.
-                  body = {
-                      "prompt": f"\n\nHuman: {SUMMARY_INSTRUCTIONS}{transcript}\n\nAssistant:",
-                      "temperature": 0,
-                      "top_p": 0.999,
-                      "top_k": 250,
-                      "max_tokens_to_sample": 1000,
-                      "stop_sequences": ["\\n\\nHuman:"]
-                  }
+                  #prompt='Human:\n\n{SUMMARY_INSTRUCTIONS}{transcript}\n\n Assistant:\n\n'
+                  SUMMARY_INSTRUCTIONS='Your task is list Key Stakeholders and highlight Key Discussion Points and list Decisions and outline Action Items and provide meeting notes and create a concise summary.'
+                  messages = [{ "role":'user', "content":[{'type':'text','text': SUMMARY_INSTRUCTIONS+transcript}]}]
 
-                  # Invoke the Anthropic model using the payload.
-                  response = bedrock_client.invoke_model(
-                      modelId="anthropic.claude-v2",
-                      contentType="application/json",
-                      accept="*/*",
-                      body=json.dumps(body)
+                  body=json.dumps(
+                      {
+                          "anthropic_version": "bedrock-2023-05-31",
+                          "max_tokens": 4096,
+                          "messages": messages,
+                          "temperature": 0,
+                          "top_p": 1.
+                      }
                   )
 
+                  print('Invoking model: {BEDROCK_MODEL_ID}')
+
+                  response = bedrock_client.invoke_model(body=body, modelId=BEDROCK_MODEL_ID)
+
+                  print("response: ", response)
+
                   # Save the response value.
-                  assistant_response = json.loads(response['body'].read())['completion']
+                  assistant_response = json.loads(response.get('body').read())
+                  print(f'assistant_response: {assistant_response}')
 
                   summary_file_name =  f"transcriptions/{event['Source']['Payload']['SourceFileName']}-summary.txt"
+                  print(f'summary_file_name: {summary_file_name}')
 
                   # Save the response value in S3.
                   s3_client.put_object(
                       Bucket=bucket_name,
                       Key=summary_file_name,
-                      Body=assistant_response,
+                      Body=assistant_response['content'][0]['text'],
                       ContentType='text/plain'
                       )
 
@@ -710,7 +737,10 @@ Resources:
               except Exception as e:
                   result['Error'] = str(e)
 
+              print(f'result: {result}')
+
               return result
+
 
   InvokeBedrockModelFunctionLogGroup:
     DependsOn: InvokeBedrockModelFunction
