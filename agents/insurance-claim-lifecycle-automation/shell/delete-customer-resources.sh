@@ -11,5 +11,8 @@ aws s3 rb s3://${ARTIFACT_BUCKET_NAME}
 echo "Deleting CloudFormation Stack: $STACK_NAME"
 
 aws cloudformation delete-stack --stack-name $STACK_NAME
+
 aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
 aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME
+
+echo "DELETE_COMPLETE"

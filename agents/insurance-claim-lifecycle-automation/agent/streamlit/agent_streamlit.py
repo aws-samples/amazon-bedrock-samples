@@ -39,8 +39,8 @@ kb_url = f'https://bedrock-agent.us-east-1.amazonaws.com/knowledgebases/{knowled
 
 # AWS Session and Clients Instantiation
 session = boto3.Session(region_name=os.environ['AWS_REGION'])
-agent_client = boto3.client('bedrock-agent-runtime')
-# agent_client = boto3.client('bedrock-agent')
+#agent_client = boto3.client('bedrock-agent-runtime')
+agent_client = boto3.client('bedrock-agent')
 s3_client = boto3.client('s3',region_name=os.environ['AWS_REGION'],config=boto3.session.Config(signature_version='s3v4',))
 
 # Streamlit CSS
@@ -115,7 +115,7 @@ def bedrock_agent(query, sessionId):
             last_response = split_response[-1]
             try:
                 encoded_last_response = last_response.split("\"")[3]
-                print("encoded_last_response: " + str(encoded_last_response))
+
                 if encoded_last_response == "citations":
                     # Find the start and end indices of the JSON content
                     start_index = last_response.find('{')
@@ -163,7 +163,6 @@ def update_knowledge_base(file_content, bucket_name, s3_file_name):
     }
 
     # agent_client.start_ingestion_job(knowledgeBaseId=knowledgeBaseId, dataSourceId=dataSourceId, description=description)
-    print("Starting Ingestion Job")
     requester = SigV4HttpRequester()
     response = requester.send_signed_request(
         url=kb_url,
@@ -177,7 +176,6 @@ def update_knowledge_base(file_content, bucket_name, s3_file_name):
         body=json.dumps(kb_update)
     )    
     
-    print("Finished Ingestion Job: " + str(response))
     return response
 
 def check_ingestion_job_status():
@@ -193,14 +191,14 @@ def check_ingestion_job_status():
                 knowledgeBaseId=knowledgeBaseId,
                 dataSourceId=dataSourceId,
             )
-
-            if response.status_code == 200:
-                job_status = response.json()["ingestionJobSummaries"][0]["status"]
-                if job_status == "complete":
-                    st.write(f"Ingestion Job Status: {job_status}")
+            
+            if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                job_status = response["ingestionJobSummaries"][0]["status"]
+                print(f"Ingestion Job Status: {job_status}")
+                st.write(f"Ingestion Job Status: {job_status}")
+                
+                if job_status == "COMPLETE":
                     break
-                else:
-                    st.write(f"Polling... Current Job Status: {job_status}")
             else:
                 st.write(f"Error: {response.status_code} - {response.text}")
         except Exception as e:
@@ -238,19 +236,23 @@ def main():
         with st.expander("Uploaded File 📁"):
             show_pdf(uploaded_file)
 
-        file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type}
-        file_name = "knowledge-base-assets/" + file_details["FileName"]
+        # Check if a new document has been uploaded in the latest action
+        if uploaded_file != st.session_state.get("uploaded_file"):
+            st.session_state["uploaded_file"] = uploaded_file
 
-        # Display the contents of the file (for text-based formats like txt, pdf, docx)
-        if uploaded_file.type == "text/plain":
-            text = uploaded_file.read()
-            st.write("Content:")
-            st.write(text.decode("utf-8"))  # Decode bytes to string for display
+            file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type}
+            file_name = "agent/knowledge-base-assets/" + file_details["FileName"]
 
-        print("Uploading document to Amazon S3")
-        file_contents = uploaded_file.getvalue()
-        update_knowledge_base(file_contents, knowledge_base_s3_bucket, file_name)
-        check_ingestion_job_status()
+            # Display the contents of the file (for text-based formats like txt, pdf, docx)
+            if uploaded_file.type == "text/plain":
+                text = uploaded_file.read()
+                st.write("Content:")
+                st.write(text.decode("utf-8"))  # Decode bytes to string for display
+
+            print("Uploading document to Amazon S3")
+            file_contents = uploaded_file.getvalue()
+            update_knowledge_base(file_contents, knowledge_base_s3_bucket, file_name)
+            check_ingestion_job_status()
 
 # Call the main function to run the app
 if __name__ == "__main__":

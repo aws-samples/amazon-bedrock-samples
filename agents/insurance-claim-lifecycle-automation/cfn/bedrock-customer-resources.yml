@@ -78,11 +78,11 @@ Parameters:
     Type: String
     Default: /agent/lambda/action-groups/send_reminder.zip
   BedrockAgentsLayerArn:
-    Description: Agents for Bedrock Lambda layer ARN
+    Description: Agents for Bedrock Lambda Layer
     Type: String
     Default: bedrock-layer-arn
   CfnresponseLayerArn:
-    Description: cfnresponse Lambda layer ARN
+    Description: Agents for Bedrock Lambda Layer
     Type: String
     Default: cfnresponse-layer-arn
   SNSEmail:
