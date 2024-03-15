@@ -71,7 +71,7 @@ Resources:
           #print (kb_id)
 
           # declare model id for calling RetrieveAndGenerate API
-          model_id = "anthropic.claude-instant-v1"
+          model_id = "anthropic.claude-v2"
           model_arn = f'arn:aws:bedrock:{region}::foundation-model/{model_id}'
 
           def retrieveAndGenerate(input, kbId, model_arn, sessionId):
