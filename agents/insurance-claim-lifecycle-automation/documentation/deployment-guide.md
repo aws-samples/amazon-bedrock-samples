@@ -3,16 +3,16 @@
 
 ## Content
 - [Pre-Implementation](#pre-Implementation)
-- [Create Knowledge Base](#create-knowledge-base-for-amazon-bedrock)
-- [Create Agent](#create-agent-for-amazon-bedrock)
+- [Create Knowledge Base](#create-knowledge-base)
+- [Create Agent](#create-agent)
 - [Testing and Validation](#testing-and-validation)
 
 ## Pre-Implementation
-By default, AWS CloudFormation uses a temporary session that it generates from your user credentials for stack operations. If you specify a service role, CloudFormation will instead use that role's credentials.
+By default, [AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html) uses a temporary session that it generates from your user credentials for stack operations. If you specify a service role, CloudFormation will instead use that role's credentials.
 
-To deploy this solution, your IAM user/role or service role must have permissions to deploy the resources specified in the CloudFormation template. For more details on AWS Identity and Access Management (IAM) with CloudFormation, please refer to the [AWS CloudFormation User Guide](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html).
+To deploy this solution, your IAM user/role or service role must have permissions to deploy the resources specified in the CloudFormation template. For more details on [AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) (IAM) with CloudFormation, please refer to the [AWS CloudFormation User Guide](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html).
 
-You must also have [AWS CLI](https://aws.amazon.com/cli/) installed. For instructions on installing AWS CLI, please see [Installing, updating, and uninstalling the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html).
+You must also have [AWS Command Line Interface](https://aws.amazon.com/cli/) (CLI) installed. For instructions on installing AWS CLI, please see [Installing, updating, and uninstalling the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html).
 
 ### Clone [_amazon-bedrock-samples_](https://github.com/aws-samples/amazon-bedrock-samples) Repository
 1. Create a local copy of the **amazon-bedrock-samples** repository using _git clone_:
@@ -21,8 +21,8 @@ You must also have [AWS CLI](https://aws.amazon.com/cli/) installed. For instruc
 git clone https://github.com/aws-samples/amazon-bedrock-samples.git
 ```
 
-#### Optional - Run Security Scan on the CloudFormation Templates
-To run a security scan on the [AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html) templates using [`cfn_nag`](https://github.com/stelligent/cfn_nag) (recommended), you have to install `cfn_nag`:
+#### Optional - Run Security Scan on the AWS CloudFormation Templates
+To run a security scan on the AWS CloudFormation templates using [`cfn_nag`](https://github.com/stelligent/cfn_nag) (recommended), you have to install `cfn_nag`:
 
 ```sh
 brew install ruby brew-gem
@@ -42,9 +42,9 @@ To emulate the existing customer resources utilized by the agent, this solution 
 > - [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) table populated with synthetic [claims data](../agent/lambda/data-loader/claims.json).
 > - Three [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions that represent customer business logic for creating claims, sending pending document reminders for open status claims, and gathering evidence on new and existing claims.
 > - Two Lambda layers for Amazon Bedrock Boto3 and [cfnresponse](https://pypi.org/project/cfnresponse/) libraries.
-> - [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html) bucket containing API documentation in OpenAPI schema format for the preceding Lambda functions and the repair estimates, claim amounts, company FAQs, and required claim document descriptions to be used as our [knowledge base data source assets](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents/insurance-lifecycle-automation/agent/knowledge-base-assets).
-> - [Amazon Simple Notification Service (SNS)](https://docs.aws.amazon.com/sns/latest/dg/welcome.html) topic to which policy holders' emails are subscribed for email alerting of claim status and pending actions.
-> - [AWS Identity and Access Management (IAM)](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) permissions for the preceding resources.
+> - Amazon S3 bucket containing API documentation in OpenAPI schema format for the preceding Lambda functions and the repair estimates, claim amounts, company FAQs, and required claim document descriptions to be used as our [knowledge base data source assets](../agent/knowledge-base-assets).
+> - [Amazon Simple Notification Service](https://docs.aws.amazon.com/sns/latest/dg/welcome.html) (SNS) topic to which policy holders' emails are subscribed for email alerting of claim status and pending actions.
+> - AWS IAM permissions for the preceding resources.
 
 CloudFormation prepopulates stack parameters with the default values provided in the template. To provide alternative input values, you can specify parameters as environment variables that are referenced in the `ParameterKey=<ParameterKey>,ParameterValue=<Value>` pairs in the _create-customer-resources.sh_ shell script's `aws cloudformation create-stack` command. 
 
@@ -70,7 +70,7 @@ export EVIDENCE_UPLOAD_URL=<YOUR-EVIDENCE-UPLOAD-URL> # URL provided by the agen
 source ./create-customer-resources.sh
 ```
 
-The preceding `source ./create-customer-resources.sh` shell command runs the following [AWS Command Line Interface](http://aws.amazon.com/cli) (AWS CLI) commands to deploy the emulated customer resources stack:
+The preceding `source ./create-customer-resources.sh` shell command runs the following AWS CLI commands to deploy the emulated customer resources stack:
 
 ```sh
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -116,9 +116,10 @@ ParameterKey=EvidenceUploadUrl,ParameterValue=${EVIDENCE_UPLOAD_URL} \
 
 aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
 aws cloudformation wait stack-create-complete --stack-name $STACK_NAME
+aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
 ```
 
-## Create Knowledge Bases for Amazon Bedrock
+## Create Knowledge Base
 Knowledge Bases for Amazon Bedrock leverage Retrieval Augmented Generation (RAG), a technique that harnesses customer data stores to enhance responses generated by foundation models. Knowledge bases allow agents to access existing customer data repositories without extensive administrator overhead. To connect a knowledge base to your data, you specify an S3 bucket as the [data source](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-ingest.html). By employing knowledge bases, applications gain enriched contextual information, streamlining development through a fully-managed RAG solution. This level of abstraction accelerates time-to-market by minimizing the effort of incorporating your data into agent functionality and it optimizes cost by negating the necessity for continuous model retraining to leverage private data.
 
 <p align="center">
@@ -172,7 +173,7 @@ Knowledge base functionality is delineated through two key processes:
   <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Data Source Sync</em></span>
 </p>
 
-3. Navigate to the [Knowledge base console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
+3. Navigate to the [Knowledge Bases for Amazon Bedrock console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
 
 <p align="center">
   <img src="../design/kb-overview.png" width="95%" height="95%"><br>
@@ -188,7 +189,7 @@ Knowledge base functionality is delineated through two key processes:
 
 ❗ Knowledge base ID and Data source ID will be used as environment variables in the later _Deploy Streamlit Web UI for Your Agent_ section.
 
-## Create Agent for Amazon Bedrock
+## Create Agent
 Agents operate through a build-time execution process, comprising several key components:
 
 - **Foundation Model:** Users select a foundation model that guides the agent in interpreting user inputs, generating responses, and directing subsequent actions during its orchestration process.

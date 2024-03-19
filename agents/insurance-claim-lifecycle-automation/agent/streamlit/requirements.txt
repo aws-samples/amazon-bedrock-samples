@@ -1,4 +1,2 @@
 streamlit
-botocore-1.32.7-py3-none-any.whl
-boto3-1.29.7-py3-none-any.whl
-awscli-1.30.7-py3-none-any.whl
+boto3
