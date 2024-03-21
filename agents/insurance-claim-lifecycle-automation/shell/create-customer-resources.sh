@@ -22,6 +22,7 @@ export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
     --license-info "MIT" \
     --content S3Bucket=${ARTIFACT_BUCKET_NAME},S3Key=agent/lambda/lambda-layer/bedrock-agents-layer.zip \
     --compatible-runtimes python3.11 \
+    --region ${AWS_REGION}
     --query LayerVersionArn --output text)
 
 export CFNRESPONSE_LAYER_ARN=$(aws lambda publish-layer-version \
@@ -30,6 +31,7 @@ export CFNRESPONSE_LAYER_ARN=$(aws lambda publish-layer-version \
     --license-info "MIT" \
     --content S3Bucket=${ARTIFACT_BUCKET_NAME},S3Key=agent/lambda/lambda-layer/cfnresponse-layer.zip \
     --compatible-runtimes python3.11 \
+    --region ${AWS_REGION}
     --query LayerVersionArn --output text)
 
 aws cloudformation create-stack \
@@ -46,7 +48,8 @@ ParameterKey=CfnresponseLayerArn,ParameterValue=${CFNRESPONSE_LAYER_ARN} \
 ParameterKey=SNSEmail,ParameterValue=${SNS_EMAIL} \
 ParameterKey=EvidenceUploadUrl,ParameterValue=${EVIDENCE_UPLOAD_URL} \
 --capabilities CAPABILITY_NAMED_IAM
+--region ${AWS_REGION}
 
-aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
-aws cloudformation wait stack-create-complete --stack-name $STACK_NAME
-aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
+aws cloudformation describe-stacks --stack-name $STACK_NAME --region ${AWS_REGION} --query "Stacks[0].StackStatus"
+aws cloudformation wait stack-create-complete --stack-name $STACK_NAME --region ${AWS_REGION}
+aws cloudformation describe-stacks --stack-name $STACK_NAME --region ${AWS_REGION} --query "Stacks[0].StackStatus"
