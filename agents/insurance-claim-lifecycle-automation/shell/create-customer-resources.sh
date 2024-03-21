@@ -13,7 +13,7 @@ export CREATE_CLAIM_KEY="agent/lambda/action-groups/create_claim.zip"
 export GATHER_EVIDENCE_KEY="agent/lambda/action-groups/gather_evidence.zip"
 export SEND_REMINDER_KEY="agent/lambda/action-groups/send_reminder.zip"
 
-aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region us-east-1
+aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region ${AWS_REGION}
 aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --recursive --exclude ".DS_Store"
 
 export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
