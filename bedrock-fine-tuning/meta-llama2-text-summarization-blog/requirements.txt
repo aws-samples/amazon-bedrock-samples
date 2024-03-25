@@ -1,0 +1,7 @@
+boto3
+pandas
+s3fs
+evaluate
+scipy
+bert_score
+nltk
