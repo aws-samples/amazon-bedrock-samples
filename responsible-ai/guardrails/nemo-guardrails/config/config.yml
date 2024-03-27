@@ -1,0 +1,6 @@
+models:
+  - type: main
+    engine: amazon_bedrock
+    parameters:
+      model_id: anthropic.claude-v2
+      streaming: True
