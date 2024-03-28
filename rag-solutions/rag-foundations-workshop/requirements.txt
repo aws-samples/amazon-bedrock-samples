@@ -1,9 +1,9 @@
-boto3>=1.28.79
-botocore>=1.31.79
+boto3>=1.34.72
+awscli>=1.32.72
 Pillow==9.4.0
 streamlit==1.27.0
 streamlit-chat==0.1.1
-langchain==0.0.323
+langchain==0.1.13
 faiss-cpu>=1.7,<2
 unstructured==0.10.16
 SQLAlchemy==2.0.21
