@@ -11,8 +11,7 @@ This repository contains pre-built examples to help customers get started with t
 - [Knowledge Bases](knowledge-bases) - Build knowledge bases with Bedrock
 - [Retrival Augmented Generation (RAG)](rag-solutions) - Implementing RAG with Amazon Bedrock
 - [Agents](agents) - Generative AI agents with Bedrock
-- [Security and Governance](security-and-governance) - Secure your Bedrock applications
-- [Responsible AI](responsible-ai) - Use Bedrock responsibly and ethically
+- [Responsible AI](responsible-ai) - Use Bedrock responsibly, secure and ethically
 - [Operational Tooling](ops-tooling) - Helpful samples to help operationalize your useage of Amazon Bedrock
 - [Multimodal](multimodal) - Working with multimodal data using Amazon Bedrock
 
