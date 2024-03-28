@@ -6,7 +6,7 @@ There is also [Guardrails for Amazon Bedrock](https://aws.amazon.com/bedrock/gua
 
 ## Setup
 
-Make sure to install `boto3`, `json` and all other required packages.
+Make sure to install `boto3`, `os` and all other required packages.
 
 ```
 python -m pip install boto3
@@ -16,4 +16,4 @@ For detailed information on how to install `nemoguardrails` see their [Installat
 
 ## Contents
 
-- [Hello World](hello-world.py) - Minimal example of using NeMo Guardrails without any actual rails
+- [Hello World](hello-world/hello-world.py) - Minimal example of using NeMo Guardrails without any actual rails
