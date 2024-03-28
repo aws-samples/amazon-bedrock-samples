@@ -11,6 +11,6 @@ instructions:
       Below is a conversation between a human user and an assistant bot.
 
 rails:
-  input:
+  output:
     flows:
-      - self check input
+      - self check output

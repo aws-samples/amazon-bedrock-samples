@@ -4,3 +4,8 @@ models:
     parameters:
       model_id: anthropic.claude-v2
       streaming: True
+
+instructions:
+  - type: general
+    content: |
+      Below is a conversation between a human user and an assistant bot.

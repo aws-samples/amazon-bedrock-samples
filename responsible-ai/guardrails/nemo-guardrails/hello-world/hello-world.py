@@ -1,12 +1,11 @@
 
 # Make sure to install nemoguardrails and dependencies, see https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/getting_started/installation-guide.md 
 from nemoguardrails import LLMRails, RailsConfig
-import os
 
-dirname = os.path.dirname(__file__)
+from os.path import dirname, abspath
 
 # NeMo expects a config folder with at least a config.yml to configure the model, instructions, rails and more
-config = RailsConfig.from_path(dirname + "/config")
+config = RailsConfig.from_path(dirname(dirname(abspath(__file__))) + "/no-rails-config")
 
 # Initializing with the config 
 rails = LLMRails(config)
