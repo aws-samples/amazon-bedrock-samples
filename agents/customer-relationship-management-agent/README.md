@@ -15,7 +15,7 @@ Through natural language interaction, the agent provides access to customer info
 
 # Architecture
 
-![architecture](/architecture.png)
+![architecture](/agents/customer-relationship-management-agent/architecture.png)
 
 ## Customer Use Case
 
@@ -31,7 +31,7 @@ The agent can integrate with Jira for task management. Provide the necessary Jir
 
 ## Deployment
 
-Upload the [codepipleline.yaml](/codepipleline.yaml) file to AWS CloudFormation. This template sets up a CodePipeline to build and deploy the Streamlit application to an ECS Fargate service. It also creates the necessary infrastructure (VPC, subnets, etc.) and integrates with Jira (optional).
+Upload the [codepipleline.yaml](/agents/customer-relationship-management-agent/codepipleline.yaml) file to AWS CloudFormation. This template sets up a CodePipeline to build and deploy the Streamlit application to an ECS Fargate service. It also creates the necessary infrastructure (VPC, subnets, etc.) and integrates with Jira (optional).
 
 Follow these steps to implement the CRM Agent in your environment:
 
@@ -69,7 +69,7 @@ The agent supports the following API paths and actions:
 
 The customer and interactions DynamoDB tables are filled with mock data.
 
-### [Customer data](src/data/customer.json)
+### [Customer data](/agents/customer-relationship-management-agent/src/data/customer.json)
 
 | customer_id | company_name            | overview                  | meetingType | dayOfWeek | timeOfDay | email         |
 |--------------|--------------------------|----------------------------|--------------|------------|------------|----------------|
@@ -79,7 +79,7 @@ The customer and interactions DynamoDB tables are filled with mock data.
 | C-jkl01112   | Modern Home Furnishings  | Modern Home Furnishings  | Online       | Friday     | Morning   | abc@kmal.com   |
 | C-mno131415  | Web Works                | Web Works is a...         | InPerson     | Monday     | Evening   | abc@kmal.com   |
 
-## [Interactions data](src/data/interactions.json)
+## [Interactions data](/agents/customer-relationship-management-agent/src/data/interactions.json)
 
 | customer_id | date | notes |
 |-|-|-|
