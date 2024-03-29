@@ -31,7 +31,7 @@ The agent can integrate with Jira for task management. Provide the necessary Jir
 
 ## Deployment
 
-Upload the [codepipleline.yaml](amazon-bedrock-samples/agents/customer-relationship-management-agent/codepipleline.yaml) file to AWS CloudFormation. This template sets up a CodePipeline to build and deploy the Streamlit application to an ECS Fargate service. It also creates the necessary infrastructure (VPC, subnets, etc.) and integrates with Jira (optional).
+Upload the [codepipleline.yaml](codepipleline.yaml) file to AWS CloudFormation. This template sets up a CodePipeline to build and deploy the Streamlit application to an ECS Fargate service. It also creates the necessary infrastructure (VPC, subnets, etc.) and integrates with Jira (optional).
 
 Follow these steps to implement the CRM Agent in your environment:
 
