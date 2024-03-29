@@ -1,0 +1,132 @@
+[
+  {
+    "customer_id": "C-abc123",
+    "date": "2023-02-14T14:30:00Z",
+    "notes": "Discussed current projects and timeline for new website launch. Provided feedback on design mockups."
+  },
+  {
+    "customer_id": "C-abc123",
+    "date": "2023-02-21T10:00:00Z",
+    "notes": "Reviewed final website design and content, provided approval to proceed with development. Answered additional questions about branding guidelines."
+  },
+  {
+    "customer_id": "C-abc123",
+    "date": "2023-02-28T15:00:00Z",
+    "notes": "Website launch check-in call. Discussed analytics setup and initial traffic results. Scheduled future call to review SEO optimization opportunities."
+  },
+  {
+    "customer_id": "C-abc123",
+    "date": "2023-03-07T11:15:00Z",
+    "notes": "Follow-up call to review website traffic and SEO performance. Analyzed site analytics and search engine rankings. Provided recommendations to improve organic visibility."
+  },
+  {
+    "customer_id": "C-abc123",
+    "date": "2023-03-14T13:45:00Z",
+    "notes": "Consulted on blog and content strategy to support SEO efforts. Outlined topic ideas focused on target keywords and buyer personas. Developed content production timeline."
+  },
+  {
+    "customer_id": "C-def456",
+    "date": "2023-02-15T09:30:00Z",
+    "notes": "Kickoff call to discuss new branding project. Provided overview of company history, mission and values. Discussed goals, ideal brand identity and timeline."
+  },
+  {
+    "customer_id": "C-def456",
+    "date": "2023-02-22T11:00:00Z",
+    "notes": "Reviewed two initial logo design concepts based on creative brief. Provided feedback on colors, fonts, and imagery. Requested revised concepts."
+  },
+  {
+    "customer_id": "C-def456",
+    "date": "2023-03-01T10:15:00Z",
+    "notes": "Presented final logo design and brand guide. Discussed website design implications and marketing material needs. Outlined next steps for brand rollout plan."
+  },
+  {
+    "customer_id": "C-def456",
+    "date": "2023-03-08T13:30:00Z",
+    "notes": "Reviewed website design mockups incorporating new brand elements and style guide. Provided feedback on information architecture, content, and functionality."
+  },
+  {
+    "customer_id": "C-def456",
+    "date": "2023-03-15T11:00:00Z",
+    "notes": "Consulted on marketing campaign to promote new brand identity. Presented ideas for press releases, social media content, ads, and collateral."
+  },
+  {
+    "customer_id": "C-ghi789",
+    "date": "2023-02-16T15:45:00Z",
+    "notes": "Presented high-level social media strategy and content calendar to support product launch. Discussed platform specifics, ideal messaging, and campaign KPIs."
+  },
+  {
+    "customer_id": "C-ghi789",
+    "date": "2023-02-23T13:15:00Z",
+    "notes": "Reviewed initial social media content and ads for launch campaign. Provided feedback to refine messaging and visuals. Finalized publishing timeline."
+  },
+  {
+    "customer_id": "C-ghi789",
+    "date": "2023-03-02T13:30:00Z",
+    "notes": "Social media launch check-in call. Reviewed initial performance data and engagement metrics. Discussed optimizations to boost reach and conversion rates."
+  },
+  {
+    "customer_id": "C-ghi789",
+    "date": "2023-03-09T14:45:00Z",
+    "notes": "Analyzed social campaign performance to date. Presented ideas for new video and interactive content to increase engagement. Outlined influencer partnership opportunities."
+  },
+  {
+    "customer_id": "C-ghi789",
+    "date": "2023-03-16T16:15:00Z",
+    "notes": "Consulted on nurturing social media community long-term. Recommended responding to comments, running contests, and leveraging user-generated content."
+  },
+  {
+    "customer_id": "C-jkl101112",
+    "date": "2023-02-17T10:15:00Z",
+    "notes": "Strategy call to define goals for updated SEO and content marketing approach. Analyzed current site content, keywords and competitors. Presented recommendations."
+  },
+  {
+    "customer_id": "C-jkl101112",
+    "date": "2023-02-24T11:45:00Z",
+    "notes": "Provided outline for refreshed blog and resource content focused on target buyer keywords. Reviewed production timeline and analytics setup for measuring content performance."
+  },
+  {
+    "customer_id": "C-jkl101112",
+    "date": "2023-03-03T09:30:00Z",
+    "notes": "First draft content review call. Discussed initial batch of blog posts and ebooks. Provided feedback on messaging, structure and SEO optimization."
+  },
+  {
+    "customer_id": "C-jkl101112",
+    "date": "2023-03-10T10:15:00Z",
+    "notes": "Follow-up content review call. Second drafts showed improvement in incorporating buyer persona angles. Discussed promotion strategy and repurposing content."
+  },
+  {
+    "customer_id": "C-jkl101112",
+    "date": "2023-03-17T14:00:00Z",
+    "notes": "Reviewed content performance after initial publication. Analyzed traffic sources, engagement metrics, and lead generation. Discussed next topics and optimization."
+  },
+  {
+    "customer_id": "C-mno131415",
+    "date": "2023-02-20T17:00:00Z",
+    "notes": "Kickoff call to discuss website redesign project to better support lead generation goals. Discussed sitemap, top pages, content strategy and overall information architecture."
+  },
+  {
+    "customer_id": "C-mno131415",
+    "date": "2023-02-27T15:30:00Z",
+    "notes": "Presented competitive analysis of website designs, features and conversions paths in the industry. Identified opportunities to improve our site navigation, layouts and calls-to-action."
+  },
+  {
+    "customer_id": "C-mno131415",
+    "date": "2023-03-06T13:45:00Z",
+    "notes": "Reviewed initial sitemap and wireframes for redesigned site. Provided feedback on layout, page hierarchy and key conversion paths for prospects."
+  },
+  {
+    "customer_id": "C-mno131415",
+    "date": "2023-03-13T11:15:00Z",
+    "notes": "Presented updated sitemap, wireframes and page designs based on previous feedback. Discussed integration with marketing automation and analytics."
+  },
+  {
+    "customer_id": "C-mno131415",
+    "date": "2023-03-20T09:30:00Z",
+    "notes": "Reviewed near-final website design and content. Provided approval on layouts, copy, imagery and calls-to-action. Discussed launch timeline and prerelease testing."
+  },
+  {
+    "customer_id": "C-mno131415",
+    "date": "2023-03-27T14:45:00Z",
+    "notes": "Website launch follow-up call. Discussed launch success metrics, traffic results and user engagement. Developed plan for ongoing optimization and refresh."
+  }
+]

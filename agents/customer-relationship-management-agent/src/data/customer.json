@@ -1,0 +1,47 @@
+[
+    {
+      "customer_id": "C-abc123", 
+      "company_name": "Acme Inc",
+      "overview": "Acme Inc is a leading manufacturer of anvils and other heavy duty tools. They have been in business for over 50 years and supply products to construction and engineering companies worldwide.",
+      "meetingType": "InPerson",
+      "dayOfWeek": "Tuesday",
+      "timeofDay": "Afternoon",
+      "email": "abc@kmal.com"
+    },
+    {
+      "customer_id": "C-def456",
+      "company_name": "123 Designs",
+      "overview": "123 Designs is a graphic design agency that specializes in branding and marketing materials. They have designed logos and ad campaigns for Fortune 500 companies.",
+      "meetingType": "Online",
+      "dayOfWeek": "Wednesday",
+      "timeofDay": "Morning",
+      "email": "abc@kmal.com"
+    },
+    {
+      "customer_id": "C-ghi789",
+      "company_name": "Builders R Us",
+      "overview": "Builders R Us supplies construction tools and materials for home renovation projects. They have a network of retail outlets across the country.",
+      "meetingType": "InPerson",
+      "dayOfWeek": "Thursday",
+      "timeofDay": "Afternoon",
+      "email": "abc@kmal.com"
+    },
+    {
+      "customer_id": "C-jkl101112",
+      "company_name": "Modern Home Furnishings",
+      "overview": "Modern Home Furnishings sells contemporary furniture and home accessories through their retail stores and website. They work directly with designers and manufacturers.",
+      "meetingType": "Online",
+      "dayOfWeek": "Friday",
+      "timeofDay": "Morning",
+      "email": "abc@kmal.com"
+    },
+    {
+     "customer_id": "C-mno131415",
+     "company_name": "Web Works",
+     "overview": "Web Works is a digital marketing agency that helps companies improve their online presence through website design, SEO, and social media marketing.",
+     "meetingType": "InPerson",
+     "dayOfWeek": "Monday",
+     "timeofDay": "Evening",
+     "email": "abc@kmal.com"
+    }
+]
