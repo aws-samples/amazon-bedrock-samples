@@ -5,43 +5,32 @@ import json
 import time
 import boto3
 import base64
+import PyPDF2
 import string
 import random
-import requests
+import mammoth
+import pdfplumber
+import pandas as pd
 import streamlit as st
-
+from docx import Document
 from requests import request
 from sigv4 import SigV4HttpRequester
-
-def session_generator():
-    # Generate random characters and digits
-    digits = ''.join(random.choice(string.digits) for _ in range(4))  # Generating 4 random digits
-    chars = ''.join(random.choice(string.ascii_lowercase) for _ in range(3))  # Generating 3 random characters
-    
-    # Construct the pattern (1a23b-4c)
-    pattern = f"{digits[0]}{chars[0]}{digits[1:3]}{chars[1]}-{digits[3]}{chars[2]}"
-    print("Session ID: " + str(pattern))
-
-    return pattern
 
 # Bedrock Variable
 agentId = os.environ['BEDROCK_AGENT_ID']
 agentAliasId = os.environ['BEDROCK_AGENT_ALIAS_ID']
 knowledgeBaseId = os.environ['BEDROCK_KB_ID']
 dataSourceId = os.environ['BEDROCK_DS_ID']
+region = os.environ['AWS_REGION']
 
 # Other Resource Variables
 knowledge_base_s3_bucket = os.environ['KB_BUCKET_NAME']
 
-# agents = bedrock-agent-runtime.us-east-1.amazonaws.com
-# knowledgebases = bedrock-agent.us-east-1.amazonaws.com
-kb_url = f'https://bedrock-agent.us-east-1.amazonaws.com/knowledgebases/{knowledgeBaseId}/datasources/{dataSourceId}/ingestionjobs/'
-
 # AWS Session and Clients Instantiation
 session = boto3.Session(region_name=os.environ['AWS_REGION'])
-#agent_client = boto3.client('bedrock-agent-runtime')
-agent_client = boto3.client('bedrock-agent')
-s3_client = boto3.client('s3',region_name=os.environ['AWS_REGION'],config=boto3.session.Config(signature_version='s3v4',))
+agent_client = session.client('bedrock-agent')
+agent_runtime_client = session.client('bedrock-agent-runtime')
+s3_client = session.client('s3')
 
 # Streamlit CSS
 custom_css = """
@@ -65,19 +54,17 @@ st.sidebar.markdown(custom_css, unsafe_allow_html=True)
 st.sidebar.subheader('**About this Demo**')
 st.sidebar.markdown('<p class="text-with-bg">The Bedrock Insurance Solution uses Agents and Knowledge base for Amazon Bedrock to assist human insurance agents by creating new claims, sending pending document reminders and gathering evidence for claims, and providing access to claims data, repair estimates, FAQs, and other insurance documents. </p>', unsafe_allow_html=True)
 
-# Helper Functions
-def show_pdf(uploaded_file):
-    if uploaded_file is not None:
-        file_contents = uploaded_file.getvalue()
+def session_generator():
+    # Generate random characters and digits
+    digits = ''.join(random.choice(string.digits) for _ in range(4))  # Generating 4 random digits
+    chars = ''.join(random.choice(string.ascii_lowercase) for _ in range(3))  # Generating 3 random characters
+    
+    # Construct the pattern (1a23b-4c)
+    pattern = f"{digits[0]}{chars[0]}{digits[1:3]}{chars[1]}-{digits[3]}{chars[2]}"
+    print("Session ID: " + str(pattern))
 
-        # Convert the file content to base64
-        base64_pdf = base64.b64encode(file_contents).decode('utf-8')
-        
-        # Display the PDF
-        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="500" height="500" type="application/pdf"></iframe>'
-        st.markdown(pdf_display, unsafe_allow_html=True)
+    return pattern
 
-# Invoke Agent
 def bedrock_agent(query, sessionId):
     if query is not None:
 
@@ -88,7 +75,7 @@ def bedrock_agent(query, sessionId):
 
         # send request
         print("Invoking Agent with query: " + query)
-        agent_url = f'https://bedrock-agent-runtime.us-east-1.amazonaws.com/agents/{agentId}/agentAliases/{agentAliasId}/sessions/{sessionId}/text'
+        agent_url = f'https://bedrock-agent-runtime.{region}.amazonaws.com/agents/{agentId}/agentAliases/{agentAliasId}/sessions/{sessionId}/text'
         requester = SigV4HttpRequester()
         response = requester.send_signed_request(
             url=agent_url,
@@ -98,9 +85,11 @@ def bedrock_agent(query, sessionId):
                 'content-type': 'application/json', 
                 'accept': 'application/json',
             },
-            region='us-east-1',
+            region=region,
             body=json.dumps(agent_query)
         )
+
+        print("RESPONSE = " + str(response))
         
         if response.status_code == 200:
             # Parse sig4_request Response
@@ -152,31 +141,21 @@ def update_knowledge_base(file_content, bucket_name, s3_file_name):
         st.success(f"File uploaded successfully to S3 bucket '{bucket_name}' as '{s3_file_name}'")
     except Exception as e:
         st.error(f"Error uploading file to S3: {e}")
+        return
+
+    # Start ingestion job
+    description = "Programmatic update of Bedrock Knowledge Base Data Source"
+    try:
+        response = agent_client.start_ingestion_job(
+            dataSourceId=dataSourceId,
+            description=description,
+            knowledgeBaseId=knowledgeBaseId
+        )
+
+    except Exception as e:
+        st.error(f"Error starting ingestion job: {e}")
     finally:
         file_obj.close()  # Close the file-like object after upload
-
-    # Define HTTP request payload (StartIngestionJobRequestContent)
-    description = "Programmatic update of Bedrock Knowledge Base Data Source"
-
-    kb_update = {
-        "description": description,   
-    }
-
-    # agent_client.start_ingestion_job(knowledgeBaseId=knowledgeBaseId, dataSourceId=dataSourceId, description=description)
-    requester = SigV4HttpRequester()
-    response = requester.send_signed_request(
-        url=kb_url,
-        method='PUT',
-        service='bedrock',
-        headers={
-            'content-type': 'application/json', 
-            'accept': 'application/json',
-        },
-        region='us-east-1',
-        body=json.dumps(kb_update)
-    )    
-    
-    return response
 
 def check_ingestion_job_status():
     headers = {
@@ -204,24 +183,154 @@ def check_ingestion_job_status():
         except Exception as e:
             st.write(f"An error occurred: {e}")
 
-        time.sleep(5)  # Poll every 5 seconds (adjust as needed)
+        time.sleep(4)  # Poll every 4 seconds (adjust as needed)
+
+def show_csv(uploaded_file):
+    # Display CSV preview
+    st.subheader("CSV Preview")
+    df = pd.read_csv(uploaded_file)
+    st.write(df)
+
+def extract_text_from_docx(uploaded_file):
+    try:
+        document = Document(uploaded_file)
+        text = ""
+        for paragraph in document.paragraphs:
+            text += paragraph.text + "\n"
+        return text
+    except Exception as e:
+        st.error(f"Error extracting text from .doc(x) file: {e}")
+        return None
+
+def convert_docx_to_html(docx_content):
+    try:
+        # Convert docx content to HTML using mammoth
+        result = mammoth.convert_to_html(io.BytesIO(docx_content))
+        return result.value
+    except Exception as e:
+        st.error(f"Error converting .docx to HTML: {e}")
+        return None
+
+def show_doc(uploaded_file):
+    # Display content of .doc files
+    st.subheader("Document Preview")
+    text = extract_text_from_docx(uploaded_file)
+    if text:
+        st.write(text)
+    else:
+        st.error("Uploaded file is not a valid Word document.")
+
+def show_docx(uploaded_file):
+    # Display content of .docx files
+    st.subheader("Document Preview")
+    file_name = uploaded_file.name.lower()
+
+    if 'docx' in file_name:
+        # Read the content of the uploaded file
+        docx_content = uploaded_file.getvalue()
+
+        # For .docx files, convert to HTML for preview
+        html_result = convert_docx_to_html(docx_content)
+        if html_result:
+            st.markdown(html_result, unsafe_allow_html=True)  # Display HTML content
+        else:
+            st.error("Failed to convert .docx to HTML")
+
+def show_excel(uploaded_file):
+    # Display Excel preview
+    try:
+        df = pd.read_excel(uploaded_file)
+        st.subheader("Excel Preview")
+        st.write(df)
+    except Exception as e:
+        st.error(f"Error reading Excel file: {e}")
+
+def show_html(uploaded_file):
+    st.subheader("HTML Preview")
+    html_content = uploaded_file.getvalue().decode("utf-8")
+    st.markdown(html_content, unsafe_allow_html=True)
+
+def show_md(uploaded_file):
+    # Display Markdown preview
+    st.subheader("Markdown Preview")
+    md_content = uploaded_file.getvalue().decode("utf-8")
+    st.markdown(md_content)
+
+def show_pdf(uploaded_file):
+    # Display PDF preview
+    st.subheader("PDF Preview")
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64.b64encode(uploaded_file.read()).decode("utf-8")}" width="100%" height="500"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
+
+def show_text(uploaded_file):
+    #Display Text preview
+    text = uploaded_file.getvalue().decode("utf-8")
+    st.subheader("Text Preview")
+    st.write(text)
+
+def process_uploaded_file(uploaded_file):
+    file_name = uploaded_file.name.lower()
+    file_extension = file_name.split(".")[-1]
+
+    file_contents = None
+
+    if file_extension == "csv":
+        show_csv(uploaded_file)
+        file_contents = uploaded_file.getvalue()
+
+    elif file_extension == "doc":
+        show_doc(uploaded_file)
+        doc_content = extract_text_from_docx(uploaded_file)
+        file_contents = doc_content.encode("utf-8") if doc_content else None
+
+    elif file_extension == "docx":
+        show_docx(uploaded_file)
+        docx_content = extract_text_from_docx(uploaded_file)
+        file_contents = docx_content.encode("utf-8") if docx_content else None
+
+    elif file_extension in ["htm", "html"]:
+        show_html(uploaded_file)
+        html_content = uploaded_file.getvalue().decode("utf-8")
+        file_contents = html_content.encode("utf-8") if html_content else None
+
+    elif file_extension == "md":
+        show_md(uploaded_file)
+        md_content = uploaded_file.getvalue().decode("utf-8")
+        file_contents = md_content.encode("utf-8") if md_content else None
+
+    elif file_extension == "pdf":
+        show_pdf(uploaded_file)
+        file_contents = uploaded_file.getvalue()
+
+    elif file_extension == "txt":
+        show_text(uploaded_file)
+        file_contents = uploaded_file.getvalue()
+
+    elif file_extension in ["xls", "xlsx"]:
+        show_excel(uploaded_file)
+        file_contents = uploaded_file.getvalue()
+
+    else:
+        # Unsupported file type
+        st.error("Preview not available for this file type.")
+
+    return file_contents
+
 
 def main():
-    # Main Execution Block
     if not "valid_inputs_received" in st.session_state:
         st.session_state["valid_inputs_received"] = False
 
     # --- Agent Q&A ---
     st.subheader('Agent for Amazon Bedrock - Prompt Input')
     query = st.text_input("User Input", value="", placeholder="What can the agent help you with?", label_visibility="visible")
-    agent_response = None  # Initialize agent_response variable
+    agent_response = None
     
     if st.session_state.get("previous_query") != query and query != "":
         if "session_id" not in st.session_state:
             st.session_state["session_id"] = session_generator()
 
         sessionId = st.session_state["session_id"]
-
         agent_response = bedrock_agent(query, sessionId)
         st.session_state["previous_query"] = query  # Update previous_query if query changes
 
@@ -233,24 +342,11 @@ def main():
     uploaded_file = st.file_uploader("Upload Document", type=["csv", "doc", "docx", "htm", "html", "md", "pdf", "txt", "xls", "xlsx"])
 
     if uploaded_file is not None:
-        with st.expander("Uploaded File 📁"):
-            show_pdf(uploaded_file)
-
-        # Check if a new document has been uploaded in the latest action
         if uploaded_file != st.session_state.get("uploaded_file"):
             st.session_state["uploaded_file"] = uploaded_file
 
-            file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type}
-            file_name = "agent/knowledge-base-assets/" + file_details["FileName"]
-
-            # Display the contents of the file (for text-based formats like txt, pdf, docx)
-            if uploaded_file.type == "text/plain":
-                text = uploaded_file.read()
-                st.write("Content:")
-                st.write(text.decode("utf-8"))  # Decode bytes to string for display
-
-            print("Uploading document to Amazon S3")
-            file_contents = uploaded_file.getvalue()
+            file_name = "agent/knowledge-base-assets/" + uploaded_file.name
+            file_contents = process_uploaded_file(uploaded_file)
             update_knowledge_base(file_contents, knowledge_base_s3_bucket, file_name)
             check_ingestion_job_status()
 
