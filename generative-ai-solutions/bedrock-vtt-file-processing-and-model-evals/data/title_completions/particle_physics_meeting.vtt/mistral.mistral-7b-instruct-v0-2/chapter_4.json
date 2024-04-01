@@ -1,0 +1,14 @@
+{
+  "exception": null,
+  "prompt": "<s>[INST] <<SYS>>\nYou are a bot that generates titles for chapters of a meeting transcript. Use the following pieces of a chapter from a meeting transcript and generate a title for this chapter. The chapter title should be concise and contain the most important aspect of the meeting. Only include the title in the response, no explanations. Do not give a response beyond eight words and do not give an explanation for why you are giving a concise title and what it means. Your response will only have a title. Do not start the title with the words \"Discussion on\". Your response of eight to ten words should be in a single line and there should be no new lines.\n\n<</SYS>>\n\nchapter: \"*nods in agreement* To the pursuit of understanding, and the open exchange of ideas. May our discussions be ever-enlightening.\"\n\n[/INST]\n",
+  "completion": "Pursuit of Understanding: Open Idea Exchange",
+  "file_name": "particle_physics_meeting.vtt",
+  "chapter_id": 4,
+  "model_id": "mistral.mistral-7b-instruct-v0:2",
+  "time_taken_in_seconds": 0.429631,
+  "completion_token_count": 9,
+  "prompt_token_count": 180,
+  "input_token_price": 2.6999999999999996e-05,
+  "output_token_pricing": 1.8e-06,
+  "chapter_text": "\"*nods in agreement* To the pursuit of understanding, and the open exchange of ideas. May our discussions be ever-enlightening.\""
+}
