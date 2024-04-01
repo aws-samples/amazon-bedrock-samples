@@ -58,7 +58,7 @@ The example consists of three Jupyter notebooks and a couple of Python scripts:
 
 ### Dataset
 
-The dataset used in this repo is a synthetically dataset generated through the Bedrock chat playground using the Anthropic Claude3 Sonnet model with the following prompt. It has been manually edits to get into the exact VTT format.
+The dataset used in this repo is a synthetically dataset generated through the Bedrock chat playground using the Anthropic Claude3 Sonnet model with the following prompt. It has been manually edited to bring it into the exact VTT format.
 
 ```{.raw}
 
