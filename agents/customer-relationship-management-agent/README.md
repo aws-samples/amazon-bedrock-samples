@@ -73,24 +73,11 @@ The customer and interactions DynamoDB tables are filled with mock data.
 
 ### [Customer data](/agents/customer-relationship-management-agent/src/data/customer.json)
 
-| customer_id | company_name            | overview                  | meetingType | dayOfWeek | timeOfDay | email         |
-|--------------|--------------------------|----------------------------|--------------|------------|------------|----------------|
-| C-abc123     | Acme Inc                 | Acme Inc is a leading... | InPerson     | Tuesday    | Afternoon | abc@kmal.com   |
-| C-def456     | 123 Designs              | 123 Designs is a...      | Online       | Wednesday  | Morning   | abc@kmal.com   |
-| C-ghi789     | Builders R Us            | Builders R Us supplies... | InPerson     | Thursday   | Afternoon | abc@kmal.com   |
-| C-jkl01112   | Modern Home Furnishings  | Modern Home Furnishings  | Online       | Friday     | Morning   | abc@kmal.com   |
-| C-mno131415  | Web Works                | Web Works is a...         | InPerson     | Monday     | Evening   | abc@kmal.com   |
+![Screenshot 2024-04-02 at 13 26 48](https://github.com/EashanKaushik/amazon-bedrock-samples/assets/50113394/291585a6-517f-4280-9ddd-183c3d47c5bd)
 
 ## [Interactions data](/agents/customer-relationship-management-agent/src/data/interactions.json)
 
-| customer_id | date | notes |
-|-|-|-|
-| C-abc123 | 2023-02-14T14:30:00Z | Discussed current projects and timeline for new website launch. Provided feedback on design mockups. |
-| C-abc123 | 2023-02-21T10:00:00Z | Reviewed final website design and content, provided approval to proceed with development. Answered additional questions about branding guidelines. |
-| C-abc123 | 2023-02-28T15:00:00Z | Website launch check-in call. Discussed analytics setup and initial traffic results. Scheduled future call to review SEO optimization opportunities. |
-| C-abc123 | 2023-03-07T16:00:00Z | Follow-up call to review website traffic and SEO performance. Analyzed site metrics and identified areas for improvement. |
-| ........ | .................... | ........................................ |
-| C-mno131415 | 2023-03-27T14:45:00Z | Follow-up call to review website traffic and SEO performance. Analyzed site metrics and identified areas for improvement.|
+![Screenshot 2024-04-02 at 13 26 53](https://github.com/EashanKaushik/amazon-bedrock-samples/assets/50113394/595b7f73-8636-4140-8bfe-ee7ad63fa4a6)
 
 ## Supported Prompts
 
