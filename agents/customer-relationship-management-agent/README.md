@@ -76,11 +76,13 @@ The customer and interactions DynamoDB tables are filled with mock data.
 
 ### [Customer data](/agents/customer-relationship-management-agent/src/data/customer.json)
 
-![Screenshot 2024-04-02 at 13 26 48](https://github.com/EashanKaushik/amazon-bedrock-samples/assets/50113394/291585a6-517f-4280-9ddd-183c3d47c5bd)
+![Screenshot 2024-04-02 at 13 26 48](https://github.com/EashanKaushik/amazon-bedrock-samples/assets/50113394/fb156fc3-739f-44c5-9ca5-7d78a5b13c4d)
+
 
 ## [Interactions data](/agents/customer-relationship-management-agent/src/data/interactions.json)
 
-![Screenshot 2024-04-02 at 13 26 53](https://github.com/EashanKaushik/amazon-bedrock-samples/assets/50113394/595b7f73-8636-4140-8bfe-ee7ad63fa4a6)
+![Screenshot 2024-04-02 at 13 26 53](https://github.com/EashanKaushik/amazon-bedrock-samples/assets/50113394/16252afd-b7ac-4f0a-9a3d-d54fe9d165a1)
+
 
 ## Supported Prompts
 
