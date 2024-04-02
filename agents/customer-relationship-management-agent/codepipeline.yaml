@@ -36,7 +36,7 @@ Parameters:
   GitURL:
     Type: String
     Description: Initial repository for CRM Agent
-    Default: https://github.com/EashanKaushik/amazon-bedrock-samples.git
+    Default: https://github.com/aws-samples/amazon-bedrock-samples.git
 
   EnvironmentName:
     Description: (containing only letters) Unique name to distinguish different web application in the same AWS account- min length 1 and max length 4
@@ -149,8 +149,7 @@ Resources:
                 - 'codebuild.amazonaws.com'
             Action:
               - 'sts:AssumeRole'
-      ManagedPolicyArns:
-          - !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy]
+      Path: "/"
       Policies:
         - PolicyName: 'CreateResources'
           PolicyDocument:
@@ -169,6 +168,13 @@ Resources:
                   - 'kms:CreateGrant'
                   - 'kms:DescribeKey'
                 Resource: "*"
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:PutRetentionPolicy'
+                Resource: '*'
               - Effect: 'Allow'
                 Action:
                   - 'ssm:PutParameter'
@@ -272,8 +278,7 @@ Resources:
                 - 'codebuild.amazonaws.com'
             Action:
               - 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy]
+      Path: "/"      
       Policies:
         - PolicyName: 'CleanResources'
           PolicyDocument:
@@ -283,6 +288,13 @@ Resources:
                 Action:
                   - 'dynamodb:ListTables'
                 Resource: '*'
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:PutRetentionPolicy'
+                Resource: '*'                
               - Effect: 'Allow'
                 Action:
                   - 'dynamodb:DeleteTable'
@@ -490,8 +502,6 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Path: "/"
-      ManagedPolicyArns:
-        - !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy]
       Policies:
         - PolicyName: LambdaCustomPolicy
           PolicyDocument:
@@ -516,6 +526,13 @@ Resources:
                   - !Sub arn:aws:s3:::${StreamlitArtifactStore}
                   - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}/*
                   - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:PutRetentionPolicy'
+                Resource: '*'
               - Effect: Allow
                 Action:
                   - cloudformation:DeleteStack
