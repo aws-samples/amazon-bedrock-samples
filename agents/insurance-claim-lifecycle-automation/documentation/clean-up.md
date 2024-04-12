@@ -9,7 +9,6 @@ The [delete-customer-resources.sh](../shell/delete-customer-resources.sh) shell 
 ```sh
 # cd amazon-bedrock-samples/agents/insurance-claim-lifecycle-automation/shell/
 # chmod u+x delete-customer-resources.sh
-# export STACK_NAME=<YOUR-STACK-NAME>
 ./delete-customer-resources.sh
 ```
 
@@ -18,14 +17,13 @@ The preceding ./delete-customer-resources.sh shell command runs the following AW
 ```sh
 echo "Emptying and Deleting S3 Bucket: $ARTIFACT_BUCKET_NAME"
 
-aws s3 rm s3://${ARTIFACT_BUCKET_NAME} --recursive
-aws s3 rb s3://${ARTIFACT_BUCKET_NAME}
+aws s3 rm s3://${ARTIFACT_BUCKET_NAME} --region ${AWS_REGION} --recursive
+aws s3 rb s3://${ARTIFACT_BUCKET_NAME} --region ${AWS_REGION}
 
 echo "Deleting CloudFormation Stack: $STACK_NAME"
 
-aws cloudformation delete-stack --stack-name $STACK_NAME
-aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus"
-aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME
+aws cloudformation delete-stack --stack-name $STACK_NAME --region ${AWS_REGION} 
+aws cloudformation describe-stacks --stack-name $STACK_NAME --region ${AWS_REGION} --query "Stacks[0].StackStatus"
 ```
 
 ## Delete Agent and Knowledge Base
@@ -33,7 +31,8 @@ Follow the instructions for [deleting an agent](https://docs.aws.amazon.com/bedr
 
 ---
 
-[Back to README](../README.md)
+## README
+see [README](../README.md)
 
 ---
 

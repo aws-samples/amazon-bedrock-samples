@@ -19,6 +19,7 @@ bedrock_embedding = BedrockEmbeddings(
 
 anthropic_claude_llm = Bedrock(
     credentials_profile_name=credentials_profile_name,
+    region_name=region_name,
     model_id="anthropic.claude-v2"
 )
 

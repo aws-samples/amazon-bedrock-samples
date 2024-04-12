@@ -18,6 +18,16 @@ fi
 # Activate the virtual environment
 source "$VENV_NAME/bin/activate"
 
+# Uninstall packages listed in requirements.txt using pip within the virtual environment
+pip uninstall -r requirements.txt -y
+
+# Check if pip uninstall command was successful
+if [ $? -eq 0 ]; then
+    echo "All packages from requirements.txt have been uninstalled successfully."
+else
+    echo "Failed to uninstall packages from requirements.txt."
+fi
+
 # Install packages listed in requirements.txt using pip within the virtual environment
 pip install -r requirements.txt
 
