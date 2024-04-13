@@ -1,0 +1,14 @@
+{
+  "exception": null,
+  "prompt": "Human: You are a bot that generates titles for chapters of a meeting transcript. Use the following pieces of a chapter from a meeting transcript and generate a title for this chapter. The chapter title should be concise and contain the most important aspect of the meeting in the <title></title> xml tags. Don't start the title with the words \"Discussion on\". Only include the title in the response, no explanations. Do not give a response beyond eight words and do not give an explanation for why you are giving a concise title and what it means. Your response will only have a title. Your response of eight to ten words should be in a single line and there should be no new lines.\n\n<chapter>\n\"*nods in agreement* To the pursuit of understanding, and the open exchange of ideas. May our discussions be ever-enlightening.\"\n</chapter>\n\nAssistant:\n",
+  "completion": "<title>Enlightening Discussions and Open Exchange</title>",
+  "file_name": "particle_physics_meeting.vtt",
+  "chapter_id": 4,
+  "model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+  "time_taken_in_seconds": 1.084369,
+  "completion_token_count": 17,
+  "prompt_token_count": 190,
+  "input_token_price": 0.00057,
+  "output_token_pricing": 0.000255,
+  "chapter_text": "\"*nods in agreement* To the pursuit of understanding, and the open exchange of ideas. May our discussions be ever-enlightening.\""
+}

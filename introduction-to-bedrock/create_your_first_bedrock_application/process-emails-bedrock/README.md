@@ -1,5 +1,7 @@
 # Processing Emails with Amazon Bedrock
 
+Sample Authors: Aditi Rajnish, Maíra Ladeira Tanke, Raj Pathak
+
 This repo contains an [AWS CDK](https://aws.amazon.com/cdk/) solution for automatically processing emails using [Amazon Bedrock](https://aws.amazon.com/bedrock/), [Simple Email Service (SES)](https://aws.amazon.com/ses/), [Amazon Simple Notification Service (SNS)](https://aws.amazon.com/sns/), [AWS Lambda](https://aws.amazon.com/lambda/), and [Amazon DynamoDB](https://aws.amazon.com/dynamodb/).
 
 To get start and set up your environment:
