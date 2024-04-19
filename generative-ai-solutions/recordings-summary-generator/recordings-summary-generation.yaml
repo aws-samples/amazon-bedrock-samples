@@ -39,12 +39,15 @@ Parameters:
   SummaryInstructions:
     Type: String
     Description: These are the instructions given to the Bedrock model to generate the summary.
-    Default: Provide a summary and next steps if there are any.
+    Default: Your task is to create markdown-formatted list Key Stakeholders and highlight Key Discussion Points and list Decisions and outline Action Items and provide meeting notes and create a concise summary.
 
   BedrockModelId:
     Type: String
-    Description: This is the ID of the model that will generate the summary (note that the API parameters will depend on the model).
+    Description: This is the ID of the model that will generate the summary.
     Default: anthropic.claude-3-sonnet-20240229-v1:0
+    AllowedValues:
+      - anthropic.claude-3-sonnet-20240229-v1:0
+      - anthropic.claude-3-haiku-20240307-v1:0
 
 
 #---------------------------------------------------------------------
@@ -663,7 +666,6 @@ Resources:
           SUMMARY_INSTRUCTIONS = os.getenv('SUMMARY_INSTRUCTIONS', 'Your task is list Key Stakeholders and highlight Key Discussion Points and list Decisions and outline Action Items and provide meeting notes and create a concise summary.')
 
           # Use the provided model ID to invoke the model.
-          # NOTE: The Bedrock invocation parameters will depend on the specific model.
           BEDROCK_MODEL_ID = os.getenv('BEDROCK_MODEL_ID')
 
           #--------------------------------------------------
@@ -693,9 +695,7 @@ Resources:
                   transcript = json.dumps(data['results']['transcripts'][0]['transcript'])
 
                   # Create the payload to provide to the Anthropic model.
-                  #prompt='Human:\n\n{SUMMARY_INSTRUCTIONS}{transcript}\n\n Assistant:\n\n'
-                  SUMMARY_INSTRUCTIONS='Your task is list Key Stakeholders and highlight Key Discussion Points and list Decisions and outline Action Items and provide meeting notes and create a concise summary.'
-                  messages = [{ "role":'user', "content":[{'type':'text','text': SUMMARY_INSTRUCTIONS+transcript}]}]
+                  messages = [{ "role":"user", "content":[{"type":"text","text": SUMMARY_INSTRUCTIONS + " " + transcript}]}]
 
                   body=json.dumps(
                       {
@@ -707,11 +707,11 @@ Resources:
                       }
                   )
 
-                  print('Invoking model: {BEDROCK_MODEL_ID}')
+                  print(f'Invoking model: {BEDROCK_MODEL_ID}')
 
                   response = bedrock_client.invoke_model(body=body, modelId=BEDROCK_MODEL_ID)
 
-                  print("response: ", response)
+                  print(f'response: {response}')
 
                   # Save the response value.
                   assistant_response = json.loads(response.get('body').read())
