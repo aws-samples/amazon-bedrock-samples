@@ -1,6 +1,7 @@
 import json
 import boto3
 import random
+import time
 
 
 suffix = random.randrange(200, 900)
@@ -215,3 +216,95 @@ def delete_iam_role_and_policies():
     iam_client.delete_policy(PolicyArn=oss_policy_arn)
     return 0
 
+
+def interactive_sleep(seconds: int):
+    dots = ''
+    for i in range(seconds):
+        dots += '.'
+        print(dots, end='\r')
+        time.sleep(1)
+    print('Done!')
+
+
+def create_bedrock_execution_role_multi_ds(bucket_names):
+    foundation_model_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "bedrock:InvokeModel",
+                ],
+                "Resource": [
+                    f"arn:aws:bedrock:{region_name}::foundation-model/amazon.titan-embed-text-v1" 
+                ]
+            }
+        ]
+    }
+
+    s3_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:GetObject",
+                    "s3:ListBucket"
+                ],
+                "Resource": [item for sublist in [[f'arn:aws:s3:::{bucket}', f'arn:aws:s3:::{bucket}/*'] for bucket in bucket_names] for item in sublist], 
+                "Condition": {
+                    "StringEquals": {
+                        "aws:ResourceAccount": f"{account_number}"
+                    }
+                }
+            }
+        ]
+    }
+
+    assume_role_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "bedrock.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+            }
+        ]
+    }
+    # create policies based on the policy documents
+    fm_policy = iam_client.create_policy(
+        PolicyName=fm_policy_name,
+        PolicyDocument=json.dumps(foundation_model_policy_document),
+        Description='Policy for accessing foundation model',
+    )
+
+    s3_policy = iam_client.create_policy(
+        PolicyName=s3_policy_name,
+        PolicyDocument=json.dumps(s3_policy_document),
+        Description='Policy for reading documents from s3')
+
+    # create bedrock execution role
+    bedrock_kb_execution_role = iam_client.create_role(
+        RoleName=bedrock_execution_role_name,
+        AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
+        Description='Amazon Bedrock Knowledge Base Execution Role for accessing OSS and S3',
+        MaxSessionDuration=3600
+    )
+
+    # fetch arn of the policies and role created above
+    bedrock_kb_execution_role_arn = bedrock_kb_execution_role['Role']['Arn']
+    s3_policy_arn = s3_policy["Policy"]["Arn"]
+    fm_policy_arn = fm_policy["Policy"]["Arn"]
+
+    # attach policies to Amazon Bedrock execution role
+    iam_client.attach_role_policy(
+        RoleName=bedrock_kb_execution_role["Role"]["RoleName"],
+        PolicyArn=fm_policy_arn
+    )
+    iam_client.attach_role_policy(
+        RoleName=bedrock_kb_execution_role["Role"]["RoleName"],
+        PolicyArn=s3_policy_arn
+    )
+    return bedrock_kb_execution_role
