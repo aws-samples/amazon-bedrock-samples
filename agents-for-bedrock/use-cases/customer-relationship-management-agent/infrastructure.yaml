@@ -1,0 +1,512 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Basic VPC Infrastructure
+
+Parameters:
+  Vpccidr:
+    Description: Please enter the IP range (CIDR notation) for the VPC
+    Type: String
+    Default: 10.0.0.0/16
+
+  PublicSubnetAcidr:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.0.0/24
+
+  PublicSubnetBcidr:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.1.0/24
+
+  PrivateSubnetAcidr:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.2.0/24
+
+  PrivateSubnetBcidr:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.3.0/24
+  
+  PrivateSubnetAcidr:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.4.0/24
+  
+  PrivateSubnetBcidr:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.5.0/24
+  
+  ProtectedSubnetAcidr:
+    Description: Please enter the IP range (CIDR notation) for the protected subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.6.0/24
+  
+  ProtectedSubnetBcidr:
+    Description: Please enter the IP range (CIDR notation) for the protected subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.7.0/24
+  
+  EnvironmentName:
+    Description: Unique name to distinguish different web application min chars 1 and max chars 4
+    Type: String
+    MinLength: 1
+    MaxLength: 4
+
+Resources:
+  # ECS Cluster
+  StreamlitCluster:
+    Type: AWS::ECS::Cluster
+    DependsOn: StreamlitECSRoleCustomResource
+    Properties:
+      ClusterName: !Join ['-', ['StreamlitCluster', !Ref EnvironmentName]]
+
+  # Logs Policy
+  LogsPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: 'LogsPolicy'
+      Path: /
+      ManagedPolicyName: !Sub "LogsPolicy${EnvironmentName}"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              - 'logs:PutRetentionPolicy'
+            Resource: '*'
+
+  # Log Bucket
+  LoggingBucket: 
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Retain
+    Properties:
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  LoggingBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref LoggingBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !Sub arn:aws:s3:::${LoggingBucket}/*       
+
+  # VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref Vpccidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: 'VPC'
+  
+  VPCLogGroup:
+    DeletionPolicy: Retain
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      RetentionInDays: 7
+      
+  VPCLogRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: vpc-flow-logs.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !GetAtt LogsPolicy.PolicyArn
+  
+  VPCFlowLog:
+    Type: "AWS::EC2::FlowLog"
+    Properties:
+      ResourceId: !Ref VPC
+      ResourceType: VPC
+      TrafficType: ALL
+      LogGroupName: !Ref VPCLogGroup
+      DeliverLogsPermissionArn: !GetAtt VPCLogRole.Arn
+  
+  # Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternetGateway
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  # Create a Subnet
+  PublicSubnetA:  
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PublicSubnetAcidr
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+                          - 0
+                          - Fn::GetAZs: !Ref 'AWS::Region'
+      Tags:
+        - Key: Name
+          Value: PublicSubnetA
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PublicSubnetBcidr
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+                          - 1
+                          - Fn::GetAZs: !Ref 'AWS::Region'
+      Tags:
+        - Key: Name
+          Value: PublicSubnetB
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PrivateSubnetAcidr
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+                          - 0
+                          - Fn::GetAZs: !Ref 'AWS::Region'
+      Tags:
+        - Key: Name
+          Value: PrivateSubnetA
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PrivateSubnetBcidr
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+                          - 1
+                          - Fn::GetAZs: !Ref 'AWS::Region'
+      Tags:
+        - Key: Name
+          Value: PrivateSubnetB
+
+  ProtectedSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+                          - 0
+                          - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: !Ref ProtectedSubnetAcidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: ProtectedSubnetA
+
+  ProtectedSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+                          - 1
+                          - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: !Ref ProtectedSubnetBcidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: ProtectedSubnetB
+
+  # NAT Gateway
+  NatGatewayAEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGatewayBEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayAEIP.AllocationId
+      SubnetId: !Ref PublicSubnetA
+
+  NatGatewayB:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayBEIP.AllocationId
+      SubnetId: !Ref PublicSubnetB
+  
+  # Public Route Table 
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable
+  
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetA
+
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetB
+
+  # Private Route Table
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTableA
+
+  DefaultPrivateRouteA:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayA
+
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      SubnetId: !Ref PrivateSubnetA
+
+  PrivateRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTableB
+
+  DefaultPrivateRouteB:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayB
+
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      SubnetId: !Ref PrivateSubnetB
+
+  # Protected Route Table
+  ProtectedRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: ProtectedRouteTableA
+
+  ProtectedSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref ProtectedRouteTableA
+      SubnetId: !Ref ProtectedSubnetA
+
+  ProtectedRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: ProtectedRouteTableB
+
+  ProtectedSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref ProtectedRouteTableB
+      SubnetId: !Ref ProtectedSubnetB
+
+  # Custom ECS resource
+  StreamlitECSRoleCustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['ECSCustomRole', !Sub '${AWS::StackName}']]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: "/"
+      ManagedPolicyArns:
+        - !GetAtt LogsPolicy.PolicyArn  
+      Policies:
+        - PolicyName: IAMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:ListRoles
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:CreateServiceLinkedRole
+                  - iam:AttachRolePolicy
+                Resource:
+                  - "*"
+
+  StreamlitECSRoleCustomResourceFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: !Join ['-', ['ECSCustomF', !Sub '${AWS::StackName}']]
+      Handler: index.handler
+      Role: !GetAtt StreamlitECSRoleCustomResourceRole.Arn
+      Timeout: 300
+      Runtime: python3.12
+      Code:
+        ZipFile: !Sub |
+              import boto3
+              from botocore.exceptions import ClientError
+              import cfnresponse
+              iam_client = boto3.client('iam')
+
+              def handler(event, context):
+                  
+                  try:
+                    request_type = event['RequestType']
+                    print(request_type)
+
+                    if request_type == 'Create':
+                      desired_role_name = "AWSServiceRoleForECS"
+
+                      try:
+                        iam_client.get_role(RoleName=desired_role_name)
+                        role_exists = True
+                      except ClientError as e:
+                        if e.response['Error']['Code'] == 'NoSuchEntity':
+                          role_exists = False
+                        else:
+                          role_exists = True
+
+                      print(role_exists)
+                      if not role_exists:
+                        iam_client.create_service_linked_role(AWSServiceName="ecs.amazonaws.com")
+                  except Exception as ex:
+                    print(ex)
+                    cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                  else:
+                    cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+  
+  StreamlitECSRoleCustomResource:
+    Type: Custom::ECSRole
+    Properties:
+      ServiceToken: !GetAtt StreamlitECSRoleCustomResourceFunction.Arn 
+
+Outputs:
+  VPC:
+    Description: "VPC"
+    Value: !Ref VPC
+    Export:
+      Name: Basic-VPC
+  
+  LogsPolicy:
+    Description: "LogsPolicy"
+    Value: !GetAtt LogsPolicy.PolicyArn
+    Export:
+      Name: Basic-LogsPolicy
+  
+  LoggingBucket:
+    Description: "LoggingBucket"
+    Value: !Ref LoggingBucket
+    Export:
+      Name: Basic-LoggingBucket
+  
+  LoggingBucketPolicy:
+    Description: "LoggingBucketPolicy"
+    Value: !Ref LoggingBucketPolicy
+    Export:
+      Name: Basic-LoggingBucketPolicy
+  
+  PublicSubnetA:
+    Description: "PublicSubnetA"
+    Value: !Ref PublicSubnetA
+    Export:
+      Name: Basic-PublicSubnetA
+
+  PublicSubnetB:
+    Description: "PublicSubnetB"
+    Value: !Ref PublicSubnetB
+    Export:
+      Name: Basic-PublicSubnetB
+
+  PrivateSubnetA:
+    Description: "PrivateSubnetA"
+    Value: !Ref PrivateSubnetA
+    Export:
+      Name: Basic-PrivateSubnetA
+
+  PrivateSubnetB:
+    Description: "PrivateSubnetB"
+    Value: !Ref PrivateSubnetB
+    Export:
+      Name: Basic-PrivateSubnetB
+
+  ProtectedSubnetA:
+    Description: "ProtectedSubnetA"
+    Value: !Ref ProtectedSubnetA
+    Export:
+      Name: Basic-ProtectedSubnetA
+
+  ProtectedSubnetB:
+    Description: "ProtectedSubnetB"
+    Value: !Ref ProtectedSubnetB
+    Export:
+      Name: Basic-ProtectedSubnetB
+  
+  StreamlitCluster:
+    Description: "StreamlitCluster"
+    Value: !Ref StreamlitCluster
+    Export:
+      Name: StreamlitCluster

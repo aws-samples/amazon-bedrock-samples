@@ -1,0 +1,9 @@
+boto3
+mammoth
+openpyxl
+pandas
+pdfplumber
+PyPDF2
+python-docx
+streamlit
+xlrd

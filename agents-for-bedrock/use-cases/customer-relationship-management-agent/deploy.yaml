@@ -1,0 +1,471 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Infrastructure for the Fargate ECS Cluster.
+
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: 'Container Configuration'
+      Parameters:
+      - Cpu
+      - Memory
+      - StreamLitImageURI
+      - ContainerPort
+    - Label:
+        default: 'Environment Configuration'
+      Parameters:
+      - EnvironmentName
+    - Label:
+        default: 'Autoscaling'
+      Parameters:
+      - Task
+      - Min
+      - Max
+      - Tv
+    - Label:
+        default: 'Infrastructure'
+      Parameters:
+      - StreamlitCluster
+      - StreamlitLogsPolicyArn
+      - StreamlitPublicSubnetA
+      - StreamlitPublicSubnetB
+      - StreamlitPrivateSubnetA
+      - StreamlitPrivateSubnetB
+      - LoggingBucketName
+
+Parameters:
+
+  StreamlitCluster:
+    Description: StreamlitCluster
+    Type: String 
+
+  StreamLitImageURI:
+    Description: Image URI
+    Type: String
+    Default: <AccountID>.dkr.ecr.<Region>.amazonaws.com/<ImageName>:<Tag>
+  
+  Cpu:
+    Description: "CPU of Fargate Task. Make sure you put valid Memory and CPU pair, refer: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html#cfn-ecs-taskdefinition-cpu:~:text=requires%3A%20Replacement-,Cpu,-The%20number%20of"
+    Type: Number
+    Default: 512
+    AllowedValues:
+      - 256
+      - 512
+      - 1024
+      - 2048
+      - 4096
+  
+  Memory:
+    Description: "Memory of Fargate Task.  Make sure you put valid Memory and CPU pair, refer: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html#cfn-ecs-taskdefinition-cpu:~:text=requires%3A%20Replacement-,Cpu,-The%20number%20of"
+    Type: Number
+    Default: 1024
+    AllowedValues:
+      - 512
+      - 1024
+      - 2048
+      - 3072
+      - 4096
+      - 5120
+      - 6144
+      - 7168
+      - 8192
+      - 16384
+      - 30720
+
+  Task:
+    Description: Desired Docker task count
+    Type: Number
+    Default: 2
+  
+  Min:
+    Description: Minimum containers for Autoscaling. Should be less than or equal to DesiredTaskCount
+    Type: Number
+    Default: 2
+  
+  Max:
+    Description: Maximum containers for Autoscaling. Should be greater than or equal to DesiredTaskCount
+    Type: Number
+    Default: 2
+  
+  Tv:
+    Description: CPU Utilization Target
+    Type: Number
+    Default: 80
+
+  EnvironmentName:
+    Description: Unique name to distinguish different web application min chars 1 and max chars 4
+    Type: String
+    MinLength: 1
+    MaxLength: 4
+
+  StreamlitLogsPolicyArn:
+    Description: Logs Policy Arn
+    Type: String   
+  
+  StreamlitPublicSubnetA:
+      Description: Task private subnet A
+      Type: String
+
+  StreamlitPublicSubnetB:
+      Description: Task private subnet A
+      Type: String
+
+  StreamlitPrivateSubnetA:
+    Description: Task private subnet A
+    Type: String
+  
+  StreamlitPrivateSubnetB:
+    Description: Task private subnet B
+    Type: String
+
+  LoggingBucketName:
+    Description: Name of Logging Bucket
+    Type: String  
+
+  StreamlitVPC:
+    Description: Id of VPC created
+    Type: String  
+
+  ContainerPort:
+    Description: Port for Docker host and container
+    Type: Number
+    Default: 80
+
+Mappings:
+  # Cloudfront Mappings
+  CFRegionMap:
+    'af-south-1':
+      PrefixListCloudFront: 'pl-c0aa4fa9'
+    'eu-north-1':
+      PrefixListCloudFront: 'pl-fab65393'
+    'ap-south-1':
+      PrefixListCloudFront: 'pl-9aa247f3'
+    'eu-west-3':
+      PrefixListCloudFront: 'pl-75b1541c'
+    'eu-west-2':
+      PrefixListCloudFront: 'pl-93a247fa'
+    'eu-south-1':
+      PrefixListCloudFront: 'pl-1bbc5972'
+    'eu-west-1':
+      PrefixListCloudFront: 'pl-4fa04526'
+    'ap-northeast-2':
+      PrefixListCloudFront: 'pl-22a6434b'
+    'me-south-1':
+      PrefixListCloudFront: 'pl-17b2577e'
+    'ap-northeast-1':
+      PrefixListCloudFront: 'pl-58a04531'
+    'sa-east-1':
+      PrefixListCloudFront: 'pl-5da64334'
+    'ca-central-1':
+      PrefixListCloudFront: 'pl-38a64351'
+    'ap-east-1':
+      PrefixListCloudFront: 'pl-14b2577d'
+    'ap-southeast-1':
+      PrefixListCloudFront: 'pl-31a34658'
+    'ap-southeast-2':
+      PrefixListCloudFront: 'pl-b8a742d1'
+    'eu-central-1':
+      PrefixListCloudFront: 'pl-a3a144ca'
+    'us-east-1':
+      PrefixListCloudFront: 'pl-3b927c52'
+    'us-east-2':
+      PrefixListCloudFront: 'pl-b6a144df'
+    'us-west-1':
+      PrefixListCloudFront: 'pl-4ea04527'
+    'us-west-2':
+      PrefixListCloudFront: 'pl-82a045eb'
+
+Resources:
+  # Task
+  StreamlitExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['StreamlitExecutionRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+
+  StreamlitECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['StreamlitECSTaskRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'TaskSSMPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - "ssm:GetParameter"
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/streamlitapp/${EnvironmentName}/*"
+              - Effect: 'Allow'
+                Action:
+                  - "kms:Decrypt"
+                Resource:
+                  - !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/alias/aws/ssm"
+              - Effect: 'Allow'
+                Action:
+                  - 'bedrock:InvokeAgent'
+                Resource:
+                  - '*'
+                  
+  StreamlitLogGroup:
+    DeletionPolicy: Retain
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
+  
+  StreamlitTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      Family: !Join ['-', ['StreamlitTaskDefinition', !Ref EnvironmentName]]
+      Memory: !Ref Memory
+      Cpu: !Ref Cpu
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - 'FARGATE'
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX   
+      TaskRoleArn: !GetAtt StreamlitECSTaskRole.Arn
+      ExecutionRoleArn: !GetAtt StreamlitExecutionRole.Arn
+      ContainerDefinitions: 
+        - Name: !Join ['-', ['ContainerDefinition', !Ref EnvironmentName]]
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options: 
+              awslogs-group: !Ref StreamlitLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: "ecs"
+          Image: !Ref StreamLitImageURI
+          PortMappings:
+            - AppProtocol: "http"
+              ContainerPort: !Ref ContainerPort
+              HostPort: !Ref ContainerPort
+              Name: !Join ['-', ['streamlit', !Ref ContainerPort, 'tcp']]
+              Protocol: "tcp"
+
+  StreamlitECSService:
+    DependsOn: 
+      - StreamlitApplicationLoadBalancer
+      - StreamlitALBListenerRule
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Join ['-', ['StreamlitECSService', !Ref EnvironmentName]]
+      Cluster: !Ref StreamlitCluster
+      TaskDefinition: !Ref StreamlitTaskDefinition
+      DesiredCount: !Ref Task
+      LaunchType: FARGATE
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          Subnets:
+            - !Ref StreamlitPrivateSubnetA
+            - !Ref StreamlitPrivateSubnetB
+          SecurityGroups:
+            - !Ref StreamlitContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: !Join ['-', ['ContainerDefinition', !Ref EnvironmentName]]
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref StreamlitContainerTargetGroup
+
+  StreamlitAutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', [StreamlitScalingRole, !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
+  
+  # AutoScaling
+  StreamlitAutoScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: !Ref Min
+      MaxCapacity: !Ref Max
+      ResourceId: !Join ['/', [service, !Ref StreamlitCluster, !GetAtt StreamlitECSService.Name]]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
+      RoleARN: !GetAtt StreamlitAutoScalingRole.Arn
+  
+  StreamlitAutoScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Join ['', [AutoScalingPolicy, !Ref EnvironmentName]]
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref StreamlitAutoScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        # Keep things at or lower than 50% CPU utilization, for example
+        TargetValue: !Ref Tv
+
+    # Security Group
+  
+  # Security Group
+  StreamlitALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to the internet
+      VpcId: !Ref StreamlitVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          Description: Allow 80 port from all IP
+          FromPort: 80
+          ToPort: 80
+          SourcePrefixListId: !FindInMap ['CFRegionMap', !Ref 'AWS::Region', 'PrefixListCloudFront']
+      Tags:
+        - Key: Name
+          Value: !Join ['-', ['StreamlitALBSecurityGroup', !Ref EnvironmentName]]
+  
+  StreamlitContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow container traffic from ALB
+      VpcId: !Ref StreamlitVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          Description: Allow Container port from ALB SG
+          FromPort: !Ref ContainerPort
+          ToPort: !Ref ContainerPort
+          SourceSecurityGroupId: !Ref StreamlitALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Join ['-', ['StreamlitContainerSecurityGroup', !Ref EnvironmentName]]
+
+  # Load Balancer
+  StreamlitContainerTargetGroup:
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Properties:
+      Port: 80
+      Protocol: "HTTP"
+      TargetType: ip
+      VpcId: !Ref StreamlitVPC
+      Name: !Join ['-', ['StreamlitContainerTG', !Ref EnvironmentName]]
+
+
+  StreamlitApplicationLoadBalancer:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      Name: !Join ['-', ['StreamlitALB', !Ref EnvironmentName]]
+      LoadBalancerAttributes:
+        - Key: load_balancing.cross_zone.enabled
+          Value: true
+      Scheme: internet-facing
+      Type: application
+      Subnets: 
+        - !Ref StreamlitPublicSubnetA
+        - !Ref StreamlitPublicSubnetB
+      SecurityGroups: 
+        - !Ref StreamlitALBSecurityGroup
+      IpAddressType: ipv4
+
+  StreamlitHTTPListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !Ref StreamlitApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions: 
+        - FixedResponseConfig:
+            ContentType: text/plain
+            MessageBody: Access denied
+            StatusCode: 403
+          Type: fixed-response
+  
+  StreamlitALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties: 
+      Actions: 
+        - Type: forward
+          TargetGroupArn: !Ref StreamlitContainerTargetGroup
+      Conditions: 
+        - Field: http-header
+          HttpHeaderConfig:
+            HttpHeaderName: X-Custom-Header
+            Values: 
+              - !Join ['-', [!Sub "${AWS::StackName}", !Sub "${AWS::AccountId}"]]
+      ListenerArn: !Ref StreamlitHTTPListener
+      Priority: 1
+
+  # Cloudfront
+  Distribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig: 
+        Origins: 
+          - ConnectionAttempts: 3
+            ConnectionTimeout: 10
+            DomainName: !GetAtt StreamlitApplicationLoadBalancer.DNSName
+            Id: !Ref StreamlitApplicationLoadBalancer
+            OriginCustomHeaders:
+               - HeaderName: X-Custom-Header
+                 HeaderValue: !Join ['-', [!Sub "${AWS::StackName}", !Sub "${AWS::AccountId}"]]
+            CustomOriginConfig:
+              HTTPPort: '80'
+              OriginProtocolPolicy: 'http-only'
+        DefaultCacheBehavior: 
+          ForwardedValues:
+            Cookies:
+              Forward: whitelist
+              WhitelistedNames: [token]
+            QueryString: true
+            QueryStringCacheKeys: [code]
+          Compress: true
+          ViewerProtocolPolicy: 'https-only'
+          AllowedMethods: 
+            - "HEAD"
+            - "DELETE"
+            - "POST"
+            - "GET"
+            - "OPTIONS"
+            - "PUT"
+            - "PATCH"
+          CachedMethods: 
+            - "HEAD"
+            - "GET"
+          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6"
+          OriginRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
+          TargetOriginId: !Ref StreamlitApplicationLoadBalancer
+        PriceClass: "PriceClass_All"
+        Enabled: true                  
+        HttpVersion: "http2"
+        IPV6Enabled: true
+        Logging: 
+          Bucket: !Sub '${LoggingBucketName}.s3.amazonaws.com'
+          IncludeCookies: true
+          Prefix: !Sub distribution-${EnvironmentName}-logs/
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+          MinimumProtocolVersion: TLSv1.2_2018
+        # WebACLId: !GetAtt CloudFrontWebACL.Arn
+      Tags:
+        - Key: CloudfrontStreamlitApp
+          Value: !Sub ${AWS::StackName}-Cloudfront
+
+Outputs:
+  CloudfrontURL:
+    Description: "CloudFront URL"
+    Value: !GetAtt Distribution.DomainName
+  
+  CloudfrontID:
+    Description: "CloudFront ID"
+    Value: !Ref Distribution
