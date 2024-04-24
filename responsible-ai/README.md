@@ -4,7 +4,8 @@ This folder contains examples related to Responsible AI on Bedrock
 
 ## Contents
 
-This repo is still under construction, come back soon! 
+[Guardrails for Amazon Bedrock Samples](guardrails-for-amazon-bedrock-samples) - Examples of Building, Updating, Versioning and Testing your Guardrails
+
 
 ## Contributing
 
