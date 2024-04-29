@@ -45,6 +45,32 @@ In order to query the correct function and parameters the following code is adde
 
 ```python
 def lambda_handler(event, context):
+    action_group = event['actionGroup']
     function = event['function']
     parameters = event.get('parameters', [])
+    
+    # setting expected response body
+    responseBody =  {
+        "TEXT": {
+            "body": "sample response"
+        }
+    }
+    
+    # Logic code goes here
+    ...
+    
+    action_response = {
+        'actionGroup': action_group,
+        'function': function,
+        'functionResponse': {
+            'responseBody': responseBody
+        }
+
+    }
+
+    function_response = {
+        'response': action_response, 
+        'messageVersion': event['messageVersion']
+    }
+    return function_response
 ```
