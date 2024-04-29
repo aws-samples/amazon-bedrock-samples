@@ -2,15 +2,28 @@
 Create a custom dashboard in CloudWatch with
 relevant metrics associated with Bedrock app.
 
+Update Parameters (Line 22) based on details of your app, 
+such as Lambda function name, Knowledge base ID, Model name
+
 Note: the `InvocationSummary by User` component of
 this dashboard assumes you have invocation logs
 enabled under Bedrock settings. If you don't enable
 invocation logs, you will see no data for this
-component.
+component. Update loggroup name in line 268 to match 
+the log group name where Bedrock invocation logs 
+are being sent.
 """
 
 import json
 import boto3
+
+
+# Parameters
+region = "us-east-1"
+lambda_name = "InvokeKnowledgeBase"
+knowledge_base_name = "bedrock-sample-knowledge-base-111"
+invoke_model_id = "anthropic.claude-instant-v1"
+dashboard_name = "Contextual-Chatbot-Dashboard"
 
 
 def knowledge_base_id_to_oss_collection(knowledge_base_id):
@@ -76,7 +89,7 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
         "widgets": [
             {
                 "height": 6,
-                "width": 7,
+                "width": 8,
                 "y": 0,
                 "x": 8,
                 "type": "metric",
@@ -203,7 +216,7 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
                 },
             },
             {
-                "height": 5,
+                "height": 6,
                 "width": 12,
                 "y": 6,
                 "x": 0,
@@ -246,13 +259,13 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
                 },
             },
             {
-                "height": 5,
+                "height": 6,
                 "width": 12,
                 "y": 6,
                 "x": 12,
                 "type": "log",
                 "properties": {
-                    "query": "SOURCE 'textGeneration/Bedrock' | fields @timestamp, identity.arn, input.inputTokenCount, output.outputTokenCount\n| stats sum(input.inputTokenCount) as totalInputTokens, sum(output.outputTokenCount) as totalOutputTokens, count(*) as invocationCount by identity.arn",
+                    "query": "SOURCE '/test/textGeneration/Bedrock' | fields @timestamp, identity.arn, input.inputTokenCount, output.outputTokenCount\n| stats sum(input.inputTokenCount) as totalInputTokens, sum(output.outputTokenCount) as totalOutputTokens, count(*) as invocationCount by identity.arn",
                     "region": region,
                     "stacked": False,
                     "title": "InvocationSummary by User",
@@ -261,8 +274,8 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
             },
             {
                 "height": 6,
-                "width": 6,
-                "y": 17,
+                "width": 8,
+                "y": 12,
                 "x": 0,
                 "type": "metric",
                 "properties": {
@@ -287,9 +300,9 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
             },
             {
                 "height": 6,
-                "width": 6,
-                "y": 17,
-                "x": 6,
+                "width": 8,
+                "y": 12,
+                "x": 8,
                 "type": "metric",
                 "properties": {
                     "metrics": [
@@ -363,9 +376,9 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
             },
             {
                 "height": 6,
-                "width": 6,
-                "y": 17,
-                "x": 18,
+                "width": 8,
+                "y": 12,
+                "x": 16,
                 "type": "metric",
                 "properties": {
                     "metrics": [
@@ -439,9 +452,9 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
             },
             {
                 "height": 6,
-                "width": 6,
-                "y": 17,
-                "x": 12,
+                "width": 8,
+                "y": 12,
+                "x": 8,
                 "type": "metric",
                 "properties": {
                     "metrics": [
@@ -494,8 +507,8 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
             {
                 "height": 6,
                 "width": 8,
-                "y": 11,
-                "x": 16,
+                "y": 12,
+                "x": 0,
                 "type": "metric",
                 "properties": {
                     "metrics": [
@@ -513,9 +526,9 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
             },
             {
                 "height": 6,
-                "width": 9,
+                "width": 8,
                 "y": 0,
-                "x": 15,
+                "x": 16,
                 "type": "metric",
                 "properties": {
                     "metrics": [
@@ -578,12 +591,6 @@ def create_dashboard(dashboard_name, dashboard_json):
     )
 
 
-# Parameters
-region = "us-east-1"
-lambda_name = "InvokeKnowledgeBase"
-knowledge_base_name = "bedrock-sample-knowledge-base-111"
-invoke_model_id = "anthropic.claude-instant-v1"
-dashboard_name = "Contextual-Chatbot-Dashboard"
 
 # Create custom dashboard for your Bedrock app
 dashboard_json = generate_dashboard_json(region, knowledge_base_name, invoke_model_id)
