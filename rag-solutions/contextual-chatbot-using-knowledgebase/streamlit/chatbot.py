@@ -76,14 +76,14 @@ if prompt := st.chat_input("What is up?"):
         # Loop over the citations list and display each citation in a separate chat message
         for citation in citations:
             display_text = citation['generatedResponsePart']['textResponsePart']['text']
-            st.markdown(display_text,unsafe_allow_html=True)
+            st.markdown(display_text)
             display_link=''
             for reference in citation['retrievedReferences']:
                 url = reference['location']['s3Location']['uri']
                 help_text=reference['content']['text']
                 s3_presigned_url = generate_presigned_url(url)
                 display_link = f"[Doc link]({s3_presigned_url})"
-                st.markdown(display_link, unsafe_allow_html=True,help=help_text)
+                st.markdown(display_link, help=help_text)
 
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": answer})
