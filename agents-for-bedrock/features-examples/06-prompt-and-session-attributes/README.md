@@ -6,7 +6,7 @@ For greater control of session context, you can modify the SessionState object i
 
 __sessionAttributes__ – Attributes that persist over a session between a user and agent. All InvokeAgent requests made with the same sessionId belong to the same session, as long as the session time limit (the __idleSessionTTLinSeconds__) has not been surpassed.
 
-__promptSessionAttributes__ – Attributes that persist over a single turn (one InvokeAgent call). You can use the $prompt_session_attributes$ placeholder when you edit the orchestration base prompt template. This placeholder will be populated at runtime with the attributes that you specify in the promptSessionAttributes field.
+__promptSessionAttributes__ – Attributes that persist over a single turn (one InvokeAgent call). You can use the __\\$ prompt_session_attributes\\$__ placeholder when you edit the orchestration base prompt template. This placeholder will be populated at runtime with the attributes that you specify in the promptSessionAttributes field.
 
 Here is the general format of the session state object:
 
