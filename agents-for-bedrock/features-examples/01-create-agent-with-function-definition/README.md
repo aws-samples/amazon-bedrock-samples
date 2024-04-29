@@ -10,8 +10,6 @@ The database structure created is as following:
 
 The agent allows the employee to `get_available_vacations_days` and `book_vacations` according to the employee's requests.
 
-Both functionalities are implemented as part of an AWS Lambda function that receives the inputs from the Agent via an event.
-
 The code below shows the definition of the functions as a list of JSON objects that is passed to the Agent's Action group via the `functionSchema` parameter
 ```python
     agent_functions = [
@@ -61,6 +59,8 @@ The code below shows the definition of the functions as a list of JSON objects t
         description=agent_action_group_description
     )
 ```
+
+Both functionalities are implemented as part of an AWS Lambda function that receives the inputs from the Agent via an event.
 
 The event has the following structure:
 
