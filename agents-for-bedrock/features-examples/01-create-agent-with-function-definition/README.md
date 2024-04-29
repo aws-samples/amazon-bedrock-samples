@@ -12,6 +12,56 @@ The agent allows the employee to `get_available_vacations_days` and `book_vacati
 
 Both functionalities are implemented as part of an AWS Lambda function that receives the inputs from the Agent via an event.
 
+The code below shows the definition of the functions as a list of JSON objects that is passed to the Agent's Action group via the `functionSchema` parameter
+```python
+    agent_functions = [
+        {
+            'name': 'get_available_vacations_days',
+            'description': 'get the number of vacations available for a certain employee',
+            'parameters': {
+                "employee_id": {
+                    "description": "the id of the employee to get the available vacations",
+                    "required": True,
+                    "type": "integer"
+                }
+            }
+        },
+        {
+            'name': 'book_vacations',
+            'description': 'book the vacation days for the employeed',
+            'parameters': {
+                "employee_id": {
+                    "description": "the id of the employee to get the available vacations",
+                    "required": True,
+                    "type": "integer"
+                },
+                "start_date": {
+                    "description": "the start date for the vacation booking",
+                    "required": True,
+                    "type": "string"
+                },
+                "end_date": {
+                    "description": "the end date for the vacation booking",
+                    "required": True,
+                    "type": "string"
+                }
+            }
+        },
+    ]
+    agent_action_group_response = bedrock_agent_client.create_agent_action_group(
+        agentId=agent_id,
+        agentVersion='DRAFT',
+        actionGroupExecutor={
+            'lambda': lambda_function['FunctionArn']
+        },
+        actionGroupName=agent_action_group_name,
+        functionSchema={
+            'functions': agent_functions
+        },
+        description=agent_action_group_description
+    )
+```
+
 The event has the following structure:
 
 ```json

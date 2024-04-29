@@ -8,7 +8,7 @@ The example agent implements an Insurance Claims Handler agents that has functio
 * Get missing paperwork for an existant claim
 * Send reminder for an open claim including the missing documents
 
-The functionalities are made available via API Schema in the [OpenAI Schema format](https://swagger.io/specification/). The code below shows the format of the request for the get open claims functionality:
+The functionalities are made available via API Schema in the [OpenAPI Schema format](https://swagger.io/specification/). The code below shows the format of the request for the get open claims functionality:
 
 ```json
 {
@@ -67,6 +67,26 @@ The functionalities are made available via API Schema in the [OpenAI Schema form
   }
 }
 
+```
+
+When creating the Agent's Action Group, the schema definition is passed to the action group via the `apiSchema` parameter that contains the s3 location for the API schema
+
+```python
+agent_action_group_response = bedrock_agent_client.create_agent_action_group(
+    agentId=agent_id,
+    agentVersion='DRAFT',
+    actionGroupExecutor={
+        'lambda': lambda_function['FunctionArn']
+    },
+    actionGroupName='ClaimManagementActionGroup',
+    apiSchema={
+        's3': {
+            's3BucketName': bucket_name,
+            's3ObjectKey': bucket_key
+        }
+    },
+    description='Actions for listing claims, identifying missing paperwork, sending reminders'
+)
 ```
 
 The agent's functionalities are then implemented as part of an AWS Lambda function that receives the inputs from the Agent via an event.
