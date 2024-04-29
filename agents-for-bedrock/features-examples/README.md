@@ -6,7 +6,7 @@ The agents connects with a generated in-memory SQLite database that contains inf
 
 The database structure created is as following:
 
-<img src="./images/HR_DB.png" style="width:50%;display:block;margin: 0 auto;">
+<img src="images/HR_DB.png" style="width:50%;display:block;margin: 0 auto;">
 
 The agent allows the employee to `get_available_vacations_days` and `book_vacations` according to the employee's requests.
 
@@ -25,10 +25,10 @@ The event has the following structure:
     }, 
     "sessionId": "<SESSION_ID>", 
     "sessionAttributes": {
-        # Session attributes to be addressed in example 06-prompt-and-session-attributes
+        "<ATTRIBUTE_NAME>": "# Session attributes to be addressed in example 06-prompt-and-session-attributes"
     }, 
     "promptSessionAttributes": {
-        # Session attributes to be addressed in example 06-prompt-and-session-attributes
+        "<PROMPT_NAME>": "# Session attributes to be addressed in example 06-prompt-and-session-attributes"
     }, 
     "inputText": "<USER_INPUT_TEXT>", 
     "actionGroup": "VacationsActionGroup", 
