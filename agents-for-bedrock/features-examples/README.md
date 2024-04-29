@@ -9,4 +9,3 @@ In this folder we provide you example implementations for the main Agents for Am
 1. [Create Agent with Knowledge Base and Action Group](05-create-agent-with-knowledge-base-and-action-group): Example of how to create extend the Insurance Claim's handler to connect to a Knowledge Base and get the requirements for missing documents. 
 1. [Using Agent's Prompt and Session Parameters](06-prompt-and-session-parameters): Example of how to pass prompt and session parameters to an agent invocation in order to extend the agent's knowledge.
 1. [Changing Agent's Advanced Prompts and creating custom Lambda Parsers](07-advanced-prompts-and-custom-parsers): Example of how to change an Agent's advanced prompt and how to create a custom lambda parser for advanced agents use cases
-1. [Create Agent with AWS CloudFormation Template](08-create-agent-with-clould-formation): example of how to build an agent using an AWS CloudFormation Template
