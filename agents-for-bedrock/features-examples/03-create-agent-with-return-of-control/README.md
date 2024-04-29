@@ -73,16 +73,16 @@ Example JSON for function definition:
 
 ```json
 {
-    'returnControl': {
-        'invocationId': '<INVOCATION_ID>', 
-        'invocationInputs': [{
-            'functionInvocationInput': {
-                'actionGroup': '<ACTION_GROUP>', 
-                'function': 'get_available_vacations_days', 
-                'parameters': [{
-                    'name': 'employee_id', 
-                    'type': 'integer', 
-                    'value': '1'
+    "returnControl": {
+        "invocationId": "<INVOCATION_ID>", 
+        "invocationInputs": [{
+            "functionInvocationInput": {
+                "actionGroup": "<ACTION_GROUP>", 
+                "function": "get_available_vacations_days", 
+                "parameters": [{
+                    "name": "employee_id", 
+                    "type": "integer", 
+                    "value": 1
                 }]
             }
         }]
@@ -93,7 +93,7 @@ Example JSON for function definition:
 Example JSON for API Schema:
 ```json
 {
-    'returnControl': {
+    "returnControl": {
         "invocationId": "<INVOCATION_ID>",
         "invocationInputs": [{
             "apiInvocationInput": {
