@@ -59,7 +59,7 @@ promptOverrideConfiguration={
     }
 ```
 
-The lambda function provided as the parser needs to respect the structure of event that is produced by  the agent as input as well as respects the structure the agent expects as response from the lambda. Examples of the input and output structure are shown below:
+The lambda function provided as the parser needs to respect the structure of event that is produced by  the agent as input as well as respect the structure the agent expects as response from the lambda. Examples of the input and output structure are shown below:
 
 Lambda input event structure:
 
@@ -83,7 +83,7 @@ Lambda response structure for pre-processing:
 ```json
 {
     "messageVersion": "1.0",
-    "promptType": PRE_PROCESSING,
+    "promptType": "PRE_PROCESSING",
     "preProcessingParsedResponse": {
         "isValidInput": "boolean",
         "rationale": "string"
