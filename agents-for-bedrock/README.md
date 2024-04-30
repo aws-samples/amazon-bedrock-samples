@@ -12,16 +12,12 @@ An agent consists of the following components:
 
 1. **Foundation model** – You choose a foundation model that the agent invokes to interpret user input and subsequent prompts in its orchestration process, and to generate responses and follow-up steps in its process
 2. **Instructions** – You author instructions that describe what the agent is designed to do
-<ol type="a">
-  <li>&nbsp; &nbsp; &nbsp; &nbsp;(Optional) With <b>Advanced Prompts</b> you can further customize instructions for the agent at every step of orchestration,</li>
-  <li>&nbsp; &nbsp; &nbsp; &nbsp;With customized <b>Lambda Parser</b> functions you can parse the output of each orchestration step</li>
-</ol>
+   1. (Optional) With **Advanced Prompts** you can further customize instructions for the agent at every step of orchestration
+   1. With customized **Lambda Parser** functions you can parse the output of each orchestration step
 
 3. (Optional) **Action groups** – You define the actions that the agent should carry out by providing the available APIs with
-<ol type="a">
-    <li>&nbsp; &nbsp; &nbsp; &nbsp;<b>Function Definition</b> where you specify functions and define parameters as JSON objects that will be associated to the action group invocation or,</li>
-    <li>&nbsp; &nbsp; &nbsp; &nbsp;<b>API Schema</b> file that defines the APIs that the agent can invoke to carry out its tasks resources</li>
-</ol>
+   1. **Function Definition** where you specify functions and define parameters as JSON objects that will be associated to the action group invocation or,
+   1. **API Schema** file that defines the APIs that the agent can invoke to carry out its tasks resources
 
 Additionally, you can define a Lambda function to execute API calls with the selected parameters
 3. (Optional) **Knowledge bases** – Associate knowledge bases with an agent to allow it to retrieve context to augment response generation and input into orchestration steps
