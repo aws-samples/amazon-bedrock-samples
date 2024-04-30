@@ -1,14 +1,14 @@
 # Create Agents with API Schema
-In this folder, provide an example of an HR agent using Agents for Amazon Bedrock integration with API Schema and Lambda functions
+In this folder, we provide an example agent using Agents for Amazon Bedrock integration with API Schema and Lambda functions.
 
-The example agent implements an Insurance Claims Handler agents that has functionalities to:
+The example agent implements an Insurance Claims Handler that can:
 
 * Get open claims
 * Get details for a certain claim
-* Get missing paperwork for an existant claim
-* Send reminder for an open claim including the missing documents
+* Get missing paperwork for an existing claim
+* Send reminder for an open claim identifying any missing documentation
 
-The functionalities are made available via API Schema in the [OpenAPI Schema format](https://swagger.io/specification/). The code below shows the format of the request for the get open claims functionality:
+The capabilities are described to the agent using an API Schema in the [OpenAPI Schema format](https://swagger.io/specification/). The code below shows the format of the request for the get open claims functionality:
 
 ```json
 {
@@ -69,7 +69,7 @@ The functionalities are made available via API Schema in the [OpenAPI Schema for
 
 ```
 
-When creating the Agent's Action Group, the schema definition is passed to the action group via the `apiSchema` parameter that contains the s3 location for the API schema
+When creating the Agent's Action Group, the schema definition is passed to the action group via the `apiSchema` parameter containing the s3 location of the API schema file:
 
 ```python
 agent_action_group_response = bedrock_agent_client.create_agent_action_group(
@@ -89,7 +89,7 @@ agent_action_group_response = bedrock_agent_client.create_agent_action_group(
 )
 ```
 
-The agent's functionalities are then implemented as part of an AWS Lambda function that receives the inputs from the Agent via an event.
+The agent's actions are then implemented as part of an AWS Lambda function that receives the inputs from the Agent via an event.
 
 The event has the following structure where apiPath provides the required path for the action required by the user:
 
@@ -116,7 +116,7 @@ The event has the following structure where apiPath provides the required path f
 }
 ```
 
-In order to query the correct function and parameters the following code is added to the Lambda function.
+To process the action requested by the Agent, the following code is added to the Lambda function.
 
 ```python
 def get_named_parameter(event, name):
@@ -148,8 +148,10 @@ def lambda_handler(event, context):
         }
     }
     
-    # Logic code goes here
+    # Logic to process the request goes here
     ...
+
+    # Lastly, return the response to the agent
     
     action_response = {
         'actionGroup': event['actionGroup'],

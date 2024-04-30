@@ -1,14 +1,14 @@
 # Create Agents with Function Definition
 
-In this folder, provide an example of an HR agent using Agents for Amazon Bedrock new capabilities for function definition.
+In this folder, we provide an example of an HR agent using Agents for Amazon Bedrock new capabilities for function definition.
 
-The agents connects with a generated in-memory SQLite database that contains information about employee's available vacation days and planned holidays.
+The agent connects with an in-memory SQLite database that contains generated data about employee's available vacation days and planned time off.
 
 The database structure created is as following:
 
 <img src="images/HR_DB.png" style="width:50%;display:block;margin: 0 auto;">
 
-The agent allows the employee to `get_available_vacations_days` and `book_vacations` according to the employee's requests.
+The agent allows the employee to `get_available_vacations_days` and `reserve_vacation_time` according to the employee's requests.
 
 The code below shows the definition of the functions as a list of JSON objects that is passed to the Agent's Action group via the `functionSchema` parameter
 ```python
@@ -25,21 +25,21 @@ The code below shows the definition of the functions as a list of JSON objects t
             }
         },
         {
-            'name': 'book_vacations',
-            'description': 'book the vacation days for the employeed',
+            'name': 'reserve_vacation_time',
+            'description': 'reserve vacation time for a specific employee',
             'parameters': {
                 "employee_id": {
-                    "description": "the id of the employee to get the available vacations",
+                    "description": "the id of the employee for which time off will be reserved",
                     "required": True,
                     "type": "integer"
                 },
                 "start_date": {
-                    "description": "the start date for the vacation booking",
+                    "description": "the start date for the vacation time",
                     "required": True,
                     "type": "string"
                 },
                 "end_date": {
-                    "description": "the end date for the vacation booking",
+                    "description": "the end date for the vacation time",
                     "required": True,
                     "type": "string"
                 }
@@ -60,7 +60,7 @@ The code below shows the definition of the functions as a list of JSON objects t
     )
 ```
 
-Both functionalities are implemented as part of an AWS Lambda function that receives the inputs from the Agent via an event.
+Both actions are implemented as part of an AWS Lambda function that receives the inputs from the Agent via an event.
 
 The event has the following structure:
 
@@ -91,7 +91,7 @@ The event has the following structure:
 }
 ```
 
-In order to query the correct function and parameters the following code is added to the Lambda function
+To process the action that the Agent is invoking, the following code is added to the Lambda function:
 
 ```python
 def lambda_handler(event, context):
@@ -106,9 +106,10 @@ def lambda_handler(event, context):
         }
     }
     
-    # Logic code goes here
+    # Logic to process the requested action goes here
     ...
     
+    # Lastly, return the response back to the agent
     action_response = {
         'actionGroup': action_group,
         'function': function,
