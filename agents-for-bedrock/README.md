@@ -12,11 +12,13 @@ An agent consists of the following components:
 
 1. **Foundation model** – You choose a foundation model that the agent invokes to interpret user input and subsequent prompts in its orchestration process, and to generate responses and follow-up steps in its process
 2. **Instructions** – You author instructions that describe what the agent is designed to do
-a. (Optional) With **Advanced Prompts**, you can further customize instructions for the agent at every step of orchestration,
-b. With customized **Lambda Parser** functions you can parse the output of each orchestration step
+
+A. (Optional) With **Advanced Prompts**, you can further customize instructions for the agent at every step of orchestration,
+A. With customized **Lambda Parser** functions you can parse the output of each orchestration step
+
 3. (Optional) **Action groups** – You define the actions that the agent should carry out by providing the available APIs with
-a. **Function Definition** where you specify functions and define parameters as JSON objects that will be associated to the action group invocation or, 
-b. **API Schema** file that defines the APIs that the agent can invoke to carry out its tasks resources
+A. **Function Definition** where you specify functions and define parameters as JSON objects that will be associated to the action group invocation or, 
+A. **API Schema** file that defines the APIs that the agent can invoke to carry out its tasks resources
 
 Additionally, you can define a Lambda function to execute API calls with the selected parameters
 3. (Optional) **Knowledge bases** – Associate knowledge bases with an agent to allow it to retrieve context to augment response generation and input into orchestration steps
@@ -27,18 +29,20 @@ Additionally, you can define a Lambda function to execute API calls with the sel
 This repository contains examples and use-cases to get you started with Agents for Amazon Bedrock and its capabilities. It is organized in the following folders:
 
 - **Use case examples**: examples of Agents in specific use cases, including:
-a. [Retail Agent with Bedrock Agents](./use-case-examples/agentsforbedrock-retailagent/README.md) - Agent designed to help with retail transactions
-b. [Financial Services Agent for Insurance Claims handling] - Agent desided to help insurance employees working with claims
-c. [Text to SQL Agent](./use-case-examples/text-2-sql-agent/README.md) - Agent designed to generate and execute SQL queries using natural language
-d. [Customer Relationship Management Agent](./use-case-examples/customer-relationship-management-agent/README.md) - Agent designed to help sales employees work with their customers 
-e. [HR Vacation Agent] - Agent to manage employee vacation time
+1. [Retail Agent with Bedrock Agents](./use-case-examples/agentsforbedrock-retailagent/README.md) - Agent designed to help with retail transactions
+1. [Financial Services Agent for Insurance Claims handling] - Agent desided to help insurance employees working with claims
+1. [Text to SQL Agent](./use-case-examples/text-2-sql-agent/README.md) - Agent designed to generate and execute SQL queries using natural language
+1. [Customer Relationship Management Agent](./use-case-examples/customer-relationship-management-agent/README.md) - Agent designed to help sales employees work with their customers 
+1. [HR Vacation Agent] - Agent to manage employee vacation time
 
 - **Feature examples**: examples of how to use specific features of Agents for Bedrock
-a. [Integrate Knowledge Base](./features-examples/04-create-agent-with-single-knowledge-base/README.md) - Creating an Agent with a Knowledge Base integration
-b. [Action Groups with Return of Control](./features-examples/03-create-agent-with-return-of-control/README.md) - Creating an Action Group without lambda function integration
-c. [Action Groups with Function Definition](./features-examples/01-create-agent-with-function-definition/README.md) - Creating an Action Group with a function definition in JSON format
-d. [Action Groups with API Schema](./features-examples/02-create-agent-with-api-schema/README.md) - Creating an Action Group with an OpenAPI schema file
-c. [Creating agents using AWS CloudFormation] - Creating Agents using AWS CloudFormation templates
+1. [Create Agent with Function Definition](features-examples/01-create-agent-with-function-definition): Example of how to create an HR assistant agent defining the Action Group function and parameters as JSON object that is associated with the Action Group invocation. It connects with an [AWS Lambda](https://aws.amazon.com/lambda/) function to execute the actions
+1. [Create Agent with API Schema](features-examples/02-create-agent-with-api-schema): Example of how to create an Insurance Claim's handler agent using an API schema for the functions and parameters definition. The API schema follows the [OpenAPI Specificiation](https://swagger.io/specification/) format and connects with an AWS Lambda function for the actions exection.
+1. [Create Agent with Return of Control](features-examples/03-create-agent-with-return-of-control): Example of how to create an HR assistant agent defining the Action Group function and parameters as JSON object that is associated with the Action Group invocation. It skips the AWS Lambda function definition to return the control to the user's application.
+1. [Create Agent with a Single Knowledge](features-examples/04-create-agent-with-single-knowledge-base): Example of how to create a restaurant assistant agent that connects with a single [Knowledge Base for Amazon Bedrock](https://aws.amazon.com/bedrock/knowledge-bases/) to find informations on the menus for adults and children.
+1. [Create Agent with Knowledge Base and Action Group](features-examples/05-create-agent-with-knowledge-base-and-action-group): Example of how to create extend the Insurance Claim's handler to connect to a Knowledge Base and get the requirements for missing documents. 
+1. [Using Agent's Prompt and Session Parameters](features-examples/06-prompt-and-session-parameters): Example of how to pass prompt and session parameters to an agent invocation in order to extend the agent's knowledge.
+1. [Changing Agent's Advanced Prompts and creating custom Lambda Parsers](features-examples/07-advanced-prompts-and-custom-parsers): Example of how to change an Agent's advanced prompt and how to create a custom lambda parser for advanced agents use cases
 
 
 ## Contributing
