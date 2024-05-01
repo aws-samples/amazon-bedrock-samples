@@ -30,7 +30,7 @@ For example, to create a custom pre-processing prompt we can provide the __custo
 In addition, we can provide custom lambda parsers to modify the raw output from the LLM at each of the steps in the agent sequence. This custom lambda parser is often used in conjunction with the custom prompt to give you greater control of not only how process the user query at that step but also 
 what parts of the output response should be passed onto the next step in the sequence.
 
-To take advantage of custom lambder parsers, a lambda function needs to be created and used to update the agent using the __UpdateAgent__ call. For our pre-processing example, we can provide the lambda arn  to the __overrideLambda__ key in the __promptOverrideConfiguration__ object in the __UpdateAgent__ call, setting the __parserMode__ to __OVERRIDDEN__.
+To take advantage of custom lambda parsers, a lambda function needs to be created and used to update the agent using the __UpdateAgent__ call. For our pre-processing example, we can provide the lambda arn  to the __overrideLambda__ key in the __promptOverrideConfiguration__ object in the __UpdateAgent__ call, setting the __parserMode__ to __OVERRIDDEN__.
 
 ```python
 
