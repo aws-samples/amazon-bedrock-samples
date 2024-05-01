@@ -38,13 +38,14 @@ Before you begin, ensure you have the following:
   - Access and manage Amazon Bedrock agents and models.
   - Create and manage Amazon Glue databases and crawlers.
   - Execute queries and manage workspaces in Amazon Athena.
+  - Access to Amazon Bedrock foundation models (Anthropic’s Claude 3 Sonnet model for this solution)
 
 - For local setup, 
         - Python and Jupyter Notebooks installed
         - AWS CLI installed and configured
 - For AWS SageMaker 
     - Make sure your domain has above permission 
-    - use Data Science 3.0 kernel in SageMaker Studio
+    - Use Data Science 3.0 kernel in SageMaker Studio
 
 ## Installation
 
