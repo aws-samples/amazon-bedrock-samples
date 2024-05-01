@@ -59,7 +59,8 @@ s3_loc = "s3://" + bucket_name + "/" + bucket_key
 s3_bucket=bucket_name
 db_loc = "s3://" + s3_bucket + "/db/"
 athena_result_loc = "s3://" + s3_bucket + "/athena_result/" 
-foundation_Model='anthropic.claude-v2:1'
+#foundation_Model='anthropic.claude-v2:1'
+foundation_Model='anthropic.claude-3-sonnet-20240229-v1:0'
 idleSessionTTLInSeconds=3600
 #print(db_loc)
 #glue_crawler_name='TheHistoryOfBaseball'
