@@ -9,7 +9,7 @@ import datetime
 url = os.environ["JIRA_URL"]
 api_token = os.environ["JIRA_API_TOKEN"]
 username = os.environ["JIRA_USERNAME"]
-env_name = os.environ["ENVIRONMENT_Name"]
+env_name = os.environ["EnvironmentName"]
 
 dynamodb = boto3.resource("dynamodb")
 customer_table = dynamodb.Table(f"customer-{env_name}")

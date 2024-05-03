@@ -15,7 +15,7 @@ Through natural language interaction, the agent provides access to customer info
 
 # Architecture
 
-![architecture](/agents/customer-relationship-management-agent/architecture.png)
+![architecture](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/architecture.png)
 
 ## Customer Use Case
 
@@ -36,7 +36,7 @@ The agent can integrate with Jira for task management. Provide the necessary Jir
 > [!NOTE]  
 > This repository provides base code for Streamlit application's and is not production ready. It is your responsibility as a developer to test and vet the application according to your security guidlines.
 
-Upload the [codepipleline.yaml](/agents/customer-relationship-management-agent/codepipeline.yaml) file to AWS CloudFormation. This template sets up a CodePipeline to build and deploy the Streamlit application to an ECS Fargate service. It also creates the necessary infrastructure (VPC, subnets, etc.) and integrates with Jira (optional).
+Upload the [codepipleline.yaml](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/codepipeline.yaml) file to AWS CloudFormation. This template sets up a CodePipeline to build and deploy the Streamlit application to an ECS Fargate service. It also creates the necessary infrastructure (VPC, subnets, etc.) and integrates with Jira (optional).
 
 Follow these steps to implement the CRM Agent in your environment:
 
@@ -76,12 +76,12 @@ The customer and interactions DynamoDB tables are filled with mock data.
 
 ### [Customer data](/agents/customer-relationship-management-agent/src/data/customer.json)
 
-![customer](/agents/customer-relationship-management-agent/src/data/customers.png)
+![customer](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/src/data/customers.png)
 
 
 ## [Interactions data](/agents/customer-relationship-management-agent/src/data/interactions.json)
 
-![interactions](/agents/customer-relationship-management-agent/src/data/interactions.png)
+![interactions](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/src/data/interactions.png)
 
 ## Supported Prompts
 

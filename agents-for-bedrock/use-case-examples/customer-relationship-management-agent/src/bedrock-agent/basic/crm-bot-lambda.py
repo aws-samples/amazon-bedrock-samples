@@ -3,7 +3,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 import os
 
-env_name = os.environ["ENVIRONMENT_Name"]
+env_name = os.environ["EnvironmentName"]
 
 dynamodb = boto3.resource("dynamodb")
 customer_table = dynamodb.Table(f"customer-{env_name}")

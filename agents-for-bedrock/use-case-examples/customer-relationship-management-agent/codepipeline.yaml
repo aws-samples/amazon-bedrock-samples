@@ -68,6 +68,10 @@ Conditions:
     ]]
 
 Resources:
+  #############################
+  ##### Nested VPC Stack #####
+  ###########################
+
   # VPC Infrastructure
   Infrastructure:
     Condition: IsDeployVPCInfrastructure
@@ -79,13 +83,22 @@ Resources:
       TemplateURL: !Sub https://s3.amazonaws.com/${StreamlitCodeS3Bucket}/infrastructure.yaml
       Parameters:
         EnvironmentName: !Ref EnvironmentName
-  
+
+  ##################################
+  ##### ECR for Streamlit App #####
+  ###############################
+
   # Container Repository
   StreamlitImageRepo:
     Type: AWS::ECR::Repository
     Properties:
       EmptyOnDelete: true
   
+
+  #######################
+  ##### S3 Buckets #####
+  #####################
+
   # Artifact Bucket
   StreamlitArtifactStore:
     Type: AWS::S3::Bucket
@@ -93,7 +106,14 @@ Resources:
       LoggingConfiguration:
         DestinationBucketName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket]
         LogFilePrefix: !Sub artifact-${EnvironmentName}-logs
-
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  
   StreamlitArtifactStorePolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -124,17 +144,69 @@ Resources:
   StreamlitCodeS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
+      LoggingConfiguration:
+        DestinationBucketName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket]
+        LogFilePrefix: !Sub artifact-${EnvironmentName}-logs
       VersioningConfiguration:
         Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
   
+  StreamlitCodeS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref StreamlitCodeS3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 's3:*'
+            Effect: Deny
+            Resource: 
+              - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}/*
+              - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}
+            Principal: "*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
   # CloudTrail Bucket
   StreamlitCloudTrailBucket:
     Type: AWS::S3::Bucket
     Properties:
-      LoggingConfiguration:
-        DestinationBucketName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket]
-        LogFilePrefix: !Sub trail-${EnvironmentName}-logs
+    VersioningConfiguration:
+      Status: Enabled
+    PublicAccessBlockConfiguration:
+      BlockPublicAcls: true
+      BlockPublicPolicy: true
+      IgnorePublicAcls: true
+      RestrictPublicBuckets: true
 
+  StreamlitCloudTrailBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref StreamlitCloudTrailBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 's3:*'
+            Effect: Deny
+            Resource: 
+              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}/*
+              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}
+            Principal: "*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  ###########################
+  ##### CustomResource #####
+  #########################
+  
   # Code Build Initial
   StreamlitInitBuildRole:
     Type: 'AWS::IAM::Role'
@@ -163,51 +235,10 @@ Resources:
                   - !Sub "arn:aws:s3:::${StreamlitCodeS3Bucket}/*"
               - Effect: 'Allow'
                 Action:
-                  - 'kms:Encrypt'
-                  - 'kms:Decrypt'
-                  - 'kms:CreateGrant'
-                  - 'kms:DescribeKey'
-                Resource: "*"
-              - Effect: 'Allow'
-                Action:
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                   - 'logs:PutRetentionPolicy'
-                Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 'ssm:PutParameter'
-                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/streamlitapp/${EnvironmentName}/*"
-              - Effect: 'Allow'
-                Action:
-                  - 'bedrock:CreateAgentAlias'
-                  - 'bedrock:CreateAgentActionGroup'
-                  - 'bedrock:PrepareAgent'
-                  - 'bedrock:CreateAgent'
-                Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 'lambda:AddPermission'
-                  - 'lambda:CreateFunction'
-                Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 'iam:AttachRolePolicy'
-                  - 'iam:PutRolePolicy'
-                  - 'iam:CreatePolicy'
-                  - 'iam:CreateRole'
-                  - 'iam:PassRole'
-                Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 'sts:GetCallerIdentity'
-                Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 'dynamodb:DescribeTable'
-                  - 'dynamodb:CreateTable'
-                  - 'dynamodb:ListTables'
                 Resource: '*'
               - Effect: 'Allow'
                 Action:
@@ -217,6 +248,9 @@ Resources:
                   - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/interactions-${EnvironmentName}
 
   StreamlitInitCodebuild:
+    DependsOn:
+      - CustomerTable
+      - InteractionsTable
     Type: AWS::CodeBuild::Project
     Properties:
       Name: !Join ['-', ['StreamlitInitCodebuild', !Ref EnvironmentName]]
@@ -230,7 +264,8 @@ Resources:
               phases:
                 pre_build:
                   commands:
-                    - cd agents
+                    - cd agents-for-bedrock
+                    - cd use-case-examples
                     - cd customer-relationship-management-agent
                     - pip3 install awscli --upgrade --user
                 build:
@@ -239,18 +274,14 @@ Resources:
                     - aws s3 cp infrastructure.yaml s3://${StreamlitCodeS3Bucket}
                     - zip -r app.zip .
                     - unzip src/data/data.zip -d src/data/
-                    - python3 src/data/create_table.py ${EnvironmentName}
-                    - python3 src/bedrock-agent/create_agent.py ${EnvironmentName} ${StreamlitCodeS3Bucket} ${IsJiraImplementation} ${Username} ${Url} ${API_Token}
+                    - python3 src/data/upload_data.py ${EnvironmentName}
                 post_build:
                   commands:
                     - echo Build completed on `date`
                     - aws s3 cp app.zip s3://${StreamlitCodeS3Bucket}
+                    - aws s3 cp --recursive ${folder} s3://${StreamlitCodeS3Bucket}/agent
             - { 
-                StreamlitCodeS3Bucket: !Ref StreamlitCodeS3Bucket,
-                IsJiraImplementation: !If [IsJiraImplementation, 'true', 'false'],
-                Username:  !If [IsJiraImplementation, !Ref JiraUsername, 'none'],
-                Url:   !If [IsJiraImplementation, !Ref JiraURL, 'none'],
-                API_Token:  !If [IsJiraImplementation, !Ref JiraAPIToken, 'none']
+                folder: !If [IsJiraImplementation, "bedrock-agent/jira", "bedrock-agent/basic"]
               }
       # SourceVersion: branch
       Environment:
@@ -260,132 +291,6 @@ Resources:
       ServiceRole: !GetAtt StreamlitInitBuildRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
-  
-    # Lambda Custom Resource
-  
-  # Clean Code Build
-  CleanBuildRole:
-    Type: 'AWS::IAM::Role'
-    # DeletionPolicy: Retain
-    Properties:
-      RoleName: !Join ['-', ['CleanBuildRole', !Ref EnvironmentName]]
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: 'Allow'
-            Principal:
-              Service:
-                - 'codebuild.amazonaws.com'
-            Action:
-              - 'sts:AssumeRole'
-      Path: "/"      
-      Policies:
-        - PolicyName: 'CleanResources'
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: 'Allow'
-                Action:
-                  - 'dynamodb:ListTables'
-                Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 'logs:CreateLogGroup'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                  - 'logs:PutRetentionPolicy'
-                Resource: '*'                
-              - Effect: 'Allow'
-                Action:
-                  - 'dynamodb:DeleteTable'
-                Resource: 
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/customer-${EnvironmentName}
-                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/interactions-${EnvironmentName}
-              - Effect: 'Allow'
-                Action:
-                  - "ssm:GetParameter"
-                  - "ssm:DeleteParameter"
-                Resource:
-                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/streamlitapp/${EnvironmentName}/*"
-              - Effect: 'Allow'
-                Action:
-                  - "kms:Decrypt"
-                Resource:
-                  - "*"
-              - Effect: 'Allow'
-                Action:
-                  - "bedrock:DeleteAgent"
-                  - "bedrock:GetAgent"
-                Resource:
-                  - "*"
-              - Effect: 'Allow'
-                Action:
-                  - "iam:DeleteRole"
-                  - "iam:DeletePolicy"
-                  - "iam:DetachRolePolicy"
-                  - "iam:DeleteRolePolicy"
-                Resource:
-                  - !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-role-${EnvironmentName}
-                  - !Sub arn:aws:iam::${AWS::AccountId}:role/AmazonBedrockExecutionRoleForAgents_${EnvironmentName}
-                  - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-                  - !Sub arn:aws:iam::${AWS::AccountId}:policy/DynamoDBPolicy-${EnvironmentName}
-                  - !Sub arn:aws:iam::${AWS::AccountId}:policy/BedrockAgentPolicy-${EnvironmentName}
-                  - !Sub arn:aws:iam::${AWS::AccountId}:policy/S3Allow-${EnvironmentName}
-                  - arn:aws:iam::aws:policy/AmazonS3FullAccess
-              - Effect: 'Allow'
-                Action:
-                  - "iam:ListRolePolicies"
-                  - "iam:ListAttachedRolePolicies"
-                  - "iam:GetRole"
-                Resource:
-                  - "*"
-              - Effect: 'Allow'
-                Action:
-                  - 'sts:GetCallerIdentity'
-                Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 'lambda:DeleteFunction'
-                  - 'lambda:GetFunction'
-                Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:crm-lambda-action-${EnvironmentName}
-
-  CleanCodebuild:
-    # DeletionPolicy: Retain
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: !Join ['-', ['CleanCodebuild', !Ref EnvironmentName]]
-      Source:
-        Type: GITHUB
-        Location: !Ref GitURL
-        BuildSpec: 
-          !Sub
-            - |
-              version: 0.2
-              phases:
-                pre_build:
-                  commands:
-                    - cd agents
-                    - cd customer-relationship-management-agent
-                    - pip3 install awscli --upgrade --user
-                build:
-                  commands:
-                    - python3 src/clean_resources.py ${EnvironmentName} ${StreamlitCodeS3Bucket}
-                post_build:
-                  commands:
-                    - echo Build completed on `date`
-            - { 
-                StreamlitCodeS3Bucket: !Ref StreamlitCodeS3Bucket
-              }
-      # SourceVersion: branch
-      Environment:
-        Type: LINUX_CONTAINER
-        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0
-        ComputeType: BUILD_GENERAL1_SMALL
-      ServiceRole: !GetAtt CleanBuildRole.Arn
-      Artifacts:
-        Type: NO_ARTIFACTS
-  
-    # Lambda Custom Resource
   
   # Start initial codebuild
   StreamlitBuildCustomResourceRole:
@@ -459,8 +364,6 @@ Resources:
                         sleep(15)
                       if status in ['FAILED', 'STOPPED', 'FAULT', 'TIMED_OUT']:
                         print("Initial CodeBuild failed")
-                        build_id = codebuild.start_build(projectName=event['ResourceProperties']['CLEANPROJECT'])['build']['id']
-                        sleep(120)
                         cfnresponse.send(event, context, cfnresponse.FAILED, {})
                         return
                     elif request_type == 'Delete':
@@ -470,8 +373,6 @@ Resources:
 
                   except Exception as ex:
                     print(ex)
-                    build_id = codebuild.start_build(projectName=event['ResourceProperties']['CLEANPROJECT'])['build']['id']
-                    sleep(120)
                     bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['CODEBUCKET'])
                     bucket.object_versions.delete()
                     bucket.objects.all().delete()
@@ -485,7 +386,6 @@ Resources:
       ServiceToken: !GetAtt StreamlitBuildCustomResourceFunction.Arn
       PROJECT: !Ref StreamlitInitCodebuild
       CODEBUCKET: !Ref StreamlitCodeS3Bucket
-      CLEANPROJECT: !Ref CleanCodebuild
 
   # Start Cleanup
   StreamlitCleanCustomResourceRole:
@@ -562,8 +462,6 @@ Resources:
                   try:
                     request_type = event['RequestType']
                     if request_type == 'Delete':
-                      build_id = codebuild.start_build(projectName=event['ResourceProperties']['CLEANPROJECT'])['build']['id']
-                      sleep(120)
 
                       bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['CODEBUCKET'])
                       bucket.object_versions.delete()
@@ -600,7 +498,10 @@ Resources:
       CODEBUCKET: !Ref StreamlitCodeS3Bucket
       ARTIFACTBUCKET: !Ref StreamlitArtifactStore
       TRAILBUCKET: !Ref StreamlitCloudTrailBucket
-      CLEANPROJECT: !Ref CleanCodebuild
+  
+  #########################
+  ##### CodePipeline #####
+  #######################
 
   # CodePipeline Roles
   StreamlitCodeBuildExecutionRole:
@@ -1331,6 +1232,176 @@ Resources:
       IncludeGlobalServiceEvents: true
       IsLogging: true
       IsMultiRegionTrail: true
+
+  ###################
+  ##### Agents #####
+  #################
+  AgentResource:
+    Type: AWS::Bedrock::Agent
+    Properties:
+      AgentName: !Sub crm-agent-${EnvironmentName}
+      AgentResourceRoleArn: !GetAtt AgentRole.Arn
+      FoundationModel: anthropic.claude-3-sonnet-20240229-v1:0
+      Instruction: !If [IsJiraImplementation, You are a customer relationship management agent tasked with helping a sales person plan their work with customers. You can provide information like company overview, company interaction history (meeting times and notes), company meeting preferences (meeting type, day of week, and time of day). You can also query Jira tasks and update their timeline. After receiving a response, clean it up into a readable format.If the output is a numbered list, format it as such with newline characters and numbers. You cannot output JSON structures., You are a customer relationship management agent tasked with helping a sales person plan their work with customers. You can provide information like company overview, company interaction history (meeting times and notes), company meeting preferences (meeting type, day of week, and time of day). After receiving a response, clean it up into a readable format.If the output is a numbered list, format it as such with newline characters and numbers. You cannot output JSON structures.]
+      Description: "Agent for Customer Relationship Management."
+      ActionGroups:
+        - ActionGroupName: crmActionGroup
+          ActionGroupExecutor: 
+            Lambda: !GetAtt AgentLambdaFunction.Arn
+          ApiSchema:
+            S3:
+              S3BucketName: !Ref StreamlitCodeS3Bucket
+              S3ObjectKey: agent/crm_schema.json
+  
+  AgentAliasResource:
+    Type: AWS::Bedrock::AgentAlias
+    Properties:
+      AgentId: !GetAtt AgentResource.AgentId
+      AgentAliasName: !Sub crm-alias-{EnvironmentName}
+
+  AgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub AmazonBedrockExecutionRoleForAgents_${EnvironmentName}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - bedrock.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: BedrockInvokeModel
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}/agent/crm_schema.json
+  
+
+      =
+  
+  ########################
+  ##### ActionGroup #####
+  ######################
+
+  AgentLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      FunctionName: !Sub crm-lambda-action-${EnvironmentName}
+      Handler: crm-bot-lambda.lambda_handler
+      Role: !GetAtt AgentLambdaRole.Arn
+      Timeout: 300
+      Environment:
+        Variables:
+          EnvironmentName: !Ref EnvironmentName
+          JIRA_URL: !If [IsJiraImplementation, !Ref JiraURL, !Ref 'AWS::NoValue']
+          JIRA_API_TOKEN: !If [IsJiraImplementation, !Ref JiraAPIToken, !Ref 'AWS::NoValue']
+          JIRA_USERNAME: !If [IsJiraImplementation, !Ref JiraUsername, !Ref 'AWS::NoValue']
+      Code:
+        S3Bucket: !Ref StreamlitCodeS3Bucket
+        S3Key: agent/crm_bot_lambda.zip
+
+  AgentLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoGetPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt CustomerTable.Arn
+                  - !GetAtt InteractionsTable.Arn
+
+  AgentLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt AgentLambdaFunction.Arn
+      Principal: bedrock.amazonaws.com
+      SourceAccount: !GetAtt AgentResource.AgentArn
+
+
+  ####################
+  ##### DynamoDB #####
+  ####################
+
+  CustomerTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub customer-${EnvironmentName}
+      AttributeDefinitions:
+        - AttributeName: customer_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: customer_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  InteractionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub interactions-${EnvironmentName}
+      AttributeDefinitions:
+        - AttributeName: customer_id
+          AttributeType: S
+        - AttributeName: date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: customer_id
+          KeyType: HASH
+        - AttributeName: date
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  ########################################
+  ##### Parameters for StreamlitApp #####
+  ######################################
+
+  AgentIdSSMParameter:
+    Name: !Sub /streamlitapp/${EnvironmentName}/AGENT_ID
+    Type: String
+    Value: !GetAtt AgentResource.AgentId
+    Description: !Sub SSM parameter for AgentId for ${EnvironmentName}
+
+  AgentAliasIdSSMParameter:
+    Name: !Sub /streamlitapp/${EnvironmentName}/AGENT_ALIAS_ID
+    Type: String
+    Value: !GetAtt AgentAliasResource.AgentAliasId
+    Description: !Sub SSM parameter for AgentAliasId for ${EnvironmentName}
 
 Outputs:
   StreamlitCodeS3Bucket:
