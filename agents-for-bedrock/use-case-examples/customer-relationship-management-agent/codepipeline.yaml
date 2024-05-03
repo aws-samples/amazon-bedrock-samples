@@ -16,8 +16,18 @@ Metadata:
       - GitURL
       - EnvironmentName
       - DeployVPCInfrastructure
+    - Label:
+        default: 'Agent Configuration'
+      Parameters:
+      - BedrockModelId
 
 Parameters:
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-3-sonnet-20240229-v1:0
+    Description: Amazon Bedrock Model ID for the agent
+    MinLength: 1
+
   JiraURL:
     Type: String
     Description: (Leave it unchanged if not using Jira) URL of the Jira without https://
@@ -94,7 +104,6 @@ Resources:
     Properties:
       EmptyOnDelete: true
   
-
   #######################
   ##### S3 Buckets #####
   #####################
@@ -144,9 +153,6 @@ Resources:
   StreamlitCodeS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      LoggingConfiguration:
-        DestinationBucketName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket]
-        LogFilePrefix: !Sub artifact-${EnvironmentName}-logs
       VersioningConfiguration:
         Status: Enabled
       PublicAccessBlockConfiguration:
@@ -177,13 +183,13 @@ Resources:
   StreamlitCloudTrailBucket:
     Type: AWS::S3::Bucket
     Properties:
-    VersioningConfiguration:
-      Status: Enabled
-    PublicAccessBlockConfiguration:
-      BlockPublicAcls: true
-      BlockPublicPolicy: true
-      IgnorePublicAcls: true
-      RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
 
   StreamlitCloudTrailBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
@@ -318,7 +324,6 @@ Resources:
                   - codebuild:BatchGetBuilds
                 Resource:
                   - !GetAtt StreamlitInitCodebuild.Arn
-                  - !GetAtt CleanCodebuild.Arn
               - Effect: 'Allow'
                 Action:
                   - 'logs:CreateLogGroup'
@@ -407,12 +412,6 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Effect: Allow
-                Action:
-                  - codebuild:StartBuild
-                  - codebuild:BatchGetBuilds
-                Resource:
-                  - !GetAtt CleanCodebuild.Arn
               - Effect: Allow
                 Action:
                   - s3:ListBucket
@@ -985,7 +984,6 @@ Resources:
             Configuration:
                 ProjectName: !Ref StreamlitCodeBuild
             RunOrder: 1
-
         # Deploy the project by executing Fargate-Cluster.yml file in the Source code with Cloudformation.
         - Name: InfrastructureDeploy
           Actions:
@@ -1237,12 +1235,13 @@ Resources:
   ##### Agents #####
   #################
   AgentResource:
+    DependsOn: StreamlitBuildCustomResource
     Type: AWS::Bedrock::Agent
     Properties:
       AgentName: !Sub crm-agent-${EnvironmentName}
       AgentResourceRoleArn: !GetAtt AgentRole.Arn
-      FoundationModel: anthropic.claude-3-sonnet-20240229-v1:0
-      Instruction: !If [IsJiraImplementation, You are a customer relationship management agent tasked with helping a sales person plan their work with customers. You can provide information like company overview, company interaction history (meeting times and notes), company meeting preferences (meeting type, day of week, and time of day). You can also query Jira tasks and update their timeline. After receiving a response, clean it up into a readable format.If the output is a numbered list, format it as such with newline characters and numbers. You cannot output JSON structures., You are a customer relationship management agent tasked with helping a sales person plan their work with customers. You can provide information like company overview, company interaction history (meeting times and notes), company meeting preferences (meeting type, day of week, and time of day). After receiving a response, clean it up into a readable format.If the output is a numbered list, format it as such with newline characters and numbers. You cannot output JSON structures.]
+      FoundationModel: !Ref BedrockModelId
+      Instruction: !If [IsJiraImplementation, "You are a customer relationship management agent tasked with helping a sales person plan their work with customers. You can provide information like company overview, company interaction history (meeting times and notes), company meeting preferences (meeting type, day of week, and time of day). You can also query Jira tasks and update their timeline. After receiving a response, clean it up into a readable format.If the output is a numbered list, format it as such with newline characters and numbers. You cannot output JSON structures.", "You are a customer relationship management agent tasked with helping a sales person plan their work with customers. You can provide information like company overview, company interaction history (meeting times and notes), company meeting preferences (meeting type, day of week, and time of day). After receiving a response, clean it up into a readable format.If the output is a numbered list, format it as such with newline characters and numbers. You cannot output JSON structures."]
       Description: "Agent for Customer Relationship Management."
       ActionGroups:
         - ActionGroupName: crmActionGroup
@@ -1257,7 +1256,7 @@ Resources:
     Type: AWS::Bedrock::AgentAlias
     Properties:
       AgentId: !GetAtt AgentResource.AgentId
-      AgentAliasName: !Sub crm-alias-{EnvironmentName}
+      AgentAliasName: !Sub crm-alias-${EnvironmentName}
 
   AgentRole:
     Type: AWS::IAM::Role
@@ -1280,7 +1279,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - bedrock:InvokeModel
-                Resource: !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                Resource: !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}
         - PolicyName: S3Access
           PolicyDocument:
             Version: 2012-10-17
@@ -1289,15 +1288,13 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource: !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}/agent/crm_schema.json
-  
-
-      =
-  
+    
   ########################
   ##### ActionGroup #####
   ######################
 
   AgentLambdaFunction:
+    DependsOn: StreamlitBuildCustomResource
     Type: AWS::Lambda::Function
     Properties:
       Runtime: python3.12
@@ -1339,8 +1336,8 @@ Resources:
                   - dynamodb:GetItem
                   - dynamodb:Query
                 Resource:
-                  - !GetAtt CustomerTable.Arn
-                  - !GetAtt InteractionsTable.Arn
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/customer-${EnvironmentName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/interactions-${EnvironmentName}
 
   AgentLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -1349,7 +1346,6 @@ Resources:
       FunctionName: !GetAtt AgentLambdaFunction.Arn
       Principal: bedrock.amazonaws.com
       SourceAccount: !GetAtt AgentResource.AgentArn
-
 
   ####################
   ##### DynamoDB #####
@@ -1392,16 +1388,20 @@ Resources:
   ######################################
 
   AgentIdSSMParameter:
-    Name: !Sub /streamlitapp/${EnvironmentName}/AGENT_ID
-    Type: String
-    Value: !GetAtt AgentResource.AgentId
-    Description: !Sub SSM parameter for AgentId for ${EnvironmentName}
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /streamlitapp/${EnvironmentName}/AGENT_ID
+      Type: String
+      Value: !GetAtt AgentResource.AgentId
+      Description: !Sub SSM parameter for AgentId for ${EnvironmentName}
 
   AgentAliasIdSSMParameter:
-    Name: !Sub /streamlitapp/${EnvironmentName}/AGENT_ALIAS_ID
-    Type: String
-    Value: !GetAtt AgentAliasResource.AgentAliasId
-    Description: !Sub SSM parameter for AgentAliasId for ${EnvironmentName}
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /streamlitapp/${EnvironmentName}/AGENT_ALIAS_ID
+      Type: String
+      Value: !GetAtt AgentAliasResource.AgentAliasId
+      Description: !Sub SSM parameter for AgentAliasId for ${EnvironmentName}
 
 Outputs:
   StreamlitCodeS3Bucket:
