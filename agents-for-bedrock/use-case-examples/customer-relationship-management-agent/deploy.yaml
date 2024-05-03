@@ -134,44 +134,8 @@ Parameters:
 Mappings:
   # Cloudfront Mappings
   CFRegionMap:
-    'af-south-1':
-      PrefixListCloudFront: 'pl-c0aa4fa9'
-    'eu-north-1':
-      PrefixListCloudFront: 'pl-fab65393'
-    'ap-south-1':
-      PrefixListCloudFront: 'pl-9aa247f3'
-    'eu-west-3':
-      PrefixListCloudFront: 'pl-75b1541c'
-    'eu-west-2':
-      PrefixListCloudFront: 'pl-93a247fa'
-    'eu-south-1':
-      PrefixListCloudFront: 'pl-1bbc5972'
-    'eu-west-1':
-      PrefixListCloudFront: 'pl-4fa04526'
-    'ap-northeast-2':
-      PrefixListCloudFront: 'pl-22a6434b'
-    'me-south-1':
-      PrefixListCloudFront: 'pl-17b2577e'
-    'ap-northeast-1':
-      PrefixListCloudFront: 'pl-58a04531'
-    'sa-east-1':
-      PrefixListCloudFront: 'pl-5da64334'
-    'ca-central-1':
-      PrefixListCloudFront: 'pl-38a64351'
-    'ap-east-1':
-      PrefixListCloudFront: 'pl-14b2577d'
-    'ap-southeast-1':
-      PrefixListCloudFront: 'pl-31a34658'
-    'ap-southeast-2':
-      PrefixListCloudFront: 'pl-b8a742d1'
-    'eu-central-1':
-      PrefixListCloudFront: 'pl-a3a144ca'
     'us-east-1':
       PrefixListCloudFront: 'pl-3b927c52'
-    'us-east-2':
-      PrefixListCloudFront: 'pl-b6a144df'
-    'us-west-1':
-      PrefixListCloudFront: 'pl-4ea04527'
     'us-west-2':
       PrefixListCloudFront: 'pl-82a045eb'
 
@@ -332,6 +296,15 @@ Resources:
           FromPort: 80
           ToPort: 80
           SourcePrefixListId: !FindInMap ['CFRegionMap', !Ref 'AWS::Region', 'PrefixListCloudFront']
+      SecurityGroupEgress:
+        - IpProtocol: "-1" 
+          CidrIp: 0.0.0.0/0 
+          Description: "Deny all outbound traffic by default" 
+        - IpProtocol: "tcp"
+          FromPort: 80 
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: "Allow HTTP outbound"
       Tags:
         - Key: Name
           Value: !Join ['-', ['StreamlitALBSecurityGroup', !Ref EnvironmentName]]
@@ -347,6 +320,15 @@ Resources:
           FromPort: !Ref ContainerPort
           ToPort: !Ref ContainerPort
           SourceSecurityGroupId: !Ref StreamlitALBSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: "-1" 
+          CidrIp: 0.0.0.0/0 
+          Description: "Deny all outbound traffic by default" 
+        - IpProtocol: "tcp"
+          FromPort: 80 
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: "Allow HTTP outbound"
       Tags:
         - Key: Name
           Value: !Join ['-', ['StreamlitContainerSecurityGroup', !Ref EnvironmentName]]

@@ -53,6 +53,14 @@ Parameters:
     MinLength: 1
     MaxLength: 4
 
+Mappings:
+  # Cloudfront Mappings
+  ELBRegionMap:
+    'us-east-1':
+      ELBAccountId: '127311923021'
+    'us-west-2':
+      ELBAccountId: '797873946194'
+
 Resources:
   # ECS Cluster
   StreamlitCluster:
@@ -92,6 +100,8 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
 
   LoggingBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
@@ -107,7 +117,25 @@ Resources:
               Service: logging.s3.amazonaws.com
             Resource: 
               - !Sub arn:aws:s3:::${LoggingBucket}/*       
-
+          - Action:
+              - 's3:*'
+            Effect: Deny
+            Resource: 
+              - !Sub arn:aws:s3:::${LoggingBucket}/*
+              - !Sub arn:aws:s3:::${LoggingBucket}
+            Principal: "*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+          - Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              AWS: !Sub 
+                    - arn:aws:iam::${ElbAccount}:root
+                    - {ElbAccount: !FindInMap [ELBRegionMap, !Ref 'AWS::Region', ELBAccountId]}
+            Resource: 
+              - !Sub arn:aws:s3:::${LoggingBucket}/alb/logs/AWSLogs/${AWS::AccountId}/*                
   # VPC
   VPC:
     Type: AWS::EC2::VPC

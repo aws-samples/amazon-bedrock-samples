@@ -1,70 +1,58 @@
-"""
-Loads customer and interaction data from JSON files and inserts it into DynamoDB tables.
-
-This script does the following:
-
-1. Configures a boto3 session and DynamoDB client to access DynamoDB.
-
-2. Opens the customer.json and interactions.json files and loads the data.
-
-3. Loops through the customer data and inserts each item into the 'customer' table.
-
-4. Loops through the interactions data and inserts each item into the 'interactions' table.
-
-The customer DynamoDB table has the following attributes:
-  - customer_id
-  - company_name 
-  - overview
-  - meetingType
-  - dayOfWeek
-  - timeofDay
-  - email
-
-The interactions DynamoDB table has the following attributes: 
-  - customer_id
-  - date 
-  - notes
-
-This allows customer and interactions data to be loaded from JSON into DynamoDB.
-"""
-
+import boto3
 import json
-from botocore.config import Config
-from boto3.session import Session
+import time
+import sys
+import os
 
-SESSION = Session(profile_name="CRM-Agent")
+dynamodb = boto3.client("dynamodb")
 
-DYNAMODB_CLIENT = SESSION.resource(
-    "dynamodb", "us-east-1", config=Config(read_timeout=600)
-)
+EnvironmentName = sys.argv[1]
 
-CUSTOMER_TABLE = DYNAMODB_CLIENT.Table("customer")
-INTERACTIONS_TABLE = DYNAMODB_CLIENT.Table("interactions")
+customer_table_name = f"customer-{EnvironmentName}"
+interactions_table_name = f"interactions-{EnvironmentName}"
 
-with open("data/customer.json", "r") as myfile:
-    customer_data = myfile.read()
+# Data files
+script_dir = os.path.dirname(os.path.abspath(__file__))
+CUSTOMER_DATA = os.path.join(script_dir, "customer.json")
+INTERACTIONS_DATA = os.path.join(script_dir, "interactions.json")
 
-with open("data/interactions.json", "r") as myfile:
-    interactions_data = myfile.read()
 
-for obj in json.loads(customer_data):
-    response = CUSTOMER_TABLE.put_item(
-        Item={
-            "customer_id": obj["customer_id"],
-            "company_name": obj["company_name"],
-            "overview": obj["overview"],
-            "meetingType": obj["meetingType"],
-            "dayOfWeek": obj["dayOfWeek"],
-            "timeofDay": obj["timeofDay"],
-            "email": obj["email"],
-        }
-    )
+def upload_data():
+    with open(CUSTOMER_DATA, "r") as file:
+        data = json.load(file)
 
-for obj in json.loads(interactions_data):
-    response = INTERACTIONS_TABLE.put_item(
-        Item={
-            "customer_id": obj["customer_id"],
-            "date": obj["date"],
-            "notes": obj["notes"],
-        }
-    )
+    for item in data:
+        dynamodb.put_item(
+            TableName=customer_table_name,
+            Item={
+                "customer_id": {"S": item["customer_id"]},
+                "company_name": {"S": item["company_name"]},
+                "overview": {"S": item["overview"]},
+                "meetingType": {"S": item["meetingType"]},
+                "dayOfWeek": {"S": item["dayOfWeek"]},
+                "timeofDay": {"S": item["timeofDay"]},
+                "email": {"S": item["email"]},
+            },
+        )
+
+    print(f"Data inserted into {customer_table_name} table successfully.")
+
+    with open(INTERACTIONS_DATA, "r") as file:
+        data = json.load(file)
+    for item in data:
+        dynamodb.put_item(
+            TableName=interactions_table_name,
+            Item={
+                "customer_id": {"S": item["customer_id"]},
+                "date": {"S": item["date"]},
+                "notes": {"S": item["notes"]},
+            },
+        )
+
+    print(f"Data inserted into {interactions_table_name} table successfully.")
+
+
+if __name__ == "__main__":
+
+    # Step 2: Upload Data
+    upload_data()
