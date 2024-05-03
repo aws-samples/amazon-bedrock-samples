@@ -329,7 +329,7 @@ database tables using a sql statement then respond to the user with the answer t
 the sql statement used to answer the question. Use the getschema tool first to understand the schema
 of the table then create a sql query to answer the users question.
 Here is an example to query the table <example>SELECT * FROM thehistoryofbaseball.players LIMIT 10;</example> Do not use 
-quotes for the table name. Youir final answer should be in plain english."""
+quotes for the table name. Your final answer should be in plain english."""
 
 
 ##PLEASE Note
