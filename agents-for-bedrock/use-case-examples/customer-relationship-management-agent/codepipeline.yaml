@@ -287,7 +287,7 @@ Resources:
                     - aws s3 cp app.zip s3://${StreamlitCodeS3Bucket}
                     - aws s3 cp --recursive ${folder} s3://${StreamlitCodeS3Bucket}/agent
             - { 
-                folder: !If [IsJiraImplementation, "bedrock-agent/jira", "bedrock-agent/basic"]
+                folder: !If [IsJiraImplementation, "src/bedrock-agent/jira", src/bedrock-agent/basic"]
               }
       # SourceVersion: branch
       Environment:
