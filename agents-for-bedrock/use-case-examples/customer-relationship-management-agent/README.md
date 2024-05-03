@@ -60,6 +60,8 @@ Follow these steps to implement the CRM Agent in your environment:
 > [!NOTE]  
 > To get more information about deployment of the streamlit application refer [aws-streamlit-deploy-cicd](https://github.com/aws-samples/aws-streamlit-deploy-cicd) aws-samples.
 
+4. Access to Amazon Bedrock foundation models isn't granted by default. In order to gain access to a foundation model follow [documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html). 
+
 ## Amazon Bedrock Agent API Paths and Actions
 
 The agent supports the following API paths and actions:

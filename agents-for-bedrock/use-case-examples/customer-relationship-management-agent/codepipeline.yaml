@@ -468,9 +468,11 @@ Resources:
                       bucket.objects.all().delete()
 
                       bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['ARTIFACTBUCKET'])
+                      bucket.object_versions.delete()
                       bucket.objects.all().delete()
                       
                       bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['TRAILBUCKET'])
+                      bucket.object_versions.delete()
                       bucket.objects.all().delete()
                       stack_name="${StackName}"
                       try:
@@ -478,10 +480,10 @@ Resources:
                         print(f"Deleting stack {stack_name}")
                       
                       except ClientError as e:
-                          if e.response['Error']['Code'] == 'ValidationError' and 'does not exist' in e.response['Error']['Message']:
-                              print(f"Stack doesn't exist. No action taken.")
-                          else:
-                              raise
+                        if e.response['Error']['Code'] == 'ValidationError' and ('does not exist' in e.response['Error']['Message'] or 'already in progress' in e.response['Error']['Message']):
+                            print(f"Stack doesn't exist. No action taken.")
+                        else:
+                            raise
                   except Exception as ex:
                     print(ex)
                     cfnresponse.send(event, context, cfnresponse.FAILED, {})
@@ -736,13 +738,15 @@ Resources:
                   - 'ec2:CreateSecurityGroup'
                   - 'ec2:DescribeSecurityGroups'
                   - 'ec2:CreateTags'
+                  - 'ec2:RevokeSecurityGroupIngress'
+                  - 'ec2:RevokeSecurityGroupEgress'
+                  - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:AuthorizeSecurityGroupEgress'
                 Resource:
                   - "*"        
               - Effect: 'Allow'
                 Action:                  
                   - 'ec2:DeleteSecurityGroup'
-                  - 'ec2:AuthorizeSecurityGroupIngress'
-                  - 'ec2:RevokeSecurityGroupIngress'
                 Resource:
                   - "*"
                 Condition:
