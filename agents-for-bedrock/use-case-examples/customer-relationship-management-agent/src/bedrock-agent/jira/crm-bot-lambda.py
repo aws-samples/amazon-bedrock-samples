@@ -6,7 +6,7 @@ import base64
 import urllib
 import datetime
 
-url = os.environ["JIRA_URL"]
+url = 'https://' + os.environ["JIRA_URL"]
 api_token = os.environ["JIRA_API_TOKEN"]
 username = os.environ["JIRA_USERNAME"]
 env_name = os.environ["EnvironmentName"]
@@ -84,8 +84,8 @@ def getPreferences(event):
 
 def getOpenJiraIssues(event):
     search_url = f"{url}/search"
-    
-    project_id = get_named_parameter(event, 'projectId')
+
+    project_id = get_named_parameter(event, "projectId")
 
     query_params = urllib.parse.urlencode(
         {
@@ -126,19 +126,20 @@ def getOpenJiraIssues(event):
     except Exception:
         print("Invalid Jira Configuration")
 
+
 def updateJiraIssue(event):
     print(event)
-    
-    issue_key = get_named_parameter(event, 'issueKey')
-    properties = event['requestBody']['content']['application/json']['properties']
-    
+
+    issue_key = get_named_parameter(event, "issueKey")
+    properties = event["requestBody"]["content"]["application/json"]["properties"]
+
     for prop in properties:
         if prop["name"] == "timelineInWeeks":
             timeline_in_weeks = int(prop["value"])
             break
-    due_date = (datetime.datetime.now() + datetime.timedelta(weeks=timeline_in_weeks)).strftime(
-        "%Y-%m-%d"
-    )
+    due_date = (
+        datetime.datetime.now() + datetime.timedelta(weeks=timeline_in_weeks)
+    ).strftime("%Y-%m-%d")
     update_url = f"{url}/issue/{issue_key}"
     update_payload = json.dumps({"fields": {"duedate": due_date}})
 
@@ -148,10 +149,7 @@ def updateJiraIssue(event):
         )
         with urllib.request.urlopen(update_req) as update_response:
             update_data = update_response.read().decode("utf-8")
-            return {
-                "issueKey": issue_key,
-                "newTimeline": timeline_in_weeks
-            }
+            return {"issueKey": issue_key, "newTimeline": timeline_in_weeks}
     except urllib.error.HTTPError as e:
         print(f"Failed to update task {issue_key}. HTTPError:", e.code, e.reason)
     except urllib.error.URLError as e:
@@ -160,6 +158,7 @@ def updateJiraIssue(event):
         print(f"Failed to decode response for task {issue_key}:", update_data)
     except Exception:
         print("Invalid Jira Configuration")
+
 
 def lambda_handler(event, context):
 
