@@ -40,3 +40,7 @@ multimodal/rag/LICENSE-CC-BY-4.0.txt
 multimodal/rag/listings.json
 multimodal/rag/*.tar
 multimodal/rag/__pycache__/
+
+# runtime artifacts
+__pycache__/
+*.pyc
