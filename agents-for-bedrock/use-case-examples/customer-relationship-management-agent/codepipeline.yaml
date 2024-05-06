@@ -643,6 +643,8 @@ Resources:
                   - !Sub arn:aws:iam::${AWS::AccountId}:role/StreamlitExecutionRole-${EnvironmentName}
                   - !Sub arn:aws:iam::${AWS::AccountId}:role/StreamlitECSTaskRole-${EnvironmentName}
                   - !Sub arn:aws:iam::${AWS::AccountId}:role/ECSCustomRole-${EnvironmentName}
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/elasticloadbalancing.amazonaws.com/AWSServiceRoleForElasticLoadBalancing
+                  - 'arn:aws:iam::aws:policy/aws-service-role/AWSApplicationAutoscalingECSServicePolicy'
               - Effect: 'Allow'
                 Action:
                   - 's3:GetBucketAcl'
@@ -742,6 +744,10 @@ Resources:
                   - 'ec2:RevokeSecurityGroupEgress'
                   - 'ec2:AuthorizeSecurityGroupIngress'
                   - 'ec2:AuthorizeSecurityGroupEgress'
+                  - 'ec2:DescribeVpcs'
+                  - 'ec2:DescribeInternetGateways'
+                  - 'ec2:DescribeAccountAttributes'
+                  - 'ec2:DescribeSubnets'
                 Resource:
                   - "*"        
               - Effect: 'Allow'
@@ -1251,6 +1257,7 @@ Resources:
       Description: "Agent for Customer Relationship Management."
       ActionGroups:
         - ActionGroupName: crmActionGroup
+          Description: Action for getting Customer Information, getting open JIRA tasks and updating JIRA issue timeline
           ActionGroupExecutor: 
             Lambda: !GetAtt AgentLambdaFunction.Arn
           ApiSchema:
