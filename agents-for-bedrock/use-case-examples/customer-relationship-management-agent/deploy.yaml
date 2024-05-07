@@ -242,19 +242,6 @@ Resources:
         - ContainerName: !Join ['-', ['ContainerDefinition', !Ref EnvironmentName]]
           ContainerPort: !Ref ContainerPort
           TargetGroupArn: !Ref StreamlitContainerTargetGroup
-
-  StreamlitAutoScalingRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Join ['-', [StreamlitScalingRole, !Ref EnvironmentName]]
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
   
   # AutoScaling
   StreamlitAutoScalingTarget:
@@ -265,8 +252,7 @@ Resources:
       ResourceId: !Join ['/', [service, !Ref StreamlitCluster, !GetAtt StreamlitECSService.Name]]
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
-      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
-      RoleARN: !GetAtt StreamlitAutoScalingRole.Arn
+      RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
   
   StreamlitAutoScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
@@ -290,49 +276,75 @@ Resources:
     Properties:
       GroupDescription: Allow http to the internet
       VpcId: !Ref StreamlitVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          Description: Allow 80 port from all IP
-          FromPort: 80
-          ToPort: 80
-          SourcePrefixListId: !FindInMap ['CFRegionMap', !Ref 'AWS::Region', 'PrefixListCloudFront']
-      SecurityGroupEgress:
-        - IpProtocol: "-1" 
-          CidrIp: 0.0.0.0/0 
-          Description: "Deny all outbound traffic by default" 
-        - IpProtocol: "tcp"
-          FromPort: 80 
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-          Description: "Allow HTTP outbound"
       Tags:
         - Key: Name
           Value: !Join ['-', ['StreamlitALBSecurityGroup', !Ref EnvironmentName]]
+  
+  ALBSGDefaultOutBoundRule:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt StreamlitALBSecurityGroup.GroupId
+      IpProtocol: "-1"
+      CidrIp: 0.0.0.0/0
+      Description: Deny all outbound traffic by default
+
+  ALBSGOutBoundRule:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt StreamlitALBSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: !Ref ContainerPort 
+      ToPort: !Ref ContainerPort
+      CidrIp: 0.0.0.0/0
+      Description: Allow container port outbound
+  
+  ALBSGInBoundRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt StreamlitALBSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: !Ref ContainerPort 
+      ToPort: !Ref ContainerPort
+      SourcePrefixListId: !FindInMap ['CFRegionMap', !Ref 'AWS::Region', 'PrefixListCloudFront']
+      Description: Allow container port from CloudFront 
   
   StreamlitContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow container traffic from ALB
       VpcId: !Ref StreamlitVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          Description: Allow Container port from ALB SG
-          FromPort: !Ref ContainerPort
-          ToPort: !Ref ContainerPort
-          SourceSecurityGroupId: !Ref StreamlitALBSecurityGroup
-      SecurityGroupEgress:
-        - IpProtocol: "-1" 
-          CidrIp: 0.0.0.0/0 
-          Description: "Deny all outbound traffic by default" 
-        - IpProtocol: "tcp"
-          FromPort: 80 
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-          Description: "Allow HTTP outbound"
       Tags:
         - Key: Name
           Value: !Join ['-', ['StreamlitContainerSecurityGroup', !Ref EnvironmentName]]
 
+  ContainerSGDefaultOutBoundRule:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt StreamlitContainerSecurityGroup.GroupId
+      IpProtocol: "-1"
+      CidrIp: 0.0.0.0/0
+      Description: Deny all outbound traffic by default
+
+  ContainerSGOutBoundRule:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt StreamlitContainerSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: !Ref ContainerPort 
+      ToPort: !Ref ContainerPort
+      CidrIp: 0.0.0.0/0
+      Description: Allow container port outbound
+  
+  ContainerSGInBoundRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt StreamlitContainerSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: !Ref ContainerPort 
+      ToPort: !Ref ContainerPort
+      SourceSecurityGroupId: !Ref StreamlitALBSecurityGroup
+      Description: Allow Container port from ALB SG
+  
   # Load Balancer
   StreamlitContainerTargetGroup:
     Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
