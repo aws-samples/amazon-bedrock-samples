@@ -1,7 +1,7 @@
 # Advanced Concepts
 
 ## Contents
-[0_chunk_size_evaluation_for_KB_RAG.ipynb](./0\hunk_size_evaluation_for_KB_RAG.ipynb) - This notebook provides sample code for chunking size evaluation for building optimum RAG applcation. For each chunk sizes (you want to evaluate), following steps are repeated:
+[0_chunk_size_evaluation_for_KB_RAG.ipynb](./01-chunking-strategy/0_chunk_size_evaluation_for_KB_RAG.ipynb) - This notebook provides sample code for chunking size evaluation for building optimum RAG applcation. For each chunk sizes (you want to evaluate), following steps are repeated:
 
 - Create execution role for Knowledge Bases for Amazon Bedrock with necessary policies for accessing data from S3 and writing embeddings into vector store (OpenSearchServerless).
 - Create an empty OpenSearch serverless index.

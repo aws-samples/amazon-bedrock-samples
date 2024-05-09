@@ -26,10 +26,10 @@ Parameters:
       - No chunking
     Default: Default chunking
   Q05pMaxTokens:
-    Type: Number
+    Type: String
     Description: Maximum number of tokens in a chunk
   Q06pOverlapPercentage:
-    Type: Number
+    Type: String
     Description: Percent overlap in each chunk
   Q07pVectorStore:
     Type: String
