@@ -25,7 +25,7 @@ with heading_column1:
 with heading_column2:
     st.link_button(
         "_Github_ :sunglasses:",
-        "https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents/customer-relationship-management-agent",
+        "https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/use-case-examples/customer-relationship-management-agent",
     )
 
 st.markdown(
