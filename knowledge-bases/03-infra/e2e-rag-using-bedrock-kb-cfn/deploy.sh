@@ -35,7 +35,7 @@
 # 1. Echo Deployment Parameters
 #       To confirm the deployment parameters and make a go/no go launch decision
 # 2. Create S3 bucket for deployment artifacts (if needed)
-# 3. Update the cloudformation templates with deployment bucket name
+# 3. Update the CloudFormation templates with deployment bucket name
 #        Note: this deploy.sh is for a SINGLE REGION deployment
 
 #####################################
@@ -127,9 +127,12 @@ echo "$updated_yml_file_contents" >templates/oss-infra-template.template
 LOCAL_TEMPLATES_DIR="templates"
 aws s3 cp ${LOCAL_TEMPLATES_DIR} s3://${DEPLOYMENT_BUCKET}/${LOCAL_TEMPLATES_DIR}/ --recursive
 
-echo "Main Cloudformation template S3 URL:"
+echo "Main CloudFormation template S3 URL:"
 echo "https://${DEPLOYMENT_BUCKET}.s3.amazonaws.com/templates/main-template-out.yml"
 
+echo "**********************************************************************************************************"
+echo "Please note the Main CloudFormation template S3 URL, this will be needed for CloudFormation deployment."
+echo "**********************************************************************************************************"
 cat << __EOF__
 
 All done. Now Deploy the RAG Workflow.
