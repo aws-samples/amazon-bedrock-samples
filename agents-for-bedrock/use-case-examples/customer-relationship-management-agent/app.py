@@ -14,7 +14,7 @@ args = parser.parse_args()
 environmentName = args.environmentName
 bedrock = util.BedrockAgent(environmentName)
 
-st.set_page_config(layout="wide",page_title="CRM")
+st.set_page_config(layout="wide", page_title="CRM")
 
 st.title("Customer Relation Manager (CRM)")
 heading_column1, heading_column_space, heading_column2 = st.columns((6, 2, 2))
@@ -24,7 +24,8 @@ with heading_column1:
 
 with heading_column2:
     st.link_button(
-        "_Github_ :sunglasses:", "https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents/customer-relationship-management-agent"
+        "_Github_ :sunglasses:",
+        "https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/use-case-examples/customer-relationship-management-agent",
     )
 
 st.markdown(

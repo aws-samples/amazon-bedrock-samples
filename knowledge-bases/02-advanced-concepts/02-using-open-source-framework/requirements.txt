@@ -1,0 +1,5 @@
+langchain-aws>=0.1.1
+langchain-experimental>=0.0.57  # semantic chunking
+pypdf>=4.2.0
+ipykernel>=6.29
+python-dotenv>=1.0.1

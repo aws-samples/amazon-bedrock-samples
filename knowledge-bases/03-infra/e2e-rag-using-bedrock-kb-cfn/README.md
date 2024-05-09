@@ -1,4 +1,4 @@
-# Deploy e2e RAG solution (using Knowledgebases for Amazon Bedrock) via cloudformation
+# Deploy e2e RAG solution (using Knowledgebases for Amazon Bedrock) via CloudFormation
 
 
 This is a complete setup for automatic deployment of end-to-end RAG workflow using Knowledge Bases for Amazon Bedrock. 
@@ -14,7 +14,7 @@ Following resources will get created and deployed:
 ## Solution Deployment:
 
 ### Step 1 : Prepare templates for deployment
-`deploy.sh` script will create a S3 deployment bucket, upload the required artifacts it, and prepare the cloudformation templates for deployment. 
+`deploy.sh` script will create a S3 deployment bucket, upload the required artifacts it, and prepare the CloudFormation templates for deployment. 
          
          a.	If you run this script without [args], this will create a deployment bucket with default name - 'e2e-rag-deployment-${ACCOUNT_ID}-${AWS_REGION}'
 
@@ -24,7 +24,7 @@ Run the included `deploy.sh` script as shown below:
 
     -  git clone https://github.com/aws-samples/amazon-bedrock-samples.git
     
-    -  cd knowledge-bases/e2e-rag-deployment-using-bedrock-kb-cfn
+    -  cd knowledge-bases/03-infra/e2e-rag-deployment-using-bedrock-kb-cfn
 
     -  bash deploy.sh (For Windows users it may be different)
 
@@ -34,9 +34,9 @@ Once deploy.sh script run is finished, go to the deployment bucket created and c
 
 Using AWS Console:
 
-    - 1. Go to Cloudformation Console and choose 'Template source' as Amazon S3 URL
+    - 1. Go to AWS CloudFormation Console and choose 'Template source' as Amazon S3 URL
 
-    - 2. Enter the 'Main Cloudformation template S3 URL' (noted in step 1) in Amazon S3 URL text box.
+    - 2. Enter the 'Main CloudFormation template S3 URL' (noted in step 1) in Amazon S3 URL text box.
 
     - 3. Specify the RAG workflow details with the options fitting your use case
 
