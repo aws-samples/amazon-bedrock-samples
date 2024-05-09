@@ -639,10 +639,11 @@ Resources:
                   - 'iam:PassRole'
                   - 'sts:AssumeRole'
                 Resource:
-                  - !Sub arn:aws:iam::${AWS::AccountId}:role/StreamlitScalingRole-${EnvironmentName}
                   - !Sub arn:aws:iam::${AWS::AccountId}:role/StreamlitExecutionRole-${EnvironmentName}
                   - !Sub arn:aws:iam::${AWS::AccountId}:role/StreamlitECSTaskRole-${EnvironmentName}
                   - !Sub arn:aws:iam::${AWS::AccountId}:role/ECSCustomRole-${EnvironmentName}
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/elasticloadbalancing.amazonaws.com/AWSServiceRoleForElasticLoadBalancing
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
               - Effect: 'Allow'
                 Action:
                   - 's3:GetBucketAcl'
@@ -738,29 +739,36 @@ Resources:
                   - 'ec2:CreateSecurityGroup'
                   - 'ec2:DescribeSecurityGroups'
                   - 'ec2:CreateTags'
-                  - 'ec2:RevokeSecurityGroupIngress'
-                  - 'ec2:RevokeSecurityGroupEgress'
-                  - 'ec2:AuthorizeSecurityGroupIngress'
-                  - 'ec2:AuthorizeSecurityGroupEgress'
+                  - 'ec2:DescribeVpcs'
+                  - 'ec2:DescribeInternetGateways'
+                  - 'ec2:DescribeAccountAttributes'
+                  - 'ec2:DescribeSubnets'
                 Resource:
                   - "*"        
               - Effect: 'Allow'
                 Action:                  
                   - 'ec2:DeleteSecurityGroup'
+                  - 'ec2:RevokeSecurityGroupIngress'
+                  - 'ec2:RevokeSecurityGroupEgress'
+                  - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:AuthorizeSecurityGroupEgress'
                 Resource:
                   - "*"
                 Condition:
                   StringEquals:
-                    'aws:ResourceTag/aws:cloudformation:logical-id': !Join ['-', ['StreamlitALBSecurityGroup', !Ref EnvironmentName]]
+                    'aws:ResourceTag/Name': !Join ['-', ['StreamlitALBSecurityGroup', !Ref EnvironmentName]]
               - Effect: 'Allow'
                 Action:                  
                   - 'ec2:DeleteSecurityGroup'
+                  - 'ec2:RevokeSecurityGroupIngress'
+                  - 'ec2:RevokeSecurityGroupEgress'
                   - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:AuthorizeSecurityGroupEgress'
                 Resource:
                   - "*"
                 Condition:                 
                   StringEquals:
-                    'aws:ResourceTag/aws:cloudformation:logical-id': !Join ['-', ['StreamlitContainerSecurityGroup', !Ref EnvironmentName]]
+                    'aws:ResourceTag/Name': !Join ['-', ['StreamlitContainerSecurityGroup', !Ref EnvironmentName]]
               - Effect: 'Allow'
                 Action:                  
                   - 'elasticloadbalancing:DeleteLoadBalancer'
@@ -785,6 +793,14 @@ Resources:
                   - 'elasticloadbalancing:ModifyLoadBalancerAttributes'
                 Resource:
                   - "*"
+              - Effect: 'Allow'
+                Action:                  
+                  - 'iam:CreateServiceLinkedRole'
+                  - 'iam:AttachRolePolicy'
+                  - 'iam:PutRolePolicy'
+                  - 'sts:AssumeRole'
+                Resource:
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
 
   # CodeBuild CodePipeline
   StreamlitCodeBuild:
@@ -1251,6 +1267,7 @@ Resources:
       Description: "Agent for Customer Relationship Management."
       ActionGroups:
         - ActionGroupName: crmActionGroup
+          Description: Action for getting Customer Information, getting open JIRA tasks and updating JIRA issue timeline
           ActionGroupExecutor: 
             Lambda: !GetAtt AgentLambdaFunction.Arn
           ApiSchema:
