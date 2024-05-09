@@ -361,14 +361,14 @@ Resources:
     Properties:
       Name: !Join ['-', ['StreamlitALB', !Ref EnvironmentName]]
       LoadBalancerAttributes:
-        - Key: load_balancing.cross_zone.enabled
+        - Key: access_logs.s3.enabled
           Value: true
         - Key: access_logs.s3.bucket
-          Value: !Ref LoggingBucketName
+          Value: !Ref LoggingBucket
         - Key: access_logs.s3.prefix
           Value: alb/logs
         - Key: load_balancing.cross_zone.enabled
-          Value: true          
+          Value: true
       Scheme: internet-facing
       Type: application
       Subnets: 
