@@ -53,18 +53,18 @@ Parameters:
     Default: e2e-rag-index
     AllowedPattern: ^[a-z0-9](-*[a-z0-9])*
     ConstraintDescription: Must be lowercase or numbers with a length of 1-63 characters
-  Q10pVectorFieldName:
-    Type: String
-    Description: Vector field name
-    Default: bedrock-knowledge-base-default-vector
-  Q11pMetaDataFieldName:
-    Type: String
-    Description: Metadata field name
-    Default: AMAZON_BEDROCK_METADATA
-  Q12pTextFieldName:
-    Type: String
-    Description: Text field name
-    Default: AMAZON_BEDROCK_TEXT_CHUNK
+  # Q10pVectorFieldName:
+  #   Type: String
+  #   Description: Vector field name
+  #   Default: bedrock-knowledge-base-default-vector
+  # Q11pMetaDataFieldName:
+  #   Type: String
+  #   Description: Metadata field name
+  #   Default: AMAZON_BEDROCK_METADATA
+  # Q12pTextFieldName:
+  #   Type: String
+  #   Description: Text field name
+  #   Default: AMAZON_BEDROCK_TEXT_CHUNK
 Resources:
   KbRoleStack:
     Type: AWS::CloudFormation::Stack
@@ -118,12 +118,12 @@ Resources:
           Ref: Q08pCollectionName
         Q09pIndexName:
           Ref: Q09pIndexName
-        Q10pVectorFieldName:
-          Ref: Q10pVectorFieldName
-        Q11pMetaDataFieldName:
-          Ref: Q11pMetaDataFieldName
-        Q12pTextFieldName:
-          Ref: Q12pTextFieldName
+        # Q10pVectorFieldName:
+        #   Ref: Q10pVectorFieldName
+        # Q11pMetaDataFieldName:
+        #   Ref: Q11pMetaDataFieldName
+        # Q12pTextFieldName:
+        #   Ref: Q12pTextFieldName
         pCollectionArn:
           Fn::GetAtt:
           - OSSInfraStack
