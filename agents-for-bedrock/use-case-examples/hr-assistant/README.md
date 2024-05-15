@@ -1,4 +1,4 @@
-# Insurance Claim Lifecycle Automation Using Agents and Knowledge Bases for Amazon Bedrock
+# HR Assistant Using Titan Text Premier with Agents and Knowledge Bases for Amazon Bedrock
 ---
 
 ## Content
