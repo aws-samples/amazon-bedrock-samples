@@ -1,0 +1,97 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Calendar Action API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/send_meeting": {
+      "post": {
+        "summary": "POST /send_meeting",
+        "description": "Sends a meeting",
+        "operationId": "send_meeting",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "meeting_subject": {
+                    "type": "string",
+                    "description": "the subject of the meeting invite"
+                  },
+                  "meeting_body": {
+                    "type": "string",
+                    "description": "the body of the meeting invite"
+                  },
+                  "organizer": {
+                    "type": "string",
+                    "description": "the email address of the employee who is scheduling the meeting"
+                  },
+                  "attendee": {
+                    "type": "string",
+                    "description": "the email address of the employee who is attending the meeting"
+                  },
+                  "start_time": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}Td{2}:\\d{2}:\\d{2}$",
+                    "description": "The start time of the meeting in the format yyyy-mm-ddThh:mm:ss"
+                  },
+                  "end_time": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}Td{2}:\\d{2}:\\d{2}$",
+                    "description": "The end time of the meeting in the format yyyy-mm-ddThh:mm:ss"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "meeting_subject",
+                  "meeting_body",
+                  "organizer",
+                  "attendee",
+                  "start_time",
+                  "end_time"
+                ],
+                "title": "send_meeting"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "description": "Whether the message was sent successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
