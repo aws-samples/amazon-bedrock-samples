@@ -18,7 +18,7 @@ This sample solution  uses Titan Text Premier with, Agents, and Knowledge Bases,
 
 ### Demo Recording
 
-[<img src="design/demo-thumbnail.png" width="100%">](https://www.youtube.com/watch?v=T4kSNEeUxc4 "Demo: Put Amazon Titan Text Premier to Work for Enterprise Automation  - YouTube")
+[<img src="design/demo-thumbnail.png" width="100%">](https://youtu.be/watch?v=T4kSNEeUxc4 "Demo: Put Amazon Titan Text Premier to Work for Enterprise Automation  - YouTube")
 
 ## Agents and Knowledge Bases for Amazon Bedrock
 
