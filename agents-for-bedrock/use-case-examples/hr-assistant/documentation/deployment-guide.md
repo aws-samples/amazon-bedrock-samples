@@ -3,6 +3,8 @@
 
 ## Content
 - [Pre-Implementation](#pre-Implementation)
+- [Test Conversation](#test-conversation)
+- [Deploy Streamlit Web UI for Your Agent](#deploy-streamlit-web-ui-for-your-agent)
 - [Get Model Access for Titan Image Generator](#get-model-access)
 
 ## Pre-Implementation
@@ -12,31 +14,221 @@ To deploy this solution, your IAM user/role or service role must have permission
 
 You must also have [AWS Command Line Interface](https://aws.amazon.com/cli/) (CLI) installed. For instructions on installing AWS CLI, please see [Installing, updating, and uninstalling the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html).
 
+### 1. Clone [_amazon-bedrock-samples_](https://github.com/aws-samples/amazon-bedrock-samples) Repository
+
+1. Create a local copy of the **amazon-bedrock-samples** repository using _git clone_:
+
+```sh
+git clone https://github.com/aws-samples/amazon-bedrock-samples.git
+```
+
+#### Optional - Run Security Scan on the AWS CloudFormation Templates
+To run a security scan on the AWS CloudFormation templates using [`cfn_nag`](https://github.com/stelligent/cfn_nag) (recommended), you have to install `cfn_nag`:
+
+```sh
+brew install ruby brew-gem
+brew gem install cfn-nag
+```
+
+To initiate the security scan, run the following command:
+```sh
+# git clone https://github.com/aws-samples/amazon-bedrock-samples
+# cd amazon-bedrock-samples
+cfn_nag_scan --input-path agents-for-bedrock/use-case-examples/hr-assistant/cfn/hr-resources.yml
+```
+---
+
+### 2. Deploy CloudFormation Stack to Emulate Existing Customer Resources 
+To emulate the existing customer resources utilized by the agent, this solution uses the [create-hr-resources.sh](../shell/create-hr-resources.sh) shell script to automate provisioning of the parameterized CloudFormation template, [hr-resources.yml](../cfn/bedrock-hr-resources.yml), to deploy the following resources:
+
+> - Three [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions that represent customer business logic for creating claims, sending pending document reminders for open status claims, and gathering evidence on new and existing claims.
+> - Two Lambda layers for Amazon Bedrock Boto3 and [cfnresponse](https://pypi.org/project/cfnresponse/) libraries.
+> - Amazon S3 bucket containing API documentation in OpenAPI schema format for the preceding Lambda functions and the repair estimates, claim amounts, company FAQs, and required claim document descriptions to be used as our [knowledge base data source assets](../agent/knowledge-base-assets).
+> - [Amazon Simple Notification Service](https://docs.aws.amazon.com/sns/latest/dg/welcome.html) (SNS) topic to which policy holders' emails are subscribed for email alerting of claim status and pending actions.
+> - AWS IAM permissions for the preceding resources.
+
+CloudFormation prepopulates stack parameters with the default values provided in the template. To provide alternative input values, you can specify parameters as environment variables that are referenced in the `ParameterKey=<ParameterKey>,ParameterValue=<Value>` pairs in the _create-customer-resources.sh_ shell script's `aws cloudformation create-stack` command. 
+
+1. Before you run the shell script, navigate to the directory where you cloned the _amazon-bedrock-samples_ repository and modify the shell script permissions to executable:
+```sh
+# If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to shell folder:
+cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/hr-assistant/shell/
+chmod u+x create-hr-resources.sh
+```
+2. Set your CloudFormation stack name(STACK_NAME), SNS email(SNS_EMAIL) and the stack deployment region(AWS_REGION). The SNS email will be used for SNS notifications. You need to confirm SNS subscription to receive emails sent by the agent. 
+```sh
+export STACK_NAME=<YOUR-STACK-NAME> # Stack name must be lower case for S3 bucket naming convention
+export SNS_EMAIL=<YOUR-EMPLOYEE-EMAIL> # Email used for SNS notifications. You need to confirm SNS subscription to receive emails sent by the agent.
+export AWS_REGION=<YOUR-STACK-REGION> # Stack deployment region
+```
+3. Run the create-customer-resources.sh shell script to deploy the emulated customers resources defined in the bedrock-customer-resources.yml CloudFormation template. These are the resources on which the agent and knowledge base will be built:
 Run the following commands to deploy the resources:
-1. ```cd amazon-bedrock-samples/agents/hr-agent/shell/```
-2. ```chmod u+x create-hr-resources.sh```
-3. ```export STACK_NAME=<YOUR-STACK-NAME>``` # Stack name must be lower case for S3 bucket naming convention
-4. ```export SNS_EMAIL=<YOUR-EMPLOYEE-EMAIL>``` # Email used for SNS notifications. You need to confirm SNS subscription to receive emails sent by the agent.
-5. ```export AWS_REGION=<YOUR-STACK-REGION>``` # Stack deployment region
-6. ```source ./create-hr-resources.sh```
+```sh
+source ./create-hr-resources.sh
+```
+---
+### 3. Get Model Access for Titan Text Premier & Titan Image Generator G1
 
-## Knowledge Base Preparation
-- Create a Knowledge Base manually, using the S3 bucket created by CloudFormation `<STACK_NAME>-customer-resources/agent/knowledge-base-assets/`.
-- Associate the Knowledge Base with the Agent, using instruction "Company's leave and pay policy."
-
-Once creation is completed, go to the AWS console to prepare the Agent and test.
-
-## Get Model Access for Titan Image Generator G1
-One of the action API requires access to the Titan Image Generator model, therefore we need to request the model permission.
-
+We will use Titan Text Premier as the underlining core model along with one of the action API also requiring access to the Titan Image Generator model, therefore we need to request the model permission for both the models.
 To request access to a model:
+
 1. Login to AWS Console and go to "Amazon Bedrock".
-2. select Model access at the bottom of the left navigation pane in the Amazon Bedrock management console.
+2. Select Model access at the bottom of the left navigation pane in the Amazon Bedrock management console.
 3. On the Model access page, select "Manage model access". 
-4. Select the checkboxes next to the Titan Image Generator G1 model.
+4. Select the checkboxes next to the Titan Image Generator G1 model, Titan Text Premier G1 model.
 5. Select Save changes to request access. The changes may take several minutes to take place.
 6. If your request is successful, the Access status changes to Access granted.
+---
 
+### 4. Knowledge Base 
+
+Knowledge Bases for Amazon Bedrock leverage Retrieval Augmented Generation (RAG), a technique that harnesses customer data stores to enhance responses generated by foundation models. Knowledge bases allow agents to access existing customer data repositories without extensive administrator overhead. To connect a knowledge base to your data, you specify an S3 bucket as the [data source](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-ingest.html). By employing knowledge bases, applications gain enriched contextual information, streamlining development through a fully-managed RAG solution. This level of abstraction accelerates time-to-market by minimizing the effort of incorporating your data into agent functionality and it optimizes cost by negating the necessity for continuous model retraining to leverage private data.
+
+#### Knowledge Base Preparation
+
+ Navigate to the [Amazon Bedrock > Knowledge base > Create knowledge base console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases/create-knowledge-base):
+ a. Under **Provide knowledge base details**, enter a name and the following optional description, leaving all other default settings:
+    ```
+    Use to retrieve Company's leave and pay policy based on policy and pay documents
+    ```
+ b. Under **Set up data source**, enter a name then choose _Browse S3_ and select the 'knowledge-base-assets' folder of the data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-customer-resources/agent/knowledge-base-assets/):
+
+    <p align="center">
+      <img src="../imgs/kb-ds-s3-configuration.png"><br>
+      <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base Data Source Configuration</em></span>
+    </p>
+
+    c. Under **Select embeddings model and configure vector store**, select _Titan Embeddings G1 - Text_ and leave the other default settings. An [OpenSearch Serverless collection](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html) will be created for you. This vector store is where the knowledge base pre-processing embeddings are stored and later used for semantic similarity search between queries and data source text.
+
+    d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
+
+<p align="center">
+  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Configuration Settings</em></span>
+</p>
+
+2. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
+
+<p align="center">
+  <img src="../imgs/kb-creation-banner.png" width="90%" height="90%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Data Source Sync</em></span>
+</p>
+
+3. Navigate to the [Knowledge Bases for Amazon Bedrock console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
+
+<p align="center">
+  <img src="../imgs/kb-overview.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 4: Knowledge Base Overview</em></span>
+</p>
+
+4. With your knowledge base still selected in the knowledge base console, select your knowledge base data source listed under **Data source**, then note the **Data source ID** under _Data source overview_:
+
+<p align="center">
+  <img src="../imgs/kb-ds-overview.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 5: Knowledge Base Data Source Overview</em></span>
+</p>
+
+❗ _Knowledge base ID and Data source ID will be used as environment variables in the later _Deploy Streamlit Web UI for Your Agent_ section_
+
+5. Navigate to the [Amazon Bedrock > Agents > Create Agent console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/agents/create): Under Add Action groups, add a new action for knowledge base then select Next:
+
+    i. Under Select knowledge base, select the knowledge base you created in the preceding deployment step
+
+    ii. Under Knowledge base instructions for Agent, enter the following then select Next:
+    ```
+    Use to retrieve details about company's leave and pay policy using associated documents.
+    ```
+### 5. Bedrock Agents
+
+Bedrock Agents operate through a build-time execution process, comprising several key components:
+
+* **Foundation Model**: Users select a foundation model that guides the agent in interpreting user inputs, generating responses, and directing subsequent actions during its orchestration process.
+* **Instructions**: Users craft detailed instructions that outline the agent's intended functionality. Optional advanced prompts allow customization at each orchestration step, incorporating Lambda functions to parse outputs.
+* **(Optional) Action Groups**: Users define actions for the agent, leveraging an OpenAPI schema to define APIs for task execution and Lambda functions to process API inputs and outputs.
+* **(Optional) Knowledge Bases**: Users can associate agents with knowledge bases, granting access to additional context for response generation and orchestration steps.
+
+The agent in this sample solution will use an Titan-Text Premier foundation model, a set of instructions, action groups, and one knowledge base. The underlining agent is pre-created through cloudformation, and we just associated the knowledge base to it. Next lets prepare and test the agent.
+
+Following the successful deployments, the next development phase involves the preparation and testing of your agent's functionality. Preparing the agent involves packaging the latest changes, while testing provides a critical opportunity to interact with and evaluate the agent's behavior. Through this process, you can refine agent capabilities, enhance its efficiency, and address any potential issues or improvements necessary for optimal performance.
+
+1. Navigate to the Agents section of the Amazon Bedrock console:
+<p align="center">
+  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 6:  Agents for Amazon Bedrock Console</em></span>
+</p>
+
+
+2. Select your agent and note your Agent ID:
+<p align="center">
+  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 7: Agent Selection</em></span>
+</p>
+
+
+
+❗ _Agent ID will be used as an environment variable in the later Deploy Streamlit web UI for your agent section._
+
+3. Navigate to your working draft. Initially, you have a working draft and a default TestAlias pointing to this draft. The working draft allows for iterative development. Select Prepare to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
+
+<p align="center">
+  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 8: Agent Working Draft Console</em></span>
+</p>
+
+
+4. Access the test window from any page within the agent's working draft console by selecting Test or the left arrow icon at the top right. In the test window, select an alias and its version that appears in the test window
+
+<p align="center">
+  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 9: Agent Prepare Message</em></span>
+</p>
+
+
+5. Test your agent using the following sample prompts and other various inputs of your own:
+
+❗ Always select Prepare after making changes to apply them before testing the agent.
+
+## Test Conversation
+The following test conversation example highlights the agent’s ability to invoke action group APIs with AWS Lambda business logic that queries a customer’s Amazon DynamoDB table and sends customer notifications using Amazon Simple Notification Service. The same conversation thread showcases agent and knowledge base integration to provide the user with responses using customer authoritative data sources, like claim amount and FAQ documents.
+
+* (KB) What's the parental leave policy? 
+* (KB+SQL) My partner and I are expecting a child on July 1st. I want to take 8 weeks off, can I do that? 
+* (KB+SQL) Please request two weeks time off using my vacation time, from July 1st, 2024 to July 12, 2024 timeoff: 
+* take 2 days time off for John Doe - what's time off balance for Jane Smith Email: 
+* send an email to liaji@amazon.com with subject "HR Agent" and body "Hello" Image: 
+* generate an emoji for "reading on sunny beach"
+
+<p align="center">
+  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 10: Agent Testing and Validation</em></span>
+</p>
+
+## Deploy Streamlit Web UI for Your Agent
+
+Once you are satisfied with the performance of your agent and knowledge base, you are ready to productize their capabilities. We use Streamlit in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. Streamlit is a Python library imgsed to streamline and simplify the process of building frontend applications. 
+To set up:
+
+1. Lets run:
+```sh
+export BEDROCK_AGENT_ID=<YOUR-AGENT-ID> # The ID of agent created
+export BEDROCK_AGENT_ALIAS_ID=<YOUR-AGENT-ALIAS-ID> # The Alias ID of agent created
+export PROFILE_NAME=<YOUR-AWS-PROFILE-NAME> # The AWS Profile used; can be default if not provided
+```
+2. Next lets install the required python dependencies:
+
+```sh
+pip install -r agents-for-bedrock/use-case-examples/hr-assistant/streamlit/requirements.txt
+```
+
+3. Run the streamlit app locally with 
+```sh
+python3 -m streamlit run agents-for-bedrock/use-case-examples/hr-assistant/streamlit/agent_streamlit.py
+```
+
+<p align="center">
+  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 11: Stremlit UI App</em></span>
+</p>
 
 ---
 
