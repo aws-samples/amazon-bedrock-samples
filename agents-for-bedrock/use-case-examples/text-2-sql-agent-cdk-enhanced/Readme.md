@@ -30,6 +30,10 @@ This repository enhances the original Text to SQL Bedrock Agent with the followi
 
 ## Prerequisites
 Before you begin, ensure you have the following:
+- AWS CLI installed and configured with the necessary permissions
+- Node.js and npm
+- Python 3.9 or higher and pip
+- Access to Amazon Bedrock foundation models (Before you can use a foundation model in Amazon Bedrock, you must request access to it. Use this Link for detail https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
 - An AWS account (AWS_PROFILE) with the following permissions:
   - Create and manage IAM roles and policies.
   - Create and invoke AWS Lambda functions.
@@ -47,7 +51,7 @@ Before you begin, ensure you have the following:
   - Use the Data Science 3.0 kernel in SageMaker Studio
 
 ## Installation
-Clone the repository to your local machine or AWS environment:
+Clone the repository to your local machine or AWS environment, set up a virtual environment and activate it and install the AWS CDK and required Python packages using below code:
 
 ```bash
 git clone https://github.com/aws-samples/amazon-bedrock-samples.git
