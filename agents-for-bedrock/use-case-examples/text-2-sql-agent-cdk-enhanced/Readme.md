@@ -64,6 +64,7 @@ Deploy the stack using the AWS CDK.
 If you want to run this with sample data, use the data provided as an example, which is "EV_WA.zip" in the "Data" directory. This is public data from [Electric Vehicle Population Data](https://catalog.data.gov/dataset/electric-vehicle-population-data). This dataset shows the Battery Electric Vehicles (BEVs) and Plug-in Hybrid Electric Vehicles (PHEVs) that are currently registered through the Washington State Department of Licensing (DOL). For the purpose of this repository, the data was split into 4 CSV files by the author. 
 
 ```bash
+cdk bootstrap --profile XXX
 cdk deploy --profile XXX --context zip_file_name=EV_WA.zip
 ```
 
