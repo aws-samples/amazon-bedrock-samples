@@ -1,0 +1,160 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Application Model template describing your function.
+
+Parameters:
+  CognitoUserPoolArn:
+    Type: String
+  BedrockAgentAliasId:
+    Type: String 
+  BedrockAgentId:
+    Type: String
+  # BedrockLayerArn:
+  #   Type: String
+
+Resources:
+
+  ApiGwAccountConfig:
+    Type: "AWS::ApiGateway::Account"
+    Properties:
+      CloudWatchRoleArn: !GetAtt "ApiGatewayLoggingRole.Arn"
+      
+  ApiGatewayLoggingRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "apigateway.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+        
+  AccessLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 30
+      LogGroupName: !Sub "/${AWS::StackName}/APIAccessLogs"
+      
+  ClaimsAPI:
+    Type: AWS::Serverless::Api
+    Name: ClaimsAPI
+    Properties:
+      StageName: Prod
+      MethodSettings:
+        - LoggingLevel: INFO
+          MetricsEnabled: True
+          ResourcePath: '/*'
+          HttpMethod: '*'
+      EndpointConfiguration:
+          Type: REGIONAL    
+      Cors:
+        AllowMethods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+        AllowHeaders: "'Content-Type', 'Authorization', 'X-Forwarded-For', 'X-Api-Key', 'X-Amz-Date', 'X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      AccessLogSetting:
+        DestinationArn: !GetAtt AccessLogs.Arn
+        Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","routeKey":"$context.routeKey", "status":"$context.status","protocol":"$context.protocol", "integrationStatus": $context.integrationStatus, "integrationLatency": $context.integrationLatency, "responseLength":"$context.responseLength" }'
+      Auth:
+        # DefaultAuthorizer: CognitoUserPoolAuthorizer        
+        Authorizers:
+          CognitoUserPoolAuthorizer:
+            UserPoolArn: !Ref CognitoUserPoolArn
+      Tags:
+        Name: !Sub "${AWS::StackName}-API"
+        Stack: !Sub "${AWS::StackName}"
+        
+  # ClaimsAPIResource:
+  #   Type: AWS::ApiGateway::Resource
+  #   Properties:
+  #     ParentId: !GetAtt ClaimsAPI.RootResourceId
+  #     PathPart: claims
+  #     RestApiId: !Ref ClaimsAPI
+
+  # ClaimsAPIMethod:
+  #   Type: AWS::ApiGateway::Method
+  #   Properties:
+  #     HttpMethod: ANY
+  #     ResourceId: !Ref ClaimsAPIResource
+  #     RestApiId: !Ref ClaimsAPI
+  #     AuthorizationType: COGNITO_USER_POOLS
+  #     AuthorizerId: !Ref CognitoAuthorizer
+  #     Integration:
+  #       Type: AWS_PROXY
+  #       IntegrationHttpMethod: POST
+  #       Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${claimsinvokebedrockagents.Arn}/invocations
+
+  # CognitoAuthorizer:
+  #   Type: AWS::ApiGateway::Authorizer
+  #   Properties:
+  #     Name: CognitoUserPoolAuthorizer
+  #     Type: COGNITO_USER_POOLS
+  #     IdentitySource: method.request.header.Authorization
+  #     ProviderARNs:
+  #       - !Ref CognitoUserPoolArn
+  #     RestApiId: !Ref ClaimsAPI
+                
+  InvokeFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${claimsinvokebedrockagents}"
+      RetentionInDays: 7
+      
+  claimsinvokebedrockagents:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./invoke-lambda
+      Description: ''
+      MemorySize: 128
+      Timeout: 180
+      Handler: invoke_lambda.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      Environment:
+        Variables:
+          AGENT_ALIAS_ID: !Ref BedrockAgentAliasId
+          AGENT_ID: !Ref BedrockAgentId
+      # Layers:
+      #    - !Ref BedrockLayerArn
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeAgent
+              Resource: '*'
+      SnapStart:
+        ApplyOn: None
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            Path: /claims
+            Method: ANY
+            RestApiId:
+              Ref: ClaimsAPI    
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+            # Cors:
+            #   AllowMethods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+            #   AllowHeaders: "'Content-Type', 'Authorization', 'X-Forwarded-For', 'X-Api-Key', 'X-Amz-Date', 'X-Amz-Security-Token'"
+            #   AllowOrigin: "'*'"              
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+
+Outputs:
+  APIEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ClaimsAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+
+  APIID:
+    Description: "API Gateway ID"
+    Value: !Ref ClaimsAPI
+
