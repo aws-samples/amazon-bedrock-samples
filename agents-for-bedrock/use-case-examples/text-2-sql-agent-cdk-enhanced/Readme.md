@@ -50,7 +50,7 @@ Clone the repository to your local machine or AWS environment, set up a virtual 
 
 ```bash
 git clone https://github.com/aws-samples/amazon-bedrock-samples.git
-cd ./agents-for-bedrock/use-case-examples/text-2-sql-agent-cdk-enhanced
+cd ./amazon-bedrock-samples/agents-for-bedrock/use-case-examples/text-2-sql-agent-cdk-enhanced
 export AWS_PROFILE=XXX
 python3.9 -m venv .venv
 source .venv/bin/activate
