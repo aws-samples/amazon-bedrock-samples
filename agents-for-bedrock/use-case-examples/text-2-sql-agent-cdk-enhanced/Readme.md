@@ -13,7 +13,9 @@ Harnessing the power of natural language processing, the "Text to SQL Bedrock Ag
 The code here sets up an agent capable of crafting SQL queries from natural language questions. It then retrieves responses from the database, providing accurate answers to user inquiries. The diagram below outlines the high-level architecture of this solution.
 
 
-##  Differences from Original Repo (https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/use-case-examples/text-2-sql-agent)
+##  ##  Differences from [text-2-sql-agent](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/use-case-examples/text-2-sql-agent)
+
+
 This repository enhances the original Text to SQL Bedrock Agent with the following improvements:
 
 - Uses AWS CDK to build the necessary infrastructure.
@@ -27,7 +29,7 @@ The Agent is designed to:
 
 ## Prerequisites
 Before you begin, ensure you have the following:
-- An AWS account with the following permissions:
+- An AWS account (AWS_PROFILE) with the following permissions:
   - Create and manage IAM roles and policies.
   - Create and invoke AWS Lambda functions.
   - Create, read from, and write to Amazon S3 buckets.
@@ -48,7 +50,7 @@ Clone the repository to your local machine or AWS environment:
 
 ```bash
 git clone https://github.com/aws-samples/amazon-bedrock-samples.git
-cd agents-for-bedrock/use-case-examples/text-2-sql-agent-cdk-enhanced
+cd ./agents-for-bedrock/use-case-examples/text-2-sql-agent-cdk-enhanced
 export AWS_PROFILE=XXX
 python3.9 -m venv .venv
 source .venv/bin/activate
@@ -59,7 +61,7 @@ chmod +x setup.sh
 
 ## Deployment 
 Deploy the stack using the AWS CDK. 
-If you want to run this with sample data, use the data provided as an example, which is "EV_WA.zip" in the "Data" directory. This is public data from Electric Vehicle Population Data (https://catalog.data.gov/dataset/electric-vehicle-population-data). This dataset shows the Battery Electric Vehicles (BEVs) and Plug-in Hybrid Electric Vehicles (PHEVs) that are currently registered through the Washington State Department of Licensing (DOL). For the purpose of this repository, the data was split into 4 CSV files by the author. 
+If you want to run this with sample data, use the data provided as an example, which is "EV_WA.zip" in the "Data" directory. This is public data from [Electric Vehicle Population Data](https://catalog.data.gov/dataset/electric-vehicle-population-data). This dataset shows the Battery Electric Vehicles (BEVs) and Plug-in Hybrid Electric Vehicles (PHEVs) that are currently registered through the Washington State Department of Licensing (DOL). For the purpose of this repository, the data was split into 4 CSV files by the author. 
 
 ```bash
 cdk deploy --profile XXX --context zip_file_name=EV_WA.zip
