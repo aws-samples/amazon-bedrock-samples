@@ -71,7 +71,7 @@ cdk deploy --profile XXX --context zip_file_name=EV_WA.zip
 Feel free to use this for your own data. If you want to deploy with your own data on your existing infrastructure, you can do that. Just make sure to stop your crawler schedule, then deploy with the new data, and then resume the schedule. However, if it is a fresh deployment with your data, you don't need to do anything extra.
 
 ## Usage
-After deployment is finished, wait for 1 minute for the crawling to complete. Then go to the AWS Bedrock console, navigate to the agent section, find your agent, and test your agent with a question, for example:
+After deployment is finished, wait for 2 minute for the first crawling of database to complete. Then go to the AWS Bedrock console, navigate to the agent section, find your agent, and test your agent with a question, for example:
 
 "What are the 5 model years and types of electric vehicles available in Thurston County?"
 
