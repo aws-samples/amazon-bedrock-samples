@@ -12,8 +12,11 @@ Harnessing the power of natural language processing, the "Text to SQL Bedrock Ag
 ## Use Case
 The code here sets up an agent capable of crafting SQL queries from natural language questions. It then retrieves responses from the database, providing accurate answers to user inquiries. The diagram below outlines the high-level architecture of this solution.
 
+The Agent is designed to:
+- Retrieve database schemas
+- Execute SQL queries
 
-##  ##  Differences from [text-2-sql-agent](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/use-case-examples/text-2-sql-agent)
+## Differences from [text-2-sql-agent](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/use-case-examples/text-2-sql-agent)
 
 
 This repository enhances the original Text to SQL Bedrock Agent with the following improvements:
@@ -23,9 +26,7 @@ This repository enhances the original Text to SQL Bedrock Agent with the followi
 - If the answer is large, it creates a file in S3 and points the user to the S3 location.
 
 
-The Agent is designed to:
-- Retrieve database schemas
-- Execute SQL queries
+
 
 ## Prerequisites
 Before you begin, ensure you have the following:
