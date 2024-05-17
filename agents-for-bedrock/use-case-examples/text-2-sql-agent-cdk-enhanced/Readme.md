@@ -43,12 +43,7 @@ Before you begin, ensure you have the following:
   - Execute queries and manage workspaces in Amazon Athena.
   - Access to Amazon Bedrock foundation models (Anthropic’s Claude 3 Sonnet model for this solution)
 
-- For local setup:
-  - Python and Jupyter Notebooks installed
-  - AWS CLI installed and configured
-- For AWS SageMaker:
-  - Ensure your domain has the above permissions
-  - Use the Data Science 3.0 kernel in SageMaker Studio
+
 
 ## Installation
 Clone the repository to your local machine or AWS environment, set up a virtual environment and activate it and install the AWS CDK and required Python packages using below code:
