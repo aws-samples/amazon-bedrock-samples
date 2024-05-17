@@ -1,0 +1,83 @@
+# Text to SQL Bedrock Agent CDK Enhanced
+
+## Authors:
+- **Pedram Jahangiri** [@iut62elec](https://github.com/iut62elec)
+
+## Reviewer:
+- **Maira Ladeira Tanke** [@mttanke](https://github.com/mttanke)
+
+## Introduction
+Harnessing the power of natural language processing, the "Text to SQL Bedrock Agent" facilitates the automatic transformation of natural language questions into executable SQL queries. This tool bridges the gap between complex database structures and intuitive human inquiries, enabling users to effortlessly extract insights from data using simple English prompts. It leverages AWS Bedrock's cutting-edge agent technology and exemplifies the synergy between AWS's robust infrastructure and advanced large language models offered in AWS Bedrock, making sophisticated data analysis accessible to a wider audience. This repository contains the necessary files to set up and test a Text to SQL conversion using the Bedrock Agent with AWS services.
+
+## Use Case
+The code here sets up an agent capable of crafting SQL queries from natural language questions. It then retrieves responses from the database, providing accurate answers to user inquiries. The diagram below outlines the high-level architecture of this solution.
+
+
+##  Differences from Original Repo (https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/use-case-examples/text-2-sql-agent)
+This repository enhances the original Text to SQL Bedrock Agent with the following improvements:
+
+- Uses AWS CDK to build the necessary infrastructure.
+- Works with any dataset: simply create a folder with all your data in CSV files, create a zip file of this folder, place it in the "Data" directory, and the code will automatically extract and upload the files, generating the necessary instructions. Provide the zip file name at the time of deployment (cdk deploy --profile XXX --context zip_file_name=EV_WA.zip).
+- If the answer is large, it creates a file in S3 and points the user to the S3 location.
+
+
+The Agent is designed to:
+- Retrieve database schemas
+- Execute SQL queries
+
+## Prerequisites
+Before you begin, ensure you have the following:
+- An AWS account with the following permissions:
+  - Create and manage IAM roles and policies.
+  - Create and invoke AWS Lambda functions.
+  - Create, read from, and write to Amazon S3 buckets.
+  - Access and manage Amazon Bedrock agents and models.
+  - Create and manage Amazon Glue databases and crawlers.
+  - Execute queries and manage workspaces in Amazon Athena.
+  - Access to Amazon Bedrock foundation models (Anthropic’s Claude 3 Sonnet model for this solution)
+
+- For local setup:
+  - Python and Jupyter Notebooks installed
+  - AWS CLI installed and configured
+- For AWS SageMaker:
+  - Ensure your domain has the above permissions
+  - Use the Data Science 3.0 kernel in SageMaker Studio
+
+## Installation
+Clone the repository to your local machine or AWS environment:
+
+```bash
+git clone https://github.com/aws-samples/amazon-bedrock-samples.git
+cd agents-for-bedrock/use-case-examples/text-2-sql-agent-cdk-enhanced
+export AWS_PROFILE=XXX
+python3.9 -m venv .venv
+source .venv/bin/activate
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+chmod +x setup.sh
+./setup.sh
+```
+
+## Deployment 
+Deploy the stack using the AWS CDK. 
+If you want to run this with sample data, use the data provided as an example, which is "EV_WA.zip" in the "Data" directory. This is public data from Electric Vehicle Population Data (https://catalog.data.gov/dataset/electric-vehicle-population-data). This dataset shows the Battery Electric Vehicles (BEVs) and Plug-in Hybrid Electric Vehicles (PHEVs) that are currently registered through the Washington State Department of Licensing (DOL). For the purpose of this repository, the data was split into 4 CSV files by the author. 
+
+```bash
+cdk deploy --profile XXX --context zip_file_name=EV_WA.zip
+```
+
+Feel free to use this for your own data. If you want to deploy with your own data on your existing infrastructure, you can do that. Just make sure to stop your crawler schedule, then deploy with the new data, and then resume the schedule. However, if it is a fresh deployment with your data, you don't need to do anything extra.
+
+## Usage
+After deployment is finished, wait for 1 minute for the crawling to complete. Then go to the AWS Bedrock console, navigate to the agent section, find your agent, and test your agent with a question, for example:
+
+"What are the 5 model years and types of electric vehicles available in Thurston County?"
+
+
+
+## Cleaning Up
+
+To delete all resources created and avoid ongoing charges, run .
+
+```bash
+cdk destroy --profile XXX
+```
