@@ -9,8 +9,7 @@ Parameters:
     Type: String 
   BedrockAgentId:
     Type: String
-  # BedrockLayerArn:
-  #   Type: String
+
 
 Resources:
 
@@ -67,36 +66,6 @@ Resources:
       Tags:
         Name: !Sub "${AWS::StackName}-API"
         Stack: !Sub "${AWS::StackName}"
-        
-  # ClaimsAPIResource:
-  #   Type: AWS::ApiGateway::Resource
-  #   Properties:
-  #     ParentId: !GetAtt ClaimsAPI.RootResourceId
-  #     PathPart: claims
-  #     RestApiId: !Ref ClaimsAPI
-
-  # ClaimsAPIMethod:
-  #   Type: AWS::ApiGateway::Method
-  #   Properties:
-  #     HttpMethod: ANY
-  #     ResourceId: !Ref ClaimsAPIResource
-  #     RestApiId: !Ref ClaimsAPI
-  #     AuthorizationType: COGNITO_USER_POOLS
-  #     AuthorizerId: !Ref CognitoAuthorizer
-  #     Integration:
-  #       Type: AWS_PROXY
-  #       IntegrationHttpMethod: POST
-  #       Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${claimsinvokebedrockagents.Arn}/invocations
-
-  # CognitoAuthorizer:
-  #   Type: AWS::ApiGateway::Authorizer
-  #   Properties:
-  #     Name: CognitoUserPoolAuthorizer
-  #     Type: COGNITO_USER_POOLS
-  #     IdentitySource: method.request.header.Authorization
-  #     ProviderARNs:
-  #       - !Ref CognitoUserPoolArn
-  #     RestApiId: !Ref ClaimsAPI
                 
   InvokeFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -121,8 +90,6 @@ Resources:
         Variables:
           AGENT_ALIAS_ID: !Ref BedrockAgentAliasId
           AGENT_ID: !Ref BedrockAgentId
-      # Layers:
-      #    - !Ref BedrockLayerArn
       PackageType: Zip
       Policies:
         - Statement:

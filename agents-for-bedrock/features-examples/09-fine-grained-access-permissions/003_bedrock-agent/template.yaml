@@ -7,8 +7,6 @@ Parameters:
     Type: String
   UserPoolId:
     Type: String    
-  # BedrockLayerArn:
-  #   Type: String
 
 
 Resources:
@@ -18,15 +16,6 @@ Description: 'IAM Role for Amazon Bedrock Agents'
 
 Resources:
 
-  # pythonjosejwtLayer:
-  #   Type: AWS::Serverless::LayerVersion
-  #   Properties:
-  #     ContentUri: ./pythonjosejwtLayer/
-  #     CompatibleRuntimes:
-  #       - python3.9
-  #   Metadata:
-  #     BuildMethod: python3.9
-      
   AmazonBedrockRoleForAgentsAgentAccess:
     Type: AWS::IAM::Role
     Properties:
@@ -228,9 +217,6 @@ Resources:
       EventInvokeConfig:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2
-      # Layers:
-      #   - !Ref BedrockLayerArn
-        # - !Ref pythonjosejwtLayer
       PackageType: Zip
       Policies:
         - Statement:

@@ -3,9 +3,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Stack for managing claims-app resources
 
-# Parameters:
-#   bedrockLayerArn:
-#     Type: String
 
 Resources:
 
@@ -26,7 +23,6 @@ Resources:
       Parameters:
         PolicyStoreId: !GetAtt AmazonVerifiedPermissionsStack.Outputs.PolicyStoreId
         UserPoolId: !GetAtt CognitoUserPoolStack.Outputs.UserPoolId
-        # BedrockLayerArn: !Ref bedrockLayerArn
 
   ApiGatewayStack:
     Type: AWS::CloudFormation::Stack
@@ -36,7 +32,6 @@ Resources:
         CognitoUserPoolArn: !GetAtt CognitoUserPoolStack.Outputs.UserPoolArn
         BedrockAgentAliasId: !GetAtt BedrockAgentStack.Outputs.BedrockAgentAliasId
         BedrockAgentId: !GetAtt BedrockAgentStack.Outputs.BedrockAgentId
-        # BedrockLayerArn: !Ref bedrockLayerArn
 
 Outputs:
   APIEndpoint:

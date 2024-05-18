@@ -78,7 +78,7 @@ When you run the command, AWS SAM will prompt for few questions, enter "claims-a
 
 ## Step 4:
 
-Update credentials in Amazon Cognito as follows: 
+Set credentials in Amazon Cognito for test users follows: 
 
 ```
 aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-adjuster --password <insert_password> --permanent
