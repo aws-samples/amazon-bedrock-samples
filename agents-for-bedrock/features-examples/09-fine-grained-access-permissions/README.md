@@ -35,6 +35,10 @@ The application architecture flow is as follows:
 4. Go to the Amazon Bedrock console, Click on Model Access, Select the Anthropic models and save changes. 
 5. The solution was tested in us-east-1
 6. AWS SAM CLI is installed. Instructions [here] (https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
+7. Install Amplify CLI [here] (https://docs.amplify.aws/gen1/react/start/getting-started/installation/). If running in Cloud shell, you can use the below command:
+```
+   npm install -g @aws-amplify/cli
+```
 
 ## Step 1:
 
@@ -43,7 +47,7 @@ The first step of utilizing this repo is performing a git clone of the repositor
 ```
 $ git clone hhttps://github.com/aws-samples/amazon-bedrock-samples.git
 
-$ cd amazon-bedrock-samples/agents-for-bedrock/features-examples/09-fine-grained-access-permission/
+$ cd amazon-bedrock-samples/agents-for-bedrock/features-examples/09-fine-grained-access-permissions/
 ```
 
 ## Step 2:
@@ -53,6 +57,7 @@ Start with setting a default region. This code was tested in us-east-1.
 
 ```
 $ aws configure set default.region us-east-1
+$ export AWS_PROFILE=<profilename>
 
 ```
 
@@ -75,25 +80,7 @@ $ sam deploy --guided --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPAB
 ```
 When you run the command, AWS SAM will prompt for few questions, enter "claims-app" for the stack name and retain defaults for rest of the questions
 
-
-## Step 4:
-
-Set credentials in Amazon Cognito for test users follows: 
-
-```
-aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-adjuster --password <insert_password> --permanent
-aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-admin    --password <insert_password> --permanent
-
-```
-
-## Step 5:
-
-Run the below command to change to the frontend directory. Then run the following command to deploy the frontend application :
-
-```
-$ cd 006_Frontend
-```
-### Step 5.1 - Set the environment variables in env file
+### Step 4 - Set the environment variables 
 
 ```
 #### Set the AWS region ####
@@ -113,7 +100,28 @@ $ WS_USER_POOL_ARN=$(aws cognito-idp describe-user-pool --user-pool-id $WS_USER_
 
 #### Get the React APP URL ####
 $ REACT_APP_API_GATEWAY_URL=$(aws cloudformation describe-stacks --stack-name claims-app --query "Stacks[0].Outputs[?OutputKey=='APIEndpoint'].OutputValue" --output text --region $AWS_REGION )
+```
 
+## Step 5:
+
+Set credentials in Amazon Cognito for test users follows: 
+
+```
+aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-adjuster --password <insert_password> --permanent
+aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-admin    --password <insert_password> --permanent
+
+```
+
+## Step 6:
+
+Run the below command to change to the frontend directory. Then run the following command to deploy the frontend application :
+
+```
+$ cd 005_Frontend
+```
+### Step 6.1 - Set the environment variables in env file
+
+```
 #### Set the .env file ####
 $ rm .env
 # Create the .env file
@@ -128,24 +136,74 @@ $ echo "REACT_APP_API_GATEWAY_URL"=$REACT_APP_API_GATEWAY_URL >> .env
 $ npm install react-scripts
 ```
 
-### Step 5.2 - Initialize Amplify project
+### Step 6.2 - Initialize Amplify project
 
 The amplify init command is used to initialize a new Amplify project. This command sets up the project directory, configures deployment resources in the cloud, and prepares the project for further Amplify operations.
 
 ```
 $ amplify init
+```
 
+amplify init
+Note: It is recommended to run this command from the root of your app directory
+? Enter a name for the project bedrocksecurity
+The following configuration will be applied:
+
+Project information
+| Name: bedrocksecurity
+| Environment: dev
+| Default editor: Visual Studio Code
+| App type: javascript
+| Javascript framework: react
+| Source Directory Path: src
+| Distribution Directory Path: build
+| Build Command: npm run-script build
+| Start Command: npm run-script start
+
+? Initialize the project with the above configuration? Yes
+Using default provider  awscloudformation
+? Select the authentication method you want to use: AWS profile
+
+For more information on AWS Profiles, see:
+https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
+
+? Please choose the profile you want to use oktank
+Adding backend environment dev to AWS Amplify app: d5np40989zxhn
+
+Deployment completed.
+Deploying root stack bedrocksecurity [ ---------------------------------------- ] 0/4
+        amplify-bedrocksecurity-dev-1… AWS::CloudFormation::Stack     CREATE_IN_PROGRESS             Sat May 18 2024 15:04:42…     
+        AuthRole                       AWS::IAM::Role                 CREATE_IN_PROGRESS             Sat May 18 2024 15:04:44…     
+        DeploymentBucket               AWS::S3::Bucket                CREATE_IN_PROGRESS             Sat May 18 2024 15:04:44…     
+        UnauthRole                     AWS::IAM::Role                 CREATE_IN_PROGRESS             Sat May 18 2024 15:04:44…     
+
+✔ Help improve Amplify CLI by sharing non-sensitive project configurations on failures (y/N) · no
+
+    You can always opt-in by running "amplify configure --share-project-config-on"
+Deployment state saved successfully.
+✔ Initialized provider successfully.
+✅ Initialized your environment successfully.
+✅ Your project has been successfully initialized and connected to the cloud!
+Some next steps:
+
+"amplify status" will show you what you've added already and if it's locally configured or deployed
+"amplify add <category>" will allow you to add features like user login or a backend API
+"amplify push" will build all your local backend resources and provision it in the cloud
+"amplify console" to open the Amplify Console and view your project status
+"amplify publish" will build all your local backend and frontend resources (if you have hosting category added) and provision it in the cloud
+
+
+```
 $ cp src/aws-exports.tmplt.js  src/aws-exports.js
-
 ```
 
 
-### Step 5.3 - Add Amplify hosting 
+### Step 6.3 - Add Amplify hosting 
 ```
 $ amplify add hosting
 ```
 
-### Step 5.3 - Publish Amplify project 
+### Step 6.4 - Publish Amplify project 
 ```
 $ amplify publish
 ```
@@ -158,7 +216,7 @@ https://code.din67qnkcrl26.amplifyapp.com
 
 
 
-## Step 6:
+## Step 7:
 
 As soon as the application is up and running, login to the application with the username: claims-app-adjuster  followed by the password set for the user. 
 

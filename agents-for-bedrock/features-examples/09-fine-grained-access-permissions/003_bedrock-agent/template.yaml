@@ -204,7 +204,7 @@ Resources:
       MemorySize: 128
       Timeout: 3
       Handler: agent.lambda_handler
-      Runtime: python3.12
+      Runtime: python3.9
       Architectures:
         - x86_64
       EphemeralStorage:

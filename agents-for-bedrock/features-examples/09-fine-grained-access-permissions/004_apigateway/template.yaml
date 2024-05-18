@@ -6,10 +6,9 @@ Parameters:
   CognitoUserPoolArn:
     Type: String
   BedrockAgentAliasId:
-    Type: String 
+    Type: String
   BedrockAgentId:
     Type: String
-
 
 Resources:
 
@@ -17,7 +16,7 @@ Resources:
     Type: "AWS::ApiGateway::Account"
     Properties:
       CloudWatchRoleArn: !GetAtt "ApiGatewayLoggingRole.Arn"
-      
+
   ApiGatewayLoggingRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -32,47 +31,112 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
-        
+
   AccessLogs:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 30
       LogGroupName: !Sub "/${AWS::StackName}/APIAccessLogs"
-      
+
   ClaimsAPI:
-    Type: AWS::Serverless::Api
-    Name: ClaimsAPI
+    Type: AWS::ApiGateway::RestApi
     Properties:
+      Name: claim-app-agent-demo-api
+      Body:
+        swagger: "2.0"
+        info:
+          version: "1.0"
+          title: "claim-app-agent-demo-api"
+        schemes:
+        - "https"
+        paths:
+          /claims:
+            options:
+              consumes:
+              - "application/json"
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: "string"
+                    Access-Control-Allow-Methods:
+                      type: "string"
+                    Access-Control-Allow-Headers:
+                      type: "string"
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: "{\"statusCode\": 200}"
+                passthroughBehavior: "when_no_match"
+                type: "mock"
+            x-amazon-apigateway-any-method:
+              produces:
+              - "application/json"
+              responses: {}
+              security:
+              - CognitoAuthorizer: []
+              x-amazon-apigateway-integration:
+                httpMethod: "POST"
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${claimsinvokebedrockagents.Arn}/invocations"
+                responses:
+                  default:
+                    statusCode: "200"
+                passthroughBehavior: "when_no_match"
+                contentHandling: "CONVERT_TO_TEXT"
+                type: "aws_proxy"
+        securityDefinitions:
+          CognitoAuthorizer:
+            type: "apiKey"
+            name: "Authorization"
+            in: "header"
+            x-amazon-apigateway-authtype: "cognito_user_pools"
+            x-amazon-apigateway-authorizer:
+              providerARNs:
+              - !Ref CognitoUserPoolArn
+              type: "COGNITO_USER_POOLS"
+
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ClaimsAPI
+    DependsOn: 
+      - ClaimsAPI
+      - claimsinvokebedrockagents
+
+  ProdStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref ClaimsAPI
       StageName: Prod
+      DeploymentId: !Ref ApiDeployment
       MethodSettings:
-        - LoggingLevel: INFO
-          MetricsEnabled: True
-          ResourcePath: '/*'
-          HttpMethod: '*'
-      EndpointConfiguration:
-          Type: REGIONAL    
-      Cors:
-        AllowMethods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
-        AllowHeaders: "'Content-Type', 'Authorization', 'X-Forwarded-For', 'X-Api-Key', 'X-Amz-Date', 'X-Amz-Security-Token'"
-        AllowOrigin: "'*'"
+        - DataTraceEnabled: true
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          ResourcePath: "/*"
+          MetricsEnabled: true
       AccessLogSetting:
         DestinationArn: !GetAtt AccessLogs.Arn
         Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","routeKey":"$context.routeKey", "status":"$context.status","protocol":"$context.protocol", "integrationStatus": $context.integrationStatus, "integrationLatency": $context.integrationLatency, "responseLength":"$context.responseLength" }'
-      Auth:
-        # DefaultAuthorizer: CognitoUserPoolAuthorizer        
-        Authorizers:
-          CognitoUserPoolAuthorizer:
-            UserPoolArn: !Ref CognitoUserPoolArn
       Tags:
-        Name: !Sub "${AWS::StackName}-API"
-        Stack: !Sub "${AWS::StackName}"
-                
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-API"
+        - Key: Stack
+          Value: !Sub "${AWS::StackName}"      
+
   InvokeFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/${claimsinvokebedrockagents}"
+      LogGroupName: !Sub "/aws/lambda/claimsinvokebedrockagents"
       RetentionInDays: 7
-      
+
   claimsinvokebedrockagents:
     Type: AWS::Serverless::Function
     Properties:
@@ -81,7 +145,7 @@ Resources:
       MemorySize: 128
       Timeout: 180
       Handler: invoke_lambda.lambda_handler
-      Runtime: python3.12
+      Runtime: python3.9
       Architectures:
         - x86_64
       EphemeralStorage:
@@ -106,13 +170,9 @@ Resources:
             Path: /claims
             Method: ANY
             RestApiId:
-              Ref: ClaimsAPI    
+              Ref: ClaimsAPI
             Auth:
               Authorizer: CognitoUserPoolAuthorizer
-            # Cors:
-            #   AllowMethods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
-            #   AllowHeaders: "'Content-Type', 'Authorization', 'X-Forwarded-For', 'X-Api-Key', 'X-Amz-Date', 'X-Amz-Security-Token'"
-            #   AllowOrigin: "'*'"              
       RuntimeManagementConfig:
         UpdateRuntimeOn: Auto
 
@@ -124,4 +184,3 @@ Outputs:
   APIID:
     Description: "API Gateway ID"
     Value: !Ref ClaimsAPI
-

@@ -11,4 +11,5 @@ aws-exports.js
 **/aws-exports.js
 **/.aws-sam/
 **/build/
-006_Frontend/src/aws-exports.js
+005_Frontend/src/aws-exports.js
+005_Frontend/amplify/
