@@ -6,23 +6,46 @@
 # export AWS_REGION=<YOUR-STACK-REGION> # Stack deployment region
 # source ./create-hr-resources.sh
 
+check_query_status() {
+    sleep 5
+    query_status=$(aws athena get-query-execution --query-execution-id "$1" --output json)
+    if [[ "$query_status" =~ "FAILED" ]]; then
+        echo QueryID: "$1", Reason: "$2" Check QueryID for debugging.
+        exit 1
+    fi
+    echo "Query execution succeeded."
+}
+
+
+
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export ARTIFACT_BUCKET_NAME=$STACK_NAME-customer-resources
+export ARTIFACT_BUCKET_NAME=$ACCOUNT_ID-$STACK_NAME-hr-resources
 
 aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region ${AWS_REGION}
 aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --region ${AWS_REGION} --recursive --exclude ".DS_Store"
 
-aws athena start-query-execution \
---query-string "CREATE DATABASE employee" \
---result-configuration "OutputLocation='s3://$ARTIFACT_BUCKET_NAME/query_output'"
-aws athena start-query-execution \
---query-string "CREATE TABLE employee.employeetimeoff (employeename string, employeealias string, vacationbalanceinhours int, personaltimeoffbalanceinhours int) LOCATION 's3://$ARTIFACT_BUCKET_NAME/athena/timeoffcomplicate' TBLPROPERTIES ('table_type'='iceberg');" \
---query-execution-context "Database='employee'" \
---result-configuration "OutputLocation='s3://$ARTIFACT_BUCKET_NAME/query_output'"
-aws athena start-query-execution \
---query-string "INSERT INTO employeetimeoff (EmployeeName, EmployeeAlias, vacationbalanceinhours, personaltimeoffbalanceinhours) VALUES ('Pepper Li', 'hremployee', 40, 70);" \
---query-execution-context "Database='employee'" \
---result-configuration "OutputLocation='s3://$ARTIFACT_BUCKET_NAME/query_output'"
+# Execute Athena queries and check for errors
+query_output=$(aws athena start-query-execution \
+    --query-string "CREATE DATABASE employee" \
+    --result-configuration "OutputLocation='s3://$ARTIFACT_BUCKET_NAME/query_output'")
+query_execution_id=$(echo "$query_output" | jq -r '.QueryExecutionId')
+check_query_status "$query_execution_id" "Failed to create database."
+
+query_output=$(aws athena start-query-execution \
+    --query-string "CREATE TABLE employee.employeetimeoff (employeename string, employeealias string, vacationbalanceinhours int, personaltimeoffbalanceinhours int) LOCATION 's3://$ARTIFACT_BUCKET_NAME/athena/timeoff' TBLPROPERTIES ('table_type'='iceberg');" \
+    --query-execution-context "Database='employee'" \
+    --result-configuration "OutputLocation='s3://$ARTIFACT_BUCKET_NAME/query_output'")
+query_execution_id=$(echo "$query_output" | jq -r '.QueryExecutionId')
+check_query_status "$query_execution_id" "Failed to create table."
+
+
+query_output=$(aws athena start-query-execution \
+    --query-string "INSERT INTO employeetimeoff (EmployeeName, EmployeeAlias, vacationbalanceinhours, personaltimeoffbalanceinhours) VALUES ('Pepper Li', 'hremployee', 40, 70);" \
+    --query-execution-context "Database='employee'" \
+    --result-configuration "OutputLocation='s3://$ARTIFACT_BUCKET_NAME/query_output'")
+query_execution_id=$(echo "$query_output" | jq -r '.QueryExecutionId')
+check_query_status "$query_execution_id" "Failed to insert data into table."
+
 
 aws cloudformation create-stack \
 --stack-name ${STACK_NAME} \
