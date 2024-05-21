@@ -68,7 +68,7 @@ The workflow consists of the following steps:
 see [Deployment Guide](documentation/deployment-guide.md)
 
 ## Testing and Validation
-see [Testing and Validation](documentation/testing-and-validation.md)
+see [Testing and Validation](documentation/deployment-guide/testing-and-validation.md)
 
 ## Clean Up
 see [Clean Up](documentation/clean-up.md)
