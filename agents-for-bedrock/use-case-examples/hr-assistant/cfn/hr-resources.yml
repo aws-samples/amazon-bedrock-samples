@@ -195,14 +195,14 @@ Resources:
             S3:
               S3BucketName: !Ref ArtifactBucket
               S3ObjectKey: "agent/api-schema/send-email-action-group.json"
-        - ActionGroupName: "schedule-meeting"
-          Description: "You can use this API to schedule a meeting with multiple participants."
+        - ActionGroupName: "send-slack-message"
+          Description: "This action group contains tool to send Slack message."
           ActionGroupExecutor:
             Lambda: !GetAtt BedrockHRFunction.Arn
           ApiSchema:
             S3:
               S3BucketName: !Ref ArtifactBucket
-              S3ObjectKey: "agent/api-schema/calendar-action-group.json"
+              S3ObjectKey: "agent/api-schema/slack-action-group.json"
       PromptOverrideConfiguration:
         PromptConfigurations:
           - PromptType: "ORCHESTRATION"
