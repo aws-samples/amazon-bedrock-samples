@@ -261,8 +261,10 @@ To set up:
 ```sh
 export BEDROCK_AGENT_ID=<YOUR-AGENT-ID> # The ID of agent created
 export BEDROCK_AGENT_ALIAS_ID=<YOUR-AGENT-ALIAS-ID> # The Alias ID of agent created
-export PROFILE_NAME=<YOUR-AWS-PROFILE-NAME> # The AWS Profile used; can be default if not provided
+export PROFILE_NAME=<YOUR-AWS-PROFILE-NAME> # The AWS Profile used; can be default if not provided. 
 ```
+❗ **Note**: If you do not have an AWS Profile created ![Checkout here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html#cli-configure-files-format-profile) to setup a AWS profile with appropriate permissions.
+
 2. Next lets install the required python dependencies:
 
 ```sh
