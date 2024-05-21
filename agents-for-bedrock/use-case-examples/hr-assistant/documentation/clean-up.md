@@ -4,7 +4,7 @@
 To avoid charges in your AWS account, please clean up the solution's provisioned resources.
 
 ## Delete Emulated HR Resources
-The [delete-customer-resources.sh](../shell/delete-customer-resources.sh) shell script empties and deletes the solution's Amazon S3 bucket and deletes the resources that were originally provisioned from the [bedrock-hr-resources.yml](../cfn/bedrock-hr-resources.yml) CloudFormation stack. The following commands use the default stack name. If you customized the stack name, adjust the commands accordingly.
+The [delete-hr-resources.sh](../shell/delete-hr-resources.sh) shell script empties and deletes the solution's Amazon S3 bucket and deletes the resources that were originally provisioned from the [bedrock-hr-resources.yml](../cfn/bedrock-hr-resources.yml) CloudFormation stack. The following commands use the default stack name. If you customized the stack name, adjust the commands accordingly.
 
 ```sh
 # cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/hr-assistant/shell/
@@ -12,7 +12,7 @@ The [delete-customer-resources.sh](../shell/delete-customer-resources.sh) shell 
 ./delete-hr-resources.sh
 ```
 
-The preceding ./delete-hr-resources.sh shell command runs the following AWS CLI commands to delete the emulated customer resources stack and Amazon S3 bucket:
+The preceding ./delete-hr-resources.sh shell command runs the following AWS CLI commands to delete the emulated hr resources stack and Amazon S3 bucket:
 
 ```sh
 echo "Emptying and Deleting S3 Bucket: $ARTIFACT_BUCKET_NAME"
