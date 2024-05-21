@@ -208,7 +208,7 @@ Following the successful deployments, the next development phase involves the pr
 3. Navigate to your working draft. Initially, you have a working draft and a default TestAlias pointing to this draft. The working draft allows for iterative development. Select Prepare to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
 
 <p align="center">
-  <img src="../imgs/12_agent_working_draft.png" width="95%" height="95%"><br>
+  <img src="../imgs/12_agent_working_draft.png" width="40%" height="1%"><br>
   <span style="display: block; text-align: center;"><em>Figure 12: Agent Working Draft Console</em></span>
 </p>
 
@@ -218,7 +218,7 @@ Following the successful deployments, the next development phase involves the pr
 5. You can also create an alias for your testing, To create an alias, click on **Create Alias**, a dialog box appears, enter alias name and description for your alias and click **create alias**
 
 <p align="center">
-  <img src="../imgs/13_create_alias.png" width="95%" height="95%"><br>
+  <img src="../imgs/13_create_alias.png" width="60%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 13: Agent Create Alias </em></span>
 </p>
 
