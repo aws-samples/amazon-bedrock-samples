@@ -44,12 +44,23 @@ The workflow consists of the following steps:
 1. **Input Query**: Users provide natural language inputs to the agent.
 
     **Sample Prompts:**
-    - _(KB) What's the parental leave policy?_
-    - _(KB+SQL) My partner and I are expecting a child on July 1st. I want to take 8 weeks off, can I do that?_
-    - _(KB+SQL) Please request two weeks time off using my vacation time, from July 1st, 2024 to July 12, 2024 timeoff:_
-    - _take 2 days time off for John Doe - what's time off balance for Jane Smith Email:_
-    - _send an email to liaji@amazon.com with subject "HR Agent" and body "Hello" Image:_
-    - _generate an emoji for "reading on sunny beach"_
+    * _(**KB call**) Can you get me some details about Parental Leave Policy?_
+   
+    * _(**KB+Athena API**) My partner and I are expecting a baby on July 1st. Can I take 2 weeks off?_
+    
+      - _Employee Name: `Pepper Li`_
+      - _Employee Alias: `hremployee`_
+    
+    * _(**KB + Athena API Call**) Yes, Please request two weeks time off using my vacation time, from July 1st, 2024 to July 12, 2024_
+    
+    * _(**Image Generator**) Generate a cartoon image of new born child with parents_
+    
+    
+    * _(**Email Action**) Send a email with above image to my team telling them that I will be away for 2 weeks starting July 1_
+    
+      - _Email Address: Use the email that you used at <SNS_EMAIL>_
+    
+    * _(**Slack Message**) You can setup slack message API similarly using [Slack Webhooks](https://api.slack.com/messaging/webhooks)_
 
 2. **Preprocessing Step**: During pre-processing, the agent validates, contextualizes, and categorizes user input. The user input (or _Task_) is interpreted by the agent using chat history and the instructions and underlying foundation model that were specified during [agent creation](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-create.html). The agent's [instructions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html) are descriptive guidelines outlining the agent's intended actions. Also, you can optionally configure [advanced prompts](https://docs.aws.amazon.com/bedrock/latest/userguide/advanced-prompts.html), which allow you to boost your agent's precision by employing more detailed configurations and offering manually selected examples for few-shot prompting. This method allows you to enhance the model's performance by providing labeled examples associated with a particular task. 
 
