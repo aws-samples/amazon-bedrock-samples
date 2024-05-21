@@ -5,7 +5,7 @@
 - [Overview](#overview)
 - [Agents and Knowledge Bases Architecture](#agents-and-knowledge-bases-architecture)
 - [Deployment Guide](#deployment-guide)
-- [Testing and Validation](#testing-and-validation)
+- [Testing Conversation](#testing-conversation)
 - [Clean Up](#clean-up)
 
 ## Overview
@@ -67,8 +67,8 @@ The workflow consists of the following steps:
 ## Deployment Guide
 see [Deployment Guide](documentation/deployment-guide.md)
 
-## Testing and Validation
-see [Testing and Validation](documentation/deployment-guide/testing-and-validation.md)
+## Testing Conversation
+see [Testing and Validation](documentation/deployment-guide.md#test-conversation)
 
 ## Clean Up
 see [Clean Up](documentation/clean-up.md)
