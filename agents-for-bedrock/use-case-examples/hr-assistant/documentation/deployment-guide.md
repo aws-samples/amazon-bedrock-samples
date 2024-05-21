@@ -275,7 +275,7 @@ python3 -m streamlit run agents-for-bedrock/use-case-examples/hr-assistant/strea
 ```
 
 <p align="center">
-  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
+  <img src="../imgs/15_streamlit.png" width="95%" height="95%"><br>
   <span style="display: block; text-align: center;"><em>Figure 15: Stremlit UI App</em></span>
 </p>
 

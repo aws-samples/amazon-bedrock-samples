@@ -25,10 +25,11 @@ def session_generator():
 # Bedrock Variable
 agentId = os.environ['BEDROCK_AGENT_ID']
 agentAliasId = os.environ['BEDROCK_AGENT_ALIAS_ID']
+profile_name = os.environ['PROFILE_NAME']
 
 # AWS Session and Clients Instantiation
-agent_client = boto3.Session(profile_name='bedrock-profile').client('bedrock-agent-runtime')
-s3_client = boto3.Session(profile_name='bedrock-profile').client('s3')
+agent_client = boto3.Session(profile_name=profile_name).client('bedrock-agent-runtime')
+s3_client = boto3.Session(profile_name=profile_name).client('s3')
 
 # Streamlit CSS
 custom_css = """
@@ -93,7 +94,7 @@ def bedrock_agent(query, sessionId):
 
         # invoke the agent API
         agentResponse = agent_client.invoke_agent(
-            inputText=agent_query,
+            inputText=query,
             agentId=agentId,
             agentAliasId=agentAliasId,
             sessionId=sessionId,
