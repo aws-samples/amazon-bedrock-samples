@@ -61,11 +61,24 @@ export STACK_NAME=<YOUR-STACK-NAME> # Stack name must be lower case for S3 bucke
 export SNS_EMAIL=<YOUR-EMPLOYEE-EMAIL> # Email used for SNS notifications. You need to confirm SNS subscription to receive emails sent by the agent.
 export AWS_REGION=<YOUR-STACK-REGION> # Stack deployment region
 ```
-3. Run the create-customer-resources.sh shell script to deploy the emulated customers resources defined in the bedrock-customer-resources.yml CloudFormation template. These are the resources on which the agent and knowledge base will be built:
+3. Run the create-hr-resources.sh shell script to deploy the emulated hr resources defined in the bedrock-hr-resources.yml CloudFormation template. These are the resources on which the agent and knowledge base will be built:
 Run the following commands to deploy the resources:
 ```sh
 source ./create-hr-resources.sh
 ```
+
+4. Once the Cloudformation succeeds you will see following resources created
+ - `SNSTopic` and `SNSSubscription` for the Email sending Action
+ - Associated IAM policies and IAM roles such as `HRAgentRoleDefaultPolicy`, `HRAgentActionGroupLambdaRoleDefaultPolicy`, `HRAgentActionGroupLambdaRole`, `AmazonBedrockExecutionRoleForAgentsHRAgent`
+ - Apart from that, we also see `BedrockHRFunction` lambda function and `BedrockCreateHrFunctionPermission` for lambda permissions.
+ - Lastly, we also see the Agent created under `HRAgent`
+
+ <p align="center">
+  <img src="../imgs/01_cfn_resources.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 1: CloudFormation resources created</em></span>
+</p>
+
+
 ---
 ### 3. Get Model Access for Titan Text Premier & Titan Image Generator G1
 
@@ -78,6 +91,9 @@ To request access to a model:
 4. Select the checkboxes next to the Titan Image Generator G1 model, Titan Text Premier G1 model.
 5. Select Save changes to request access. The changes may take several minutes to take place.
 6. If your request is successful, the Access status changes to Access granted.
+
+Next, we cover how to associate a Knowledge Bases to the created Agent.
+
 ---
 
 ### 4. Knowledge Base 
@@ -87,57 +103,85 @@ Knowledge Bases for Amazon Bedrock leverage Retrieval Augmented Generation (RAG)
 #### Knowledge Base Preparation
 
  Navigate to the [Amazon Bedrock > Knowledge base > Create knowledge base console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases/create-knowledge-base):
+
  a. Under **Provide knowledge base details**, enter a name and the following optional description, leaving all other default settings:
-    ```
+
     Use to retrieve Company's leave and pay policy based on policy and pay documents
-    ```
- b. Under **Set up data source**, enter a name then choose _Browse S3_ and select the 'knowledge-base-assets' folder of the data source S3 bucket you deployed in the preceding deployment step (e.g., \<YOUR-STACK-NAME>-customer-resources/agent/knowledge-base-assets/):
 
-    <p align="center">
-      <img src="../imgs/kb-ds-s3-configuration.png"><br>
-      <span style="display: block; text-align: center;"><em>Figure 1: Knowledge Base Data Source Configuration</em></span>
-    </p>
-
-    c. Under **Select embeddings model and configure vector store**, select _Titan Embeddings G1 - Text_ and leave the other default settings. An [OpenSearch Serverless collection](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html) will be created for you. This vector store is where the knowledge base pre-processing embeddings are stored and later used for semantic similarity search between queries and data source text.
-
-    d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
+ b. Under **Configure data source**, enter a datasource name then choose _Browse S3_ and select the 'agent/knowledge-base-assets' folder of the data source S3 bucket you deployed in the preceding deployment step (e.g. `<ACCOUNT-ID>-<YOUR-STACK-NAME>-hr-resources/agent/knowledge-base-assets/`):
 
 <p align="center">
-  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Configuration Settings</em></span>
+    <img src="../imgs/02_kb_data_source.png"><br>
+    <span style="display: block; text-align: center;"><em>Figure 2: Knowledge Base Data Source Configuration</em></span>
 </p>
 
-2. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Sync** to initiate the data source sync:
+c. Under **Select embeddings model and configure vector store**, select _Titan Embeddings G1 - Text_ and leave the other default settings. An [OpenSearch Serverless collection](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html) will be created for you. This vector store is where the knowledge base pre-processing embeddings are stored and later used for semantic similarity search between queries and data source text.
+
+d. Under **Review and create**, confirm your configuration settings then select **Create knowledge base**:
 
 <p align="center">
-  <img src="../imgs/kb-creation-banner.png" width="90%" height="90%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Data Source Sync</em></span>
+  <img src="../imgs/03_kb_review.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 3: Knowledge Base Review Page</em></span>
+</p>
+
+2. Once your knowledge base is created, a green "created successfully" banner will display with the option to sync your data source. Select **Go To Data sources** and then select the datasource and click **Sync** to initiate the data source sync:
+
+<p align="center">
+  <img src="../imgs/04_kb_creation_banner.png" width="90%" height="90%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 4: Knowledge Base Creation Banner</em></span>
+</p>
+
+<p align="center">
+  <img src="../imgs/05_kb_data_sync.png" width="90%" height="90%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 5: Knowledge Base Data Source Sync</em></span>
 </p>
 
 3. Navigate to the [Knowledge Bases for Amazon Bedrock console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/knowledge-bases), select the knowledge base you just created, then note the **Knowledge base ID** under Knowledge base overview:
 
 <p align="center">
-  <img src="../imgs/kb-overview.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 4: Knowledge Base Overview</em></span>
+  <img src="../imgs/06_kb_id.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 6: Knowledge Base Overview</em></span>
 </p>
 
 4. With your knowledge base still selected in the knowledge base console, select your knowledge base data source listed under **Data source**, then note the **Data source ID** under _Data source overview_:
 
 <p align="center">
-  <img src="../imgs/kb-ds-overview.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 5: Knowledge Base Data Source Overview</em></span>
+  <img src="../imgs/07_kb_ds_id.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 7: Knowledge Base Data Source Overview</em></span>
 </p>
 
-❗ _Knowledge base ID and Data source ID will be used as environment variables in the later _Deploy Streamlit Web UI for Your Agent_ section_
+5. Once the sync is completed, you will see another green banner with showing that the sync status being completed.
 
-5. Navigate to the [Amazon Bedrock > Agents > Create Agent console](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/agents/create): Under Add Action groups, add a new action for knowledge base then select Next:
+❗ _Knowledge base ID and Data source ID will be used as environment variables in the later _Deploy Streamlit Web UI for Your Agent_ section
 
-    i. Under Select knowledge base, select the knowledge base you created in the preceding deployment step
+5. Navigate to the [Amazon Bedrock > Agents ](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/agents): Here you should see the `HRAgent` already created but not prepared as shown below:
+<p align="center">
+  <img src="../imgs/08_hr_agent.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 8: HRAgent Created</em></span>
+</p>
 
-    ii. Under Knowledge base instructions for Agent, enter the following then select Next:
-    ```
+6. Click into the HRAgent, and lets go under, **Edit in Agent Builder**. We see 4 actions associated already, lets go ahead and associate a newly created knowledge base under **Knowledge Bases** and click on **Add**:
+
+<p align="center">
+  <img src="../imgs/09_associated_actions.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 9: HRAgent Associated Actions</em></span>
+</p>
+
+ i. Under Select knowledge base, select the knowledge base you created in the preceding deployment step
+
+ii. Under Knowledge base instructions for Agent, enter the following then select Next:
+
     Use to retrieve details about company's leave and pay policy using associated documents.
-    ```
+
+iii. Click **Save and Exit**
+
+You should see KB now associated with the agent.
+
+<p align="center">
+  <img src="../imgs/10_associated_actions_withkb.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 10: HRAgent Associated Actions with Knowledge Bases</em></span>
+</p>
+
 ### 5. Bedrock Agents
 
 Bedrock Agents operate through a build-time execution process, comprising several key components:
@@ -151,38 +195,32 @@ The agent in this sample solution will use an Titan-Text Premier foundation mode
 
 Following the successful deployments, the next development phase involves the preparation and testing of your agent's functionality. Preparing the agent involves packaging the latest changes, while testing provides a critical opportunity to interact with and evaluate the agent's behavior. Through this process, you can refine agent capabilities, enhance its efficiency, and address any potential issues or improvements necessary for optimal performance.
 
-1. Navigate to the Agents section of the Amazon Bedrock console:
+1. Navigate to the Agents section of the Amazon Bedrock console
+
+2. Select your `HR Agent`created and note your Agent ID:
 <p align="center">
-  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 6:  Agents for Amazon Bedrock Console</em></span>
+  <img src="../imgs/11_agent_overview.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 11: Agent Selection</em></span>
 </p>
-
-
-2. Select your agent and note your Agent ID:
-<p align="center">
-  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 7: Agent Selection</em></span>
-</p>
-
-
 
 ❗ _Agent ID will be used as an environment variable in the later Deploy Streamlit web UI for your agent section._
 
 3. Navigate to your working draft. Initially, you have a working draft and a default TestAlias pointing to this draft. The working draft allows for iterative development. Select Prepare to package the agent with the latest changes before testing. Regularly check the agent's last prepared time to ensure testing with the latest configurations:
 
 <p align="center">
-  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 8: Agent Working Draft Console</em></span>
+  <img src="../imgs/12_agent_working_draft.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 12: Agent Working Draft Console</em></span>
 </p>
 
 
 4. Access the test window from any page within the agent's working draft console by selecting Test or the left arrow icon at the top right. In the test window, select an alias and its version that appears in the test window
 
-<p align="center">
-  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 9: Agent Prepare Message</em></span>
-</p>
+5. You can also create an alias for your testing, To create an alias, click on **Create Alias**, a dialog box appears, enter alias name and description for your alias and click **create alias**
 
+<p align="center">
+  <img src="../imgs/13_create_alias.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 13: Agent Create Alias </em></span>
+</p>
 
 5. Test your agent using the following sample prompts and other various inputs of your own:
 
@@ -191,16 +229,27 @@ Following the successful deployments, the next development phase involves the pr
 ## Test Conversation
 The following test conversation example highlights the agent’s ability to invoke action group APIs with AWS Lambda business logic that queries a customer’s Amazon DynamoDB table and sends customer notifications using Amazon Simple Notification Service. The same conversation thread showcases agent and knowledge base integration to provide the user with responses using customer authoritative data sources, like claim amount and FAQ documents.
 
-* (KB) What's the parental leave policy? 
-* (KB+SQL) My partner and I are expecting a child on July 1st. I want to take 8 weeks off, can I do that? 
-* (KB+SQL) Please request two weeks time off using my vacation time, from July 1st, 2024 to July 12, 2024 timeoff: 
-* take 2 days time off for John Doe - what's time off balance for Jane Smith Email: 
-* send an email to liaji@amazon.com with subject "HR Agent" and body "Hello" Image: 
-* generate an emoji for "reading on sunny beach"
+* _(**KB call**) Can you get me some details about Parental Leave Policy?_
+
+* _(**KB+Athena API**) My partner and I are expecting a baby on July 1st. Can I take 2 weeks off?_
+
+  - _Employee Name: `Pepper Li`_
+  - _Employee Alias: `hremployee`_
+
+* _(**KB + Athena API Call**) Yes, Please request two weeks time off using my vacation time, from July 1st, 2024 to July 12, 2024_
+
+* _(**Image Generator**) Generate a cartoon image of new born child with parents_
+
+
+* _(**Email Action**) Send a email with above image to my team telling them that I will be away for 2 weeks starting July 1_
+
+  - _Email Address: Use the email that you used at <SNS_EMAIL>_
+
+* _(**Slack Message**) You can setup slack message API similarly using [Slack Webhooks](https://api.slack.com/messaging/webhooks)_
 
 <p align="center">
-  <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 10: Agent Testing and Validation</em></span>
+  <img src="../imgs/14_testing.png" width="95%" height="95%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 14: Agent Testing and Validation</em></span>
 </p>
 
 ## Deploy Streamlit Web UI for Your Agent
@@ -227,7 +276,7 @@ python3 -m streamlit run agents-for-bedrock/use-case-examples/hr-assistant/strea
 
 <p align="center">
   <img src="../imgs/kb-configuration.png" width="95%" height="95%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 11: Stremlit UI App</em></span>
+  <span style="display: block; text-align: center;"><em>Figure 15: Stremlit UI App</em></span>
 </p>
 
 ---
