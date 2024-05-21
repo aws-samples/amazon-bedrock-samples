@@ -246,6 +246,7 @@ The following test conversation example highlights the agent’s ability to invo
   - _Email Address: Use the email that you used at <SNS_EMAIL>_
 
 * _(**Slack Message**) You can setup slack message API similarly using [Slack Webhooks](https://api.slack.com/messaging/webhooks)_
+* Once you have created your webhook and get an API Key you can use the slack URL obtained to update the slack_integration.py [slack_integration.py](../agent/lambda/slack_integration.py). The URL looks like: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
 
 <p align="center">
   <img src="../imgs/14_testing.png" width="95%" height="95%"><br>
