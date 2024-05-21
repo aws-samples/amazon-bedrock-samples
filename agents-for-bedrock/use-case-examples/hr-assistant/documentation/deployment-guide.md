@@ -254,7 +254,7 @@ The following test conversation example highlights the agent’s ability to invo
 
 ## Deploy Streamlit Web UI for Your Agent
 
-Once you are satisfied with the performance of your agent and knowledge base, you are ready to productize their capabilities. We use Streamlit in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. Streamlit is a Python library imgsed to streamline and simplify the process of building frontend applications. 
+Once you are satisfied with the performance of your agent and knowledge base, you are ready to productize their capabilities. We use Streamlit in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. Streamlit is a Python library designed to streamline and simplify the process of building frontend applications. 
 To set up:
 
 1. Lets run:
