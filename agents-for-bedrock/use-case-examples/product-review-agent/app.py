@@ -167,10 +167,11 @@ if __name__ == '__main__':
     #             {'name':'count','value':2},
     #             {'name':'start_date','value':1577808000000},
     #             {'name':'end_date','value':1609430400000}]}
-    event = {'httpMethod':'GET','actionGroup':'action-group','apiPath':'/reviews/{count}/start_date/{start_date}/end_date/{end_date}/description/{description}',
+    event = {'httpMethod':'GET','actionGroup':'action-group','apiPath':'/reviews/{count}/start_date/{start_date}/end_date/{end_date}/reviewer/{reviewer}/description/{description}',
             'parameters':[
                 {'name':'count','value':2},
                 {'name':'start_date','value':'1577808000000'},
                 {'name':'end_date','value':'1609430400000'},
+                {'name':'reviewer','value':'curry'},
                 {'name':'description','value':'hair spray'}]}
     lambda_handler(event,None)
