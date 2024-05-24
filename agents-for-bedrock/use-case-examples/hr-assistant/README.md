@@ -1,5 +1,11 @@
 # HR Assistant Using Titan Text Premier with Agents and Knowledge Bases for Amazon Bedrock
 ---
+## Authors:
+Anupam Dewan @dewanup, Jie Lie @liaji, Han Liu @haliuz
+
+## Reviewer:
+Maira Ladeira Tanke @mttanke
+
 
 ## Content
 - [Overview](#overview)
