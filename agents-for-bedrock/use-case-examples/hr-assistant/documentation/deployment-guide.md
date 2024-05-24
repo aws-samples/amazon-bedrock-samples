@@ -55,7 +55,8 @@ export STACK_NAME=<YOUR-STACK-NAME> # Stack name must be lower case for S3 bucke
 export SNS_EMAIL=<YOUR-EMPLOYEE-EMAIL> # Email used for SNS notifications. You need to confirm SNS subscription to receive emails sent by the agent.
 export AWS_REGION=<YOUR-STACK-REGION> # Stack deployment region
 ```
-3. Run the create-hr-resources.sh shell script to deploy the emulated hr resources defined in the bedrock-hr-resources.yml CloudFormation template. These are the resources on which the agent and knowledge base will be built:
+3. Run the [create-hr-resources.sh](../shell/create-hr-resources.sh) shell script to deploy the emulated hr resources defined in the [hr-resources.yml](../cfn/bedrock-hr-resources.yml) CloudFormation template. These are the resources on which the agent and knowledge base will be built:
+
 Run the following commands to deploy the resources:
 ```sh
 source ./create-hr-resources.sh
@@ -74,7 +75,7 @@ source ./create-hr-resources.sh
 
 
 ---
-### 3. Get Model Access for Titan Text Premier & Titan Image Generator G1
+### 3. Get Model Access for Titan Text Premier G1 & Titan Image Generator G1
 
 We will use Titan Text Premier as the underlining core model along with one of the action API also requiring access to the Titan Image Generator model, therefore we need to request the model permission for both the models.
 To request access to a model:
