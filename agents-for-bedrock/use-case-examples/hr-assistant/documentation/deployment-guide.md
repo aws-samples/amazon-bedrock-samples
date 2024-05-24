@@ -38,14 +38,8 @@ cfn_nag_scan --input-path agents-for-bedrock/use-case-examples/hr-assistant/cfn/
 ```
 ---
 
-### 2. Deploy CloudFormation Stack to Emulate Existing Customer Resources 
-To emulate the existing customer resources utilized by the agent, this solution uses the [create-hr-resources.sh](../shell/create-hr-resources.sh) shell script to automate provisioning of the parameterized CloudFormation template, [hr-resources.yml](../cfn/bedrock-hr-resources.yml), to deploy the following resources:
-
-> - Three [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions that represent customer business logic for creating claims, sending pending document reminders for open status claims, and gathering evidence on new and existing claims.
-> - Two Lambda layers for Amazon Bedrock Boto3 and [cfnresponse](https://pypi.org/project/cfnresponse/) libraries.
-> - Amazon S3 bucket containing API documentation in OpenAPI schema format for the preceding Lambda functions and the repair estimates, claim amounts, company FAQs, and required claim document descriptions to be used as our [knowledge base data source assets](../agent/knowledge-base-assets).
-> - [Amazon Simple Notification Service](https://docs.aws.amazon.com/sns/latest/dg/welcome.html) (SNS) topic to which policy holders' emails are subscribed for email alerting of claim status and pending actions.
-> - AWS IAM permissions for the preceding resources.
+### 2. Deploy CloudFormation Stack to Emulate HR Resources 
+To emulate the creation of HR resources utilized by the agent, this solution uses the [create-hr-resources.sh](../shell/create-hr-resources.sh) shell script to automate provisioning of the parameterized CloudFormation template, [hr-resources.yml](../cfn/bedrock-hr-resources.yml)
 
 CloudFormation prepopulates stack parameters with the default values provided in the template. To provide alternative input values, you can specify parameters as environment variables that are referenced in the `ParameterKey=<ParameterKey>,ParameterValue=<Value>` pairs in the _create-customer-resources.sh_ shell script's `aws cloudformation create-stack` command. 
 
