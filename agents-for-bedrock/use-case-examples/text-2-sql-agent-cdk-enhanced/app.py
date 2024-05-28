@@ -190,13 +190,7 @@ class MyStack(Stack):
             api_schema=api_schema)
         
         agent.add_action_group(action_group)
-        
-        # agent.add_action_group(
-        #     description="Actions for getting the database schema and querying the Athena database for sample data or final query",
-        #     action_group_executor=action_group_function,
-        #     action_group_state="ENABLED",
-        #     api_schema=api_schema
-        # )
+       
         
          # IAM Role for Agent
         agent_role = iam.Role(self, "AgentRole",
