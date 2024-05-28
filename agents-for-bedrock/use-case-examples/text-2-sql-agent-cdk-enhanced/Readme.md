@@ -22,7 +22,7 @@ The Agent is designed to:
 This repository enhances the original Text to SQL Bedrock Agent with the following improvements:
 
 - Uses AWS CDK to build the necessary infrastructure.
-- Works with any dataset: simply create a folder with all your data in CSV files, create a zip file of this folder, place it in the "Data" directory, and the code will automatically extract and upload the files, generating the necessary instructions. Provide the zip file name at the time of deployment (cdk deploy --profile XXX --context zip_file_name=EV_WA.zip).
+- Works with any dataset: simply create a folder with all your data in CSV files, create a zip file of this folder, place it in the "Data" directory, and the code will automatically extract and upload the files, generating the necessary instructions. Provide the zip file name at the time of deployment (cdk deploy --profile XXX --context zip_file_name=EV_WA.zip --context region=us-east-1).
 - If the answer is large, it creates a file in S3 and points the user to the S3 location.
 
 
@@ -65,7 +65,7 @@ If you want to run this with sample data, use the data provided as an example, w
 
 ```bash
 cdk bootstrap --profile XXX --context zip_file_name=EV_WA.zip
-cdk deploy --profile XXX --context zip_file_name=EV_WA.zip
+cdk deploy --profile XXX --context zip_file_name=EV_WA.zip --context region=us-east-1
 ```
 
 Feel free to use this for your own data. If you want to deploy with your own data on your existing infrastructure, you can do that. Just make sure to stop your crawler schedule, then deploy with the new data, and then resume the schedule. However, if it is a fresh deployment with your data, you don't need to do anything extra.

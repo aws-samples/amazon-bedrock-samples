@@ -28,11 +28,11 @@ from agent_instruction_generator import analyze_csv_files,generate_instruction,i
 from Prep_Data import prep_data
 
 class MyStack(Stack):
-    def __init__(self, scope: App, id: str,zip_file_name: str, **kwargs):
+    def __init__(self, scope: App, id: str,zip_file_name: str, region: str, **kwargs):
         super().__init__(scope, id, **kwargs)
 
         # General setup
-        region = cdk.Stack.of(self).region
+        #region = cdk.Stack.of(self).region
         account_id = cdk.Stack.of(self).account
        
         #zip_file_name='EV_WA.zip'
@@ -155,12 +155,15 @@ class MyStack(Stack):
         #     {instruction_text}.
         #     """ 
             
+        
         question = f"""
-            Craft a comprehensive and cohesive instruction in one full paragraph for the Bedrock agent, with a Maximum length of 1200 characters (1200 characters is hard limit so adhere to this limit on generating text). These instructions should clearly outline the agent's tasks and how it should interact with users. Ensure that your instruction is based on all seven contextual details provided. The final answer should be detailed and precise, without any introductory phrases such as "Here is your...".
+            Craft a comprehensive and cohesive paragraph instruction for the Bedrock agent, ensuring the instruction text includes all 7 contextual details and examples provided. The instruction should be detailed, precise with a maximum length of 4000 characters. Clearly outline the agent's tasks and how it should interact with users, incorporating the provided contextual details and examples with minimal changes. Avoid any introductory phrases such as "Here is your...".
 
-            Contextual details:
+            <Contextual details and examples>
             {instruction_text}
-            """       
+            """
+   
+                 
         agent_instruction=invoke_claude_3_with_text(question)    
         print(agent_instruction)
         
@@ -217,5 +220,6 @@ class MyStack(Stack):
 
 app = App()
 zip_file_name = app.node.try_get_context("zip_file_name")
-MyStack(app, "text-2-sql2", zip_file_name=zip_file_name)
+region = app.node.try_get_context("region")
+MyStack(app, "text-2-sql2", zip_file_name=zip_file_name, region=region)
 app.synth()
