@@ -1,12 +1,15 @@
 # Create Agents with Function Definition
 
-In this folder, we provide an example of an HR agent using Agents for Amazon Bedrock new capabilities for function definition.
+In this folder, we provide an example of an HR agent using Agents for Amazon Bedrock new capabilities for [function definition](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-action-function.html).
 
-The agent connects with an in-memory SQLite database that contains generated data about employee's available vacation days and planned time off.
+When creating Agent’s action groups, you can define actions by providing the function details or passing an API Schema. When providing the function details you can simplify the action group creation process and set up the agent to elicit a set of parameters that you define. You can then pass the parameters on to your application and customize how to use them to carry out the action in your own systems.
 
-The database structure created is as following:
+The agent connects with an in-memory SQLite database that contains generated data about employee's available vacation days and planned time off. The architecture created is as following:
+![HR Assistant Agent](images/architecture.png)
 
-<img src="images/HR_DB.png" style="width:50%;display:block;margin: 0 auto;">
+Where the vacation database has the following schema:
+
+![Three tables: {employees, vacations, planned_vacations}, employees: {employee_id - INTEGER, employee_name - TEXT, employee_job_title - TEXT, employee_start_date - TEXT, employee_employment_status - TEXT}, vacations: {employee_id - INTEGER, year - INTEGER, employee_total_vacation_days - INTEGER, employee_vacation_days_taken - INTEGER, employee_vacation_days_available - INTEGER}, planned_vacations: {employee_id - INTEGER, vacation_start_date - TEXT, vacation_end_date - TEXT, vacation_days_taken - INTEGER}](images/HR_DB.png)
 
 The agent allows the employee to `get_available_vacations_days` and `reserve_vacation_time` according to the employee's requests.
 
@@ -46,6 +49,9 @@ The code below shows the definition of the functions as a list of JSON objects t
             }
         },
     ]
+```
+The function definition is passed to the `create_agent_action_group` function as the `functionSchema` parameter
+```python
     agent_action_group_response = bedrock_agent_client.create_agent_action_group(
         agentId=agent_id,
         agentVersion='DRAFT',
@@ -91,7 +97,7 @@ The event has the following structure:
 }
 ```
 
-To process the action that the Agent is invoking, the following code is added to the Lambda function:
+To process the action that the Agent is invoking, you need to recover the action group, function and parameters from the `event` and return the response as a `JSON` object with a `TEXT` key. To do so, the following code is added to the Lambda function:
 
 ```python
 def lambda_handler(event, context):
@@ -125,3 +131,4 @@ def lambda_handler(event, context):
     }
     return function_response
 ```
+``
