@@ -131,4 +131,3 @@ def lambda_handler(event, context):
     }
     return function_response
 ```
-``
