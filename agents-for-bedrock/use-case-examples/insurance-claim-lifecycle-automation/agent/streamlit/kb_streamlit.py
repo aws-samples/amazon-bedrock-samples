@@ -8,6 +8,10 @@ import base64
 import PyPDF2
 import string
 import random
+
+#import mammoth
+from docx import Document
+
 import pdfplumber
 import pandas as pd
 import streamlit as st
@@ -16,8 +20,6 @@ from requests import request
 from sigv4 import SigV4HttpRequester
 
 # Bedrock Variable
-agentId = os.environ['BEDROCK_AGENT_ID']
-agentAliasId = os.environ['BEDROCK_AGENT_ALIAS_ID']
 knowledgeBaseId = os.environ['BEDROCK_KB_ID']
 dataSourceId = os.environ['BEDROCK_DS_ID']
 region = os.environ['AWS_REGION']
@@ -64,68 +66,66 @@ def session_generator():
 
     return pattern
 
-def bedrock_agent(query, sessionId):
-    if query is not None:
+# Update the existing function
+def bedrock_query_knowledge_base(query):
+    # API endpoint for querying the knowledge base
+    kb_url = f"https://bedrock-agent-runtime.{region}.amazonaws.com/knowledgebases/{knowledgeBaseId}/retrieveAndGenerate"
+    
+    # Construct the prompt template
+    prompt_template = """\n\nHuman: You will be acting as a helpful customer service rep named Joe working for Pacific Life. You will be replying to users who are calling Pacific Life call center who will be confused if you don't respond in the character of Joe. Provide a summarized answer only using 1 or 2 sentences. 
+    Here is the relevant information from our knowledge base: $search_results$
+    User query: $query$\n\nAssistant: """
 
-        agent_query = {
-            "inputText": query,   
-            "enableTrace": True,
-        }
-
-        # send request
-        print("Invoking Agent with query: " + query)
-        agent_url = f'https://bedrock-agent-runtime.{region}.amazonaws.com/agents/{agentId}/agentAliases/{agentAliasId}/sessions/{sessionId}/text'
-        requester = SigV4HttpRequester()
-        response = requester.send_signed_request(
-            url=agent_url,
-            method='POST',
-            service='bedrock',
-            headers={
-                'content-type': 'application/json', 
-                'accept': 'application/json',
+    # Construct the payload
+    payload = {
+        "input": {
+            "text": query
+        },
+        "retrieveAndGenerateConfiguration": {
+            "knowledgeBaseConfiguration": {
+                "knowledgeBaseId": knowledgeBaseId,
+                "modelArn": "anthropic.claude-v2:1",
+                "generationConfiguration": {
+                    "promptTemplate": {
+                        "textPromptTemplate": prompt_template
+                    }
+                },
+                "retrievalConfiguration": {
+                    "vectorSearchConfiguration": {
+                        "numberOfResults": 5  # Example setting, adjust as needed
+                    }
+                }
             },
-            region=region,
-            body=json.dumps(agent_query)
-        )
-        
-        if response.status_code == 200:
-            # Parse sig4_request Response
-            response_string = ""
-            for line in response.iter_content():
-                try:
-                    response_string += line.decode(encoding='utf-8')
-                except:
-                    continue
+            "type": "KNOWLEDGE_BASE"
+        }
+    }
 
-            split_response = response_string.split(":message-type")
-            last_response = split_response[-1]
-            try:
-                encoded_last_response = last_response.split("\"")[3]
+    # "sessionId": session_generator()  # Generate session ID dynamically
 
-                if encoded_last_response == "citations":
-                    # Find the start and end indices of the JSON content
-                    start_index = last_response.find('{')
-                    end_index = last_response.rfind('}')
+    # send request
+    print(f"Knowledge Base query: {query}")
 
-                    # Extract the JSON content
-                    json_content = last_response[start_index:end_index + 1]
+    try:
+        response = agent_runtime_client.retrieve_and_generate(**payload)
+        retrieval_results = response.get("retrievalResults", [])
 
-                    try:
-                        data = json.loads(json_content)
-                        final_response = data['attribution']['citations'][0]['generatedResponsePart']['textResponsePart']['text']
-                    except json.decoder.JSONDecodeError as e:
-                        print(f"JSON decoding error: {e}")
-                    except KeyError as e:
-                        print(f"KeyError: {e}")
-                else:
-                    decoded = base64.b64decode(encoded_last_response)
-                    final_response = decoded.decode('utf-8')
-            except base64.binascii.Error as e:
-                print(f"Base64 decoding error: {e}")
-                final_response = last_response  # Or assign a default value
+        print(f"response: {response}")
 
-        print("Agent response: " + final_response)
-        return final_response
+        # Extract the relevant information from the response
+        if 'output' in response:
+            kb_response = response['output']['text']
+            
+            # Split the text by newlines and select the desired part
+            output_lines = kb_response.split('\n')
+            clean_response = output_lines[-1].strip()  # Select the last line and remove leading/trailing whitespaces
+            
+            return clean_response  # Return the desired text
+
+        else:
+            return "No relevant information found in the knowledge base."
+
+    except Exception as e:
+        return f"Error querying knowledge base: {e}"
 
 def update_knowledge_base(file_content, bucket_name, s3_file_name):
     print("Syncing Knowledge Base Data Source")
@@ -199,6 +199,19 @@ def extract_text_from_docx(uploaded_file):
         st.error(f"Error extracting text from .doc(x) file: {e}")
         return None
 
+def convert_docx_to_html(docx_content):
+    try:
+        # Use python-docx to extract text from the DOCX content
+        document = Document(io.BytesIO(docx_content))
+        text = "\n".join([paragraph.text for paragraph in document.paragraphs])
+
+        # Convert text to HTML
+        html_content = f"<p>{text}</p>"
+        return html_content
+    except Exception as e:
+        st.error(f"Error converting .docx to HTML: {e}")
+        return None
+
 def show_doc(uploaded_file):
     # Display content of .doc files
     st.subheader("Document Preview")
@@ -207,6 +220,22 @@ def show_doc(uploaded_file):
         st.write(text)
     else:
         st.error("Uploaded file is not a valid Word document.")
+
+def show_docx(uploaded_file):
+    # Display content of .docx files
+    st.subheader("Document Preview")
+    file_name = uploaded_file.name.lower()
+
+    if 'docx' in file_name:
+        # Read the content of the uploaded file
+        docx_content = uploaded_file.getvalue()
+
+        # For .docx files, convert to HTML for preview
+        html_result = convert_docx_to_html(docx_content)
+        if html_result:
+            st.markdown(html_result, unsafe_allow_html=True)  # Display HTML content
+        else:
+            st.error("Failed to convert .docx to HTML")
 
 def show_excel(uploaded_file):
     # Display Excel preview
@@ -256,7 +285,7 @@ def process_uploaded_file(uploaded_file):
         file_contents = doc_content.encode("utf-8") if doc_content else None
 
     elif file_extension == "docx":
-        show_doc(uploaded_file)
+        show_docx(uploaded_file)
         docx_content = extract_text_from_docx(uploaded_file)
         file_contents = docx_content.encode("utf-8") if docx_content else None
 
@@ -290,37 +319,43 @@ def process_uploaded_file(uploaded_file):
 
 
 def main():
+
+    # Initialize session variables if not present
     if not "valid_inputs_received" in st.session_state:
         st.session_state["valid_inputs_received"] = False
 
-    # --- Agent Q&A ---
-    st.subheader('Agent for Amazon Bedrock - Prompt Input')
+    if "uploaded_files" not in st.session_state:
+        st.session_state["uploaded_files"] = []
+
+    # --- KB Q&A ---
+    st.subheader('Knowledge Base for Amazon Bedrock - Prompt Input')
     query = st.text_input("User Input", value="", placeholder="What can the agent help you with?", label_visibility="visible")
-    agent_response = None
+    kb_response = None
     
     if st.session_state.get("previous_query") != query and query != "":
         if "session_id" not in st.session_state:
             st.session_state["session_id"] = session_generator()
 
         sessionId = st.session_state["session_id"]
-        agent_response = bedrock_agent(query, sessionId)
+        kb_response = bedrock_query_knowledge_base(query)
         st.session_state["previous_query"] = query  # Update previous_query if query changes
 
-    if agent_response is not None:
-        st.write("Agent's Response:", agent_response)
+    if kb_response is not None:
+        st.write("Knowledge Base Response:", kb_response)
 
     # --- Knowledge Base Update ---
     st.subheader("Knowledge Base for Amazon Bedrock - File Upload")
-    uploaded_file = st.file_uploader("Upload Document", type=["csv", "doc", "docx", "htm", "html", "md", "pdf", "txt", "xls", "xlsx"])
+    uploaded_files = st.file_uploader("Upload Document", type=["csv", "doc", "docx", "htm", "html", "md", "pdf", "txt", "xls", "xlsx"], accept_multiple_files=True)
 
-    if uploaded_file is not None:
-        if uploaded_file != st.session_state.get("uploaded_file"):
-            st.session_state["uploaded_file"] = uploaded_file
+    if uploaded_files is not None:
+        for uploaded_file in uploaded_files:
+            if uploaded_file not in st.session_state["uploaded_files"]:
+                st.session_state["uploaded_files"].append(uploaded_file)
 
-            file_name = "agent/knowledge-base-assets/" + uploaded_file.name
-            file_contents = process_uploaded_file(uploaded_file)
-            update_knowledge_base(file_contents, knowledge_base_s3_bucket, file_name)
-            check_ingestion_job_status()
+                file_name = "agent/knowledge-base-assets/" + uploaded_file.name
+                file_contents = process_uploaded_file(uploaded_file)
+                update_knowledge_base(file_contents, knowledge_base_s3_bucket, file_name)
+                check_ingestion_job_status()
 
 # Call the main function to run the app
 if __name__ == "__main__":
