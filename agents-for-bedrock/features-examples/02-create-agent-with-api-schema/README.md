@@ -20,7 +20,7 @@ The architecture of the created agent is as following:
 The capabilities are described to the agent using an API Schema in the OpenAPI Schema format. 
 
 The code below shows the format of a request for the get open claims functionality:
-```
+```json
 {
   "paths": {
     "/open-items": {
@@ -70,7 +70,7 @@ This code shows an example of how to define API routes with an OpenAPI schema fo
 
 When creating the Agent's Action Group, the schema definition is passed to the action group via the apiSchema parameter containing the s3 location of the API schema file:
 
-```
+```python
 agent_action_group_response = bedrock_agent_client.create_agent_action_group(
     agentId=agent_id,
     agentVersion='DRAFT',
@@ -92,7 +92,7 @@ The agent's actions are then implemented as part of an AWS Lambda function that 
 
 The event has the following structure where apiPath provides the required path for the action required by the user:
 
-```
+```json
 {
     "messageVersion": "1.0",
     "response": {
@@ -117,7 +117,7 @@ The event has the following structure where apiPath provides the required path f
 
 To process the action requested by the Agent, the following code is then added to the Lambda function:
 
-```
+```python
 def get_named_parameter(event, name):
     return next(item for item in event['parameters'] if item['name'] == name)['value']
 
