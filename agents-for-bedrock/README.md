@@ -29,7 +29,7 @@ This repository contains examples and use-cases to get you started with Agents f
 
 - **Use case examples**: examples of Agents in specific use cases, including:
 1. [Retail Agent with Bedrock Agents](./use-case-examples/agentsforbedrock-retailagent/README.md) - Agent designed to help with retail transactions
-1. [Insurance Claim Lifecycle Automation](./use-case-examples/insurance-claim-lifecycle-automation/README.md) - Agent desided to help insurance employees working with claims
+1. [Insurance Claim Lifecycle Automation Agent](./use-case-examples/insurance-claim-lifecycle-automation/README.md) - Agent desided to help insurance employees working with claims
 1. [Text to SQL Agent](./use-case-examples/text-2-sql-agent/README.md) - Agent designed to generate and execute SQL queries using natural language
 1. [Customer Relationship Management Agent](./use-case-examples/customer-relationship-management-agent/README.md) - Agent designed to help sales employees work with their customers 
 1. [HR Vacation Agent] - Agent to manage employee vacation time
