@@ -10,7 +10,7 @@ For greater control of session context, you can modify the SessionState object i
 
 Here is the general format of the session state object:
 
-```
+```json
 {
     "sessionAttributes": {
         "<attributeName1>": "<attributeValue1>",
@@ -33,7 +33,7 @@ During runtime, when you send an InvokeAgent request, include a sessionState obj
 
 As an example, we can set sessionAttributes for first name. So when a user uses your application and provides their first name, your code will send the first name as a session attribute and the agent will store their first name for the duration of the session. These attributes can be used downstream in the lambda function calls associated with an action group.
 
-```
+```json
 {
     "inputText": "<request>",
     "sessionState": {
@@ -46,7 +46,7 @@ As an example, we can set sessionAttributes for first name. So when a user uses 
 
 In addition, we can also modify session context through promptSessionAttributes.For example, we can retrieve the time zone at the user's location in the case that the user uses a word indicating relative time (such as "tomorrow") in their request. We can then store their time zone in a variable called timeZone. After doing this if the user asks to book a hotel for tomorrow, your code will send the user's time zone to the agent and the agent can determine the exact date that "tomorrow" refers to.
 
-```
+```json
 {
     "inputText": "<request>",
     "sessionState": {
