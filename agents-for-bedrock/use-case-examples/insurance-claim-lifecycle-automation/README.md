@@ -65,50 +65,50 @@ The workflow consists of the following steps:
 
 ## Cost
 
-You are responsible for the cost of the AWS services used while running this sample solution. As of May 2024, the cost for running this solution with the specified settings in the us-east-1 (N. Virginia) AWS Region is approximately $1,876.68 per month based on the following assumptions.
+You are responsible for the cost of the AWS services used while running this sample solution. As of May 2024, the cost for running this solution with the specified settings in the us-east-1 (N. Virginia) AWS Region is approximately **$766.57** per month based on the following assumptions.
 
 #### Amazon S3 ([Pricing](https://aws.amazon.com/s3/pricing/)):
 
 - **Storage:**
   - Volume: 1 TB (1024 GB) of data in the S3 Standard storage class.
   - Storage Cost: $0.023 per GB-month.
-  - Estimated monthly storage cost: $0.023/GB-month * 1024 GB = $23.55.
+  - Estimated monthly storage cost: $0.023/GB-month * 1024 GB = $23.55
 
 - **Data Transfer:**
   - Volume: 1 TB (1024 GB) of data transfer out per month.
   - Data Transfer Cost: $0.09 per GB for the first 10 TB.
-  - Estimated monthly data transfer cost: $0.09/GB * 1024 GB = $92.16.
+  - Estimated monthly data transfer cost: $0.09/GB * 1024 GB = $92.16
 
 - **Requests:**
   - GET Requests: 1,000,000 requests at $0.0004 per 1,000 requests.
   - PUT Requests: 1,000,000 requests at $0.005 per 1,000 requests.
   - Estimated monthly requests cost: 
-    - GET: $0.0004 * (1,000,000 / 1,000) = $0.40.
-    - PUT: $0.005 * (1,000,000 / 1,000) = $5.00.
-    - Total requests cost: $0.40 + $5.00 = $5.40.
+    - GET: $0.0004 * (1,000,000 / 1,000) = $0.40
+    - PUT: $0.005 * (1,000,000 / 1,000) = $5.00
+    - Total requests cost: $0.40 + $5.00 = $5.40
 
 - **Total Amazon S3 Cost:**
-  - Storage: $23.55.
-  - Data Transfer: $92.16.
-  - Requests: $5.40.
-  - **Total: $121.11.**
+  - Storage: $23.55
+  - Data Transfer: $92.16
+  - Requests: $5.40
+  - **Total: $121.11**
 
 #### Amazon OpenSearch ([Pricing](https://aws.amazon.com/opensearch-service/pricing/)):
 
 - **Storage:**
   - Volume: 1 TB (1024 GB) managed storage.
   - Storage Cost: $0.24 per GB per month.
-  - Estimated monthly storage cost: $0.24/GB * 1024 GB = $245.76.
+  - Estimated monthly storage cost: $0.24/GB * 1024 GB = $245.76
 
 - **Compute:**
-  - OCU - Indexing: 4 [OpenSearch Compute Units](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-scaling.html) (OCUs) at $0.24 per OCU per hour.
-  - OCU - Search and Query: 4 OCUs at $0.24 per OCU per hour.
-  - Estimated monthly compute cost: $0.24 * 4 OCUs * 24 hours * 30 days = $691.20.
+  - OCU - Indexing: 2 [OpenSearch Compute Units](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-scaling.html) (OCUs) at $0.24 per OCU per hour.
+  - OCU - Search and Query: 2 OCUs at $0.24 per OCU per hour.
+  - Estimated monthly compute cost: $0.24 * 2 OCUs * 24 hours * 30 days = $345.60
 
 - **Total Amazon OpenSearch Cost:**
-  - Compute: $691.20.
-  - Storage: $245.76.
-  - **Total: $937.56.**
+  - Storage: $245.76
+  - Compute: $345.60
+  - **Total: $591.36**
 
 #### AWS Lambda ([Pricing](https://aws.amazon.com/lambda/pricing/)):
 
@@ -119,53 +119,36 @@ You are responsible for the cost of the AWS services used while running this sam
   - Memory: 128 MB.
   - Total GB-Seconds: 50,000 * 128 MB / 1024 = 6,250 GB-Seconds.
   - Cost: $0.0000166667 per GB-second.
-  - Estimated monthly cost: $0.0000166667 * 6,250 GB-Seconds = $0.10.
+  - Estimated monthly cost: $0.0000166667 * 6,250 GB-Seconds = $0.10
 
-- **Total AWS Lambda Cost: $0.10.**
+- **Total AWS Lambda Cost: $0.10**
 
-#### Knowledge Bases for Amazon Bedrock ([Pricing](https://aws.amazon.com/bedrock/pricing/)):
-
-- **Model:**
-  - Selection: Anthropic Claude 3 Sonnet.
-  - Usage Volume: 3,000,000 tokens per month.
-  - Price per 1,000 input tokens: $0.003.
-  - Price per 1,000 output tokens: $0.015.
-
-- **Tokens:**
-  - Input Tokens: 100,000 tokens/day * 30 days = 3,000,000 tokens/month.
-  - Output Tokens: 100,000 tokens/day * 30 days = 3,000,000 tokens/month.
-  - Cost for input tokens: $0.003 * (3,000,000 / 1,000) = $9.00.
-  - Cost for output tokens: $0.015 * (3,000,000 / 1,000) = $45.00.
-
-- **Total Knowledge Bases Cost: $54.00.**
-
-#### Agents for Amazon Bedrock ([Pricing](https://aws.amazon.com/bedrock/pricing/)):
+#### Agents and Knowledge Bases for Amazon Bedrock ([Pricing](https://aws.amazon.com/bedrock/pricing/)):
 
 - **Model:**
   - Selection: Anthropic Claude 3 Sonnet.
   - Usage Volume: 3,000,000 tokens per month.
-  - Price per 1,000 input tokens: $0.003.
-  - Price per 1,000 output tokens: $0.015.
+  - Price per 1,000 input tokens: $0.003
+  - Price per 1,000 output tokens: $0.015
 
 - **Tokens:**
   - Input Tokens: 100,000 tokens/day * 30 days = 3,000,000 tokens/month.
   - Output Tokens: 100,000 tokens/day * 30 days = 3,000,000 tokens/month.
-  - Cost for input tokens: $0.003 * (3,000,000 / 1,000) = $9.00.
-  - Cost for output tokens: $0.015 * (3,000,000 / 1,000) = $45.00.
+  - Cost for input tokens: $0.003 * (3,000,000 / 1,000) = $9.00
+  - Cost for output tokens: $0.015 * (3,000,000 / 1,000) = $45.00
 
-- **Total Agents Cost: $54.00.**
+- **Total Agents Cost: $54.00**
 
 ### Total Monthly Solution Cost
 
 Summing up all the individual costs:
 
-- **Amazon S3 Cost: $121.11.**
-- **Amazon OpenSearch Cost: $937.56.**
-- **AWS Lambda Cost: $0.10.**
-- **Knowledge Bases for Amazon Bedrock Cost: $54.00.**
-- **Agents for Amazon Bedrock Cost: $54.00.**
+- **Amazon S3 Cost: $121.11**
+- **Amazon OpenSearch Cost: $591.36**
+- **AWS Lambda Cost: $0.10**
+- **Agents and Knowledge Bases for Amazon Bedrock Cost: $54.00**
 
-**Total Estimated Monthly Cost: $1,166.77.**
+**Total Estimated Monthly Cost: $766.57**
 
 ## Deployment Guide
 see [Deployment Guide](documentation/deployment-guide.md)
