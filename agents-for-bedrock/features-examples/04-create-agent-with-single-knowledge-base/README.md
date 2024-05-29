@@ -7,21 +7,18 @@ consulting the knowledge base to obtain more information, and finally responding
 
 ![Agents with Knowledge Bases for Amazon Bedrock](agents-with-kb.png)
 
-In this notebook you will learn how to create an Amazon Bedrock Agent that makes use of Knowledge Bases 
-for Amazon Bedrock to retrieve data and answer questions about this data. 
-The use case for this notebook is an Amazon Bedrock Assistant, an Agent that answers questions about Bedrock's documentation.
+In this notebook you will learn how to create an Amazon Bedrock Agent that makes use of Knowledge Bases to retrieve information relevant to a certain use case. 
+We will create a Bedrock Assistant Agent that allows users to ask questions about the Bedrock User Guide based on the documents uploaded to the Knowledge Base.
 
-This involves the following steps:
+The architecture created looks as following:
+
+![Bedrock Assistant](images/architecture.png)
+
+The code presented in this lab provides the following functionality:
 
 1. Import the needed libraries
 2. Upload the dataset to Amazon S3
-3. Create the Knowledge Base for Amazon Bedrock
-4. Create the Agent for Amazon Bedrock
-5. Test the Agent
+3. Create the Knowledge Base for Amazon Bedrock using the [Boto3 Agents for Bedrock SDK](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-agent.html)
+4. Create the Agent for Amazon Bedrock using the Boto3 Agents for Bedrock SDK
+5. Test the Agent using the [Boto3 Agents for Bedrock Runtime SDK](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-agent-runtime.html)
 6. Clean-up the resources created
-
-
-For more details on __agents__ see [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html).
-
-For more details on __Knowledge Bases__ see [Knowledge bases for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) 
-
