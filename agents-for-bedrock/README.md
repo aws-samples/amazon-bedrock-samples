@@ -19,8 +19,9 @@ An agent consists of the following components:
    1. **Function Definition** where you specify functions and define parameters as JSON objects that will be associated to the action group invocation or,
    1. **API Schema** file that defines the APIs that the agent can invoke to carry out its tasks resources
 
-Additionally, you can define a Lambda function to execute API calls with the selected parameters
-3. (Optional) **Knowledge bases** – Associate knowledge bases with an agent to allow it to retrieve context to augment response generation and input into orchestration steps
+   Additionally, you can define a Lambda function to execute API calls with the selected parameters
+
+4. (Optional) **Knowledge bases** – Associate knowledge bases with an agent to allow it to retrieve context to augment response generation and input into orchestration steps
 
 
 ## Contents
