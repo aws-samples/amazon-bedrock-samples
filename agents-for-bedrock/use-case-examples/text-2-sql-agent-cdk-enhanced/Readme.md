@@ -94,5 +94,5 @@ This dataset shows the Battery Electric Vehicles (BEVs) and Plug-in Hybrid Elect
 To delete all resources created and avoid ongoing charges, run .
 
 ```bash
-cdk destroy --profile XXX
+cdk destroy --profile XXX --context zip_file_name=EV_WA.zip --context region=us-east-1
 ```
