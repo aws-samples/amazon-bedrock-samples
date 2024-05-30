@@ -75,6 +75,18 @@ After deployment is finished, wait for 2 minute for the first crawling of databa
 
 "What are the 5 model years and types of electric vehicles available in Thurston County?"
 
+## Data
+This project uses the Electric Vehicle Population Data, which is under the Open Data Commons Open Database License (ODbL) v1.0. You can find the dataset [here](https://catalog.data.gov/dataset/electric-vehicle-population-data) and the license details [here](https://opendatacommons.org/licenses/odbl/1-0/).
+
+### Conditions for Use:
+- You will cite the dataset in your documentation/scientific publication as appropriate.
+- You will include a link to the source of the original dataset with the dataset.
+- You will abide by the terms of the ODbL license for attribution and attachment of the license to data.
+- You will prominently identify the data as being under the ODbL license. Our customers need to be made aware of the usage in a way that allows them to make reasoned decisions.
+
+
+### Citation:
+This dataset shows the Battery Electric Vehicles (BEVs) and Plug-in Hybrid Electric Vehicles (PHEVs) that are currently registered through the Washington State Department of Licensing (DOL). For the purpose of this repository, the data was split into 4 CSV files by the author. 
 
 
 ## Cleaning Up
