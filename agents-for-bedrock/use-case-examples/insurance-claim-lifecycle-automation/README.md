@@ -101,14 +101,15 @@ You are responsible for the cost of the AWS services used while running this sam
   - Estimated monthly storage cost: $0.24/GB * 1024 GB = $245.76
 
 - **Compute:**
-  - OCU - Indexing: 2 [OpenSearch Compute Units](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-scaling.html) (OCUs) at $0.24 per OCU per hour.
-  - OCU - Search and Query: 2 OCUs at $0.24 per OCU per hour.
-  - Estimated monthly compute cost: $0.24 * 2 OCUs * 24 hours * 30 days = $345.60
+  - OCU - Indexing: 0.5 [OpenSearch Compute Units](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-scaling.html) (OCU) at $0.24 per OCU per hour.
+  - OCU - Search and Query: 0.5 OCU at $0.24 per OCU per hour.
+  - OpenSearch Serverless dev mode allows for cost optimization with as low as 0.5 OCU.
+  - Estimated monthly compute cost: $0.24 * 1 OCU * 24 hours * 30 days = $172.80
 
 - **Total Amazon OpenSearch Cost:**
   - Storage: $245.76
-  - Compute: $345.60
-  - **Total: $591.36**
+  - Compute: $172.80
+  - **Total: $418.56**
 
 #### AWS Lambda ([Pricing](https://aws.amazon.com/lambda/pricing/)):
 
