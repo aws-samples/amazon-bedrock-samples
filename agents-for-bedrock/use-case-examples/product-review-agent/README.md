@@ -4,7 +4,7 @@ The agent integrates with the knowledge base without an explicit association to 
 
 ## Dataset
 
-This example assumes a dataset with these fields - review (string), rating (number), timestamp (number), reviewers (string list).
+This example uses the [amazon reviews 2018 dataset](https://jmcauley.ucsd.edu/data/amazon_v2/categoryFilesSmall/All_Beauty_5.json.gz) with these fields - review (string), rating (number), timestamp (number), reviewers (string list).
 
 We create the following metadata file for each of the text chunks (review) in the knowledge base.
 
@@ -18,11 +18,11 @@ In addition, string list can be filtered using the ```in``` operator. This can b
 
 ## Knowledge Base integration
 
-An [openapi schema](openapischema.json) is used to define the APIs that are callable by the agent.
+[Function definitions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-action-function.html) are used to define the APIs that are callable by the agent.
 
-The first API ```(/reviews/{count}/start_date/{start_date}/end_date/{end_date})``` takes in as arguments the number of results to return, the start date and the end date of the documents. This API performs a direct query on the OpenSearch database.
+The first function ```retrieve-reviews-opensearch``` takes in as arguments the number of results to return, the start date and the end date of the documents. This API performs a direct query on the OpenSearch database.
 
-The second API ```/reviews/{count}/start_date/{start_date}/end_date/{end_date}/reviewer/{reviewer}/description/{description}``` is similar to the first except it takes in additional reviewer and description arguments. This API uses a Bedrock KB hybrid query type - filters using count, start_date, end_date, reviewers and semantic similarity using vectors.  
+The second function ```retrieve-reviews-hybrid``` is similar to the first except it takes in additional reviewer and description arguments. This API uses a Bedrock KB hybrid query type - filters using count, start_date, end_date, reviewers and semantic similarity using vectors.  
 
 ## Run
 
@@ -64,7 +64,7 @@ Based on the provided date range of 1577808000000.0 to 1609430400000.0, the last
 
 Prompt
 
-```give me the last review on hair spray from jokic```
+```Give me the last review on hair spray from jokic```
 
 Response
 

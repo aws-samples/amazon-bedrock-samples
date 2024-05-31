@@ -5,7 +5,7 @@ import json
 
 bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime')
 agent_id = '<your agent id>'
-agent_alias_id = '<your agent alias>'
+agent_alias_id = '<your agent alias id>'
 enable_trace = False
 end_session = False
 session_id = str(uuid.uuid4())

@@ -9,27 +9,7 @@ def get_named_parameter(event, name):
     return next(item for item in event['parameters'] if item['name'] == name)['value']
 
 def lambda_handler(event, context):
-    """Sample pure Lambda function
-
-    Parameters
-    ----------
-    event: dict, required
-        API Gateway Lambda Proxy Input Format
-
-        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
-
-    context: object, required
-        Lambda Context runtime methods and attributes
-
-        Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
-
-    Returns
-    ------
-    API Gateway Lambda Proxy Output Format: dict
-
-        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
-    """
-    api_path = event['apiPath']
+    function_name = event['function']
     
     host = f'{aoss_collection_id}.us-west-2.aoss.amazonaws.com'
     region = 'us-west-2'
@@ -49,7 +29,7 @@ def lambda_handler(event, context):
     
     results = []
     # query opensearch directly
-    if api_path == '/reviews/{count}/start_date/{start_date}/end_date/{end_date}':
+    if function_name == 'retrieve-reviews-opensearch':
         count = get_named_parameter(event, "count")
         start_date = get_named_parameter(event, "start_date")
         end_date = get_named_parameter(event, "end_date")
@@ -86,12 +66,12 @@ def lambda_handler(event, context):
             res = {'review':fields['bedrock-knowledge-base-text'][0],'rating':fields['rating'][0],'timestamp':fields['timestamp']}
             results.append(res)
     # query knowledge base directly - hybrid (filter + semantic)
-    elif api_path == '/reviews/{count}/start_date/{start_date}/end_date/{end_date}/reviewer/{reviewer}/description/{description}':
+    elif function_name == 'retrieve-reviews-hybrid':
         count = get_named_parameter(event, "count")
         start_date = get_named_parameter(event, "start_date")
         end_date = get_named_parameter(event, "end_date")
         description = get_named_parameter(event, "description")
-        reviewer = ''
+        reviewer = get_named_parameter(event, "reviewer")
         bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime')
         response = bedrock_agent_runtime_client.retrieve_and_generate(
             input={
@@ -142,36 +122,34 @@ def lambda_handler(event, context):
             for reference in retrievedReferences:
                 reviews.append({'review':reference['content']['text'],'rating':reference['metadata']['rating'],'timestamp':reference['metadata']['timestamp']})
         results = {'generated_text':generated_text,'reviews':reviews}
-    response = {
-        'response': results
-    }
     response_body = {
-        'application/json': {
-            'body': json.dumps(response)
+        'TEXT':{
+            'body': json.dumps(results)
         }
     }
     action_response = {
         'actionGroup': event['actionGroup'],
-        'apiPath': event['apiPath'],
-        'httpMethod': event['httpMethod'],
-        'httpStatusCode': 200,
-        'responseBody': response_body
+        'function': function_name,
+        'functionResponse':{
+            'responseBody': response_body
+        }
     }
     return {
-        "response": action_response,
+        'messageVersion': '1.0',
+        "response": action_response
     }
 
 if __name__ == '__main__':
-    # event = {'httpMethod':'GET','actionGroup':'action-group','apiPath':'/reviews/{count}/start_date/{start_date}/end_date/{end_date}',
-    #         'parameters':[
-    #             {'name':'count','value':2},
-    #             {'name':'start_date','value':1577808000000},
-    #             {'name':'end_date','value':1609430400000}]}
-    event = {'httpMethod':'GET','actionGroup':'action-group','apiPath':'/reviews/{count}/start_date/{start_date}/end_date/{end_date}/reviewer/{reviewer}/description/{description}',
+    event = {'actionGroup':'action-group','function':'retrieve-reviews-opensearch',
             'parameters':[
                 {'name':'count','value':2},
-                {'name':'start_date','value':'1577808000000'},
-                {'name':'end_date','value':'1609430400000'},
-                {'name':'reviewer','value':'curry'},
-                {'name':'description','value':'hair spray'}]}
+                {'name':'start_date','value':1577808000000},
+                {'name':'end_date','value':1609430400000}]}
+    # event = {'actionGroup':'action-group','function':'retrieve-reviews-hybrid',
+    #         'parameters':[
+    #             {'name':'count','value':2},
+    #             {'name':'start_date','value':'1577808000000'},
+    #             {'name':'end_date','value':'1609430400000'},
+    #             {'name':'reviewer','value':'curry'},
+    #             {'name':'description','value':'hair spray'}]}
     lambda_handler(event,None)
