@@ -1,0 +1,6 @@
+bedrock-agent
+boto3
+pandas
+cdklabs.generative-ai-cdk-constructs
+aws-cdk.aws-lambda-python-alpha
+botocore
