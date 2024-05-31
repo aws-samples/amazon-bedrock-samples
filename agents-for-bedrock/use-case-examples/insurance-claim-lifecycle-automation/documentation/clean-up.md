@@ -7,7 +7,7 @@ To avoid charges in your AWS account, please clean up the solution's provisioned
 The [delete-customer-resources.sh](../shell/delete-customer-resources.sh) shell script empties and deletes the solution's Amazon S3 bucket and deletes the resources that were originally provisioned from the [bedrock-customer-resources.yml](../cfn/bedrock-customer-resources.yml) CloudFormation stack. The following commands use the default stack name. If you customized the stack name, adjust the commands accordingly.
 
 ```sh
-# cd amazon-bedrock-samples/agents/insurance-claim-lifecycle-automation/shell/
+# cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/insurance-claim-lifecycle-automation/shell/
 # chmod u+x delete-customer-resources.sh
 ./delete-customer-resources.sh
 ```
