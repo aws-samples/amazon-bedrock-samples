@@ -20,6 +20,7 @@ from aws_cdk import aws_events_targets as events_targets
 # from aws_cdk import custom_resources
 #from aws_cdk import core as cdk
 from aws_cdk import Duration  # Import Duration directly
+from cdklabs.generative_ai_cdk_constructs.bedrock import ActionGroupExecutor
 
 
 from constructs import Construct
@@ -58,7 +59,7 @@ class MyStack(Stack):
         # Upload files to S3
         # Upload the unzipped data to S3
         deployment = BucketDeployment(self, "DeployFiles",
-                                      sources=[Source.asset(f"./data/{data_folder_name}")], 
+                                      sources=[Source.asset(f"./Data/{data_folder_name}")], 
                                       destination_bucket=schema_bucket,
                                       destination_key_prefix=f"data/{data_folder_name}/")
 
@@ -113,6 +114,16 @@ class MyStack(Stack):
             timeout= Duration.minutes(5),
             memory_size=512,
         )
+        
+        
+        # action_group_function = PythonFunction(
+        #     self,
+        #     "ActionGroupFunction",
+        #     runtime=Runtime.PYTHON_3_9,
+        #     entry="./lambda",  
+        #     index="app.py",
+        #     handler="lambda_handler",
+        # )
         
         # Fine-tuning IAM policies
         action_group_function.role.add_to_policy(iam.PolicyStatement(
@@ -181,13 +192,20 @@ class MyStack(Stack):
         #     alias_name='prod',
         #     agent_version='1'
         #     )   
-        action_group = AgentActionGroup(self,
+        
+      
+
+        action_group = AgentActionGroup(
+            self,
             "MyActionGroup",
             action_group_name="QueryAthenaActionGroup",
             description="Actions for getting the database schema and querying the Athena database for sample data or final query.",
-            action_group_executor=action_group_function,
+            action_group_executor=ActionGroupExecutor(lambda_=action_group_function),  
             action_group_state="ENABLED",
-            api_schema=api_schema)
+            api_schema=api_schema
+        )
+        
+       
         
         agent.add_action_group(action_group)
        
