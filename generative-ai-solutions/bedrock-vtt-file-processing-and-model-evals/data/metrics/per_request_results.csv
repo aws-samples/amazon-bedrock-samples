@@ -1,5 +1,5 @@
 chapter_title,file_name,chapter_id,model_id,latency_seconds,completion_token_count,prompt_token_count,input_token_price,output_token_pricing,chapter_text,original_title,rouge_l_f1_score,cosine_similarity
-Higgs Boson and its Implications,particle_physics_meeting.json,0,amazon.titan-text-express-v1,1.362092,10,341,0.0002728,1.6000000000000003e-05,"1 ""Dr. E"" (1234567890)
+Higgs Boson and its Implications,particle_physics_meeting.json,0,amazon.titan-text-express-v1,1.392893,10,341,0.0002728,1.6000000000000003e-05,"1 ""Dr. E"" (1234567890)
 00:00:00.000 --> 00:00:05.340
 Have you all seen the latest results from the Large Hadron Collider? The data on the Higgs boson is quite fascinating.
 
@@ -18,7 +18,7 @@ That's an intriguing idea, but we'd need to overcome some significant technical 
 5 ""Dr. E"" (1234567890)
 00:00:21.870 --> 00:00:27.140
 Absolutely. Have you considered the implications of these findings on our understanding of dark matter?",Discussing the Higgs Boson and Its Implications,0.8333,0.856294597379697
-Particle Physics Prospects,particle_physics_meeting.json,1,amazon.titan-text-express-v1,1.169297,6,330,0.000264,9.600000000000001e-06,"996 ""Dr. M"" (2345678901)
+Particle Physics Prospects,particle_physics_meeting.json,1,amazon.titan-text-express-v1,0.971876,6,330,0.000264,9.600000000000001e-06,"996 ""Dr. M"" (2345678901)
 10:02:15.340 --> 10:02:20.720
 The upcoming run at the Tevatron should provide us with even more data to analyze.
 
@@ -37,7 +37,7 @@ Regardless, the future of particle physics is full of exciting possibilities.
 1000 ""Dr. M"" (2345678901)
 10:02:37.140 --> 10:02:42.520
 Indeed. As long as we continue to ask questions and push the boundaries of our knowledge, we'll make groundbreaking discoveries.",Exploring Future Frontiers in Particle Physics,0.4444,0.8516234297174835
-Quantum Gravity and the Search for a Unified Theory,particle_physics_meeting.json,2,amazon.titan-text-express-v1,0.919879,11,343,0.00027440000000000006,1.76e-05,"1001 ""Dr. S"" (3456789012)
+Quantum Gravity and the Search for a Unified Theory,particle_physics_meeting.json,2,amazon.titan-text-express-v1,1.646153,11,343,0.00027440000000000006,1.76e-05,"1001 ""Dr. S"" (3456789012)
 10:02:42.520 --> 10:02:48.200
 Speaking of pushing boundaries, have you all considered the potential implications of quantum gravity on our current models?
 
@@ -56,7 +56,7 @@ But the mathematical complexities involved are mind-boggling. String theory is o
 1005 ""Dr. S"" (3456789012)
 10:03:07.100 --> 10:03:13.400
 What about loop quantum gravity? That's another promising avenue, although the experimental verification is lacking.",The Quest for a Theory of Quantum Gravity,0.4706,0.867930326912557
-Higher Dimensions,particle_physics_meeting.json,3,amazon.titan-text-express-v1,1.088219,4,330,0.000264,6.4000000000000006e-06,"1006 ""Dr. D"" (4567890123)
+Higher Dimensions,particle_physics_meeting.json,3,amazon.titan-text-express-v1,1.138155,4,330,0.000264,6.4000000000000006e-06,"1006 ""Dr. D"" (4567890123)
 10:03:13.400 --> 10:03:19.700
 Precisely. Without empirical data to support these theories, they remain highly speculative at this stage.
 
@@ -75,7 +75,7 @@ Agreed. The notion of a multidimensional universe is both fascinating and perple
 1010 ""Dr. D"" (4567890123)
 10:03:38.600 --> 10:03:44.900
 It's a tantalizing concept, but one that may forever elude our observational capabilities.",Exploring Higher Dimensions and the Fabric of Reality,0.4,0.7465365145992169
-Exploring the Frontiers of Reality,particle_physics_meeting.json,4,amazon.titan-text-express-v1,1.238609,9,298,0.0002384,1.44e-05,"1011 ""Dr. E"" (1234567890)
+Exploring the Frontiers of Reality,particle_physics_meeting.json,4,amazon.titan-text-express-v1,0.873429,9,298,0.0002384,1.44e-05,"1011 ""Dr. E"" (1234567890)
 10:03:44.900 --> 10:03:51.200
 Not necessarily. With the advent of more powerful particle accelerators, we may be able to probe deeper into the fabric of reality.
 
@@ -90,7 +90,7 @@ And let's not forget the importance of theoretical work. Sometimes the math lead
 1014 ""Dr. D"" (4567890123)
 10:04:03.800 --> 10:04:10.100
 Absolutely. Some of the greatest breakthroughs in physics have come from pure thought experiments and mathematical models.",The Role of Theory and Experimentation in Physics,0.3077,0.220735172939149
-Antimatter in Medicine and Space Exploration,particle_physics_meeting.json,5,amazon.titan-text-express-v1,1.27424,10,296,0.0002368,1.6000000000000003e-05,"1015 ""Dr. E"" (1234567890)
+Antimatter in Medicine and Space Exploration,particle_physics_meeting.json,5,amazon.titan-text-express-v1,1.029566,10,296,0.0002368,1.6000000000000003e-05,"1015 ""Dr. E"" (1234567890)
 10:04:10.100 --> 10:04:16.400
 Take the concept of antimatter, for instance. It was purely theoretical until we found ways to produce and study it.
 
@@ -105,7 +105,7 @@ Not to mention the potential for antimatter-based propulsion systems, which coul
 1018 ""Dr. D"" (4567890123)
 10:04:29.000 --> 10:04:35.300
 Ah yes, the dream of achieving faster-than-light travel. But we'd need to overcome some significant hurdles first.",Antimatter and Its Potential Applications,0.3636,0.8166738818700023
-Higgs Boson Particle Discoveries,particle_physics_meeting.json,0,anthropic.claude-3-haiku-20240307-v1:0,0.719491,13,387,9.675000000000001e-05,1.625e-05,"1 ""Dr. E"" (1234567890)
+Higgs Boson Particle Discoveries,particle_physics_meeting.json,0,anthropic.claude-3-haiku-20240307-v1:0,0.80932,13,387,9.675000000000001e-05,1.625e-05,"1 ""Dr. E"" (1234567890)
 00:00:00.000 --> 00:00:05.340
 Have you all seen the latest results from the Large Hadron Collider? The data on the Higgs boson is quite fascinating.
 
@@ -124,7 +124,7 @@ That's an intriguing idea, but we'd need to overcome some significant technical 
 5 ""Dr. E"" (1234567890)
 00:00:21.870 --> 00:00:27.140
 Absolutely. Have you considered the implications of these findings on our understanding of dark matter?",Discussing the Higgs Boson and Its Implications,0.3636,0.7126181643117613
-Particle Physics Frontiers,particle_physics_meeting.json,1,anthropic.claude-3-haiku-20240307-v1:0,0.669474,9,373,9.325e-05,1.1249999999999999e-05,"996 ""Dr. M"" (2345678901)
+Particle Physics Frontiers,particle_physics_meeting.json,1,anthropic.claude-3-haiku-20240307-v1:0,0.75971,9,373,9.325e-05,1.1249999999999999e-05,"996 ""Dr. M"" (2345678901)
 10:02:15.340 --> 10:02:20.720
 The upcoming run at the Tevatron should provide us with even more data to analyze.
 
@@ -143,7 +143,7 @@ Regardless, the future of particle physics is full of exciting possibilities.
 1000 ""Dr. M"" (2345678901)
 10:02:37.140 --> 10:02:42.520
 Indeed. As long as we continue to ask questions and push the boundaries of our knowledge, we'll make groundbreaking discoveries.",Exploring Future Frontiers in Particle Physics,0.4444,0.8800632517141547
-Quantum Gravity Theories,particle_physics_meeting.json,2,anthropic.claude-3-haiku-20240307-v1:0,0.706976,9,385,9.625000000000001e-05,1.1249999999999999e-05,"1001 ""Dr. S"" (3456789012)
+Quantum Gravity Theories,particle_physics_meeting.json,2,anthropic.claude-3-haiku-20240307-v1:0,0.4911,9,385,9.625000000000001e-05,1.1249999999999999e-05,"1001 ""Dr. S"" (3456789012)
 10:02:42.520 --> 10:02:48.200
 Speaking of pushing boundaries, have you all considered the potential implications of quantum gravity on our current models?
 
@@ -162,7 +162,7 @@ But the mathematical complexities involved are mind-boggling. String theory is o
 1005 ""Dr. S"" (3456789012)
 10:03:07.100 --> 10:03:13.400
 What about loop quantum gravity? That's another promising avenue, although the experimental verification is lacking.",The Quest for a Theory of Quantum Gravity,0.3636,0.8910441816014504
-Multidimensional Universe Theories,particle_physics_meeting.json,3,anthropic.claude-3-haiku-20240307-v1:0,0.697822,11,375,9.375e-05,1.3749999999999999e-05,"1006 ""Dr. D"" (4567890123)
+Multidimensional Universe Theories,particle_physics_meeting.json,3,anthropic.claude-3-haiku-20240307-v1:0,0.800183,11,375,9.375e-05,1.3749999999999999e-05,"1006 ""Dr. D"" (4567890123)
 10:03:13.400 --> 10:03:19.700
 Precisely. Without empirical data to support these theories, they remain highly speculative at this stage.
 
@@ -181,7 +181,7 @@ Agreed. The notion of a multidimensional universe is both fascinating and perple
 1010 ""Dr. D"" (4567890123)
 10:03:38.600 --> 10:03:44.900
 It's a tantalizing concept, but one that may forever elude our observational capabilities.",Exploring Higher Dimensions and the Fabric of Reality,0.0,0.6756176443088397
-Probing Particle Physics Frontiers,particle_physics_meeting.json,4,anthropic.claude-3-haiku-20240307-v1:0,0.7815229999999999,12,336,8.400000000000001e-05,1.5e-05,"1011 ""Dr. E"" (1234567890)
+Probing Particle Physics Frontiers,particle_physics_meeting.json,4,anthropic.claude-3-haiku-20240307-v1:0,0.794268,12,336,8.400000000000001e-05,1.5e-05,"1011 ""Dr. E"" (1234567890)
 10:03:44.900 --> 10:03:51.200
 Not necessarily. With the advent of more powerful particle accelerators, we may be able to probe deeper into the fabric of reality.
 
@@ -196,7 +196,7 @@ And let's not forget the importance of theoretical work. Sometimes the math lead
 1014 ""Dr. D"" (4567890123)
 10:04:03.800 --> 10:04:10.100
 Absolutely. Some of the greatest breakthroughs in physics have come from pure thought experiments and mathematical models.",The Role of Theory and Experimentation in Physics,0.1667,0.5403725085826919
-Antimatter's Scientific Potential,particle_physics_meeting.json,5,anthropic.claude-3-haiku-20240307-v1:0,0.640172,10,336,8.400000000000001e-05,1.25e-05,"1015 ""Dr. E"" (1234567890)
+Antimatter's Scientific Potential,particle_physics_meeting.json,5,anthropic.claude-3-haiku-20240307-v1:0,0.739622,10,336,8.400000000000001e-05,1.25e-05,"1015 ""Dr. E"" (1234567890)
 10:04:10.100 --> 10:04:16.400
 Take the concept of antimatter, for instance. It was purely theoretical until we found ways to produce and study it.
 
@@ -211,7 +211,7 @@ Not to mention the potential for antimatter-based propulsion systems, which coul
 1018 ""Dr. D"" (4567890123)
 10:04:29.000 --> 10:04:35.300
 Ah yes, the dream of achieving faster-than-light travel. But we'd need to overcome some significant hurdles first.",Antimatter and Its Potential Applications,0.4444,0.8903697401414686
-Higgs Boson Discussion,particle_physics_meeting.json,0,anthropic.claude-3-sonnet-20240229-v1:0,0.61834,10,387,0.0011610000000000001,0.00015,"1 ""Dr. E"" (1234567890)
+Higgs Boson Discussion,particle_physics_meeting.json,0,anthropic.claude-3-sonnet-20240229-v1:0,1.813108,10,387,0.0011610000000000001,0.00015,"1 ""Dr. E"" (1234567890)
 00:00:00.000 --> 00:00:05.340
 Have you all seen the latest results from the Large Hadron Collider? The data on the Higgs boson is quite fascinating.
 
@@ -230,7 +230,7 @@ That's an intriguing idea, but we'd need to overcome some significant technical 
 5 ""Dr. E"" (1234567890)
 00:00:21.870 --> 00:00:27.140
 Absolutely. Have you considered the implications of these findings on our understanding of dark matter?",Discussing the Higgs Boson and Its Implications,0.4,0.8581848947063393
-Future of Particle Physics,particle_physics_meeting.json,1,anthropic.claude-3-sonnet-20240229-v1:0,0.869347,8,373,0.001119,0.00012,"996 ""Dr. M"" (2345678901)
+Future of Particle Physics,particle_physics_meeting.json,1,anthropic.claude-3-sonnet-20240229-v1:0,0.847617,8,373,0.001119,0.00012,"996 ""Dr. M"" (2345678901)
 10:02:15.340 --> 10:02:20.720
 The upcoming run at the Tevatron should provide us with even more data to analyze.
 
@@ -249,7 +249,7 @@ Regardless, the future of particle physics is full of exciting possibilities.
 1000 ""Dr. M"" (2345678901)
 10:02:37.140 --> 10:02:42.520
 Indeed. As long as we continue to ask questions and push the boundaries of our knowledge, we'll make groundbreaking discoveries.",Exploring Future Frontiers in Particle Physics,0.6,0.8787515407015252
-Quantum Gravity Discussion,particle_physics_meeting.json,2,anthropic.claude-3-sonnet-20240229-v1:0,1.54582,8,385,0.001155,0.00012,"1001 ""Dr. S"" (3456789012)
+Quantum Gravity Discussion,particle_physics_meeting.json,2,anthropic.claude-3-sonnet-20240229-v1:0,0.904402,8,385,0.001155,0.00012,"1001 ""Dr. S"" (3456789012)
 10:02:42.520 --> 10:02:48.200
 Speaking of pushing boundaries, have you all considered the potential implications of quantum gravity on our current models?
 
@@ -268,7 +268,7 @@ But the mathematical complexities involved are mind-boggling. String theory is o
 1005 ""Dr. S"" (3456789012)
 10:03:07.100 --> 10:03:13.400
 What about loop quantum gravity? That's another promising avenue, although the experimental verification is lacking.",The Quest for a Theory of Quantum Gravity,0.3636,0.7676976076254755
-Multidimensional Universe,particle_physics_meeting.json,3,anthropic.claude-3-sonnet-20240229-v1:0,0.878087,9,375,0.0011250000000000001,0.00013499999999999997,"1006 ""Dr. D"" (4567890123)
+Multidimensional Universe,particle_physics_meeting.json,3,anthropic.claude-3-sonnet-20240229-v1:0,0.605713,9,375,0.0011250000000000001,0.00013499999999999997,"1006 ""Dr. D"" (4567890123)
 10:03:13.400 --> 10:03:19.700
 Precisely. Without empirical data to support these theories, they remain highly speculative at this stage.
 
@@ -287,7 +287,7 @@ Agreed. The notion of a multidimensional universe is both fascinating and perple
 1010 ""Dr. D"" (4567890123)
 10:03:38.600 --> 10:03:44.900
 It's a tantalizing concept, but one that may forever elude our observational capabilities.",Exploring Higher Dimensions and the Fabric of Reality,0.0,0.707808743225666
-Probing Fundamental Physics,particle_physics_meeting.json,4,anthropic.claude-3-sonnet-20240229-v1:0,0.955644,9,336,0.001008,0.00013499999999999997,"1011 ""Dr. E"" (1234567890)
+Probing Fundamental Physics,particle_physics_meeting.json,4,anthropic.claude-3-sonnet-20240229-v1:0,1.585,9,336,0.001008,0.00013499999999999997,"1011 ""Dr. E"" (1234567890)
 10:03:44.900 --> 10:03:51.200
 Not necessarily. With the advent of more powerful particle accelerators, we may be able to probe deeper into the fabric of reality.
 
@@ -302,7 +302,7 @@ And let's not forget the importance of theoretical work. Sometimes the math lead
 1014 ""Dr. D"" (4567890123)
 10:04:03.800 --> 10:04:10.100
 Absolutely. Some of the greatest breakthroughs in physics have come from pure thought experiments and mathematical models.",The Role of Theory and Experimentation in Physics,0.1818,0.571396673433334
-Antimatter Applications,particle_physics_meeting.json,5,anthropic.claude-3-sonnet-20240229-v1:0,0.966612,7,336,0.001008,0.000105,"1015 ""Dr. E"" (1234567890)
+Antimatter Applications,particle_physics_meeting.json,5,anthropic.claude-3-sonnet-20240229-v1:0,0.970207,7,336,0.001008,0.000105,"1015 ""Dr. E"" (1234567890)
 10:04:10.100 --> 10:04:16.400
 Take the concept of antimatter, for instance. It was purely theoretical until we found ways to produce and study it.
 
@@ -317,7 +317,7 @@ Not to mention the potential for antimatter-based propulsion systems, which coul
 1018 ""Dr. D"" (4567890123)
 10:04:29.000 --> 10:04:35.300
 Ah yes, the dream of achieving faster-than-light travel. But we'd need to overcome some significant hurdles first.",Antimatter and Its Potential Applications,0.5714,0.9381671508121436
-Higgs Boson Implications,particle_physics_meeting.json,0,meta.llama3-70b-instruct-v1:0,1.461489,9,365,0.00096725,3.15e-05,"1 ""Dr. E"" (1234567890)
+Higgs Boson Implications,particle_physics_meeting.json,0,meta.llama3-70b-instruct-v1:0,1.180567,9,365,0.00096725,3.15e-05,"1 ""Dr. E"" (1234567890)
 00:00:00.000 --> 00:00:05.340
 Have you all seen the latest results from the Large Hadron Collider? The data on the Higgs boson is quite fascinating.
 
@@ -336,7 +336,7 @@ That's an intriguing idea, but we'd need to overcome some significant technical 
 5 ""Dr. E"" (1234567890)
 00:00:21.870 --> 00:00:27.140
 Absolutely. Have you considered the implications of these findings on our understanding of dark matter?",Discussing the Higgs Boson and Its Implications,0.6,0.8074999796489555
-Future of Physics,particle_physics_meeting.json,1,meta.llama3-70b-instruct-v1:0,1.93154,6,354,0.0009381,2.1000000000000002e-05,"996 ""Dr. M"" (2345678901)
+Future of Physics,particle_physics_meeting.json,1,meta.llama3-70b-instruct-v1:0,1.181257,6,354,0.0009381,2.1000000000000002e-05,"996 ""Dr. M"" (2345678901)
 10:02:15.340 --> 10:02:20.720
 The upcoming run at the Tevatron should provide us with even more data to analyze.
 
@@ -355,7 +355,7 @@ Regardless, the future of particle physics is full of exciting possibilities.
 1000 ""Dr. M"" (2345678901)
 10:02:37.140 --> 10:02:42.520
 Indeed. As long as we continue to ask questions and push the boundaries of our knowledge, we'll make groundbreaking discoveries.",Exploring Future Frontiers in Particle Physics,0.4444,0.7731963999852232
-Quantum Gravity Implications,particle_physics_meeting.json,2,meta.llama3-70b-instruct-v1:0,1.398088,7,367,0.00097255,2.4500000000000003e-05,"1001 ""Dr. S"" (3456789012)
+Quantum Gravity Implications,particle_physics_meeting.json,2,meta.llama3-70b-instruct-v1:0,0.773836,7,367,0.00097255,2.4500000000000003e-05,"1001 ""Dr. S"" (3456789012)
 10:02:42.520 --> 10:02:48.200
 Speaking of pushing boundaries, have you all considered the potential implications of quantum gravity on our current models?
 
@@ -374,7 +374,7 @@ But the mathematical complexities involved are mind-boggling. String theory is o
 1005 ""Dr. S"" (3456789012)
 10:03:07.100 --> 10:03:13.400
 What about loop quantum gravity? That's another promising avenue, although the experimental verification is lacking.",The Quest for a Theory of Quantum Gravity,0.3636,0.8143763861546128
-Higher Dimensions,particle_physics_meeting.json,3,meta.llama3-70b-instruct-v1:0,1.124067,5,354,0.0009381,1.7500000000000002e-05,"1006 ""Dr. D"" (4567890123)
+Higher Dimensions,particle_physics_meeting.json,3,meta.llama3-70b-instruct-v1:0,0.774545,5,354,0.0009381,1.7500000000000002e-05,"1006 ""Dr. D"" (4567890123)
 10:03:13.400 --> 10:03:19.700
 Precisely. Without empirical data to support these theories, they remain highly speculative at this stage.
 
@@ -393,7 +393,7 @@ Agreed. The notion of a multidimensional universe is both fascinating and perple
 1010 ""Dr. D"" (4567890123)
 10:03:38.600 --> 10:03:44.900
 It's a tantalizing concept, but one that may forever elude our observational capabilities.",Exploring Higher Dimensions and the Fabric of Reality,0.4,0.7465365145992169
-Probing Reality's Fabric,particle_physics_meeting.json,4,meta.llama3-70b-instruct-v1:0,1.923327,8,322,0.0008533,2.8e-05,"1011 ""Dr. E"" (1234567890)
+Probing Reality's Fabric,particle_physics_meeting.json,4,meta.llama3-70b-instruct-v1:0,1.18602,8,322,0.0008533,2.8e-05,"1011 ""Dr. E"" (1234567890)
 10:03:44.900 --> 10:03:51.200
 Not necessarily. With the advent of more powerful particle accelerators, we may be able to probe deeper into the fabric of reality.
 
@@ -408,7 +408,7 @@ And let's not forget the importance of theoretical work. Sometimes the math lead
 1014 ""Dr. D"" (4567890123)
 10:04:03.800 --> 10:04:10.100
 Absolutely. Some of the greatest breakthroughs in physics have come from pure thought experiments and mathematical models.",The Role of Theory and Experimentation in Physics,0.0,0.4225202567039735
-Antimatter Applications,particle_physics_meeting.json,5,meta.llama3-70b-instruct-v1:0,1.391336,7,320,0.000848,2.4500000000000003e-05,"1015 ""Dr. E"" (1234567890)
+Antimatter Applications,particle_physics_meeting.json,5,meta.llama3-70b-instruct-v1:0,1.118524,7,320,0.000848,2.4500000000000003e-05,"1015 ""Dr. E"" (1234567890)
 10:04:10.100 --> 10:04:16.400
 Take the concept of antimatter, for instance. It was purely theoretical until we found ways to produce and study it.
 
@@ -423,7 +423,7 @@ Not to mention the potential for antimatter-based propulsion systems, which coul
 1018 ""Dr. D"" (4567890123)
 10:04:29.000 --> 10:04:35.300
 Ah yes, the dream of achieving faster-than-light travel. But we'd need to overcome some significant hurdles first.",Antimatter and Its Potential Applications,0.5714,0.9381671508121436
-Higgs Boson Discussion,particle_physics_meeting.json,0,meta.llama3-8b-instruct-v1:0,0.795714,8,365,0.000146,4.8e-06,"1 ""Dr. E"" (1234567890)
+Higgs Boson Discussion,particle_physics_meeting.json,0,meta.llama3-8b-instruct-v1:0,0.82689,8,365,0.000146,4.8e-06,"1 ""Dr. E"" (1234567890)
 00:00:00.000 --> 00:00:05.340
 Have you all seen the latest results from the Large Hadron Collider? The data on the Higgs boson is quite fascinating.
 
@@ -442,7 +442,7 @@ That's an intriguing idea, but we'd need to overcome some significant technical 
 5 ""Dr. E"" (1234567890)
 00:00:21.870 --> 00:00:27.140
 Absolutely. Have you considered the implications of these findings on our understanding of dark matter?",Discussing the Higgs Boson and Its Implications,0.4,0.8581848947063393
-Future of Particle Physics,particle_physics_meeting.json,1,meta.llama3-8b-instruct-v1:0,0.792023,7,354,0.0001416,4.2e-06,"996 ""Dr. M"" (2345678901)
+Future of Particle Physics,particle_physics_meeting.json,1,meta.llama3-8b-instruct-v1:0,0.783326,7,354,0.0001416,4.2e-06,"996 ""Dr. M"" (2345678901)
 10:02:15.340 --> 10:02:20.720
 The upcoming run at the Tevatron should provide us with even more data to analyze.
 
@@ -461,7 +461,7 @@ Regardless, the future of particle physics is full of exciting possibilities.
 1000 ""Dr. M"" (2345678901)
 10:02:37.140 --> 10:02:42.520
 Indeed. As long as we continue to ask questions and push the boundaries of our knowledge, we'll make groundbreaking discoveries.",Exploring Future Frontiers in Particle Physics,0.6,0.8787515407015252
-Quantum Gravity Implications,particle_physics_meeting.json,2,meta.llama3-8b-instruct-v1:0,0.732896,7,367,0.00014680000000000002,4.2e-06,"1001 ""Dr. S"" (3456789012)
+Quantum Gravity Implications,particle_physics_meeting.json,2,meta.llama3-8b-instruct-v1:0,0.772773,7,367,0.00014680000000000002,4.2e-06,"1001 ""Dr. S"" (3456789012)
 10:02:42.520 --> 10:02:48.200
 Speaking of pushing boundaries, have you all considered the potential implications of quantum gravity on our current models?
 
@@ -480,7 +480,7 @@ But the mathematical complexities involved are mind-boggling. String theory is o
 1005 ""Dr. S"" (3456789012)
 10:03:07.100 --> 10:03:13.400
 What about loop quantum gravity? That's another promising avenue, although the experimental verification is lacking.",The Quest for a Theory of Quantum Gravity,0.3636,0.8143763861546128
-Higher Dimensions,particle_physics_meeting.json,3,meta.llama3-8b-instruct-v1:0,0.689824,5,354,0.0001416,2.9999999999999997e-06,"1006 ""Dr. D"" (4567890123)
+Higher Dimensions,particle_physics_meeting.json,3,meta.llama3-8b-instruct-v1:0,0.752379,5,354,0.0001416,2.9999999999999997e-06,"1006 ""Dr. D"" (4567890123)
 10:03:13.400 --> 10:03:19.700
 Precisely. Without empirical data to support these theories, they remain highly speculative at this stage.
 
@@ -499,7 +499,7 @@ Agreed. The notion of a multidimensional universe is both fascinating and perple
 1010 ""Dr. D"" (4567890123)
 10:03:38.600 --> 10:03:44.900
 It's a tantalizing concept, but one that may forever elude our observational capabilities.",Exploring Higher Dimensions and the Fabric of Reality,0.4,0.7465365145992169
-Particle Accelerators,particle_physics_meeting.json,4,meta.llama3-8b-instruct-v1:0,0.780634,6,322,0.00012880000000000001,3.6e-06,"1011 ""Dr. E"" (1234567890)
+Particle Accelerators,particle_physics_meeting.json,4,meta.llama3-8b-instruct-v1:0,0.771979,6,322,0.00012880000000000001,3.6e-06,"1011 ""Dr. E"" (1234567890)
 10:03:44.900 --> 10:03:51.200
 Not necessarily. With the advent of more powerful particle accelerators, we may be able to probe deeper into the fabric of reality.
 
@@ -514,7 +514,7 @@ And let's not forget the importance of theoretical work. Sometimes the math lead
 1014 ""Dr. D"" (4567890123)
 10:04:03.800 --> 10:04:10.100
 Absolutely. Some of the greatest breakthroughs in physics have come from pure thought experiments and mathematical models.",The Role of Theory and Experimentation in Physics,0.0,0.285518023267594
-Antimatter Applications,particle_physics_meeting.json,5,meta.llama3-8b-instruct-v1:0,0.799182,7,320,0.00012800000000000002,4.2e-06,"1015 ""Dr. E"" (1234567890)
+Antimatter Applications,particle_physics_meeting.json,5,meta.llama3-8b-instruct-v1:0,0.782303,7,320,0.00012800000000000002,4.2e-06,"1015 ""Dr. E"" (1234567890)
 10:04:10.100 --> 10:04:16.400
 Take the concept of antimatter, for instance. It was purely theoretical until we found ways to produce and study it.
 
@@ -529,7 +529,7 @@ Not to mention the potential for antimatter-based propulsion systems, which coul
 1018 ""Dr. D"" (4567890123)
 10:04:29.000 --> 10:04:35.300
 Ah yes, the dream of achieving faster-than-light travel. But we'd need to overcome some significant hurdles first.",Antimatter and Its Potential Applications,0.5714,0.9381671508121436
-Higgs Applications,particle_physics_meeting.json,0,mistral.mistral-7b-instruct-v0:2,2.38273,52,357,5.3549999999999994e-05,1.04e-05,"1 ""Dr. E"" (1234567890)
+Higgs Applications,particle_physics_meeting.json,0,mistral.mistral-7b-instruct-v0:2,1.272014,51,357,5.3549999999999994e-05,1.02e-05,"1 ""Dr. E"" (1234567890)
 00:00:00.000 --> 00:00:05.340
 Have you all seen the latest results from the Large Hadron Collider? The data on the Higgs boson is quite fascinating.
 
@@ -548,7 +548,7 @@ That's an intriguing idea, but we'd need to overcome some significant technical 
 5 ""Dr. E"" (1234567890)
 00:00:21.870 --> 00:00:27.140
 Absolutely. Have you considered the implications of these findings on our understanding of dark matter?",Discussing the Higgs Boson and Its Implications,0.2222,0.34454220900634897
-Future Physics Projects,particle_physics_meeting.json,1,mistral.mistral-7b-instruct-v0:2,0.381222,15,346,5.1899999999999994e-05,3e-06,"996 ""Dr. M"" (2345678901)
+Future Physics Projects,particle_physics_meeting.json,1,mistral.mistral-7b-instruct-v0:2,0.817322,15,346,5.1899999999999994e-05,3e-06,"996 ""Dr. M"" (2345678901)
 10:02:15.340 --> 10:02:20.720
 The upcoming run at the Tevatron should provide us with even more data to analyze.
 
@@ -567,7 +567,7 @@ Regardless, the future of particle physics is full of exciting possibilities.
 1000 ""Dr. M"" (2345678901)
 10:02:37.140 --> 10:02:42.520
 Indeed. As long as we continue to ask questions and push the boundaries of our knowledge, we'll make groundbreaking discoveries.",Exploring Future Frontiers in Particle Physics,0.4444,0.7579552728615581
-Quantum Gravity Discussions,particle_physics_meeting.json,2,mistral.mistral-7b-instruct-v0:2,0.617654,5,359,5.3849999999999994e-05,1.0000000000000002e-06,"1001 ""Dr. S"" (3456789012)
+Quantum Gravity Discussions,particle_physics_meeting.json,2,mistral.mistral-7b-instruct-v0:2,0.65349,5,359,5.3849999999999994e-05,1.0000000000000002e-06,"1001 ""Dr. S"" (3456789012)
 10:02:42.520 --> 10:02:48.200
 Speaking of pushing boundaries, have you all considered the potential implications of quantum gravity on our current models?
 
@@ -586,7 +586,7 @@ But the mathematical complexities involved are mind-boggling. String theory is o
 1005 ""Dr. S"" (3456789012)
 10:03:07.100 --> 10:03:13.400
 What about loop quantum gravity? That's another promising avenue, although the experimental verification is lacking.",The Quest for a Theory of Quantum Gravity,0.3636,0.7796977818990533
-Higher Dimensions Debate,particle_physics_meeting.json,3,mistral.mistral-7b-instruct-v0:2,0.576824,5,346,5.1899999999999994e-05,1.0000000000000002e-06,"1006 ""Dr. D"" (4567890123)
+Higher Dimensions Debate,particle_physics_meeting.json,3,mistral.mistral-7b-instruct-v0:2,0.66553,5,346,5.1899999999999994e-05,1.0000000000000002e-06,"1006 ""Dr. D"" (4567890123)
 10:03:13.400 --> 10:03:19.700
 Precisely. Without empirical data to support these theories, they remain highly speculative at this stage.
 
@@ -605,7 +605,7 @@ Agreed. The notion of a multidimensional universe is both fascinating and perple
 1010 ""Dr. D"" (4567890123)
 10:03:38.600 --> 10:03:44.900
 It's a tantalizing concept, but one that may forever elude our observational capabilities.",Exploring Higher Dimensions and the Fabric of Reality,0.3636,0.7067930124475411
-Particle Probe,particle_physics_meeting.json,4,mistral.mistral-7b-instruct-v0:2,0.813358,21,314,4.709999999999999e-05,4.2000000000000004e-06,"1011 ""Dr. E"" (1234567890)
+New Insights,particle_physics_meeting.json,4,mistral.mistral-7b-instruct-v0:2,0.978241,30,314,4.709999999999999e-05,6e-06,"1011 ""Dr. E"" (1234567890)
 10:03:44.900 --> 10:03:51.200
 Not necessarily. With the advent of more powerful particle accelerators, we may be able to probe deeper into the fabric of reality.
 
@@ -619,8 +619,8 @@ And let's not forget the importance of theoretical work. Sometimes the math lead
 
 1014 ""Dr. D"" (4567890123)
 10:04:03.800 --> 10:04:10.100
-Absolutely. Some of the greatest breakthroughs in physics have come from pure thought experiments and mathematical models.",The Role of Theory and Experimentation in Physics,0.0,0.35130538380697407
-Antimatter Applications,particle_physics_meeting.json,5,mistral.mistral-7b-instruct-v0:2,0.5688950000000002,6,312,4.68e-05,1.2000000000000002e-06,"1015 ""Dr. E"" (1234567890)
+Absolutely. Some of the greatest breakthroughs in physics have come from pure thought experiments and mathematical models.",The Role of Theory and Experimentation in Physics,0.0,0.26241314030714863
+Antimatter Applications,particle_physics_meeting.json,5,mistral.mistral-7b-instruct-v0:2,0.613379,6,312,4.68e-05,1.2000000000000002e-06,"1015 ""Dr. E"" (1234567890)
 10:04:10.100 --> 10:04:16.400
 Take the concept of antimatter, for instance. It was purely theoretical until we found ways to produce and study it.
 
@@ -635,7 +635,7 @@ Not to mention the potential for antimatter-based propulsion systems, which coul
 1018 ""Dr. D"" (4567890123)
 10:04:29.000 --> 10:04:35.300
 Ah yes, the dream of achieving faster-than-light travel. But we'd need to overcome some significant hurdles first.",Antimatter and Its Potential Applications,0.5714,0.9381671508121436
-Higgs Boson Discussion,particle_physics_meeting.json,0,mistral.mixtral-8x7b-instruct-v0:1,0.611403,7,357,0.00016065,4.9e-06,"1 ""Dr. E"" (1234567890)
+Higgs Boson Discussion,particle_physics_meeting.json,0,mistral.mixtral-8x7b-instruct-v0:1,0.703913,7,357,0.00016065,4.9e-06,"1 ""Dr. E"" (1234567890)
 00:00:00.000 --> 00:00:05.340
 Have you all seen the latest results from the Large Hadron Collider? The data on the Higgs boson is quite fascinating.
 
@@ -654,7 +654,7 @@ That's an intriguing idea, but we'd need to overcome some significant technical 
 5 ""Dr. E"" (1234567890)
 00:00:21.870 --> 00:00:27.140
 Absolutely. Have you considered the implications of these findings on our understanding of dark matter?",Discussing the Higgs Boson and Its Implications,0.4,0.8581848947063393
-Future of Particle Physics,particle_physics_meeting.json,1,mistral.mixtral-8x7b-instruct-v0:1,0.670892,6,346,0.0001557,4.2000000000000004e-06,"996 ""Dr. M"" (2345678901)
+Future of Particle Physics,particle_physics_meeting.json,1,mistral.mixtral-8x7b-instruct-v0:1,0.703232,6,346,0.0001557,4.2000000000000004e-06,"996 ""Dr. M"" (2345678901)
 10:02:15.340 --> 10:02:20.720
 The upcoming run at the Tevatron should provide us with even more data to analyze.
 
@@ -673,7 +673,7 @@ Regardless, the future of particle physics is full of exciting possibilities.
 1000 ""Dr. M"" (2345678901)
 10:02:37.140 --> 10:02:42.520
 Indeed. As long as we continue to ask questions and push the boundaries of our knowledge, we'll make groundbreaking discoveries.",Exploring Future Frontiers in Particle Physics,0.6,0.8787515407015252
-Quantum Gravity Theories,particle_physics_meeting.json,2,mistral.mixtral-8x7b-instruct-v0:1,0.622597,6,359,0.00016155,4.2000000000000004e-06,"1001 ""Dr. S"" (3456789012)
+Quantum Gravity Theories,particle_physics_meeting.json,2,mistral.mixtral-8x7b-instruct-v0:1,0.673304,6,359,0.00016155,4.2000000000000004e-06,"1001 ""Dr. S"" (3456789012)
 10:02:42.520 --> 10:02:48.200
 Speaking of pushing boundaries, have you all considered the potential implications of quantum gravity on our current models?
 
@@ -692,7 +692,7 @@ But the mathematical complexities involved are mind-boggling. String theory is o
 1005 ""Dr. S"" (3456789012)
 10:03:07.100 --> 10:03:13.400
 What about loop quantum gravity? That's another promising avenue, although the experimental verification is lacking.",The Quest for a Theory of Quantum Gravity,0.3636,0.8910441816014504
-Higher Dimensions,particle_physics_meeting.json,3,mistral.mixtral-8x7b-instruct-v0:1,0.648211,4,346,0.0001557,2.8e-06,"1006 ""Dr. D"" (4567890123)
+Higher Dimensions,particle_physics_meeting.json,3,mistral.mixtral-8x7b-instruct-v0:1,0.627219,4,346,0.0001557,2.8e-06,"1006 ""Dr. D"" (4567890123)
 10:03:13.400 --> 10:03:19.700
 Precisely. Without empirical data to support these theories, they remain highly speculative at this stage.
 
@@ -711,7 +711,7 @@ Agreed. The notion of a multidimensional universe is both fascinating and perple
 1010 ""Dr. D"" (4567890123)
 10:03:38.600 --> 10:03:44.900
 It's a tantalizing concept, but one that may forever elude our observational capabilities.",Exploring Higher Dimensions and the Fabric of Reality,0.4,0.7465365145992169
-Exploring Reality,particle_physics_meeting.json,4,mistral.mixtral-8x7b-instruct-v0:1,0.644036,5,314,0.0001413,3.5e-06,"1011 ""Dr. E"" (1234567890)
+Exploring Reality,particle_physics_meeting.json,4,mistral.mixtral-8x7b-instruct-v0:1,0.619021,5,314,0.0001413,3.5e-06,"1011 ""Dr. E"" (1234567890)
 10:03:44.900 --> 10:03:51.200
 Not necessarily. With the advent of more powerful particle accelerators, we may be able to probe deeper into the fabric of reality.
 
@@ -726,7 +726,7 @@ And let's not forget the importance of theoretical work. Sometimes the math lead
 1014 ""Dr. D"" (4567890123)
 10:04:03.800 --> 10:04:10.100
 Absolutely. Some of the greatest breakthroughs in physics have come from pure thought experiments and mathematical models.",The Role of Theory and Experimentation in Physics,0.0,0.25401926414916726
-Antimatter Applications,particle_physics_meeting.json,5,mistral.mixtral-8x7b-instruct-v0:1,0.668316,6,312,0.0001404,4.2000000000000004e-06,"1015 ""Dr. E"" (1234567890)
+Antimatter Applications,particle_physics_meeting.json,5,mistral.mixtral-8x7b-instruct-v0:1,0.633988,6,312,0.0001404,4.2000000000000004e-06,"1015 ""Dr. E"" (1234567890)
 10:04:10.100 --> 10:04:16.400
 Take the concept of antimatter, for instance. It was purely theoretical until we found ways to produce and study it.
 
