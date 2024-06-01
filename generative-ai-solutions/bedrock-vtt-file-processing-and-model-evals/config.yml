@@ -24,6 +24,7 @@ dir:
   filtered_titles_for_eval: filtered_titles_for_eval.csv
   final_report: recommended_model.csv
   model_distribution: model_distribution_count.csv
+  overall_eval_report: overall_evaluation_report.csv
   # use "json" if you already have chapterized data, use
   # "vtt" if you the data as a vtt transcript. See notes
   # in the "run_steps" section below.

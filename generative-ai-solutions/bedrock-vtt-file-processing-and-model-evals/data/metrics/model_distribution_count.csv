@@ -1,3 +1,7 @@
 selected_model,proportion
-anthropic.claude-3-sonnet-20240229-v1:0,83.33333333333334
-amazon.titan-text-express-v1,16.666666666666664
+anthropic.claude-3-sonnet-20240229-v1:0,50.0
+anthropic.claude-3-haiku-20240307-v1:0,10.0
+meta.llama3-70b-instruct-v1:0,10.0
+meta.llama3-8b-instruct-v1:0,10.0
+mistral.mistral-7b-instruct-v0:2,10.0
+mistral.mixtral-8x7b-instruct-v0:1,10.0
