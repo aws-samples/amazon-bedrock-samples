@@ -32,7 +32,7 @@ Resources:
               StringEquals:
                 aws:SourceAccount: !Sub ${AWS::AccountId}
               ArnLike:  
-                aws:SourceArn: !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:agent/*
+                aws:SourceArn: !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:agent/${BedrockAgent.AgentId}
       Policies:
         - PolicyName: fm_access
           PolicyDocument:

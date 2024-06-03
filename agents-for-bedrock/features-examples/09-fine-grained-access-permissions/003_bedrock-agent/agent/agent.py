@@ -40,9 +40,9 @@ def get_claim(event):
     # TODO: Implement logic to retrieve and return a claim by ID
     dummy_claim = {
         "id": claim_id,
-        "claimAmount": 5000.0,
-        "claimDescription": "Dummy claim",
-        "claimStatus": "denied"
+        "claimAmount": 1000.0,
+        "claimDescription": "Dummy claim 1",
+        "claimStatus": "approved"
     }
     return dummy_claim
 
@@ -63,6 +63,7 @@ def lambda_handler(event, context):
     logger.info(f'event: {event}')
     logger.info(f'context: {context}')
 
+    # sessionAttributes contain the authorization_header which is later retrieved to validate the request. This is the JWT token.
     sessionAttributes = event.get("sessionAttributes")
     
     # print("sessionAttributes:", sessionAttributes)
@@ -150,21 +151,29 @@ def verifyJWT_getUserInfo(token):
     Validate JWT claims & retrieve user identifier along with additional claims
     """
     try:
+        # Decode and verify the JWT using the AWS Cognito JWT library
         verified_user = cognitojwt.decode(
             token, os.environ["AWS_REGION"], os.environ["USER_POOL_ID"]
         )
     except (cognitojwt.CognitoJWTException, ValueError) as error:
+        # Log any JWT validation errors
         logger.error(f"JWT validation error: {error}")
         return {}
+    
+    # Log the verified user information
     logger.info(f"verified_user: {verified_user}")
+    
+    # Extract relevant user information from the verified JWT
     user_info = {
         "username": verified_user.get("cognito:username"),
         "region": verified_user.get("custom:region"),
         "role": verified_user.get("custom:role")
     }
 
+    # Log the extracted user information
     logger.info(f"user_info: {user_info}")
 
+    # Return the user information
     return user_info
 
 
@@ -177,8 +186,8 @@ def getActionID(api_path, http_method):
         action_id = "GetClaim"
     elif api_path.startswith('/updateClaim/') and http_method == 'PUT':
         action_id = "UpdateClaim"
-
-    # Add additional conditions for other API paths and HTTP methods if needed
+    else:
+        raise ValueError("Unknown API path or HTTP method")
 
     return action_id
 
