@@ -14,3 +14,4 @@ langgraph>=0.0.49
 langsmith>=0.1.59
 langchain-anthropic>=0.1.11
 langchain-aws>=0.1.4
+evaluate>=0.4.2
