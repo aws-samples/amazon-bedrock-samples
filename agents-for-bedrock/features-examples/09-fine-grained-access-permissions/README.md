@@ -1,8 +1,11 @@
 # Designing secure generative AI Application workflows with Amazon Verified Permissions and Agents for Bedrock
 
 [Link AWS Blog: https://aws.amazon.com/blogs/aws/](https://aws.amazon.com/blogs/aws/)
+[Link to Amazon Verified Permissions: https://aws.amazon.com/verified-permissions/](https://aws.amazon.com/verified-permissions/)
 
 This is sample code we will demonstrate how to design fine-grained access controls using Verified Permissions for a generative AI application that uses agents for Bedrock to answer questions about insurance claims that exist in a claims review system using textual prompts as inputs and outputs.
+
+
 
 
 
@@ -207,11 +210,15 @@ $ amplify add hosting
 ```
 $ amplify publish
 ```
+✔ Select the plugin module to execute · Hosting with Amplify Console (Managed hosting with custom domains, Continuous deployment)
+? Choose a type Manual deployment
+
+You can now publish your app using the following command:
 
 When the amplify project is published, it should show a message like this with the url of the frontend application: 
 
 ✔ Deployment complete!
-https://code.din67qnkcrl26.amplifyapp.com
+
 
 
 
