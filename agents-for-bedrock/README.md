@@ -32,7 +32,7 @@ This repository contains examples and use-cases to get you started with Agents f
 1. [Retail Agent with Bedrock Agents](./use-case-examples/agentsforbedrock-retailagent/README.md) - Agent designed to help with retail transactions
 1. [Financial Services Agent for Insurance Claims handling] - Agent desided to help insurance employees working with claims
 1. [Text to SQL Agent](./use-case-examples/text-2-sql-agent/README.md) - Agent designed to generate and execute SQL queries using natural language
-1. [Text to SQL  Agent CDK Enhanced](./use-case-examples/text-2-sql-agent-cdk-enhanced/README.md) - Agent designed to generate and execute SQL queries using natural language. This repository enhances the original Text to SQL Bedrock Agent with improvment on: using CDK, works with any dataset, wroks with super large answers.
+1. [Text to SQL  Agent CDK Enhanced](./use-case-examples/text-2-sql-agent-cdk-enhanced/Readme.md) - Agent designed to generate and execute SQL queries using natural language. This repository enhances the original Text to SQL Bedrock Agent with improvment on: using CDK, works with any dataset, wroks with super large answers.
 1. [Customer Relationship Management Agent](./use-case-examples/customer-relationship-management-agent/README.md) - Agent designed to help sales employees work with their customers 
 1. [HR Vacation Agent] - Agent to manage employee vacation time
 
