@@ -5,6 +5,7 @@ import os
 vector_db_idx = os.environ.get('VECTOR_DB_INDEX')
 aoss_collection_id = os.environ.get('AOSS_COLLECTION_ID')
 region = os.environ.get('REGION')
+knowledge_base_id = os.environ.get('KNOWLEDGE_BASE_ID')
 
 def get_named_parameter(event, name):
     return next(item for item in event['parameters'] if item['name'] == name)['value']
@@ -17,7 +18,7 @@ def lambda_handler(event, context):
     index = vector_db_idx
     credentials = boto3.Session().get_credentials()
     auth = AWSV4SignerAuth(credentials, region, service)
-
+    print('host',host)
     ospy_client = OpenSearch(
         hosts = [{'host': host, 'port': 443}],
         http_auth = auth,
@@ -79,8 +80,8 @@ def lambda_handler(event, context):
             },
             retrieveAndGenerateConfiguration={
                 'knowledgeBaseConfiguration': {
-                    'knowledgeBaseId': 'OXIMY0KZXH',
-                    'modelArn': 'arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-3-haiku-20240307-v1:0',
+                    'knowledgeBaseId': knowledge_base_id,
+                    'modelArn': f'arn:aws:bedrock:{region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0',
                     'retrievalConfiguration': {
                         'vectorSearchConfiguration': {
                             'filter': {
