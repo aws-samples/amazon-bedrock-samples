@@ -4,6 +4,7 @@ from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
 import os
 vector_db_idx = os.environ.get('VECTOR_DB_INDEX')
 aoss_collection_id = os.environ.get('AOSS_COLLECTION_ID')
+region = os.environ.get('REGION')
 
 def get_named_parameter(event, name):
     return next(item for item in event['parameters'] if item['name'] == name)['value']
@@ -11,8 +12,7 @@ def get_named_parameter(event, name):
 def lambda_handler(event, context):
     function_name = event['function']
     
-    host = f'{aoss_collection_id}.us-west-2.aoss.amazonaws.com'
-    region = 'us-west-2'
+    host = f'{aoss_collection_id}.{region}.aoss.amazonaws.com'
     service = 'aoss'
     index = vector_db_idx
     credentials = boto3.Session().get_credentials()
