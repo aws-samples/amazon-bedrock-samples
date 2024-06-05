@@ -189,7 +189,7 @@ To test the chatbot application, complete the following steps:
 
 7. Use this Streamlit chatbot application to post natural language questions to start the conversations powered by Bedrock Knowledge base. 
 
-</br><img src="images/streamlit-filled.jpg" alt="streamlit-filled" width="500" align="center" border="1"/></br>
+</br><img src="images/streamlit-filled-withanswer.png" alt="streamlit-filled-withanswer" width="500" align="center" border="1"/></br>
 
 When you submit a prompt, the Streamlit app triggers the Lambda function, which invokes the Knowledge Bases RetrieveAndGenerate API to search and generate responses.
 
