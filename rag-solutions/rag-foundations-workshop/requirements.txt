@@ -17,3 +17,4 @@ langchain-aws>=0.1.4
 evaluate>=0.4.2
 langchain-community>=0.0.36
 pypdf>=4.2.0
+evaluate>=4.2.0
