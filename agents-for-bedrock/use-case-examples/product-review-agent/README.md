@@ -53,23 +53,17 @@ Prompt
 Response
 
 ```text
-Based on the provided date range of 1577808000000.0 to 1609430400000.0, the last 2 reviews are:
-
-"I really like these ear swabs. First they come in a large, handy box and are easy to store (will last a long time). Second, they are all organic and good for the environment. Third, they are strong and don't fall apart very easily. I highly recommend these over Q-Tips (which I have used for years)." with a rating of 5.0 and a timestamp of 1596473351088.
-
-"Super cute and great value!" with a rating of 5.0 and a timestamp of 1585211251700.
+Here are the last 2 reviews within the given date range: 1. "Nice light mousse. Gives some control to old gray wild hair." - 5 star rating, timestamp: 1488067230000.0 2. "This and the matching conditioner saved my scalp. My hair was falling out due to a very dry scalp. Nothing else I tried would cure my issue. My head literally hurt. After one use, my scalp had real relief. My hair looks beautiful after just two washes. I'm definitely going to buy this again. The smell is not great, but you'll look past it to save your scalp. It is one of the only products that is 100% truly organic. No added chemicals. Very gentle and effective. I highly recommend this product." - 5 star rating, timestamp: 1492387230000.0
 ```
 
 2. Trigger knowledge base retrieval API
 
 Prompt
 
-```Give me the last review on hair spray from jokic```
+```Give me the last 2 reviews on hair conditioner from jokic```
 
 Response
 
 ```text
-Based on the provided date range of 1577808000000.0 to 1609430400000.0, and the search for the last review on hair spray from jokic, the review is:
-
-"Last summer I decided to grow out my bangs after having them for all of my adult life. I hadn't used much hairspray since the eighties and into the nineties, but I found that I needed to spray my former bangs in order to help train them to their new position. This is a huge bottle of hair spray. It has a standard hair spray smell. It gives a nice mist. It doesn't leave my hair crunchy. It's a flexible hold so my hair moves and looks natural. So far I am pleased with it." with a rating of 4.0 and a timestamp of 1579351461183.
+Based on the search results, the last 2 reviews on the hair conditioner product from the reviewer "jokic" within the given date range are: 1. "A really good gentle cleanser. Always leaves my hair feeling clean, and soft. Also virtually eliminated dandruff issues where other bigger named products consistently failed." - 5 star rating, timestamp 1521072000000.0 2. "Best shampoo/conditioner hands down" - 5 star rating, timestamp 1490140800000.0 The reviews describe the hair conditioner as leaving the hair feeling clean and soft, and virtually eliminating dandruff issues where other products failed. It is also described as the "best shampoo/conditioner hands down".
 ```
