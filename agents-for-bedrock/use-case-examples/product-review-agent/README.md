@@ -26,7 +26,8 @@ The second function ```retrieve-reviews-hybrid``` is similar to the first except
 
 ## Run
 
-1. Install requirements
+1. Request [model access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html) to Anthropic Claude 3 Haiku and Cohere Embed (English).
+2. Install requirements
 
 ```bash
 pip install -r requirements.txt
