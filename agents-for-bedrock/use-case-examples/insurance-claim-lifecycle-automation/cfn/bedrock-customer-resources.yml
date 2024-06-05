@@ -281,3 +281,4 @@ Resources:
       Endpoint: !Ref SNSEmail
       Protocol: email
       TopicArn: !Ref SNSTopic
+      
