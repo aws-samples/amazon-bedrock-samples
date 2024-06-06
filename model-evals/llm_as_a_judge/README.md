@@ -1,12 +1,15 @@
-# Get Inferences and Model Evaluations using an `LLM as a judge pipeline`
+# Get Inferences and Model Evaluations using an _LLM as a judge_
 
-This repo provides code samples for generating inferences from bedrock models (`Claude 3`) using `Litellm`, and provided an `LLM as a judge` evaluation pipeline. The dataset is provided by the user, which contains a `user question`, `context`, and a `target response` (if any). This sample runs inferences against the provided models in the [config.yaml](config.yaml) file, and generates an output with a side by side view of responses from all of the models. 
+This repo provides code samples for generating inferences from models using `Litellm`, and provides a comprehensive `LLM as a judge` evaluation solution. The dataset is provided by the user, which contains a `user question`, `system prompt` (optional), and a `pre existing response` (optional). This sample runs inferences against the provided models in the [config.yaml](config.yaml) file, and generates an output with a side by side view of responses from all the models. 
 
-Next, these responses run through an evaluation pipeline. In this sample, `Llama3-70b Instruct` is used to act as an `LLM as a judge`, that goes through each user question and context, and gives the model response that best matches/answers the question in terms of *correctness* and *relevancy*. Once the `LLM as a judge` criteria is over, all of the explanations (and corresponding selected models) that it provides runs through another final layer of analysis. `Claude 3 Sonnet` ingests all of the information from the `LLM as a judge` and gives a final report. This report contains the `recommended model`, `trends` and `patterns` across the `LLM as a judge evaluation` and which model is preferred for the given use case/dataset.
+Next, these responses run through an evaluation solution. In this sample, `Llama3-70b Instruct` is used to act as an `LLM as a judge`, that goes through each user question and context, and gives the model response that best matches/answers the question in terms of _correctness_ and _relevancy_. Once the LLM as a judge evaluation is completed, all the explanations and analysis that it provides runs through another final layer of analysis. A _final analysis summarizer_ (in this case `Claude 3`) ingests all the information from the LLM as a judge and gives a final analysis. This analysis contains the overall patterns and trends as to why a particular model was selected more times than the other models for the given use case/dataset.
 
-*All of the parameters can be configured in the ['config.yaml'](config.yaml) file. The dataset used for this sample is synthetically generated, and the target responses are standard definitions and human answers*
+*All the parameters can be configured in the ['config.yaml'](config.yaml) file. The dataset used for this sample is synthetically generated, and the pre existing responses are standard definitions and human generated answers*
 
 # Prerequisites
+---
+
+### Set up the environment
 
 1. Run this code on an AWS platform so as to not include internet latency in the inference latency for the response.
 
@@ -18,102 +21,72 @@ Next, these responses run through an evaluation pipeline. In this sample, `Llama
     pip install -r requirements.txt
     ```
 
+### Use your own custom dataset
+
 1. Configure your parameters in the `config.yaml` file. 
 
-    1. To use your own data, mention the dataset file name in the `pdf_dir_info` next to `dataset_file_name` and place the file in this path: `data/source_data/`. 
+    1. To use your own dataset, mention the dataset file name in the `pdf_dir_info` section next to `dataset_file_name` and place the file in this path: `data/source_data/`. 
 
     ```{.yaml}
-    pdf_dir_info:
-    data_dir: data
-    dataset_dir: source_data
-    dataset_file_name: dummy_data.xlsx
+    dataset_file_name: data.xlsx
     ```
 
-    2. Mention the user query/question column name and the context column name from your dataset in the `dataset_info` section as follows:
+    2. Your dataset must be prepared for this sample. It should either have a user query column (that contains the entire prompt payload, including the context and the user question that can be sent for inference). For that, fill out the name of that column next to the `user_question_col` in the `dataset_info` section of the config file. If your dataset has a pre existing response you would like to run as a part of the evaluation, mention the name of that column next to `pre_existing_response_col`.
     
     ```{.yaml}
     dataset_info:
-    user_question_col: user_input
-    context_col: context
-    target_response_col: dummy_model_response
+      user_question_col: user_input
+      pre_existing_response_col: model_1
     ```
     
-    If your dataset has a `user_prompt` and a `system_prompt` column that you want to use instead. Set the `is_system_and_user_role` parameter to `True` and mention the names of those columns in the section below:
+    If your dataset has a `user_prompt` and a `system_prompt` column that you want to use instead, mention the names of both of those columns in the `user_question_col` and `system_prompt_col`. 
 
     ```{.yaml}
-    is_system_and_user_role: True  
-    user_prompt: user_input
-    system_prompt: system_prompt
+    dataset_info:
+      user_question_col: user_input
+      system_prompt_col: system_prompt
     ```
-    *Otherwise, let this be set to False*
+    *If there is no system prompt, and only a user prompt with the entire payload, leave the system_prompt_col empty*
 
 # Steps to run
 
-1. Setup the Python 3.11 `conda` environment, activate it as described in the [Prerequisites](#prerequisites) section, and insert your `xlsx` dataset.
+1. Setup the Python 3.11 `conda` environment, activate it as described in the [Prerequisites](#prerequisites) section, and insert your dataset. Supported dataset files are `.csv`/`.xlsx`/`.xls`. 
 
 1. There is a prompt template directory in this sample with prompts for different purposes as follows. Change them as preferred for your use case:
 
-    1. `claude_inference_prompt_template.txt`: This is a simple `RAG` prompt for a question and answering task for `Claude` that it uses while getting inferences for the Anthropic models. You can bring your own prompt template for any other model.
-
-    1. `llama3_eval_prompt`: This is the `LLM as a judge` prompt that in this case `Llama3-70b` uses to parse through all the model responses, user questions, and gives the best selected model for each question and a corresponding explanation as to why it chose that model.
+    1. `llama3_eval_prompt`: This is the `LLM as a judge` prompt that in this example `Llama3-70b Instruct` uses to parse through all the model responses, user questions, and inference results to give the best selected model for each question and a corresponding explanation as to why it chose that model.
 
     1. `claude_eval_prompt`: This is the `LLM as a judge` prompt for `Claude` in case you would like to use Claude as a judge.
 
     1. `claude_inference_prompt_template`: This is the prompt that `Claude Sonnet` uses to parse through evaluations from the `LLM as a judge`, and gives a final summarized analysis on which model to use and why, highlights trends and patterns for the given dataset.
 
-1. Open the `get_llm_judge_evaluations.ipynb` notebook, select the `llm_as_a_judge_eval_py311` kernel and do a `Run All` to run all the cells.
+    1. Change the LLM as a judge/final summarizer models and their respective prompt templates in the `config.yaml` file under the `llm_as_a_judge_info` and `final_analysis_summarizer` sections.
 
-1. The following output files are created in the `data` folder.
-
+1. Open the `1_get_inference.ipynb` notebook, select the `llm_as_a_judge_eval_py311` kernel and do a `Run All` to run all the cells. This notebook runs inferences on models (specified in the config file) against your custom dataset. This creates the following files:
     1. `all_results.csv`: This file contains the results/responses from all the models that ran inferences, original question, target responses (if any) and their associated metrics.
-    1. `llm_as_a_judge_comparisons.csv`: This file contains the best_match_answer, selected_model and explanation in JSON format. It contains information on which model had an answer that best matched to the task that was provided, along with an explanation of why it was selected and why others weren’t.
-    1. `llm_as_a_judge_comparisons.txt`: a text file to read all the comparison responses from the LLM as a judge.
-    1. `inference_latency_summary.txt`: a text file that contains the `p50` and `p95` of the inference latency for each model.
-    1. `llm_as_a_judge_pick_rate.csv`: Shows the LLM as a judge pick rate.
-    1. `final_analysis.csv`: Shows the final analysis report generated by `Claude Sonnet` based on all evaluations done by the `LLM as a judge`
-    1. `all_explanations.csv`: All selected models and respective explanations generated by the `LLM as a judge` in a text file.
 
-***View the example final analysis that `Claude Sonnet` generates on the evaluations done on the synthetic data***
+1. Open the `2_get_llm_as_a_judge_eval.ipynb` notebook, select the `llm_as_a_judge_eval_py311` kernel and do a `Run All` to run all the cells. This notebook implements the evaluation solution using an LLM as a judge and a final analysis summarizer:
+    1. The following output files are created in the `data` folder.
+        1. `llm_as_a_judge_comparisons.csv`: This file contains the best_match_answer, selected_model and explanation in JSON format. It contains information on which model had an answer that best matched to the task that was provided, along with an explanation of why it was selected and why others weren’t.
+        1. `llm_as_a_judge_comparisons.txt`: a text file to read all the comparison responses from the LLM as a judge.
+        1. `inference_latency_summary.txt`: a text file that contains the `p50` and `p95` of the inference latency for each model.
+        1. `llm_as_a_judge_pick_rate.csv`: Shows the LLM as a judge pick rate.
+        1. `final_analysis.txt`: Shows the final analysis report generated by `Claude Sonnet` based on all evaluations done by the `LLM as a judge`
+        1. `all_explanations.csv`: All selected models and respective explanations generated by the `LLM as a judge` in a text file.
 
-```
-The given data consists of a series of user questions related to various physics and chemistry concepts, along with generated answers from different models. For each question, the best model answer is selected, accompanied by an explanation justifying the selection over other models.
-
-Upon analyzing the data, several trends and patterns emerge:
-
-1. Common Types of Questions: The majority of questions revolve around fundamental physics concepts like thermodynamics, quantum mechanics, atomic models, and nuclear processes. Chemistry-related questions, such as those on chemical reactions and the greenhouse effect, are also present.
-
-2. Frequently Selected Models: The model 'anthropic.claude-3-haiku-20240307-v1:0' is the most frequently selected as the best answer for various questions. It is chosen for its clear, concise, and accurate explanations across a range of topics.
-
-3. Reasons for Model Selection: The primary factors influencing model selection are:
-   - Completeness and accuracy of the answer
-   - Clarity and conciseness of the explanation
-   - Inclusion of relevant details and examples
-   - Addressing the core concept or principle in the question
-
-4. Reasons for Model Rejection: Models are typically rejected when they provide incomplete, inaccurate, or extraneous information, or fail to address the key aspects of the question adequately.
-
-Based on the analysis, the following insights can be drawn regarding model suitability:
-
-- The 'anthropic.claude-3-haiku-20240307-v1:0' model is well-suited for providing clear and comprehensive explanations of complex physics and chemistry concepts. It excels at addressing the core principles and presenting information concisely without sacrificing accuracy or relevant details.
-
-- The 'anthropic.claude-3-sonnet-20240229-v1:0' model is also commendable for its detailed and structured answers, making it a viable choice for scenarios where more in-depth explanations are required.
-
-- Models that provide partial or tangential information, or lack specificity, are generally less suitable for questions demanding precise and focused responses.
-
-In summary, for this dataset focused on physics and chemistry concepts, the 'anthropic.claude-3-haiku-20240307-v1:0' model emerges as the most appropriate choice due to its ability to provide clear, concise, and accurate explanations across a wide range of topics. Its consistent selection and the explanations provided indicate its suitability for this use case.
-
-Examples:
-
-1. For the question on the Heisenberg uncertainty principle, 'anthropic.claude-3-haiku-20240307-v1:0' was selected for its 'complete and accurate description' and mentioning the principle's implications.
-
-2. When explaining the difference between endothermic and exothermic reactions, this model was chosen for 'directly addressing the question' and providing a clear explanation of energy flow and temperature changes.
-
-3. In the case of the photoelectric effect, 'anthropic.claude-3-haiku-20240307-v1:0' was preferred for its comprehensive answer, covering not only the definition but also its significance in the development of quantum mechanics.
-
-While other models like 'anthropic.claude-3-sonnet-20240229-v1:0' and 'dummy_model' were occasionally selected for specific questions, the 'anthropic.claude-3-haiku-20240307-v1:0' model demonstrated a consistent ability to provide accurate, focused, and well-rounded explanations across various physics and chemistry topics, making it the most suitable choice for this dataset.
+***View the example final analysis that is generated on the evaluations done on the synthetic data by the LLM as a judge***
 
 ```
+Based on the context provided, the model anthropic.claude-3-haiku-20240307-v1:0 was selected more frequently than the other models. The key reasons for its selection appear to be its ability to provide clear, concise, and comprehensive explanations on various scientific concepts and phenomena.
 
+This model's responses were often praised for their clarity, directly addressing the questions and covering the essential points without extraneous information. For instance, its explanation of the Heisenberg uncertainty principle was described as 'complete and accurate,' while its description of the difference between nuclear fission and fusion was deemed 'clear and concise.'
+
+Furthermore, the anthropic.claude-3-haiku-20240307-v1:0 model was commended for its ability to provide comprehensive overviews and explanations, such as its coverage of the development of atomic models and the significance of the photoelectric effect in the context of quantum mechanics.
+
+In contrast, the other models were often criticized for providing incomplete, inaccurate, or vague responses, lacking the clarity and comprehensiveness of the anthropic.claude-3-haiku-20240307-v1:0 model. For example, model_1's answer on catalysts was deemed incomplete, while anthropic.claude-3-sonnet-20240229-v1:0's explanation on classical and quantum mechanics lacked clarity.
+
+Overall, the anthropic.claude-3-haiku-20240307-v1:0 model was consistently praised for its ability to provide clear, concise, and comprehensive explanations on various scientific topics, making it the preferred choice for this specific dataset.
+```
 
 ## License
 

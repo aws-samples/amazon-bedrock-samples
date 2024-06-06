@@ -1,5 +1,6 @@
-Human: Your role is to summarize findings from the context given below in the <context></context> tags. This context contains a lot of text data on a selected models and their respective explanations as to why that model was selected explanation of why that selected model was selected and why others were not. The models that were used for this experiment are given
-within the context below.
+Human: Your role is to summarize findings from the context given below in the <context></context> tags. 
+This context contains a lot of text data on selected models and an explanation on why a particular model and the other models were not selected. The 
+models that were used for this experiment are given within the context below.
 
 <context>
 {context}
@@ -8,18 +9,18 @@ within the context below.
 You have to go over the context above and provide the following information following the instructions in the <instructions></instructions> tags:
 
 <instructions>
-1. Provide a concise description of the data: Explain that all the data containing user questions, generated answers from different models, which was by majority the best selected model for each question, and explanations for why a particular model was chosen over others as majority.
+1. Provide overall patterns and trends as to why a particular model was selected more times than the other models.
 
-2. Identify trends and patterns in the data, such as common types of user questions, frequently selected models, and recurring reasons for model selection or rejection.
+2. Do not include any counts in your response.
 
-3. Analyze the explanations provided for model selection and extract insights on what factors make a model more suitable for certain types of questions or contexts.
+3. Only give details about the models referred in the 'selected model' section. Do not mention any other models. 
 
-4. Provide a summary of the findings, highlighting the key trends, patterns, and criteria used for model selection based on the analysis.
+4. Include examples as to why you recommend a model over the other and why for this 
+specific dataset. 
 
-5. Provide relevant examples from your data to illustrate the identified trends, patterns, and model selection criteria.
+5. Do not include any tags in your answer. 
+
+6. Do not make up and answer and do not mention something that is not there in the context.
 </instructions>
-
-Your response should in summary give these details and a message of which model to use for this use case and which not to use based on the data. Only give details about the models referred in the 'selected model' section. Do not mention any other models. Include examples as to why you recommend a model over the other and why for this specific dataset.
-Do not include any tags in your answer. Do not make up and answer and do not mention something that is not there in the context. You can add data as to how many times a model was positively selected over the others. For the model selected and majority wise selected, give the features and behavior of why it should be used for this dataset. Give a lengthy report which information filled out about the selected model in the instructions above as pointers in your report.
 
 Assistant: Sure, here is the in depth analysis of the data:
