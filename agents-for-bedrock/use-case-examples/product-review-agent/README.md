@@ -1,6 +1,6 @@
 # Custom integration with knowledge base
 
-The agent integrates with the knowledge base without an explicit association to it. Essentially, based on the paths invoked in the openapi schema, it can choose to query the vector DB directly by filtering or the knowledge base through both filtering and semantic similarity. This is useful when you want to leverage on the managed knowledge base for data maintenance (create,delete,update of documents in vector database), and more control over invocations of the knowledge base.
+The agent integrates with the knowledge base without an explicit association to it. Essentially, based on the function invoked in the function definitions, it can choose to query the vector DB directly by filtering or the knowledge base through both filtering and semantic similarity. This is useful when you want to leverage on the managed knowledge base for data maintenance (create,delete,update of documents in vector database), and exert more control over invocations of the knowledge base.
 
 ## Dataset
 
