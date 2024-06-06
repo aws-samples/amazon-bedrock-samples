@@ -32,8 +32,8 @@ brew gem install cfn-nag
 To initiate the security scan, run the following command:
 ```sh
 # git clone https://github.com/aws-samples/amazon-bedrock-samples
-# cd amazon-bedrock-samples
-cfn_nag_scan --input-path agents/insurance-claim-lifecycle-automation/cfn/bedrock-customer-resources.yml
+cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/insurance-claim-lifecycle-automation
+cfn_nag_scan --input-path cfn/bedrock-customer-resources.yml
 ```
 
 ### Deploy CloudFormation Stack to Emulate Existing Customer Resources 
@@ -52,7 +52,7 @@ CloudFormation prepopulates stack parameters with the default values provided in
 
 ```sh
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to shell folder:
-cd amazon-bedrock-samples/agents/insurance-claim-lifecycle-automation/shell/
+cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/insurance-claim-lifecycle-automation/shell/
 chmod u+x create-customer-resources.sh
 ```
 

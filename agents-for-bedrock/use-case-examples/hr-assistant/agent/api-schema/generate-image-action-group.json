@@ -1,0 +1,73 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Generate an Image API",
+    "description": "API for generating images.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/generate_image": {
+      "post": {
+        "summary": "Generate an image",
+        "operationId": "generate_image",
+        "description": "Generate an image or emoji image based on the provided description.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["image_type, image_description"],
+                "properties": {
+                  "image_description": {
+                    "type": "string",
+                    "description": "The description of the image to generate"
+                  },
+                  "image_type": {
+                    "type": "string",
+                    "description": "The task type is Emoji or Image",
+                    "enum": ["Emoji", "Image"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "s3_location": {
+                      "type": "string",
+                      "description": "The S3 location of generated image"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

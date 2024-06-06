@@ -4,6 +4,7 @@ from boto3.session import Session
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
+
 class SigV4HttpRequester:
     def __init__(self):
         self.credentials = Session().get_credentials().get_frozen_credentials()
@@ -33,12 +34,14 @@ class SigV4HttpRequester:
         req = req.prepare()
 
         # send request
-        return requests.request(
+        response = requests.request(
             method=req.method,
             url=req.url,
             headers=req.headers,
             data=req.body
         )
+
+        return response
 
 '''Example usage:
 if __name__ == "__main__":

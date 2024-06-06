@@ -1,0 +1,17 @@
+Action Group: send-slack-message
+Description: This action group contains tool to send Slack message.
+
+Action Group: employee-timeoff-database
+Description: This action group contains tool to execute statements on the database to get or update time off balance.
+
+Action Group: generate-image
+Description: Generate an image or emoji image based on the provided description.
+
+Action Group: send-email
+Description: API for sending emails to employees. You can use this API to send emails.
+
+Action Group: get-schedule-availability
+Description: getting schedule availability for multiple emails. You can use this API to find a common time for a meeting in which all participants are free.
+
+Action Group: schedule-meeting
+Description: You can use this API to schedule a meeting with multiple participants.

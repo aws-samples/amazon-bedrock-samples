@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Stack for managing claims-app resources
+
+
+Resources:
+
+  AmazonVerifiedPermissionsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 001_avp/template.yaml
+
+  CognitoUserPoolStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 002_cognito/template.yaml
+
+  BedrockAgentStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 003_bedrock-agent/template.yaml
+      Parameters:
+        PolicyStoreId: !GetAtt AmazonVerifiedPermissionsStack.Outputs.PolicyStoreId
+        UserPoolId: !GetAtt CognitoUserPoolStack.Outputs.UserPoolId
+
+  ApiGatewayStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 004_apigateway/template.yaml
+      Parameters:
+        CognitoUserPoolArn: !GetAtt CognitoUserPoolStack.Outputs.UserPoolArn
+        BedrockAgentAliasId: !GetAtt BedrockAgentStack.Outputs.BedrockAgentAliasId
+        BedrockAgentId: !GetAtt BedrockAgentStack.Outputs.BedrockAgentId
+
+Outputs:
+  APIEndpoint:
+    Description: "The endpoint of the API Gateway"
+    Value: !GetAtt ApiGatewayStack.Outputs.APIEndpoint
