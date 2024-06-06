@@ -8,6 +8,7 @@ import base64
 import string
 import secrets
 import requests
+import ast
 
 # DynamoDB boto3 clients and variables
 dynamodb = boto3.resource('dynamodb',region_name=os.environ['AWS_REGION'])
@@ -100,18 +101,30 @@ def notify_pending_documents(event):
             },
             ProjectionExpression='pendingDocuments'  # Retrieve only the 'pendingDocuments' attribute
         )
-        
-        # Extract pendingDocuments attribute from the DynamoDB response
-        pending_documents_response = response.get('Item', {}).get('pendingDocuments', {}).get('L', [])
+        print(f"ddb pending documents query response: {response}")
 
-        # Transform the list of dictionaries to a list of strings
-        pending_documents = [doc['S'] for doc in pending_documents_response]
+        # Extract pendingDocuments attribute from the DynamoDB response
+        pending_documents_attr = response.get('Item', {}).get('pendingDocuments', {})
+        
+        if 'S' in pending_documents_attr:
+            # pendingDocuments is a string, so we parse it as a Python list literal
+            pending_documents_response = ast.literal_eval(pending_documents_attr['S'])
+        else:
+            # pendingDocuments is a list
+            pending_documents_response = pending_documents_attr.get('L', [])
+
+        print(f"ddb pending documents extract: {pending_documents_response}")
+
+        # Transform the list of dictionaries to a list of strings if it's in 'L' format
+        pending_documents = [doc['S'] for doc in pending_documents_response if isinstance(doc, dict) and 'S' in doc]
+        if not pending_documents:  # if pending_documents_response was a string, use it directly
+            pending_documents = pending_documents_response
 
         # Join the list of strings into a single string, separated by ", "
         formatted_pending_documents = ", ".join(pending_documents)
 
     except Exception as e:
-        print(f"Error querying DynamoDB table: {e}")
+        print(f"Error returning DynamoDB table query results: {e}")
         return []
 
     # Generate a random string of length 7 (to match the format '12a3456')

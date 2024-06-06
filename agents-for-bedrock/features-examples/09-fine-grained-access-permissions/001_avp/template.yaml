@@ -1,0 +1,182 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Amazon Verified Permissions resources'
+
+Resources:
+  AvpPolicyStore:
+    Type: AWS::VerifiedPermissions::PolicyStore
+    Properties:
+      Description: 'Fine-grained data access - Policy store for the claims application'
+      ValidationSettings:
+        Mode: STRICT
+      Schema:
+        CedarJson: |
+          {
+              "avp::claim::app": {
+                  "actions": {
+                      "ListClaims": {
+                          "appliesTo": {
+                              "principalTypes": [
+                                  "User"
+                              ],
+                              "resourceTypes": [
+                                  "Application"
+                              ]
+                          }
+                      },
+                      "UpdateClaim": {
+                          "appliesTo": {
+                              "resourceTypes": [
+                                  "Claim"
+                              ],
+                              "principalTypes": [
+                                  "User"
+                              ]
+                          }
+                      },
+                      "GetClaim": {
+                          "appliesTo": {
+                              "resourceTypes": [
+                                  "Claim"
+                              ],
+                              "principalTypes": [
+                                  "User"
+                              ]
+                          }
+                      }
+                  },
+                  "entityTypes": {
+                      "Role": {
+                          "shape": {
+                              "type": "Record",
+                              "attributes": {}
+                          },
+                          "memberOfTypes": []
+                      },
+                      "Application": {
+                          "shape": {
+                              "type": "Record",
+                              "attributes": {
+                                  "region": {
+                                      "type": "String",
+                                      "required": true
+                                  },
+                                  "owner": {
+                                      "type": "Entity",
+                                      "name": "User",
+                                      "required": true
+                                  }
+                              }
+                          },
+                          "memberOfTypes": []
+                      },
+                      "Claim": {
+                          "shape": {
+                              "type": "Record",
+                              "attributes": {
+                                  "region": {
+                                      "type": "String",
+                                      "required": true
+                                  },
+                                  "custom-attr-1": {
+                                      "type": "String",
+                                      "required": true
+                                  },
+                                  "owner": {
+                                      "required": true,
+                                      "type": "Entity",
+                                      "name": "User"
+                                  }
+                              }
+                          },
+                          "memberOfTypes": []
+                      },
+                      "User": {
+                          "memberOfTypes": [
+                              "Role"
+                          ],
+                          "shape": {
+                              "attributes": {
+                                  "custom": {
+                                      "attributes": {
+                                          "region": {
+                                              "type": "String",
+                                              "required": false
+                                          }
+                                      },
+                                      "required": false,
+                                      "type": "Record"
+                                  }
+                              },
+                              "type": "Record"
+                          }
+                      }
+                  }
+              }
+          }
+
+  Policy1:
+    Type: AWS::VerifiedPermissions::Policy  
+    Properties:
+      PolicyStoreId: !Ref AvpPolicyStore
+      Definition:
+        Static:
+          Description: 'Allow ClaimsAdministrator role to List claims across all regions'
+          Statement: |
+            permit (
+                principal in avp::claim::app::Role::"ClaimsAdministrator",
+                action in [
+                avp::claim::app::Action::"ListClaims"  
+                ],
+                resource
+            );
+
+  Policy2:
+    Type: AWS::VerifiedPermissions::Policy
+    Properties:
+      PolicyStoreId: !Ref AvpPolicyStore
+      Definition:
+        Static:
+          Description: 'Allow ClaimsAdjuster role to Get and Update Claims they own'
+          Statement: |
+            permit (
+                principal in avp::claim::app::Role::"ClaimsAdjuster",
+                action in [
+                avp::claim::app::Action::"GetClaim",
+                 avp::claim::app::Action::"UpdateClaim"
+                ],
+                resource
+            ) when {
+                principal == resource.owner
+            };
+
+  Policy3:
+    Type: AWS::VerifiedPermissions::Policy
+    Properties:
+      PolicyStoreId: !Ref AvpPolicyStore
+      Definition:
+        Static:
+          Description: 'Allow ClaimsAdjuster role to List claims in their region'
+          Statement: |
+            permit (
+                principal in avp::claim::app::Role::"ClaimsAdjuster",
+                action in [avp::claim::app::Action::"ListClaims"],
+                resource
+            )
+            when
+            {
+                resource has owner &&
+                principal == resource.owner &&
+                principal has custom &&
+                principal.custom has region &&
+                principal.custom.region == resource.region
+            };
+
+Outputs:
+  PolicyStoreId:
+    Value: !Ref AvpPolicyStore
+  Policy1Id:
+    Value: !GetAtt Policy1.PolicyId
+  Policy2Id:
+    Value: !GetAtt Policy2.PolicyId
+  Policy3Id:
+    Value: !GetAtt Policy3.PolicyId
