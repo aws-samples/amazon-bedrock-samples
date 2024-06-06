@@ -90,10 +90,13 @@ see [Test Conversation](documentation/deployment-guide.md#test-conversation)
 ## Clean Up
 see [Clean Up](documentation/clean-up.md)
 
-Refrences:
+## Refrences:
+
 Data Sources:
-(1) The Aglaia_Benifits_Policy.pdf is a Fictious Company HR policy
-(2)Paystubs for January and Feburary is also synthetically created fake paystubs
+
+(1) The Aglaia_Benifits_Policy.pdf is a Fictitious Company HR policy
+(2) Paystubs for January and Feburary is also synthetically created fake paystubs
+
 ---
 
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
