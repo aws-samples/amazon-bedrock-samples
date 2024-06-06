@@ -5,6 +5,14 @@ app_name: llm-as-a-judge-eval-pipeline
 aws:
   region: us-east-1
 
+# Set the steps you want to run all via a python script to get the 
+# the inferences and the evaluation metrics and files created
+run_steps:
+  # this step runs the inference against the user dataset
+  1_get_inference.ipynb: yes
+  # this step runs the evaluation solution using the LLM as a judge
+  2_get_llm_as_a_judge_eval.ipynb: yes
+
 # directory paths
 pdf_dir_info:
   data_dir: data

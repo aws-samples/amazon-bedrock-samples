@@ -1,2 +1,2 @@
-[p50, p95] for anthropic.claude-3-haiku-20240307-v1:0-time_taken_in_seconds=[1.4578595, 2.0035858999999996]
-[p50, p95] for anthropic.claude-3-sonnet-20240229-v1:0-time_taken_in_seconds=[3.036037, 4.1958546]
+[p50, p95] for anthropic.claude-3-haiku-20240307-v1:0-time_taken_in_seconds=[1.4654099999999999, 2.0590030999999995]
+[p50, p95] for anthropic.claude-3-sonnet-20240229-v1:0-time_taken_in_seconds=[2.4934849999999997, 3.4069260499999987]
