@@ -1,0 +1,4 @@
+selected_model,proportion
+anthropic.claude-3-haiku-20240307-v1:0,70.0
+anthropic.claude-3-sonnet-20240229-v1:0,20.0
+dummy_model,10.0
