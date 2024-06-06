@@ -14,14 +14,14 @@ Refer to the question demarcated by "```" below
 Question: {question}
 ```
 
-Refer to the model completions demarcated by "```" below. While giving a response, always refer to the model using its model name in the <> tags and do not use terms like "other model or this model". for example, if a response is in <dummy_model></dummy_model> tags, then the model name is 'dummy_model'
+Refer to the model completions demarcated by "```" below. While giving a response, always refer to the model using its model name in the <> tags and do not use terms like "other model or this model". for example, if a response is in <model_1></model_1> tags, then the model name is 'model_1'
 
 ```
 Model responses: 
 
-<dummy_model>
+<model_1>
 {original_answer}
-</dummy_model>
+</model_1>
 
 {model_responses}
 ```

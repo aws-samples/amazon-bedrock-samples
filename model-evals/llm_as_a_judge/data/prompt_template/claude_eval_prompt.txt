@@ -10,9 +10,9 @@ Your explanation should include both model name and answer description so that i
 {question}
 </question>
 
-<model_x>
+<model_1>
 {original_answer}
-</model_x>
+</model_1>
 
 {model_responses}
 
