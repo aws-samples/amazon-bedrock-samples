@@ -144,10 +144,197 @@ In the following knowledge base tracing example, the agent maps the user input t
 </p>
 
 ## Deploy Streamlit Web UI for Your Agent
-Once you are satisfied with the performance of your agent and knowledge base, you are ready to productize their capabilities. We use [Streamlit](https://streamlit.io/) in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. Streamlit is a Python library designed to streamline and simplify the process of building frontend applications. Our application provides two features:
+Once you are satisfied with the performance of your agent and knowledge base, you are ready to productize their capabilities. We use [Streamlit](https://streamlit.io/) in this solution to launch an example frontend, intended to emulate what would be a customer's Production application. Streamlit is a Python library designed to streamline and simplify the process of building frontend applications.
 
-- **Agent for Amazon Bedrock - Prompt Input:** Allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input.
+Our application allows users to choose between Agents and Knowledge Bases for Amazon Bedrock based on their use case and requirements. Knowledge bases are suited for managing and retrieving large volumes of information, while agents excel in automating tasks, interacting with users, and orchestrating complex workflows. Both tools can be used together to build powerful, intelligent applications that deliver a more accurate, efficient, and user-friendly experience.
+
+The following are the available application features -
+
+- **Agents for Amazon Bedrock - Prompt Input:** Allows the user to [invoke the agent](https://docs.aws.amazon.com/bedrock/latest/userguide/api-agent-invoke.html) using their own task input.
+- **Knowledge Bases for Amazon Bedrock - Prompt Input:** Allows the user to query a knowledge base and generates responses based on the retrieved results using the [RetrieveAndGenerate API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent-runtime_RetrieveAndGenerate.html).
 - **Knowledge Base for Amazon Bedrock - File Upload:** Enables the user to upload their local files to the Amazon S3 bucket that is being used as the data source for the customer's knowledge base. Once the file is uploaded, the application [starts an ingestion job](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-api-ingestion.html) to sync the knowledge base data source.
+
+### Key Features
+
+1. **Mode of Operation:** Users can choose between interacting with an "Agent" or a "Knowledge Base".
+2. **Agent Selection:** If "Agent" mode is selected, users can pick an agent by name and alias.
+3. **Knowledge Base Selection:** If "Knowledge Base" mode is selected, users can pick a knowledge base by name.
+4. **Model Selection:** Users can choose from a predefined list of model IDs.
+5. **Session Enabling:** Option to enable session persistence.
+6. **Filter Application:** Option to apply filters based on attributes.
+
+### Agents and Knowledge Bases for Amazon Bedrock Functions
+
+#### `bedrock_query_knowledge_base(query)`
+This function queries the knowledge base to retrieve information and generate a response based on the retrieved data.
+
+```python
+def bedrock_query_knowledge_base(query):
+    print(f"Knowledge Base query: {query}")
+
+    prompt_template = """\n\nHuman: You will be acting as a helpful customer service representative named Ava (short for Amazon Virtual Assistant) working for AnyCompany. Provide a summarized answer using only 1 or 2 sentences. 
+    Here is the relevant information in numbered order from our knowledge base: $search_results$
+    Current time: $current_time$
+    User query: $query$\n\nAssistant: """
+
+    payload = {
+        "input": {
+            "text": query
+        },
+        "retrieveAndGenerateConfiguration": {
+            "type": "KNOWLEDGE_BASE",
+            "knowledgeBaseConfiguration": {
+                "generationConfiguration": {
+                    "promptTemplate": {
+                        "textPromptTemplate": prompt_template
+                    }
+                },
+                "knowledgeBaseId": kb_id,
+                "modelArn": model_arn,
+                "retrievalConfiguration": {
+                    "vectorSearchConfiguration": {
+                        "numberOfResults": 5,
+                    }
+                }
+            }
+        }
+    }
+
+    if filter_attribute != "None":
+        print(f"filter_attribute: {filter_attribute}")
+        payload["retrieveAndGenerateConfiguration"]["knowledgeBaseConfiguration"]["retrievalConfiguration"] = {
+            "vectorSearchConfiguration": {
+                "numberOfResults": 5,
+                "filter": {
+                    "equals": {
+                        "key": "exposure",
+                        "value": filter_attribute
+                    }
+                }
+            }
+        }
+
+    if st.session_state.get("session_enabled", True):
+        if st.session_state["session_id"] is not None:
+            sesh = st.session_state["session_id"]
+            print(f"session_id: {sesh}")
+            payload["sessionId"] = st.session_state["session_id"]
+
+    try:
+        response = agent_runtime_client.retrieve_and_generate(**payload)
+        st.session_state["session_id"] = response.get("sessionId", st.session_state["session_id"])
+        retrieval_results = response.get("retrievalResults", [])
+
+        if 'output' in response:
+            kb_response = response['output']['text']
+            output_lines = kb_response.split('\n')
+            clean_response = output_lines[-1].strip()
+            print(f"Knowledge Base response ({model_selection}): {clean_response}\n")
+            return clean_response
+        else:
+            return "No relevant information found in the knowledge base."
+
+    except Exception as e:
+        return f"Error querying knowledge base: {e}"
+```
+
+#### `update_knowledge_base(file_content, bucket_name, s3_file_name, selected_ds_id, selected_kb_id)`
+This function uploads a file to an S3 bucket and starts an ingestion job to update the knowledge base with new data.
+
+```python
+def update_knowledge_base(file_content, bucket_name, s3_file_name, selected_ds_id, selected_kb_id):
+    print("Syncing Knowledge Base Data Source")
+
+    try:
+        file_obj = io.BytesIO(file_content)
+        s3_client.upload_fileobj(file_obj, bucket_name, s3_file_name)
+        st.success(f"File uploaded successfully to S3 bucket '{bucket_name}' as '{s3_file_name}'")
+    except Exception as e:
+        st.error(f"Error uploading file to S3: {e}")
+        return
+
+    description = "Programmatic update of Bedrock Knowledge Base Data Source"
+    try:
+        response = agent_client.start_ingestion_job(
+            dataSourceId=selected_ds_id,
+            description=description,
+            knowledgeBaseId=selected_kb_id
+        )
+    except Exception as e:
+        st.error(f"Error starting ingestion job: {e}")
+    finally:
+        file_obj.close()
+```
+
+#### `check_ingestion_job_status(selected_ds_id, selected_kb_id)`
+This function checks the status of an ongoing ingestion job to ensure the data is successfully ingested into the knowledge base.
+
+```python
+def check_ingestion_job_status(selected_ds_id, selected_kb_id):
+    headers = {
+        "Content-type": "application/json",
+    }
+
+    status = ""
+    while status != "complete":
+        try:
+            response = agent_client.list_ingestion_jobs(
+                knowledgeBaseId=selected_kb_id,
+                dataSourceId=selected_ds_id,
+            )
+            
+            if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                job_status = response["ingestionJobSummaries"][0]["status"]
+                print(f"Ingestion Job Status: {job_status}")
+                st.write(f"Ingestion Job Status: {job_status}")
+                
+                if job_status == "COMPLETE":
+                    break
+            else:
+                st.write(f"Error: {response.status_code} - {response.text}")
+        except Exception as e:
+            st.write(f"An error occurred: {e}")
+
+        time.sleep(4)
+```
+
+#### `invoke_agent(query)`
+This function invokes an agent to process a user query and generate a response.
+
+```python
+def invoke_agent(query):
+    print(f"Agent query: {query}")
+
+    # Generate new session ID if session is not enabled or session ID is None
+    if not st.session_state["session_enabled"]:
+        st.session_state["session_id"] = generate_session_id()
+    
+    try:    
+        # Build the parameters for the invoke_agent call
+        params = {
+            'agentAliasId': agent_alias_id,
+            'agentId': agent_id,
+            'sessionId': st.session_state["session_id"],
+            'inputText': query,
+            'enableTrace': True
+        }
+        
+        # Invoke the agent
+        response = agent_runtime_client.invoke_agent(**params)
+        
+        # Handle the response (this is a simplification, adjust as needed for your use case)
+        for event in response['completion']:
+            if 'chunk' in event:
+                result_bytes = event['chunk']['bytes']
+                result_text = result_bytes.decode('utf-8')
+                print(f"Agent response ({model_selection}): {result_text}\n")
+                return result_text
+
+    except Exception as e:
+        return f"Error invoking agent: {e}"
+```
+
+### Deploy Streamlit UI
 
 To isolate our Streamlit application dependencies and for ease of deployment, we use the [setup-streamlit-env.sh](../agent/streamlit/setup-streamlit-env.sh) shell script to create a virtual Python environment with the requirements installed.
 
@@ -155,7 +342,7 @@ To isolate our Streamlit application dependencies and for ease of deployment, we
 
 ```sh 
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
-cd amazon-bedrock-samples/agents/insurance-claim-lifecycle-automation/agent/streamlit/
+cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/insurance-claim-lifecycle-automation/agent/streamlit/
 chmod u+x setup-streamlit-env.sh
 ```
 
@@ -168,13 +355,7 @@ source ./setup-streamlit-env.sh
 3.	Set your Bedrock agent ID, agent alias ID, knowledge base ID, data source ID, and knowledge base bucket name environment variables.
 
 ```sh 
-export BEDROCK_AGENT_ID=<YOUR-AGENT-ID> # Collected in Test agent section and available in agents console
-export BEDROCK_AGENT_ALIAS_ID=<YOUR-AGENT-ALIAS-ID> # Use TSTALIASID for current working draft
-export BEDROCK_KB_ID=<YOUR-KNOWLEDGE-BASE-ID> # Collected in Deploy knowledge base section and available in knowledge base console
-export BEDROCK_DS_ID=<YOUR-DATA-SOURCE-ID> # Collected in Deploy knowledge base section and available in knowledge base console
-export KB_BUCKET_NAME=<YOUR-KNOWLEDGE-BASE-S3-BUCKET-NAME> # Deployed during pre-implementation phase (e.g., <YOUR-STACK-NAME>-customer-resources
 export AWS_REGION=<YOUR-AWS-REGION> # Region into which you deployed the stack
-
 ```
 
 4.	Run your Streamlit application and begin testing in your local web browser:
