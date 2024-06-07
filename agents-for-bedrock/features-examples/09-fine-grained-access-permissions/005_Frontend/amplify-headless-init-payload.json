@@ -1,0 +1,25 @@
+{
+  "amplify": {
+    "projectName": "bedrock-security",
+    "envName": "dev",
+    "defaultEditor": "code"
+  },
+  "frontend": {
+    "frontend": "javascript",
+    "framework": "react",
+    "config": {
+      "SourceDir": "src",
+      "DistributionDir": "build",
+      "BuildCommand": "npm run-script build",
+      "StartCommand": "npm run-script start"
+    }
+  },
+  "providers": {
+    "awscloudformation": {
+      "configLevel": "project",
+      "useProfile": true,
+      "profileName": "anil2_access",
+      "region": "us-east-1"
+    }
+  }
+}

@@ -1,0 +1,2 @@
+model_recommendation
+"The recommended model with the best match title based on an evaluation of 6 titles is anthropic.claude-3-sonnet-20240229-v1:0, with a 60.0% selection rate. The total cost to run the LLM as a judge evaluation is $0.0378."

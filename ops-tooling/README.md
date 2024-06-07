@@ -5,6 +5,7 @@ This folder contains helpful samples to help with operationalizing your work wit
 ## Contents
 
 - [Set up CloudWatch dashboard](bedrock_cloudwatch_dashboard.py) - Create CloudWatch dashboard using AWS Python SDK
+- [Set up custom CloudWatch dashboard for Bedrock app](bedrock_app_custom_dashboard.py) - Create a custom CloudWatch dashboard using the AWS Python SDK to track relevant metrics of your Bedrock app
 
 ## Contributing
 

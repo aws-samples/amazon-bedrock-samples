@@ -1,0 +1,114 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Calendar Availability API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/get_availability": {
+      "post": {
+        "summary": "Gets the first available free meeting slot",
+        "description": "Gets the first available free meeting slot",
+        "operationId": "get_availability_endpoint_get_availability_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "attendee1": {
+                    "type": "string",
+                    "title": "Email 1",
+                    "description": "The first email to check for meeting availability"
+                  },
+                  "attendee2": {
+                    "type": "string",
+                    "title": "Email 2",
+                    "description": "The second email to check for meeting availability"
+                  },
+                  "duration": {
+                    "type": "integer",
+                    "title": "Duration",
+                    "description": "The duration of the meeting in minutes"
+                  },
+                  "date": {
+                    "type": "string",
+                    "title": "Start Date",
+                    "description": "The date of the meeting in the format yyyy-mm-dd"
+                  }
+                },
+                "type": "object",
+                "required": ["attendee1", "attendee2", "duration", "date"],
+                "title": "Body_get_availability_endpoint_get_availability_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "MeetingTime": {
+                      "type": "string",
+                      "description": "Time of the first available free slot for all participants"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "items": {
+                        "properties": {
+                          "loc": {
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "integer"
+                                }
+                              ]
+                            },
+                            "type": "array",
+                            "title": "Location"
+                          },
+                          "msg": {
+                            "type": "string",
+                            "title": "Message"
+                          },
+                          "type": {
+                            "type": "string",
+                            "title": "Error Type"
+                          }
+                        },
+                        "type": "object",
+                        "required": ["loc", "msg", "type"],
+                        "title": "ValidationError"
+                      },
+                      "type": "array",
+                      "title": "Detail"
+                    }
+                  },
+                  "type": "object",
+                  "title": "HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,246 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "crmAgent API",
+    "description": "APIs for a CRM agent. You have a function to retrieve a history of recent customer interactions, one to get a simple overview of the company itself, and another get customer preferences for how they want communication. Customer identifiers are formatted with a 'C-' prefix.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/companyOverview": {
+      "get": {
+        "description": "Returns a brief overview (like when they were founded, and what they offer to their customers) of a specific customer company, based on customer ID. It is static, not giving any indication of recent customer interactions.",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "description": "Customer identifier string. Customer identifiers are formatted with a 'C-' prefix.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company overview, static information about when company was founded, what industry they are in, high level summary of markets they serve",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listRecentInteractions": {
+      "get": {
+        "description": "Returns list of recent customer interactions (like meetings and phone calls), including notes and date-time for each customer interaction. Takes a customer ID and a count of how many interactions to return. If unsure how many to ask for, default to a count of 5.",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "description": "Customer identifier string. Customer identifiers are formatted with a 'C-' prefix.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "Number of interactions to return",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of recent interactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "date": {
+                        "type": "string",
+                        "description": "Date of the customer interaction"
+                      },
+                      "notes": {
+                        "type": "string",
+                        "description": "Notes of the customer interaction"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/getPreferences": {
+      "get": {
+        "description": "Returns customer communication preferences like method of communication, day of week, and time of day.",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "description": "Customer identifier string. Customer identifiers are formatted with a 'C-' prefix.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties":{
+                    "dayOfWeek": {
+                      "type": "string",
+                      "description": "Customer preferred day of week for communication"
+                    },
+                    "timeofDay": {
+                      "type": "string",
+                      "description": "Customer preferred time of day for communication"
+                    },
+                    "meetingType": {
+                      "type": "string",
+                      "description": "Customer preferred mode of communication"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/getOpenJiraIssues": {
+      "get": {
+        "description": "Get all Jira issues with status as InProgress or Todo",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "description": "Jira project identifier string. The ID of the project to retrieve Inprogress or Todo issues for.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getOpenJiraIssues",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "issueKey": {
+                        "type": "string",
+                        "description": "The unique key of the Jira issue"
+                      },
+                      "summary": {
+                        "type": "string",
+                        "description": "The summary of the Jira issue"
+                      },
+                      "status": {
+                        "type": "string",
+                        "description": "The current status of the Jira issue"
+                      },
+                      "project": {
+                        "type": "string",
+                        "description": "The name of project of the Jira issue"
+                      },
+                      "assignee": {
+                        "type": "string",
+                        "description": "The assignee status of the Jira issue"
+                      },
+                      "duedate": {
+                        "type": "string",
+                        "description": "The duedate for the Jira issue"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/updateJiraIssue": {
+      "put": {
+        "description": "Update the timeline of a Jira issue",
+        "parameters": [
+          {
+            "name": "issueKey",
+            "in": "path",
+            "description": "The unique key of the Jira issue",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The new timeline for the Jira issue",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "timelineInWeeks": {
+                    "type": "integer",
+                    "description": "The new timeline for the Jira issue in weeks"
+                  }
+                },
+                "required": [
+                  "timelineInWeeks"
+                ]                
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issueKey": {
+                      "type": "string",
+                      "description": "The unique key of the Jira issue"
+                    },
+                    "newTimeline": {
+                      "type": "integer",
+                      "description": "The updated timeline for the Jira issue in weeks"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
