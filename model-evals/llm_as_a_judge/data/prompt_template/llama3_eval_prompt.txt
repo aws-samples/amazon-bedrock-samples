@@ -14,7 +14,8 @@ Refer to the question demarcated by "```" below
 Question: {question}
 ```
 
-Refer to the model completions demarcated by "```" below. While giving a response, always refer to the model using its model name in the <> tags and do not use terms like "other model or this model". for example, if a response is in <model_1></model_1> tags, then the model name is 'model_1'
+Refer to the model completions demarcated by "```" below. While giving a response, always refer to the model using its model name in the <> tags and do not use terms like "other model or this model". for example, if a response is in <model_1></model_1> tags, then the selected model name is model_1.
+Do not add spaces between the selected model name. The selected model name should be exactly same as the model name in the <> tags around the model response.
 
 ```
 Model responses: 
@@ -27,6 +28,8 @@ Model responses:
 ```
 
 Only give the JSON format response and do not include any pre filler words. Make sure your JSON response is a single line with the opening and closing brackets placed correctly. Only select from the models provided, do not make up your own model. If none give a good answer, select the one which is better.
+
+Your response should start with the JSON directly and should only contain that, no pre filler words or tags.
 
 <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 

@@ -19,9 +19,9 @@ pdf_dir_info:
   dataset_dir: source_data
   # enter the name of your dataset here. it should be placed in the
   # data/source_data/ directory
-  dataset_file_name: data.xlsx
+  dataset_file_name: data.csv
   # this is the folder where all of the evaluation metrics are stored
-  metrics: metrics
+  metrics: results
   # this folder contains raw json file for each response that the llm as a judge
   # evaluates
   llm_as_a_judge_dir: eval_completions
@@ -44,11 +44,11 @@ pdf_dir_info:
   inference_latency_summary_fname: inference_latency_summary.txt
   # csv file containing all the response completions, latency, input/output tokens, etc
   all_results_file_name: all_results.csv
-  all_explanations: metrics/all_explanations.txt
+  all_explanations: all_explanations.txt
   # prompt template that is used to take all evaluations from the LLM as a judge and provide
   # a final file containing a summary on patterns/trends and the preferred model for the dataset
   claude_final_summary_eval_prompt: data/prompt_template/claude_final_summary_prompt.txt
-  final_summary_analysis: metrics/final_analysis.txt
+  final_summary_analysis: final_analysis.txt
   
 # these are the dataset column names that the user provides as prompts to get inference from
 # if your dataset has a column with the entire prompt payload, name that column in 'user_question_col' below 
