@@ -14,7 +14,7 @@ RAG is an approach to natural language generation that incorporates information 
 
 The data ingestion workflow uses LLMs to create embedding vectors that represent semantic meaning of texts. Embeddings are created for documents and user questions. The document embeddings are split into chunks and stored as indexes in a vector database. The text generation workflow then takes a question's embedding vector and uses it to retrieve the most similar document chunks based on vector similarity. It augments prompts with these relevant chunks to generate an answer using the LLM. For more details, refer to the Primer on Retrieval Augmented Generation, Embeddings, and Vector Databases section in [Preview – Connect Foundation Models to Your Company Data Sources with Agents for Amazon Bedrock](https://aws.amazon.com/blogs/aws/preview-connect-foundation-models-to-your-company-data-sources-with-agents-for-amazon-bedrock/).
 
-The following diagram illustrates the high-level RAG architecture.
+The following diagram illustrates the high-level RAG architecture with a Guardrail.
 
 </br><img src="images/architecture_1.jpg" alt="architecture1" width="800" align="center"/></br>
 
@@ -144,6 +144,8 @@ In this step, create a knowledge base using the Amazon shareholder letters datas
 
 </br><img src="images/kb-readysync.jpg" alt="kb-readysync" width="800" align="center"/></br>
 
+Congratulations, your Knowledge base is ready.
+
 20. Create a Guardrail
 </br><img src="images/gr-image.png" alt="gr-image" width="175" align="center"/></br>
 Click on the Create guardrail buttnon
@@ -155,7 +157,7 @@ Click next untill you reach to the  **Add word filters - optional** screen. Then
 Once the guardrail is created now we need to add a version. **Take a note of guardrail id.**
 </br><img src="images/gr-version.png" alt="gr-version" width="600" align="center"/></br>
 
-Congratulations, your Knowledge base is ready. 
+Congratulations, your Guardrail is ready. 
 
 Note that you can also use Knowledge Bases for Amazon Bedrock service APIs and the [AWS Command Line Interface](http://aws.amazon.com/cli) (AWS CLI) to programmatically create a knowledge base. You will need to run various sections of the Jupyter notebook provided under the /notebook folder in the code base you cloned earlier.
 
@@ -195,6 +197,10 @@ To test the chatbot application, complete the following steps:
 3.	Run the following command to install and set up a local Python development environment to run the Streamlit application:
 
 ```pip install streamlit```
+
+If you already have Streamlit, make sure you have a current version
+
+```pip install --upgrade streamlit```
 
 4.	Navigate to the /streamlit folder in the code base you cloned earlier.
 5.	Run the following command to instantiate the chatbot application:
