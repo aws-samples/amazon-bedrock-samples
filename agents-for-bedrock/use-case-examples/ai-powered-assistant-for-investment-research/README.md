@@ -74,7 +74,7 @@ It takes a few minutes to create. Once it is created, you can check the generate
 
 ## Generate text files from audio and pdf files
 
-[AWS CloudShell](https://aws.amazon.com/cloudshell/) allos you to explore and manage AWS resources from a terminal in your browser
+[AWS CloudShell](https://aws.amazon.com/cloudshell/) allows you to explore and manage AWS resources from a terminal in your browser
 
 Open AWS CloudShell
 
@@ -215,7 +215,7 @@ As part of wrapping the business logic using [Lambda functions](https://aws.amaz
 
 ## Security
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+See [Notifying issue](CONTRIBUTING.md#security-issue-notifications) for more information.
 
 ## License
 
