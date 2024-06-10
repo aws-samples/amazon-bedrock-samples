@@ -71,7 +71,7 @@ Resources:
           #print (kb_id)
 
           # declare model id for calling RetrieveAndGenerate API
-          model_id = "anthropic.claude-instant-v1"
+          model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
           model_arn = f'arn:aws:bedrock:{region}::foundation-model/{model_id}'
 
           def retrieveAndGenerate(input, kbId, model_arn, sessionId):
@@ -110,12 +110,12 @@ Resources:
               response = retrieveAndGenerate(query, kb_id, model_arn, sessionId)
               generated_text = response['output']['text']
               sessionId = response['sessionId']
+              citations = response['citations']
               print (generated_text)
               print (sessionId)
-              
               return {
                   'statusCode': 200,
-                  'body': {"question": query.strip(), "answer": generated_text.strip(), "sessionId":sessionId}
+                  'body': {"question": query.strip(), "answer": generated_text.strip(), "sessionId":sessionId, "citations":citations}
               }
               
       Description: Create KnowledgeBase Lambda

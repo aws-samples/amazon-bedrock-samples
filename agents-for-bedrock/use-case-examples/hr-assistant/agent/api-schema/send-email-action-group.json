@@ -1,0 +1,95 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Send Email API",
+    "description": "API for sending emails to employees. You can use this API to send emails.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/send_email": {
+      "post": {
+        "summary": "Send an email",
+        "operationId": "send_email",
+        "description": "sending emails to employees. You can use this API to send emails.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message_id": {
+                      "type": "string",
+                      "description": "The unique identifier for the sent email message"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EmailRequest": {
+        "type": "object",
+        "required": ["email_address", "subject", "body"],
+        "properties": {
+          "email_address": {
+            "type": "string",
+            "description": "The email address to send the email to"
+          },
+          "subject": {
+            "type": "string",
+            "description": "The subject of the email"
+          },
+          "body": {
+            "type": "string",
+            "description": "The body of the email"
+          }
+        }
+      },
+      "EmailResponse": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "string",
+            "description": "The response from the API"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          }
+        }
+      }
+    }
+  }
+}

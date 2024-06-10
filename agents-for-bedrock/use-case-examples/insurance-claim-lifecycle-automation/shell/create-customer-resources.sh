@@ -1,10 +1,12 @@
 # If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
-# cd amazon-bedrock-samples/agents/insurance-claim-lifecycle-automation/shell/
+# cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/insurance-claim-lifecycle-automation/shell/
 # chmod u+x create-customer-resources.sh
+
 # export STACK_NAME=<YOUR-STACK-NAME> # Stack name must be lower case for S3 bucket naming convention
 # export SNS_EMAIL=<YOUR-POLICY-HOLDER-EMAIL> # Email used for SNS notifications
 # export EVIDENCE_UPLOAD_URL=<YOUR-EVIDENCE-UPLOAD-URL> # URL provided by the agent to the policy holder for evidence upload
 # export AWS_REGION=<YOUR-STACK-REGION> # Stack deployment region
+
 # source ./create-customer-resources.sh
 
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -15,7 +17,7 @@ export GATHER_EVIDENCE_KEY="agent/lambda/action-groups/gather_evidence.zip"
 export SEND_REMINDER_KEY="agent/lambda/action-groups/send_reminder.zip"
 
 aws s3 mb s3://${ARTIFACT_BUCKET_NAME} --region ${AWS_REGION}
-aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --region ${AWS_REGION} --recursive --exclude ".DS_Store"
+aws s3 cp ../agent/ s3://${ARTIFACT_BUCKET_NAME}/agent/ --region ${AWS_REGION} --recursive --exclude ".DS_Store" --exclude "*/.DS_Store"
 
 export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
     --layer-name bedrock-agents \

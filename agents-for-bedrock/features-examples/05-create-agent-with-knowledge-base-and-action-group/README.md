@@ -1,22 +1,17 @@
-# Creating Agent with a Single Knowledge Base
+# Creating Agent with Knowledge Base and an Action Group connection
 
-In this folder, we provide an example of creating an agent with Amazon Bedrock and integrating it with Knowledge Bases. With this integration, the agent will be able to respond to a user query by taking a sequence of actions, consulting the knowledge base to obtain more information, and finally responding to the user with an answer.
-
-![Agents with Knowledge Bases for Amazon Bedrock](agents-with-kb.png)
-
-In this notebook you will learn how to create an Amazon Bedrock Agent that makes use of Knowledge Bases for Amazon Bedrock to retrieve company data and complete tasks. The use case for this notebook is an agent for a restaurant, it's tasks will be to give information to the clients about the adults or childrens menu and be in charge of the table booking system. Client's will be able to create, delete or get booking information.
-
-This involves the following steps:
-
-1. Import the needed libraries
-2. Upload the dataset to Amazon S3
-3. Create the Knowledge Base for Amazon Bedrock
-4. Create the Agent for Amazon Bedrock
-5. Test the Agent
-6. Clean-up the resources created
+In this folder, we provide an example of creating an agent with Amazon Bedrock and integrating it with a 
+Knowledge Base for Amazon Bedrock and with an Action Group. 
+With this integration, the agent will be able to respond to a user query by taking a sequence of actions, 
+consulting the knowledge base to obtain more information, and/or executing tasks using the lambda function 
+connected with an Action Group.
 
 
-For more details on __agents__ see [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html).
+## Agent Architecture
+In this example we will create a restaurant assistant agent that connects with a Knowledge Base for Amazon Bedrock containing the restaurant's different menus. 
+This agent also connects to an action group that provides functionalities for handling the table booking in this restaurant. 
+![Agents architecture - showing an agent responding on one end using APIs and action groups and then on the end responding to other questions with a knowledge base on a vector database](images/architecture.png)
 
-For more details on __Knowledge Bases__ see [Knowledge bases for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) 
-
+The action group created in this example uses [function details](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-action-function.html) to define the functionalities for 
+`create_booking`, `get_booking_details` and `delete_booking`.
+The action group execution connects with a Lambda function that interacts with an Amazon DynamoDB table.

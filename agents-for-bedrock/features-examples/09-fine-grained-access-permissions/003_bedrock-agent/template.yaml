@@ -1,0 +1,258 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'CloudFormation template for creating an Amazon Bedrock agent'
+
+Parameters:
+  PolicyStoreId:
+    Type: String
+  UserPoolId:
+    Type: String    
+
+
+Resources:
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IAM Role for Amazon Bedrock Agents'
+
+Resources:
+
+  AmazonBedrockRoleForAgentsAgentAccess:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AmazonBedrockExecutionRoleForAgents_agentAccess
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17' 
+        Statement:
+          - Sid: AmazonBedrockAgentTrustPolicy
+            Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Sub ${AWS::AccountId}
+              ArnLike:  
+                aws:SourceArn: !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:agent/${BedrockAgent.AgentId}
+      Policies:
+        - PolicyName: fm_access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: AmazonBedrockAgentPolicy  
+                Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource: 
+                  - arn:aws:bedrock:us-east-1::foundation-model/*
+                  
+  BedrockAgent:
+    Type: AWS::Bedrock::Agent
+    Properties:
+      AgentName: insurance-claims-agent-app-test
+      Instruction: "You are an insurance agent that has access to domain-specific insurance knowledge. 
+      You can create new insurance claims, send pending document reminders to policy holders with open claims, and gather claim evidence. 
+      You can also retrieve claim amount and repair estimate information for a specific claim ID or answer general insurance questions about things like coverage, premium, policy, rate, deductible, accident, documents, resolution, and condition. 
+      You can answer internal questions about things like which steps an agent should follow and the company's internal processes. 
+      You can respond to questions about multiple claim IDs within a single conversation"
+      FoundationModel: anthropic.claude-3-sonnet-20240229-v1:0
+      IdleSessionTTLInSeconds: 1800
+      AutoPrepare: True
+      AgentResourceRoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/AmazonBedrockExecutionRoleForAgents_agentAccess
+      ActionGroups:
+      
+        - 
+                ActionGroupName: ClaimsActionGroup
+                Description: 'Action group for managing insurance claims'
+                ActionGroupExecutor:
+                  Lambda: !GetAtt ClaimsActionGroupLambdaExecutor.Arn
+                ApiSchema:
+                  Payload: |
+                    {
+                      "openapi": "3.0.0",
+                      "info": {
+                        "title": "Insurance Claims API",
+                        "description": "API for managing insurance claims",
+                        "version": "1.0.0"
+                      },
+                      "paths": {
+                        "/listClaims": {
+                          "get": {
+                            "description": "List all claims",
+                            "responses": {
+                              "200": {
+                                "description": "Successful response",
+                                "content": {
+                                  "application/json": {
+                                    "schema": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/components/schemas/Claim"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "/getClaim/{claimId}": {
+                          "get": {
+                            "description": "Get a claim by ID",
+                            "parameters": [
+                              {
+                                "name": "claimId",
+                                "in": "path",
+                                "description": "ID of the claim to retrieve",
+                                "required": true,
+                                "schema": {
+                                  "type": "integer"
+                                }
+                              }
+                            ],
+                            "responses": {
+                              "200": {
+                                "description": "Successful response",
+                                "content": {
+                                  "application/json": {
+                                    "schema": {
+                                      "$ref": "#/components/schemas/Claim"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "/updateClaim/{claimId}": {
+                          "put": {
+                            "description": "Update a claim by ID",
+                            "parameters": [
+                              {
+                                "name": "claimId",
+                                "in": "path",
+                                "description": "ID of the claim to update",
+                                "required": true,
+                                "schema": {
+                                  "type": "integer"
+                                }
+                              }
+                            ],
+                            "responses": {
+                              "200": {
+                                "description": "Successful response",
+                                "content": {
+                                  "application/json": {
+                                    "schema": {
+                                      "$ref": "#/components/schemas/Claim"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "components": {
+                        "schemas": {
+                          "Claim": {
+                            "type": "object",
+                            "description": "An insurance claim",
+                            "required": [
+                              "id",
+                              "claimAmount",
+                              "claimDescription",
+                              "claimStatus"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "description": "Unique identifier for the claim"
+                              },
+                              "claimAmount": {
+                                "type": "number",
+                                "description": "The amount of the claim"
+                              },
+                              "claimDescription": {
+                                "type": "string",
+                                "description": "Description of the claim"
+                              },
+                              "claimStatus": {
+                                "type": "string",
+                                "description": "Status of the claim (approved, pending, denied)",
+                                "enum": [
+                                  "approved",
+                                  "pending",
+                                  "denied"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+
+  ClaimsActionGroupLambdaExecutorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ClaimsActionGroupLambdaExecutor}"
+      RetentionInDays: 7
+      
+  ClaimsActionGroupLambdaExecutor:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./agent/
+      Description: ''
+      MemorySize: 128
+      Timeout: 3
+      Handler: agent.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      Environment:
+        Variables:
+          POLICY_STORE_ID: !Ref PolicyStoreId
+          REGION: !Sub ${AWS::AccountId}
+          USER_POOL_ID: !Ref UserPoolId
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - verifiedpermissions:IsAuthorized
+                - verifiedpermissions:IsAuthorizedWithToken
+                - verifiedpermissions:*
+              Resource: '*'
+
+      SnapStart:
+        ApplyOn: None
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+        
+  BedrockAgentAlias:        
+    Type: AWS::Bedrock::AgentAlias
+    DependsOn: BedrockAgent 
+    Properties:
+      AgentAliasName: TestAlias
+      AgentId: !GetAtt BedrockAgent.AgentId
+      Description: "Alias for testing"
+
+
+  LambdaResourcePolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ClaimsActionGroupLambdaExecutor
+      Action: lambda:InvokeFunction
+      Principal: bedrock.amazonaws.com
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*      
+
+Outputs:
+  BedrockAgentId:
+    Value: !GetAtt BedrockAgent.AgentId
+  BedrockAgentArn:
+    Value: !GetAtt BedrockAgent.AgentArn
+  BedrockAgentAliasId:
+    Value: !GetAtt BedrockAgentAlias.AgentAliasId    

@@ -8,7 +8,7 @@ import base64
 import PyPDF2
 import string
 import random
-import mammoth
+from docx import Document
 import pdfplumber
 import pandas as pd
 import streamlit as st
@@ -16,177 +16,182 @@ from docx import Document
 from requests import request
 from sigv4 import SigV4HttpRequester
 
-# Bedrock Variable
-agentId = os.environ['BEDROCK_AGENT_ID']
-agentAliasId = os.environ['BEDROCK_AGENT_ALIAS_ID']
-knowledgeBaseId = os.environ['BEDROCK_KB_ID']
-dataSourceId = os.environ['BEDROCK_DS_ID']
-region = os.environ['AWS_REGION']
-
-# Other Resource Variables
-knowledge_base_s3_bucket = os.environ['KB_BUCKET_NAME']
-
 # AWS Session and Clients Instantiation
-session = boto3.Session(region_name=os.environ['AWS_REGION'])
+region = os.environ['AWS_REGION']
+session = boto3.Session(region_name=region)
 agent_client = session.client('bedrock-agent')
 agent_runtime_client = session.client('bedrock-agent-runtime')
 s3_client = session.client('s3')
 
-# Streamlit CSS
-custom_css = """
-    <style>
-        .text-with-bg {
-        color: white;
-            background-color: #1c2e4a; /* Change this to your desired background color */
-            padding: 10px;
-            border-radius: 5px;
-        }
-    </style>
-"""
+# Streamlit Agents and Knowledge Bases Helper Functions
+def generate_session_id():
+    return ''.join(random.choices(string.digits, k=5))
+
+# Function to fetch agent data
+def fetch_agents():
+    agents = []
+    next_token = None
+    while True:
+        response = agent_client.list_agents(maxResults=10, nextToken=next_token) if next_token else agent_client.list_agents(maxResults=10)
+        agents.extend(response['agentSummaries'])
+        next_token = response.get('nextToken')
+        if not next_token:
+            break
+    return agents
+
+# Function to fetch knowledge base data
+def fetch_knowledge_bases():
+    knowledge_bases = []
+    next_token = None
+    while True:
+        response = agent_client.list_knowledge_bases(maxResults=10, nextToken=next_token) if next_token else agent_client.list_knowledge_bases(maxResults=10)
+        knowledge_bases.extend(response['knowledgeBaseSummaries'])
+        next_token = response.get('nextToken')
+        if not next_token:
+            break
+    return knowledge_bases
+
+# Function to fetch data sources and their IDs and names
+def fetch_data_sources(kb_id):
+    data_sources = []
+    next_token = None
+    while True:
+        response = agent_client.list_data_sources(knowledgeBaseId=kb_id, maxResults=100, nextToken=next_token) if next_token else agent_client.list_data_sources(knowledgeBaseId=kb_id, maxResults=100)
+        for ds in response['dataSourceSummaries']:
+            data_source_info = {
+                'id': ds['dataSourceId'],
+                'name': ds['name']
+            }
+            data_sources.append(data_source_info)
+        next_token = response.get('nextToken')
+        if not next_token:
+            break
+    return data_sources
+
+# Function to fetch agent aliases
+def fetch_agent_aliases(agent_id):
+    agent_aliases = []
+    next_token = None
+    while True:
+        response = agent_client.list_agent_aliases(agentId=agent_id, maxResults=5, nextToken=next_token) if next_token else agent_client.list_agent_aliases(agentId=agent_id, maxResults=5)
+        agent_aliases.extend(response['agentAliasSummaries'])
+        next_token = response.get('nextToken')
+        if not next_token:
+            break
+    return agent_aliases
+
+# Function to list knowledge bases associated with an agent
+def fetch_agent_knowledge_bases(agent_id):
+    response = agent_client.list_agent_knowledge_bases(
+        agentId=agent_id,
+        agentVersion='DRAFT'
+    )
+    return response['agentKnowledgeBaseSummaries']
+
+# Function to get knowledge base name
+def fetch_knowledge_base_name(kb_id):
+    response = agent_client.get_knowledge_base(knowledgeBaseId=kb_id)
+    return response['knowledgeBase']['name']
+
+# Function to S3 bucket name
+def extract_bucket_name(bucket_arn):
+    # ARN format: arn:aws:s3:::bucket_name
+    return bucket_arn.split(':')[-1]
+
+# Function to get data source S3 configuration
+def fetch_data_source_s3_configuration(data_source_id, knowledge_base_id):
+    response = agent_client.get_data_source(dataSourceId=data_source_id, knowledgeBaseId=knowledge_base_id)
+    s3_config = response['dataSource']['dataSourceConfiguration']['s3Configuration']
+    bucket_arn = s3_config['bucketArn']
+    bucket_name = extract_bucket_name(bucket_arn)
+    s3_config['bucketName'] = bucket_name  # Add bucket name to the configuration dictionary
+    return s3_config
+
+# Function to reset session settings when the mode changes
+def reset_session():
+    st.session_state['session_enabled'] = False
+    st.session_state['session_id'] = None
+    st.session_state['first_input_processed'] = False
+    st.session_state['user_input'] = ""
+
+# Fetching regional agent and knowledge base lists
+agent_summaries = fetch_agents()
+knowledge_base_summaries = fetch_knowledge_bases()
+
+agent_name_to_id = {agent['agentName']: agent['agentId'] for agent in agent_summaries}
+agent_name_list = list(agent_name_to_id.keys())
+
+# Create a mapping of knowledge base name to ID
+kb_name_to_id = {kb['name']: kb['knowledgeBaseId'] for kb in knowledge_base_summaries}
+kb_name_list = list(kb_name_to_id.keys())
+
+# Initialize session state for session enabled and session ID
+if 'session_enabled' not in st.session_state:
+    st.session_state['session_enabled'] = False
+if 'session_id' not in st.session_state:
+    st.session_state['session_id'] = None
+if 'first_input_processed' not in st.session_state:
+    st.session_state['first_input_processed'] = False
+if 'user_input' not in st.session_state:
+    st.session_state['user_input'] = ""
+if 'kb_id' not in st.session_state:
+    st.session_state['kb_id'] = None
+if 'data_source_id' not in st.session_state:
+    st.session_state['data_source_id'] = None
 
 # Streamlit App Layout
 st.title('Bedrock Insurance Agent')
 st.subheader('Powered by coffee and Amazon Bedrock')
-st.info("**DISCLAIMER:** This demo uses an Amazon Bedrock foundation model and is not intended to collect any personally identifiable information (PII) from users. Please do not provide any PII when interacting with this demo. The content generated by this demo is for informational purposes only.")
+st.info("**PURPOSE:** Allow users to select between Agents and Knowledge Bases for Amazon Bedrock for their task automation and intelligent search use cases. ")
 idp_logo = "bedrock_logo.png"
 st.sidebar.image(idp_logo, width=300, output_format='PNG')
-st.sidebar.markdown(custom_css, unsafe_allow_html=True)
-st.sidebar.subheader('**About this Demo**')
-st.sidebar.markdown('<p class="text-with-bg">The Bedrock Insurance Solution uses Agents and Knowledge base for Amazon Bedrock to assist human insurance agents by creating new claims, sending pending document reminders and gathering evidence for claims, and providing access to claims data, repair estimates, FAQs, and other insurance documents. </p>', unsafe_allow_html=True)
 
-def session_generator():
-    # Generate random characters and digits
-    digits = ''.join(random.choice(string.digits) for _ in range(4))  # Generating 4 random digits
-    chars = ''.join(random.choice(string.ascii_lowercase) for _ in range(3))  # Generating 3 random characters
-    
-    # Construct the pattern (1a23b-4c)
-    pattern = f"{digits[0]}{chars[0]}{digits[1:3]}{chars[1]}-{digits[3]}{chars[2]}"
-    print("Session ID: " + str(pattern))
+# User choice: Agent or Knowledge Base
+st.sidebar.subheader('1. Select Service Type')
+use_agent = st.sidebar.radio("Mode of Operation", ["Agent", "Knowledge Base"], on_change=reset_session)
 
-    return pattern
+# Dropdowns for selecting agent name, agent alias ID, knowledge base ID, and model ID (conditionally displayed)
+if use_agent == "Agent":
+    st.sidebar.subheader('2. Choose Your Agent')
+    agent_name = st.sidebar.selectbox("Agent Name", agent_name_list)
+    agent_id = agent_name_to_id[agent_name]
 
-def bedrock_agent(query, sessionId):
-    if query is not None:
+    # Fetch agent aliases based on selected agent ID
+    agent_alias_summaries = fetch_agent_aliases(agent_id) if agent_id else []
+    agent_alias_id_list = [alias['agentAliasId'] for alias in agent_alias_summaries]
+    agent_alias_id = st.sidebar.selectbox("Agent Alias ID", agent_alias_id_list) if agent_alias_id_list else st.sidebar.selectbox("Agent Alias ID", [])
 
-        agent_query = {
-            "inputText": query,   
-            "enableTrace": True,
-        }
+else:
+    st.sidebar.subheader('2. Choose Your Knowledge Base')
+    kb_name_to_id = {kb['name']: kb['knowledgeBaseId'] for kb in knowledge_base_summaries}
+    kb_name_list = list(kb_name_to_id.keys())
+    kb_name = st.sidebar.selectbox("Knowledge Base Name", kb_name_list)
+    kb_id = kb_name_to_id[kb_name]
+    st.session_state['kb_id'] = kb_id
 
-        # send request
-        print("Invoking Agent with query: " + query)
-        agent_url = f'https://bedrock-agent-runtime.{region}.amazonaws.com/agents/{agentId}/agentAliases/{agentAliasId}/sessions/{sessionId}/text'
-        requester = SigV4HttpRequester()
-        response = requester.send_signed_request(
-            url=agent_url,
-            method='POST',
-            service='bedrock',
-            headers={
-                'content-type': 'application/json', 
-                'accept': 'application/json',
-            },
-            region=region,
-            body=json.dumps(agent_query)
-        )
+st.sidebar.subheader('3. Select Model ID')
+model_id_list = ["anthropic.claude-3-sonnet", "anthropic.claude-3-haiku", "anthropic.claude-v2:1"]
+model_id_map = {
+    "anthropic.claude-3-sonnet": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "anthropic.claude-3-haiku": "anthropic.claude-3-haiku-20240307-v1:0",
+    "anthropic.claude-v2:1": "anthropic.claude-v2:1"
+}
 
-        print("RESPONSE = " + str(response))
-        
-        if response.status_code == 200:
-            # Parse sig4_request Response
-            response_string = ""
-            for line in response.iter_content():
-                try:
-                    response_string += line.decode(encoding='utf-8')
-                except:
-                    continue
+model_selection = st.sidebar.selectbox("Model ID", model_id_list)
+model_id = model_id_map[model_selection]
+model_arn = f"arn:aws:bedrock:{region}::foundation-model/{model_id}"
 
-            split_response = response_string.split(":message-type")
-            last_response = split_response[-1]
-            try:
-                encoded_last_response = last_response.split("\"")[3]
+# Enable Session checkbox, only enabled after the first input is processed
+st.sidebar.subheader('4. Session Setting')
+st.sidebar.radio("Enable Session", [False, True], key="session_enabled")
 
-                if encoded_last_response == "citations":
-                    # Find the start and end indices of the JSON content
-                    start_index = last_response.find('{')
-                    end_index = last_response.rfind('}')
+# Optional: Select filter attribute
+st.sidebar.subheader('5. (Optional) Filter Setting')
+filter_attributes = ["None", "external", "internal"]
+filter_attribute = st.sidebar.selectbox("Filter Attribute", filter_attributes)
 
-                    # Extract the JSON content
-                    json_content = last_response[start_index:end_index + 1]
-
-                    try:
-                        data = json.loads(json_content)
-                        final_response = data['attribution']['citations'][0]['generatedResponsePart']['textResponsePart']['text']
-                    except json.decoder.JSONDecodeError as e:
-                        print(f"JSON decoding error: {e}")
-                    except KeyError as e:
-                        print(f"KeyError: {e}")
-                else:
-                    decoded = base64.b64decode(encoded_last_response)
-                    final_response = decoded.decode('utf-8')
-            except base64.binascii.Error as e:
-                print(f"Base64 decoding error: {e}")
-                final_response = last_response  # Or assign a default value
-
-        print("Agent Response: " + final_response)
-        return final_response
-
-def update_knowledge_base(file_content, bucket_name, s3_file_name):
-    print("Syncing Knowledge Base Data Source")
-
-    try:
-        # Wrap the bytes content in an in-memory file-like object
-        file_obj = io.BytesIO(file_content)
-
-        s3_client.upload_fileobj(file_obj, bucket_name, s3_file_name)
-        st.success(f"File uploaded successfully to S3 bucket '{bucket_name}' as '{s3_file_name}'")
-    except Exception as e:
-        st.error(f"Error uploading file to S3: {e}")
-        return
-
-    # Start ingestion job
-    description = "Programmatic update of Bedrock Knowledge Base Data Source"
-    try:
-        response = agent_client.start_ingestion_job(
-            dataSourceId=dataSourceId,
-            description=description,
-            knowledgeBaseId=knowledgeBaseId
-        )
-
-    except Exception as e:
-        st.error(f"Error starting ingestion job: {e}")
-    finally:
-        file_obj.close()  # Close the file-like object after upload
-
-def check_ingestion_job_status():
-    headers = {
-        "Content-type": "application/json",
-        # Add any necessary headers here
-    }
-
-    status = ""
-    while status != "complete":
-        try:
-            response = agent_client.list_ingestion_jobs(
-                knowledgeBaseId=knowledgeBaseId,
-                dataSourceId=dataSourceId,
-            )
-            
-            if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                job_status = response["ingestionJobSummaries"][0]["status"]
-                print(f"Ingestion Job Status: {job_status}")
-                st.write(f"Ingestion Job Status: {job_status}")
-                
-                if job_status == "COMPLETE":
-                    break
-            else:
-                st.write(f"Error: {response.status_code} - {response.text}")
-        except Exception as e:
-            st.write(f"An error occurred: {e}")
-
-        time.sleep(4)  # Poll every 4 seconds (adjust as needed)
-
+# Streamlit File Preview Helper Methods
 def show_csv(uploaded_file):
-    # Display CSV preview
     st.subheader("CSV Preview")
     df = pd.read_csv(uploaded_file)
     st.write(df)
@@ -204,15 +209,15 @@ def extract_text_from_docx(uploaded_file):
 
 def convert_docx_to_html(docx_content):
     try:
-        # Convert docx content to HTML using mammoth
-        result = mammoth.convert_to_html(io.BytesIO(docx_content))
-        return result.value
+        document = Document(io.BytesIO(docx_content))
+        text = "\n".join([paragraph.text for paragraph in document.paragraphs])
+        html_content = f"<p>{text}</p>"
+        return html_content
     except Exception as e:
         st.error(f"Error converting .docx to HTML: {e}")
         return None
 
 def show_doc(uploaded_file):
-    # Display content of .doc files
     st.subheader("Document Preview")
     text = extract_text_from_docx(uploaded_file)
     if text:
@@ -221,23 +226,17 @@ def show_doc(uploaded_file):
         st.error("Uploaded file is not a valid Word document.")
 
 def show_docx(uploaded_file):
-    # Display content of .docx files
     st.subheader("Document Preview")
     file_name = uploaded_file.name.lower()
-
     if 'docx' in file_name:
-        # Read the content of the uploaded file
         docx_content = uploaded_file.getvalue()
-
-        # For .docx files, convert to HTML for preview
         html_result = convert_docx_to_html(docx_content)
         if html_result:
-            st.markdown(html_result, unsafe_allow_html=True)  # Display HTML content
+            st.markdown(html_result, unsafe_allow_html=True)
         else:
             st.error("Failed to convert .docx to HTML")
 
 def show_excel(uploaded_file):
-    # Display Excel preview
     try:
         df = pd.read_excel(uploaded_file)
         st.subheader("Excel Preview")
@@ -251,19 +250,16 @@ def show_html(uploaded_file):
     st.markdown(html_content, unsafe_allow_html=True)
 
 def show_md(uploaded_file):
-    # Display Markdown preview
     st.subheader("Markdown Preview")
     md_content = uploaded_file.getvalue().decode("utf-8")
     st.markdown(md_content)
 
 def show_pdf(uploaded_file):
-    # Display PDF preview
     st.subheader("PDF Preview")
     pdf_display = f'<iframe src="data:application/pdf;base64,{base64.b64encode(uploaded_file.read()).decode("utf-8")}" width="100%" height="500"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 def show_text(uploaded_file):
-    #Display Text preview
     text = uploaded_file.getvalue().decode("utf-8")
     st.subheader("Text Preview")
     st.write(text)
@@ -271,7 +267,6 @@ def show_text(uploaded_file):
 def process_uploaded_file(uploaded_file):
     file_name = uploaded_file.name.lower()
     file_extension = file_name.split(".")[-1]
-
     file_contents = None
 
     if file_extension == "csv":
@@ -311,45 +306,222 @@ def process_uploaded_file(uploaded_file):
         file_contents = uploaded_file.getvalue()
 
     else:
-        # Unsupported file type
         st.error("Preview not available for this file type.")
 
     return file_contents
 
+# Agents and Knowledge Bases API Helper Functions
+def bedrock_query_knowledge_base(query):
+    print(f"Knowledge Base query: {query}")
+
+    prompt_template = """\n\nHuman: You will be acting as a helpful customer service representative named Ava (short for Amazon Virtual Assistant) working for AnyCompany. Provide a summarized answer using only 1 or 2 sentences. 
+    Here is the relevant information in numbered order from our knowledge base: $search_results$
+    Current time: $current_time$
+    User query: $query$\n\nAssistant: """
+
+    payload = {
+        "input": {
+            "text": query
+        },
+        "retrieveAndGenerateConfiguration": {
+            "type": "KNOWLEDGE_BASE",
+            "knowledgeBaseConfiguration": {
+                "generationConfiguration": {
+                    "promptTemplate": {
+                        "textPromptTemplate": prompt_template
+                    }
+                },
+                "knowledgeBaseId": kb_id,
+                "modelArn": model_arn,
+                "retrievalConfiguration": {
+                    "vectorSearchConfiguration": {
+                        "numberOfResults": 5,
+                    }
+                }
+            }
+        }
+    }
+
+    if filter_attribute != "None":
+        print(f"filter_attribute: {filter_attribute}")
+        payload["retrieveAndGenerateConfiguration"]["knowledgeBaseConfiguration"]["retrievalConfiguration"] = {
+            "vectorSearchConfiguration": {
+                "numberOfResults": 5,
+                "filter": {
+                    "equals": {
+                        "key": "exposure",
+                        "value": filter_attribute
+                    }
+                }
+            }
+        }
+
+    if st.session_state.get("session_enabled", True):
+        if st.session_state["session_id"] is not None:
+            sesh = st.session_state["session_id"]
+            print(f"session_id: {sesh}")
+            payload["sessionId"] = st.session_state["session_id"]
+
+    try:
+        response = agent_runtime_client.retrieve_and_generate(**payload)
+        st.session_state["session_id"] = response.get("sessionId", st.session_state["session_id"])
+        retrieval_results = response.get("retrievalResults", [])
+
+        if 'output' in response:
+            kb_response = response['output']['text']
+            output_lines = kb_response.split('\n')
+            clean_response = output_lines[-1].strip()
+            print(f"Knowledge Base response ({model_selection}): {clean_response}\n")
+            return clean_response
+        else:
+            return "No relevant information found in the knowledge base."
+
+    except Exception as e:
+        return f"Error querying knowledge base: {e}"
+
+def update_knowledge_base(file_content, bucket_name, s3_file_name, selected_ds_id, selected_kb_id):
+    print("Syncing Knowledge Base Data Source")
+
+    try:
+        file_obj = io.BytesIO(file_content)
+        s3_client.upload_fileobj(file_obj, bucket_name, s3_file_name)
+        st.success(f"File uploaded successfully to S3 bucket '{bucket_name}' as '{s3_file_name}'")
+    except Exception as e:
+        st.error(f"Error uploading file to S3: {e}")
+        return
+
+    description = "Programmatic update of Bedrock Knowledge Base Data Source"
+    try:
+        response = agent_client.start_ingestion_job(
+            dataSourceId=selected_ds_id,
+            description=description,
+            knowledgeBaseId=selected_kb_id
+        )
+    except Exception as e:
+        st.error(f"Error starting ingestion job: {e}")
+    finally:
+        file_obj.close()
+
+def check_ingestion_job_status(selected_ds_id, selected_kb_id):
+    headers = {
+        "Content-type": "application/json",
+    }
+
+    status = ""
+    while status != "complete":
+        try:
+            response = agent_client.list_ingestion_jobs(
+                knowledgeBaseId=selected_kb_id,
+                dataSourceId=selected_ds_id,
+            )
+            
+            if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                job_status = response["ingestionJobSummaries"][0]["status"]
+                print(f"Ingestion Job Status: {job_status}")
+                st.write(f"Ingestion Job Status: {job_status}")
+                
+                if job_status == "COMPLETE":
+                    break
+            else:
+                st.write(f"Error: {response.status_code} - {response.text}")
+        except Exception as e:
+            st.write(f"An error occurred: {e}")
+
+        time.sleep(4)
+
+def invoke_agent(query):
+    print(f"Agent query: {query}")
+
+    # Generate new session ID if session is not enabled or session ID is None
+    if not st.session_state["session_enabled"]:
+        st.session_state["session_id"] = generate_session_id()
+    
+    try:    
+        # Build the parameters for the invoke_agent call
+        params = {
+            'agentAliasId': agent_alias_id,
+            'agentId': agent_id,
+            'sessionId': st.session_state["session_id"],
+            'inputText': query,
+            'enableTrace': True
+        }
+        
+        # Invoke the agent
+        response = agent_runtime_client.invoke_agent(**params)
+        
+        # Handle the response (this is a simplification, adjust as needed for your use case)
+        for event in response['completion']:
+            if 'chunk' in event:
+                result_bytes = event['chunk']['bytes']
+                result_text = result_bytes.decode('utf-8')
+                print(f"Agent response ({model_selection}): {result_text}\n")
+                return result_text
+
+    except Exception as e:
+        return f"Error invoking agent: {e}"
 
 def main():
     if not "valid_inputs_received" in st.session_state:
         st.session_state["valid_inputs_received"] = False
 
-    # --- Agent Q&A ---
-    st.subheader('Agent for Amazon Bedrock - Prompt Input')
-    query = st.text_input("User Input", value="", placeholder="What can the agent help you with?", label_visibility="visible")
-    agent_response = None
+    if "uploaded_files" not in st.session_state:
+        st.session_state["uploaded_files"] = []
+
+    if use_agent == "Agent":
+        st.subheader("Agents for Amazon Bedrock - Prompt Input")
+    else:
+        st.subheader("Knowledge Bases for Amazon Bedrock - Prompt Input")
+        selected_kb_id = kb_id
     
+    query = st.text_input("User Input", value="", placeholder="What can the agent help you with?", label_visibility="visible")
+
+    response = None
     if st.session_state.get("previous_query") != query and query != "":
-        if "session_id" not in st.session_state:
-            st.session_state["session_id"] = session_generator()
+        st.session_state['first_input_processed'] = True
+        st.session_state["previous_query"] = query
 
-        sessionId = st.session_state["session_id"]
-        agent_response = bedrock_agent(query, sessionId)
-        st.session_state["previous_query"] = query  # Update previous_query if query changes
+        if use_agent == "Agent":
+            response = invoke_agent(query)
+        else:
+            response = bedrock_query_knowledge_base(query)
 
-    if agent_response is not None:
-        st.write("Agent's Response:", agent_response)
+    if response:
+        st.write("Response:", response)
 
-    # --- Knowledge Base Update ---
-    st.subheader("Knowledge Base for Amazon Bedrock - File Upload")
-    uploaded_file = st.file_uploader("Upload Document", type=["csv", "doc", "docx", "htm", "html", "md", "pdf", "txt", "xls", "xlsx"])
+    st.subheader("Knowledge Bases for Amazon Bedrock - File Upload")
 
-    if uploaded_file is not None:
-        if uploaded_file != st.session_state.get("uploaded_file"):
-            st.session_state["uploaded_file"] = uploaded_file
+    if use_agent == "Agent":
+        try:
+            knowledge_bases = fetch_agent_knowledge_bases(agent_id)
+            kb_ids = [kb['knowledgeBaseId'] for kb in knowledge_bases]
+            kb_options = [fetch_knowledge_base_name(kb_id) for kb_id in kb_ids]
 
-            file_name = "agent/knowledge-base-assets/" + uploaded_file.name
-            file_contents = process_uploaded_file(uploaded_file)
-            update_knowledge_base(file_contents, knowledge_base_s3_bucket, file_name)
-            check_ingestion_job_status()
+            selected_kb_name = st.selectbox("Select Knowledge Base", options=kb_options)
+            selected_kb_id = kb_ids[kb_options.index(selected_kb_name)]
 
-# Call the main function to run the app
+        except Exception as e:
+            st.error(f"Error fetching knowledge bases: {str(e)}")
+
+    # Fetch data sources and their IDs and names
+    data_sources = fetch_data_sources(selected_kb_id)
+    ds_options = [ds['name'] for ds in data_sources]
+    selected_ds_name = st.selectbox("Select Data Source", options=ds_options)
+    selected_ds_id = next(ds['id'] for ds in data_sources if ds['name'] == selected_ds_name)
+    
+    st.session_state['kb_id'] = selected_kb_id
+    st.session_state['data_source_id'] = selected_ds_id
+    s3_configuration = fetch_data_source_s3_configuration(selected_ds_id, selected_kb_id)
+
+    uploaded_files = st.file_uploader("Upload Document", type=["csv", "doc", "docx", "htm", "html", "md", "pdf", "txt", "xls", "xlsx"], accept_multiple_files=True)
+
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            if uploaded_file not in st.session_state["uploaded_files"]:
+                st.session_state["uploaded_files"].append(uploaded_file)
+                file_name = "agent/knowledge-base-assets/" + uploaded_file.name
+                file_contents = process_uploaded_file(uploaded_file)
+                update_knowledge_base(file_contents, s3_configuration['bucketName'], file_name, selected_ds_id, selected_kb_id)
+                check_ingestion_job_status(selected_ds_id, selected_kb_id)
+
 if __name__ == "__main__":
     main()
