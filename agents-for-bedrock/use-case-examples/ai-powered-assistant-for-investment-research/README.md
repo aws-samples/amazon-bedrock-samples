@@ -38,7 +38,7 @@ Upload the files in folder *files* to the S3 bucket.
 This Solution use Anthropic Claude 3 model in Bedrock. Make sure you have access to the model in Bedrock.
 Navigate to the Bedrock console and click on **Model Access** to the left tab. Select the **Manage model access** button to the top-right.
 
-<img src="images/bedrock-access.JPG" width="680"/>
+<img src="images/bedrock-access.jpg" width="680"/>
 
 \
 Submit the **Use case details** and select the checkboxes beside the Anthropic models. Then select **save changes** button.
