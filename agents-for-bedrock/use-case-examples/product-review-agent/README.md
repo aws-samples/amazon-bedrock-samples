@@ -1,6 +1,10 @@
 # Custom integration with knowledge base
 
-The agent integrates with the knowledge base without an explicit association to it. Essentially, based on the function invoked in the function definitions, it can choose to query the vector DB directly by filtering or the knowledge base through both filtering and semantic similarity. This is useful when you want to leverage on the managed knowledge base for data maintenance (create,delete,update of documents in vector database), and exert more control over invocations of the knowledge base.
+The agent integrates with the knowledge base **without an explicit association** to it. Essentially, based on the function invoked in the function definitions, it can choose to query the vector DB directly by filtering or the knowledge base through both filtering and semantic similarity. This is useful when you want to leverage on the managed knowledge base for data maintenance (create,delete,update of documents in vector database), and exert more control over invocations of the knowledge base.
+
+## Architecture
+
+![product review agent](./architecture/product-review-agent.drawio.png)
 
 ## Dataset
 
@@ -27,20 +31,13 @@ The second function ```retrieve-reviews-hybrid``` is similar to the first except
 ## Run
 
 1. Request [model access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html) to Anthropic Claude 3 Haiku and Cohere Embed (English).
-2. Install requirements
-
-```bash
-pip install -r requirements.txt
-```
 
 2. Step through the cells in main.ipynb
 
 3. Interact using streamlit web app
 
-Fill in agent id and alias in agent.py
-
 ```bash
-streamlit run main.py
+streamlit run main.py -- --id your_agent_id --alias your_agent_alias_id
 ```
 
 ### Sample prompts and responses

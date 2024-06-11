@@ -1,7 +1,14 @@
 import streamlit as st
 import datetime
 import time
-from agent import invoke_agent
+from agent import ProductReviewAgent
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-id','--id')
+parser.add_argument('-alias','--alias')
+args = parser.parse_args()
+agent = ProductReviewAgent(args)
 
 st.title('Agent with custom knowledge base query')
 
@@ -41,6 +48,6 @@ if user_input := st.chat_input("Ask me questions on product reviews."):
 
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
-        response = st.write_stream(invoke_agent(prompt))
+        response = st.write_stream(agent.invoke_agent(prompt))
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
