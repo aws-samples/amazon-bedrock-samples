@@ -215,21 +215,18 @@ If you already have Streamlit, make sure you have a current version
 
 </br><img src="images/streamlit-filled.jpg" alt="streamlit-filled" width="500" align="center" border="1"/></br>
 
+</br><img src="images/streamlit-filled-checked.jpg" alt="streamlit-filled-checked" width="500" align="center" border="1"/></br>
+
 When you submit a prompt, the Streamlit app triggers the Lambda function, which invokes the Knowledge Bases RetrieveAndGenerate API to search and generate responses.
 
 The following table includes some sample questions and related knowledge base responses. Try out some of these questions by using prompts. 
 
 | Questions | Answers |
 | --------- | ------- |
-| What is Amazon's doing in the field of generative AI? |	Amazon has been working on their own large language models (LLMs) for generative AI and believes it will transform and improve every customer experience. They plan to continue investing substantially in these models across all their consumer, seller, brand, and creator experiences. |
-| What is AWS year-over-year revenue in 2022? | AWS revenue grew 29% year-over-year in 2022 on a $62 billion revenue base in 2021.
-How many days has Amazon asked employees to come to work in office? | Amazon has asked corporate employees to come back to office at least three days a week beginning May 2022. |
-| By what percentage did AWS revenue grow year-over-year in 2022? | AWS had a 29% year-over-year ('YoY') revenue in 2022. |
-| Compared to Graviton2 processors, what performance improvement did Graviton3 chips deliver according to the passage? | In 2022, AWS delivered their Graviton3 chips, providing 25% better performance than the Graviton2 processors. |
-| Which was the first inference chip launched by AWS according to the passage? | AWS launched their first inference chips (“Inferentia”) in 2019, and they have saved companies like Amazon over a hundred million dollars in capital expense. | 
-| According to the context, in what year did Amazon's annual revenue increase from $245B to $434B?	| Amazon's annual revenue increased from $245B in 2019 to $434B in 2022. |
 | **Uncheck Enable Guardrails**  How did Google do in 2023 ?  	| The search results do not contain any information about Google's business performance in 2023. |
 | **Check Enable Guardrails**  How did Google do in 2023 ? 	| Sorry, the model cannot answer this question. |
+| What is Amazon's doing in the field of generative AI? |	Amazon has been working on their own large language models (LLMs) for generative AI and believes it will transform and improve every customer experience. They plan to continue investing substantially in these models across all their consumer, seller, brand, and creator experiences. |
+| What is AWS year-over-year revenue in 2022? | AWS revenue grew 29% year-over-year in 2022 on a $62 billion revenue base in 2021.
 
 During the first call to the Lambda function, the ```RetrieveAndGenerate``` API returns a ```sessionId```, which is then passed by the Streamlit app along with the subsequent user prompt as an input to the ```RetrieveAndGenerate``` API to continue the conversation in the same session. The ```RetrieveAndGenerate``` API manages the short-term memory and uses the chat history as long as the same ```sessionId``` is passed as an input in the successive calls. When Enable Guardrails is checked we pass ```generationConfiguration``` and provide the ```guardrailsId```. 
 
