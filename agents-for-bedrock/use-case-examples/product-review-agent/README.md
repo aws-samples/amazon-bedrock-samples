@@ -4,7 +4,7 @@ The agent integrates with the knowledge base **without an explicit association**
 
 ## Architecture
 
-![product review agent](./architecture/product-review-agent.drawio.png)
+![product review agent](./architecture/architecture.jpeg)
 
 ## Dataset
 
