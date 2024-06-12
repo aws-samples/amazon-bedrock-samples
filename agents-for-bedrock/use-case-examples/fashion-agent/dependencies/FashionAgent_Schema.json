@@ -1,0 +1,276 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Titan Image Gen",
+        "version": "1.0.0",
+        "description": "APIs for processing user input for image creation and getting the weather at a location"
+    },
+    "paths": {
+		"/outpaint": {
+           "get": {
+                "summary": "Outpaint the outfit to the desired scene or environment",
+                "description": "Modify an image by seamlessly extending the region defined by the mask. Outpaint the outfit in the image to the requested scene or environment or background using a text prompt.",
+                "operationId": "outpaint",
+                "parameters":[{
+                    "name": "text",
+                    "description": "The prompt describing the desired scene or environment the user wants for the outfit",
+		            "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                },{
+                    "name": "mask",
+                    "description": "The description for mask of the outfit to be outpainted. Mask here means the parts that user doesn't want to change. Just describing the items to be masked, without adding instructions like keeping or unchanging.",
+	                "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                },{
+                    "name": "image_location",
+                    "description": "The S3 location URI for user uploaded image",
+	                "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "responsebody": {
+                                            "type": "string",
+                                            "description": "The S3 location for outpainted image"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. Please check log for more details."
+                    }
+                }
+            }
+        },
+        "/inpaint": {
+            "get": {
+                "summary": "Inpaint the outfit to the desired style in the same scene",
+                "description": "Inpainting is defined as an image editing operation where a section of the image called a mask is modified to match the surrounding background in the input image. Inpaint the outfits or clothes in the image to the desired style. The inpaint parameter mask should only contains the outfits/clothes need to be changed, parameter text should contains the desired outfits/clothes design in the generated image.",
+                "operationId": "inpaint",
+                "parameters":[{
+                    "name": "text",
+                    "description":"Text prompt to guide inpainting, showing how user wants the new image to be. ",
+		            "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                },{
+                    "name": "mask",
+                    "description": "Prompt used for describing where in the current image that the user wants to change. Normally it should be the current outfits or clothes in the image.",
+	                "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                },{
+                    "name": "image_location",
+                    "description": "The S3 location URI for user uploaded image",
+	                "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "responsebody": {
+                                            "type": "string",
+                                            "description": "The S3 location for inpainted image"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. Please check log for more details."
+                    }
+                }
+            }
+        },
+        "/image_lookup": {
+            "get": {
+                "summary": "Search for the image in the database/catalog.",
+                "description": "Search for the input image in the database/catalog & retrieve similar images. If the image location is not provided use the default value of None",
+                "operationId": "image_lookup",
+                "parameters": [{
+                    "name": "input_image",
+                    "description": "S3 location URI of the user uploaded image. This is not a required input. If an input location for the image is not provided, use a default value of None ",
+		    "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                },{
+                    "name": "input_query",
+                    "description": "This is the part of the user query that describes the details to be included in the image. This is not a required input. If this not provided used a default value of None",
+	            "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "responsebody": {
+                                            "type": "string",
+                                            "description": "The S3 location URI for the matching image."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "No matching image retrieved. Redirecting to /imageGeneration ApiPath. Using the original query as input_query parameter",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "responsebody": {
+                                            "type": "string",
+                                            "description": "The S3 location URI for the original input image."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Bad request. One or more required fields are missing or invalid."
+                    }
+                }
+            }
+        },
+        "/weather": {
+            "get": {
+                "summary": "Finds weather at a given location",
+                "description":"This finds the weather at a particular geographical location",
+                "operationId": "get_weather",
+                "parameters": [{
+                    "name": "location_name",
+                    "description": "the location indicated in the user query",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "int"
+                    }
+                }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "weather": {
+                                            "type": "string",
+                                            "description": "String with weather information for a given location identified from user's prompt. This will be used if needed in the /imageGeneration API"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. Please ask user to confirm location."
+                    }
+                }
+            }
+        },
+        "/imageGeneration": {
+            "get": {
+                "summary": "Given the weather information, generate an image based on user's query and image provided",
+                "description":"This action generates images based on user's query and image provided by the user, the weather parameter is only needed if a location was mentioned in the user query. If weather is needed used the /weather api to get the weather input needed. In other cases where a location is not mentioned by the user query the weather parameter is optional.",
+                "operationId": "getImageGen",
+		"parameters": [{
+                    "name": "input_query",
+                    "description": "This is the part of the user query that describes the details to be included in the image.",
+	            "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+		{
+                    "name": "weather",
+                    "in": "query",
+	            "required": true,
+                    "description": " This parameter is input with the weather output if the /weather api is called. If a location is not mentioned in the user query use the default value of None",
+                    "schema": {
+                        "type": "string"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Generates a response with the s3 location of the images that were generated ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "S3-location": {
+                                                "type": "string",
+                                                "description": "the s3 location of the generated images"
+                                            }
+
+
+                                        }
+
+                                }
+                            }
+                        }
+                    },
+		    "400": {
+                     "description":"if no image generated, ask the user if they want to try asking another fashion question",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "responsebody": {
+                                            "type": "string",
+                                            "description": "output message"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
