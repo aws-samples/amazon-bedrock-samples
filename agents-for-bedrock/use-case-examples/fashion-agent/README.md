@@ -24,7 +24,7 @@ This project is a fashion assistant agent built with Amazon Titan models and Age
 
 1. Clone the GitHub repository
 2. Complete prerequisites and grant sufficient permissions
-3. (Optional) If using the image lookup feature, execute code snippets in `Create_OSS.ipynb` to create a vector store and use the Titan Multi-modal Embedding model to embed and store sample images
+3. (Optional) If using the image lookup feature, execute code snippets in `Create_OSS_vectorstore.ipynb` to create a vector store and use the Titan Multi-modal Embedding model to embed and store sample images
 4. Execute code snippets in `Create_Agent.ipynb` to create the infrastructure and build the agent
 5. Run the Streamlit UI to interact with the agent: `streamlit run frontend/app.py`
 
