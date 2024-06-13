@@ -163,7 +163,42 @@ The following are the available application features -
 5. **Session Enabling:** Option to enable session persistence.
 6. **Filter Application:** Option to apply filters based on attributes.
 
-### Agents and Knowledge Bases for Amazon Bedrock Functions
+### Deploy Streamlit UI
+
+To isolate our Streamlit application dependencies and for ease of deployment, we use the [setup-streamlit-env.sh](../agent/streamlit/setup-streamlit-env.sh) shell script to create a virtual Python environment with the requirements installed.
+
+1.	Before you run the shell script, navigate to the directory where you cloned the amazon-bedrock-samples repository and modify the Streamlit shell script permissions to executable:
+
+```sh 
+# If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
+cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/insurance-claim-lifecycle-automation/agent/streamlit/
+chmod u+x setup-streamlit-env.sh
+```
+
+2.	Run the shell script to activate the virtual Python environment with the required dependencies:
+
+```sh 
+source ./setup-streamlit-env.sh
+```
+
+3.	Set your Bedrock agent ID, agent alias ID, knowledge base ID, data source ID, and knowledge base bucket name environment variables.
+
+```sh 
+export AWS_REGION=<YOUR-AWS-REGION> # Region into which you deployed the stack
+```
+
+4.	Run your Streamlit application and begin testing in your local web browser:
+
+```sh 
+streamlit run agent_streamlit.py
+```
+
+<p align="center">
+  <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
+  <span style="display: block; text-align: center;"><em>Figure 21: Streamlit Agent Application</em></span>
+</p>
+
+### Agents and Knowledge Bases for Amazon Bedrock Streamlit Functions
 
 #### `bedrock_query_knowledge_base(query)`
 This function queries the knowledge base to retrieve information and generate a response based on the retrieved data.
@@ -333,41 +368,6 @@ def invoke_agent(query):
     except Exception as e:
         return f"Error invoking agent: {e}"
 ```
-
-### Deploy Streamlit UI
-
-To isolate our Streamlit application dependencies and for ease of deployment, we use the [setup-streamlit-env.sh](../agent/streamlit/setup-streamlit-env.sh) shell script to create a virtual Python environment with the requirements installed.
-
-1.	Before you run the shell script, navigate to the directory where you cloned the amazon-bedrock-samples repository and modify the Streamlit shell script permissions to executable:
-
-```sh 
-# If not already cloned, clone the remote repository (https://github.com/aws-samples/amazon-bedrock-samples) and change working directory to insurance agent shell folder
-cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/insurance-claim-lifecycle-automation/agent/streamlit/
-chmod u+x setup-streamlit-env.sh
-```
-
-2.	Run the shell script to activate the virtual Python environment with the required dependencies:
-
-```sh 
-source ./setup-streamlit-env.sh
-```
-
-3.	Set your Bedrock agent ID, agent alias ID, knowledge base ID, data source ID, and knowledge base bucket name environment variables.
-
-```sh 
-export AWS_REGION=<YOUR-AWS-REGION> # Region into which you deployed the stack
-```
-
-4.	Run your Streamlit application and begin testing in your local web browser:
-
-```sh 
-streamlit run agent_streamlit.py
-```
-
-<p align="center">
-  <img src="../design/streamlit-app.png" width="85%" height="85%"><br>
-  <span style="display: block; text-align: center;"><em>Figure 21: Streamlit Agent Application</em></span>
-</p>
 
 While the demonstrated solution showcases the capabilities of Agents and Knowledge Bases for Amazon Bedrock, it is important to understand that this solution is not Production-ready. Rather, it serves as a conceptual guide for developers aiming to create personalized agents for their own specific tasks and automated workflows. Developers aiming for production deployment should refine and adapt this initial model, keeping in mind the several key considerations outlined in the [Amazon Bedrock generative AI agent blog](https://aws.amazon.com/blogs/machine-learning/build-generative-ai-agents-with-amazon-bedrock-amazon-dynamodb-amazon-kendra-amazon-lex-and-langchain/).
 
