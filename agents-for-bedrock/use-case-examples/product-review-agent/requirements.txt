@@ -1,0 +1,5 @@
+boto3>=1.34.118
+awscli
+botocore
+opensearch-py
+requests-aws4auth

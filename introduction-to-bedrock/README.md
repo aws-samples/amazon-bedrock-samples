@@ -9,6 +9,10 @@ This repository contains examples to get you started with the core Amazon Bedroc
 
 ## Contents
 
+- [Getting Started with Bedrock Converse API - Notebook](Getting_started_with_Converse_API.ipynb) - Example notebook to illustrate the basics of the Converse API
+- [Getting Started with Bedrock Converse API - Streamlit demo](getting_started_converse_bedrock_streamlit.py) - Streamlit demo to illustrate the basics of the Converse API
+- [Model Choice with Bedrock Converse API - Streamlit demo](model_choice_converse_bedrock_streamlit.py) - Streamlit demo to illustrate the model choice with the Converse API
+- [Model Choice with Bedrock Converse API - Demo script](model-choice-demo-converse-api.py) - Script demo to illustrate the model choice with the Converse API
 - [Getting Started with the API](bedrock_api.py) - Simple example using the REST API
 - [Example using the Python SDK](bedrock_sdk.py) - Simple example using the Python SDK
 - [Streaming your responses](bedrock_streaming.py) - Example that streams your response from Bedrock

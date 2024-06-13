@@ -1,0 +1,96 @@
+---
+# Name of the application
+app_name: llm-as-a-judge-eval-pipeline
+
+aws:
+  region: us-east-1
+
+# Set the steps you want to run all via a python script to get the 
+# the inferences and the evaluation metrics and files created
+run_steps:
+  # this step runs the inference against the user dataset
+  1_get_inference.ipynb: yes
+  # this step runs the evaluation solution using the LLM as a judge
+  2_run_llm_as_a_judge_eval.ipynb: yes
+
+# directory paths
+dir_info:
+  data_dir: data
+  dataset_dir: source_data
+  # enter the name of your dataset here. it should be placed in the
+  # data/source_data/ directory
+  dataset_file_name: data.csv
+  # this is the folder where all of the evaluation metrics are stored
+  metrics: results
+  # this folder contains raw json file for each response that the llm as a judge
+  # evaluates
+  llm_as_a_judge_dir: eval_completions
+  # this directory contains prompt templates for inference, evaluation
+  prompt_dir: prompt_template
+  # CSV file names to be saved in different directories
+  llm_as_a_judge_completions: llm_as_a_judge_completions.csv
+  raw_llm_as_a_judge_completions: raw_llm_responses.csv
+  # this contains all of the different model comparison and selection metrics
+  llm_as_a_judge_comparisons: llm_as_a_judge_comparisons.csv
+  llm_comparisons_txt: llm_as_a_judge_comparisons.txt
+  # this file shows the rate at which the specific models were picked by the 
+  # LLM as a judge in the evaluation process
+  llm_as_a_judge_pick_rate: llm_as_a_judge_pick_rate.csv
+  # prompt template for Llama3 as an LLM as a judge
+  eval_prompt_template: llama3_eval_prompt.txt
+  prompt_template: prompt_template.txt
+  processed_eval_prompts: processed_eval_prompts.csv
+  # text file containing the p50 and p95 latency metrics
+  inference_latency_summary_fname: inference_latency_summary.txt
+  # csv file containing all the response completions, latency, input/output tokens, etc
+  all_results_file_name: all_results.csv
+  all_explanations: all_explanations.txt
+  # prompt template that is used to take all evaluations from the LLM as a judge and provide
+  # a final file containing a summary on patterns/trends and the preferred model for the dataset
+  claude_final_summary_eval_prompt: data/prompt_template/claude_final_summary_prompt.txt
+  final_summary_analysis: final_analysis.txt
+  
+# these are the dataset column names that the user provides as prompts to get inference from
+# if your dataset has a column with the entire prompt payload, name that column in 'user_question_col' below 
+# and leave the 'system_prompt_col' empty. If you have a dataset that uses both a user and a system prompt, 
+# name both the columns below.
+dataset_info:
+  # in this case, the 'user_input' column has the entire prompt payload, including the context and the question
+  # so the models get inference from this column
+  user_question_col: user_input
+  # specify the system prompt column name if a system prompt is used, else leave this empty
+  system_prompt_col:
+  # this is the name of an optional column. This optional column is a response candidate the user might provide
+  # as an example response to the question in the prompt. In that case, this response candidate will be used with the
+  # other model generated responses in the evaluation process
+  pre_existing_response_col: model_1
+
+# enter the llm as a judge information below, including the model id, eval prompt template
+llm_as_a_judge_info:
+  model: meta.llama3-70b-instruct-v1:0
+  prompt_template: data/prompt_template/llama3_eval_prompt.txt
+  input_tokens_pricing: 0.00265
+  output_tokens_pricing: 0.0035
+
+# list of bedrock model ids that are used to generate responses to user
+# provided data
+bedrock_fms_to_test:
+  - model_id: anthropic.claude-3-haiku-20240307-v1:0
+    input-per-1k-tokens: 0.00025
+    output-per-1k-tokens: 0.00125
+  - model_id: anthropic.claude-3-sonnet-20240229-v1:0
+    input-per-1k-tokens: 0.00300
+    output-per-1k-tokens: 0.01500
+
+# model that creates a final summary from the analysis and evaluations 
+# done by the llm as a judge
+final_analysis_summarizer: anthropic.claude-3-sonnet-20240229-v1:0
+
+bedrock_ep_url: https://bedrock-runtime.{region}.amazonaws.com
+
+inference_parameters:
+  temperature: 0.1
+  caching: False
+  max_tokens: 1000
+
+parallel_inference_count: 5

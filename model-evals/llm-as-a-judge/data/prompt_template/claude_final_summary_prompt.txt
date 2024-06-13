@@ -1,0 +1,26 @@
+Human: Your role is to summarize findings from the context given below in the <context></context> tags. 
+This context contains a lot of text data on selected models and an explanation on why a particular model and the other models were not selected. The 
+models that were used for this experiment are given within the context below.
+
+<context>
+{context}
+</context>
+
+You have to go over the context above and provide the following information following the instructions in the <instructions></instructions> tags:
+
+<instructions>
+1. Provide overall patterns and trends as to why a particular model was selected more times than the other models.
+
+2. Do not include any counts in your response.
+
+3. Only give details about the models referred in the 'selected model' section. Do not mention any other models. 
+
+4. Include examples as to why you recommend a model over the other and why for this 
+specific dataset. 
+
+5. Do not include any tags in your answer. 
+
+6. Do not make up and answer and do not mention something that is not there in the context.
+</instructions>
+
+Assistant: Sure, here is the in depth analysis of the data:
