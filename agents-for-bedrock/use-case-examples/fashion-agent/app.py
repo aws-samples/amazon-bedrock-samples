@@ -1,18 +1,19 @@
-import streamlit as st
-import bedrock_agent
-from PIL import Image
 import io
-import boto3
 import pickle
-import uuid
 import re
+import uuid
 
-with open('variables.pkl', 'rb') as f:
+import bedrock_agent
+import boto3
+import streamlit as st
+from PIL import Image
+
+with open("variables.pkl", "rb") as f:
     variables = pickle.load(f)
 
-agent_id = variables['agent_id']
-agent_alias_id = variables['agent_alias_id']
-default_bucket = variables['bucket_name']
+agent_id = variables["agent_id"]
+agent_alias_id = variables["agent_alias_id"]
+default_bucket = variables["bucket_name"]
 bedrock = bedrock_agent.BedrockAgent(agent_id, agent_alias_id)
 
 # To resolve 403 issue with uploading: https://discuss.streamlit.io/t/axioserror-request-failed-with-status-code-403/38112/12

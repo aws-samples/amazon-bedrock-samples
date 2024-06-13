@@ -1,17 +1,13 @@
-import json
-from typing import List
-import boto3
-import os
-
-# import io
 import base64
-import requests
+import json
+import os
 from random import randint
-from opensearchpy import OpenSearch, AWSV4SignerAuth, RequestsHttpConnection
+from typing import List
 
-# from PIL import Image
-# from langchain.vectorstores import FAISS
-# from langchain.embeddings import BedrockEmbeddings
+import boto3
+import requests
+from opensearchpy import AWSV4SignerAuth, OpenSearch, RequestsHttpConnection
+
 
 os.chdir("/tmp")
 region = os.environ["region_info"]
@@ -22,6 +18,8 @@ host = os.environ["aoss_host"]
 index_name = os.environ["index_name"]
 embeddingSize = int(os.environ["embeddingSize"])
 
+# similarity threshold - to retrieve the matching images from OpenSearch index
+RETRIEVE_THRESHOLD = 0.3
 
 def get_named_parameter(event, name):
     try:
@@ -154,7 +152,7 @@ def get_location_coordinates(location_name):
 
 
 def find_similar_image_in_opensearch_index(
-        image_path: str = "None", text: str = "None", k: int = 1
+    image_path: str = "None", text: str = "None", k: int = 1
 ) -> List:
     # Create the client with SSL/TLS enabled, but hostname verification disabled.
     if host is None:
@@ -171,18 +169,19 @@ def find_similar_image_in_opensearch_index(
         timeout=3000,
     )
     if (image_path != "None") or (text != "None"):
-        payload, embedding = get_titan_multimodal_embedding(image_path=image_path, text=text)
+        payload, embedding = get_titan_multimodal_embedding(
+            image_path=image_path, text=text
+        )
     query = {
         "size": 5,
-        "query": {
-            "knn": {"vector_field": {"vector": embedding["embedding"], "k": k}}
-        },
+        "query": {"knn": {"vector_field": {"vector": embedding["embedding"], "k": k}}},
     }
     # search for documents in the index with the given query
     response = opensearch_client.search(index=index_name, body=query)
     retrieved_images = []
     for hit in response["hits"]["hits"]:
-        if hit["_score"] > 0.3:
+        # only retrieve the image if it's matching more than a certain threshold. 
+        if hit["_score"] > RETRIEVE_THRESHOLD:
             image = hit["_source"]["image_b64"]
             img = base64.b64decode(image)
             retrieved_images.append(img)
@@ -316,7 +315,7 @@ def outpaint(event):
     return results
 
 
-def getImageGen(event):
+def get_image_gen(event):
     # input_image = get_named_parameter(event, 'input_image')
     input_query = get_named_parameter(event, "input_query")
     weather = get_named_parameter(event, "weather")
@@ -324,10 +323,12 @@ def getImageGen(event):
     # Read image from file and encode it as base64 string.
 
     try:
-        """s3_client.download_file(bucket_name, input_image, f'/tmp/{input_image}')
+        
+        # Uncomment this to get the image file from s3 instead 
+        # s3_client.download_file(bucket_name, input_image, f'/tmp/{input_image}')
 
-        with open(f'/tmp/{input_image}', "rb") as image_file:
-            input_image = base64.b64encode(image_file.read()).decode('utf8')"""
+        # with open(f'/tmp/{input_image}', "rb") as image_file:
+        #     input_image = base64.b64encode(image_file.read()).decode('utf8')
 
         if weather == "None":
             prompt = f"{input_query}"
@@ -375,7 +376,7 @@ def getImageGen(event):
     except Exception as e:
         response_code = 400
         results = {
-            "body": f"Image cannot be generated, please try again: see error{e}",
+            "body": f"Image cannot be generated, please try again: see error {e}",
             "response_code": response_code,
         }
         return results
@@ -405,16 +406,14 @@ def load_image_from_s3(image_path: str):
 
 
 def get_titan_multimodal_embedding(
-        image_path: str = "None",
-        text: str = "None",
+    image_path: str = "None",
+    text: str = "None",
 ):
     """This function reads the image path, and gets the embeddings by calling Titan Multimodal Embeddings model Amazon Bedrock"""
 
     embedding_config = {
         # OutputEmbeddingLength has to be one of: [256, 384, 1024],
-        "embeddingConfig": {
-            "outputEmbeddingLength": embeddingSize
-        }
+        "embeddingConfig": {"outputEmbeddingLength": embeddingSize}
     }
 
     payload_body = {}
@@ -443,11 +442,11 @@ def get_titan_multimodal_embedding(
 
 
 def titan_image(
-        payload: dict,
-        num_image: int = 1,
-        cfg: float = 10.0,
-        seed: int = None,
-        modelId: str = "amazon.titan-image-generator-v1",
+    payload: dict,
+    num_image: int = 1,
+    cfg: float = 10.0,
+    seed: int = None,
+    modelId: str = "amazon.titan-image-generator-v1",
 ) -> list:
     #   ImageGenerationConfig Options:
     #   - numberOfImages: Number of images to be generated
@@ -496,31 +495,26 @@ def lambda_handler(event, context):
     api_path = event["apiPath"]
 
     if api_path == "/imageGeneration":
-
-        result = getImageGen(event)
+        result = get_image_gen(event)
         body = result["body"]
         response_code = result["response_code"]
 
     elif api_path == "/weather":
-
         result = get_weather(event)
         body = result["body"]
         response_code = result["response_code"]
 
     elif api_path == "/image_lookup":
-
         result = image_lookup(event, host)
         body = result["body"]
         response_code = result["response_code"]
 
     elif api_path == "/inpaint":
-
         result = inpaint(event)
         body = result["body"]
         response_code = result["response_code"]
 
     elif api_path == "/outpaint":
-
         result = outpaint(event)
         body = result["body"]
         response_code = result["response_code"]
