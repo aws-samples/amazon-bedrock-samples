@@ -1,8 +1,9 @@
-import shutil
 from config import *
 
-# ### Create S3 bucket and upload API Schema
-#
+
+################################################
+##### Create S3 bucket and upload API Schema
+################################################
 # Agents require an API Schema stored on s3. Let's create an S3 bucket to store the file and upload the file to the newly created bucket
 
 # Create S3 bucket for Open API schema
@@ -21,8 +22,13 @@ sts_response = sts_client.get_caller_identity().get('Arn')
 print(sts_response)
 
 
-# ### Create Lambda function for Action Group
-# Let's now create the lambda function required by the agent action group. We first need to create the lambda IAM role and it's policy. After that, we package the lambda function into a ZIP format to create the function
+################################################
+##### Create Lambda function for Action Group
+################################################
+
+# Let's now create the lambda function required by the agent action group. 
+# We first need to create the lambda IAM role and it's policy. 
+# After that, we package the lambda function into a ZIP format to create the function
 
 
 # Create IAM Role for the Lambda function
@@ -81,22 +87,31 @@ s3_read_write_policy = {
     ]
 }
 
+# add the AOSS access policy to the lambda function
 iam_client.put_role_policy(
     RoleName=lambda_role_name,
     PolicyName='AOSSAPIAccessPolicy',
     PolicyDocument=json.dumps(aoss_api_access_policy)
 )
 
+# add the s3 read_write policy to the lambda function
 iam_client.put_role_policy(
     RoleName=lambda_role_name,
     PolicyName='S3ReadWritePolicy',
     PolicyDocument=json.dumps(s3_read_write_policy)
 )
 
+# add the existing policy arns (These are AWS managed policies in IAM Policies)
 policy_arns = [
     'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
 ]
+for policy_arn in policy_arns:
+    iam_client.attach_role_policy(
+        RoleName=lambda_role_name,
+        PolicyArn=policy_arn
+    )
 
+# Add the custom policy for Bedrock - to provide access to only the used Foundation Models.
 bedrock_policy = {
     "Version": "2012-10-17",
     "Statement": [
@@ -110,18 +125,15 @@ bedrock_policy = {
         }
     ]
 }
-
 iam_client.put_role_policy(
     RoleName=lambda_role_name,
     PolicyName='BedrockInvokePolicy',
     PolicyDocument=json.dumps(bedrock_policy)
 )
 
-for policy_arn in policy_arns:
-    iam_client.attach_role_policy(
-        RoleName=lambda_role_name,
-        PolicyArn=policy_arn
-    )
+
+### Add layer for the lambda Function:
+# Opensearch-py layer (stored as a zip file in dependencies folder)
 
 response = lambda_client.list_layers(
     CompatibleRuntime='python3.11'
@@ -184,8 +196,10 @@ lambda_function = lambda_client.create_function(
         f'arn:aws:lambda:{region}:770693421928:layer:Klayers-p311-requests:7'
     ]
 )
+####################################################
+######### Give permissions to the agent ############
+####################################################
 
-# ### Create Agent
 # We will now create our agent. To do so, we first need to create the agent policies that allow bedrock model invocation  and s3 bucket access.
 
 # Create IAM policies for agent
@@ -204,12 +218,12 @@ bedrock_agent_bedrock_allow_policy_statement = {
 }
 
 bedrock_policy_json = json.dumps(bedrock_agent_bedrock_allow_policy_statement)
-bedrock_agent_bedrock_allow_policy_name
+print(f"Bedrock Agent policy name for bedrock: {bedrock_agent_bedrock_allow_policy_name}")
 agent_bedrock_policy = iam_client.create_policy(
     PolicyName=bedrock_agent_bedrock_allow_policy_name,
     PolicyDocument=bedrock_policy_json
 )
-
+## for S3 
 bedrock_agent_s3_allow_policy_statement = {
     "Version": "2012-10-17",
     "Statement": [
@@ -287,11 +301,16 @@ if aoss_host:
     update_access_policy(aoss_client, '{}-policy'.format(collection_name), lambda_iam_role['Role']['Arn'])
     print("Lambda role added to AOSS data access policy")
 
-# #### Creating Agent
-# Once the needed IAM role is created, we can use the bedrock agent client to create a new agent. To do so we use the `create_agent` function. It requires an agent name, underline foundation model and instruction. You can also provide an agent description. Note that the agent created is not yet prepared. We will focus on preparing the agent and then using it to invoke actions and use other APIs
 
+#######################################
+########### Create Agent ##############
+#######################################
 
-# Create Agent
+# Once the needed IAM role is created, we can use the bedrock agent client to create a new agent. To do so we use the `create_agent` function. 
+# It requires an agent name, underline foundation model and instruction. You can also provide an agent description. Note that the agent created is not yet prepared.
+# We will focus on preparing the agent and then using it to invoke actions and use other APIs
+
+# Create Agent instruction
 agent_instruction = """DO NOT RESPOND TO NON FASHION RELATED REQUESTS. CLASSIFY USER REQUEST AS FASHION RELATED OR NOT FIRST. You are a fashion designer that can help create images, find the weather at a location to customize the image, find images similar to an image given by the user in a knowledge base, and peform inpainting where a part of an image called a mask is specified and filled in with the background of the image. Do not make any assumptions about what to fill the masked section with. If no images are found in the knowledge base, create an image based on the input image from the user. Use the /weather api output as the input value for the weather parameter into the /imageGeneration api only if a location is mentioned in the user query. If the user makes a request about an image that is not fashion related do not do anything else or ask followup questions, immediately say "Sorry I am only a fashion expert, please try and ask a fashion related question." If a call to search for similar images is made but no input_location is provided, use a default value of "None" for the input value. FInd weather at location if user asks for a clothing for a location provided. When providing the weather as a parameter interpret the weather using the follwing example: 
  Interpret the temperature as very hot, hot, cold, very cold,or warm and add to this the weather conditions. Output should only be at most 1 sentence like the example below:
 
@@ -302,8 +321,7 @@ output: a very hot and sunny day.
 
  If the output contains a S3 URI, return the S3 URI inside XML tag, in a format of "<generated_s3_uri>output_s3_uri</generated_s3_uri>"""
 
-##PLEASE Note
-###Disabling pre-processing can enhance the agent's response time, however, it may increase the risk of inaccuracies in SQL query generation or some sql ingestion. Careful consideration is advised when toggling this feature based on your use case requirements.
+## NOTE: Disabling pre-processing can enhance the agent's response time, however, it may increase the risk of inaccuracies in SQL query generation or some sql ingestion. Careful consideration is advised when toggling this feature based on your use case requirements.
 
 
 response = bedrock_agent_client.create_agent(
@@ -321,7 +339,7 @@ response = bedrock_agent_client.create_agent(
 
 
 agent_id = response['agent']['agentId']
-agent_id
+print(f"agent ID - {agent_id}")
 
 # ### Create Agent Action Group
 # We will now create and agent action group that uses the lambda function and API schema files created before.
@@ -330,6 +348,7 @@ agent_id
 
 # Pause to make sure agent is created
 time.sleep(30)
+
 # Now, we can configure and create an action group here:
 agent_action_group_response = bedrock_agent_client.create_agent_action_group(
     agentId=agent_id,
@@ -347,7 +366,7 @@ agent_action_group_response = bedrock_agent_client.create_agent_action_group(
     description='Actions related to creating images and getting information to process images'
 )
 
-agent_action_group_response
+print(f"Action group created with response: {agent_action_group_response}")
 
 # ### Allowing Agent to invoke Action Group Lambda
 # Before using our action group, we need to allow our agent to invoke the lambda function associated to the action group. This is done via resource-based policy. Let's add the resource-based policy to the lambda function created
@@ -365,13 +384,12 @@ response = lambda_client.add_permission(
 # ### Preparing Agent
 # Let's create a DRAFT version of the agent that can be used for internal testing.
 
-
 agent_prepare = bedrock_agent_client.prepare_agent(agentId=agent_id)
-agent_prepare
+print(f"{agent_prepare}")
+
 
 # ### Create Agent alias
 # We will now create an alias of the agent that can be used to deploy the agent.
-
 
 # Pause to make sure agent is prepared
 time.sleep(30)
@@ -383,6 +401,4 @@ agent_alias = bedrock_agent_client.create_agent_alias(
 # Pause to make sure agent alias is ready
 time.sleep(30)
 
-agent_alias
-
-print(agent_alias)
+print(f"Agent Alias created: {agent_alias}")
