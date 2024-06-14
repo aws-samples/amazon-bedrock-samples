@@ -43,6 +43,7 @@ MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
 # Knowledge Base Configuration
 KB_ID = "ON3190TKPR"
 APPLICATION_NAME = 'KB Chatbot for Octank Financial'
+EXPERIMENT_ID = 'test'
 
 # Knowledge Base Evaluation Configuration
 MODEL_ID_EVAL = "anthropic.claude-3-sonnet-20240229-v1:0"

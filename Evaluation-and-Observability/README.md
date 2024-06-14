@@ -37,7 +37,7 @@ from observability import BedrockLogs
 4. Initialize the `BedrockLogs` instance with the required parameters:
 
 ```python
-logs = BedrockLogs(
+bedrock_logs = BedrockLogs(
     delivery_stream_name='your-firehose-delivery-stream',
     experiment_id='your-experiment-id', # or use 'local' for testing
     feature_name='Agent',  # or 'KB', 'InvokeModel', etc.
@@ -45,10 +45,10 @@ logs = BedrockLogs(
 )
 ```
 
-5. Decorate the functions or methods you want to log and evaluate with the `@logs.watch` decorator:
+5. Decorate the functions or methods you want to log and evaluate with the `@bedrock_logs.watch` decorator:
 
 ```python
-@logs.watch(capture_input=True, capture_output=True, call_type='LLM')
+@bedrock_logs.watch(capture_input=True, capture_output=True, call_type='<your-custom-dataset-name>')
 def your_function(arg1, arg2): # only arg1 will be tracked to give you an option to not log sensitive information
     # Your function code here
     
