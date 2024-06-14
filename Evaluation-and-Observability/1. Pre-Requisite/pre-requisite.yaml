@@ -10,13 +10,13 @@ Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'kb-observability-${AWS::AccountId}-s3-bucket-${DateString}'
+      BucketName: !Sub 'observability-${AWS::AccountId}-s3-bucket-${DateString}'
 
   # IAM Roles
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub 'kb-observability-${AWS::AccountId}-lambda-role-${DateString}'
+      RoleName: !Sub 'observability-${AWS::AccountId}-lambda-role-${DateString}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -59,7 +59,7 @@ Resources:
   FirehoseRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub 'kb-observability-${AWS::AccountId}-firehose-role-${DateString}'
+      RoleName: !Sub 'observability-${AWS::AccountId}-firehose-role-${DateString}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -169,7 +169,7 @@ Resources:
   GlueRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub 'kb-observability-${AWS::AccountId}-glue-role-${DateString}'
+      RoleName: !Sub 'observability-${AWS::AccountId}-glue-role-${DateString}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -185,7 +185,7 @@ Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub 'kb-observability-${AWS::AccountId}-lambda-function-${DateString}'
+      FunctionName: !Sub 'observability-${AWS::AccountId}-lambda-function-${DateString}'
       Runtime: python3.9
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 256
@@ -295,7 +295,7 @@ Resources:
   FirehoseDeliveryStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
-      DeliveryStreamName: !Sub 'kb-observability-${AWS::AccountId}-firehose-${DateString}'
+      DeliveryStreamName: !Sub 'observability-${AWS::AccountId}-firehose-${DateString}'
       DeliveryStreamType: DirectPut
       ExtendedS3DestinationConfiguration:
         BucketARN: !GetAtt S3Bucket.Arn
@@ -328,13 +328,13 @@ Resources:
     Properties:
       CatalogId: !Ref AWS::AccountId
       DatabaseInput:
-        Name: !Sub 'kb-observability-${AWS::AccountId}-glue-database-${DateString}'
+        Name: !Sub 'observability-${AWS::AccountId}-glue-database-${DateString}'
 
   # Glue Crawler
   GlueCrawler:
     Type: AWS::Glue::Crawler
     Properties:
-      Name: !Sub 'kb-observability-${AWS::AccountId}-glue-crawler-${DateString}'
+      Name: !Sub 'observability-${AWS::AccountId}-glue-crawler-${DateString}'
       Role: !GetAtt GlueRole.Arn
       DatabaseName: !Ref GlueDatabase
       Description: Crawl Firehose S3 data to create a table in Athena

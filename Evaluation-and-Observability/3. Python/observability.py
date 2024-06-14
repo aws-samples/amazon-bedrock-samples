@@ -104,7 +104,7 @@ class BedrockLogs:
                 trace = data['trace']
                 if 'start_trace_time' in trace:
                     # Check if 'start_trace_time' is defined correctly
-                    if 'start_trace_time' not in trace or not isinstance(trace['start_trace_time'], float):
+                    if not isinstance(trace['start_trace_time'], float):
                         raise ValueError("The key 'start_trace_time' should be present and should be a time.time() object.")
 
                     # Calculate the latency between traces
@@ -122,7 +122,7 @@ class BedrockLogs:
                 for item in data:
                     if isinstance(item, dict) and 'start_trace_time' in item:
                         # Check if 'start_trace_time' is defined correctly
-                        if 'start_trace_time' not in item or not isinstance(item['start_trace_time'], float):
+                        if not isinstance(item['start_trace_time'], float):
                             raise ValueError("The key 'start_trace_time' should be present and should be a time.time() object.")
 
                         # Calculate the latency between traces
@@ -139,7 +139,7 @@ class BedrockLogs:
                         trace = item['trace']
                         if 'start_trace_time' in trace:
                             # Check if 'start_trace_time' is defined correctly
-                            if 'start_trace_time' not in trace or not isinstance(trace['start_trace_time'], float):
+                            if not isinstance(trace['start_trace_time'], float):
                                 raise ValueError("The key 'start_trace_time' should be present and should be a time.time() object.")
 
                             # Calculate the latency between traces
@@ -194,8 +194,11 @@ class BedrockLogs:
 
                 # Handle the 'Agent' feature case
                 if self.feature_name == "Agent":
-                    output_data = self.handle_agent_feature(output_data, self.request_start_time)
-                    run_id = self.extract_session_id(output_data[0])
+                    if output_data is not None:
+                        output_data = self.handle_agent_feature(output_data, self.request_start_time)
+                        run_id = self.extract_session_id(output_data[0])
+                    else:
+                        run_id = self.extract_session_id(input_log)
                 else:
                     # Extract the session ID from the log or generate a new one
                     run_id = self.extract_session_id(input_log)
