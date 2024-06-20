@@ -23,7 +23,7 @@ The workflow for the solution is as follows:
 
 ## Deployment
 
-The deployment steps for this solution are provided in the `kb-end-to-end-acl.ipynb` notebook.
+The deployment steps for this solution are provided in the **kb-end-to-end-acl.ipynb** notebook.
 
 ## Contributing
 
