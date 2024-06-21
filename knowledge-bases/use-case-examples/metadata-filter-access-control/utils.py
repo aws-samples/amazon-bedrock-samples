@@ -171,7 +171,7 @@ def createAOSSIndex(indexName, region, collection_id):
             "properties": {
                 "vector": {
                     "type": "knn_vector",
-                    "dimension": 1536,
+                    "dimension": 1024,
                      "method": {
                          "name": "hnsw",
                          "engine": "faiss",
