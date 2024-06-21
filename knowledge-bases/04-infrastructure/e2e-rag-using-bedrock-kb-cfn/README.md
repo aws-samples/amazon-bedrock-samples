@@ -24,7 +24,7 @@ Run the included `deploy.sh` script as shown below:
 
     -  git clone https://github.com/aws-samples/amazon-bedrock-samples.git
     
-    -  cd knowledge-bases/03-infra/e2e-rag-deployment-using-bedrock-kb-cfn
+    -  cd knowledge-bases/04-infrastructure/e2e-rag-deployment-using-bedrock-kb-cfn
 
     -  bash deploy.sh (For Windows users it may be different)
 

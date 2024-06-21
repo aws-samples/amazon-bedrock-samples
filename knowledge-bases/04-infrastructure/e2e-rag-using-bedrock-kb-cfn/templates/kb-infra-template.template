@@ -28,12 +28,15 @@ Parameters:
   Q10pVectorFieldName:
     Type: String
     Description: Vector field name
+    Default: bedrock-knowledge-base-default-vector
   Q11pMetaDataFieldName:
     Type: String
     Description: Metadata field name
+    Default: AMAZON_BEDROCK_METADATA
   Q12pTextFieldName:
     Type: String
     Description: Text field name
+    Default: AMAZON_BEDROCK_TEXT_CHUNK
   pCollectionArn:
     Type: String
     Description: Name of the Collection Arn

@@ -5,9 +5,6 @@ Parameters:
   Q03pEmbedModel:
     Type: String
     Description: Choose Embedding model
-    AllowedValues:
-    - amazon.titan-embed-text-v1
-    Default: amazon.titan-embed-text-v1
   Q08pCollectionName:
     Type: String
     Description: Name of the Collection
@@ -93,9 +90,20 @@ Resources:
             - lambda.amazonaws.com
           Action:
           - sts:AssumeRole
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/AdministratorAccess
       Policies:
+      - PolicyName: allowAoss
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - aoss:APIAccessAll
+            - aoss:List*
+            - aoss:Get*
+            - aoss:Create*
+            - aoss:Update*
+            - aoss:Delete*
+            Resource: '*'
       - PolicyName: OSSLambdaRoleDefaultPolicy
         PolicyDocument:
           Version: '2012-10-17'
