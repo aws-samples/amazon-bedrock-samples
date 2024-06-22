@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  CustomerSupportChatbotGuardrail:
+    Type: AWS::Bedrock::Guardrail
+    Properties:
+      Name: CustomerSupportChatbotGuardrail
+      Description: Guardrail to filter harmful content in customer support chatbot interactions
+      BlockedInputMessaging: "Your input contains inappropriate content and cannot be processed."
+      BlockedOutputsMessaging: "The response generated contains inappropriate content and has been blocked."
+      ContentPolicyConfig:
+        FiltersConfig:
+          - Type: SEXUAL
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: VIOLENCE
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: HATE
+            InputStrength: HIGH
+            OutputStrength: MEDIUM
+          - Type: INSULTS
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: MISCONDUCT
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: PROMPT_ATTACK
+            InputStrength: HIGH
+            OutputStrength: NONE
+      SensitiveInformationPolicyConfig:
+        PiiEntitiesConfig:
+          - Type: EMAIL
+            Action: ANONYMIZE
+          - Type: PHONE
+            Action: ANONYMIZE
+          - Type: NAME
+            Action: ANONYMIZE
+          - Type: US_SOCIAL_SECURITY_NUMBER
+            Action: BLOCK
+          - Type: US_BANK_ACCOUNT_NUMBER
+            Action: BLOCK
+          - Type: CREDIT_DEBIT_CARD_NUMBER
+            Action: BLOCK
+        RegexesConfig:
+          - Name: AccountNumber
+            Description: "Matches account numbers in the format XXXXXX1234"
+            Pattern: "\\b\\d{6}\\d{4}\\b"
+            Action: ANONYMIZE
+      TopicPolicyConfig:
+        TopicsConfig:
+          - Name: FiduciaryAdvice
+            Definition: "Avoid providing guidance on managing financial assets, investments, or trusts to prevent fiduciary responsibility."
+            Examples:
+              - "What stocks should I invest in for my retirement?"
+              - "Is it a good idea to put my money in a mutual fund?"
+              - "How should I allocate my 401(k) investments?"
+              - "What type of trust fund should I set up for my children?"
+              - "Should I hire a financial advisor to manage my investments?"
+            Type: DENY
+      WordPolicyConfig:
+        WordsConfig:
+          - Text: "fiduciary advice"
+          - Text: "investment recommendations"
+          - Text: "stock picks"
+          - Text: "financial planning guidance"
+          - Text: "portfolio allocation advice"
+          - Text: "retirement fund suggestions"
+          - Text: "wealth management tips"
+          - Text: "trust fund setup"
+          - Text: "investment strategy"
+          - Text: "financial advisor recommendations"
+        ManagedWordListsConfig:
+          - Type: PROFANITY
+      Tags:
+        - Key: Environment
+          Value: Production
+        - Key: Application
+          Value: CustomerSupportChatbot
+
+Outputs:
+  GuardrailId:
+    Description: The unique identifier of the guardrail
+    Value: !Ref CustomerSupportChatbotGuardrail
+  GuardrailArn:
+    Description: The ARN of the guardrail
+    Value: !GetAtt CustomerSupportChatbotGuardrail.GuardrailArn
