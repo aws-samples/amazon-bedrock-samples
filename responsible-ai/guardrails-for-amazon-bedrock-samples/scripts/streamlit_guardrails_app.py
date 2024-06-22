@@ -1,6 +1,12 @@
 import streamlit as st
 import boto3
 import json
+import argparse
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('--guardrail_identifier', type=str, required=True, help='The identifier of the guardrail')
+args = parser.parse_args()
 
 # Initialize AWS SDK clients
 bedrock_client = boto3.client("bedrock-runtime")
@@ -48,7 +54,7 @@ if st.button("Submit"):
                 contentType=payload["contentType"],
                 accept=payload["accept"],
                 body=body_bytes,
-                guardrailIdentifier='7g23pquqkkjb',
+                guardrailIdentifier=args.guardrail_identifier,
                 guardrailVersion='DRAFT',
                 trace="ENABLED"
             )
