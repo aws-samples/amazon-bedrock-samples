@@ -5,7 +5,7 @@ Resources:
     Properties:
       Name: CustomerSupportChatbotGuardrail
       Description: Guardrail to filter harmful content in customer support chatbot interactions
-      BlockedInputMessaging: "Your input contains inappropriate content and cannot be processed."
+      BlockedInputMessaging: "Your input contains inappropriate content and cannot be processed. Keep in mind that this chatbot cannot provide specific financial advice. Please ask a general question or contact a financial advisor for personalized advice."
       BlockedOutputsMessaging: "The response generated contains inappropriate content and has been blocked."
       ContentPolicyConfig:
         FiltersConfig:
@@ -73,7 +73,7 @@ Resources:
           - Type: PROFANITY
       Tags:
         - Key: Environment
-          Value: Production
+          Value: Development
         - Key: Application
           Value: CustomerSupportChatbot
 
