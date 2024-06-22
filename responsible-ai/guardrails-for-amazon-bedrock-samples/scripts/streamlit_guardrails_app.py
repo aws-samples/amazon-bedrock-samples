@@ -11,13 +11,31 @@ args = parser.parse_args()
 # Initialize AWS SDK clients
 bedrock_client = boto3.client("bedrock-runtime")
 
+# Set the page config including the title and favicon
+bedrock_logo_path = "../images/bedrock_logo.png"  # Update this path to where you save the Bedrock logo
+st.set_page_config(page_title="Customer Support Chatbot with Guardrails", page_icon=bedrock_logo_path)
+
+# Display Bedrock logo
+st.image(bedrock_logo_path, width=100)
+
 st.title("Customer Support Chatbot with Guardrails")
 st.write(
     """
 This app allows you to interact with a customer support chatbot. The chatbot is equipped with guardrails to filter out harmful content and ensure safe interactions.
 """
 )
- 
+
+# Update the URLs below with your actual blog URL and AWS Guardrails documentation URL
+blog_url = "https://medium.com/@mccartni"
+aws_guardrails_url = "https://aws.amazon.com/bedrock/guardrails/"
+
+st.markdown(
+    f"""
+    [![Blog](https://img.shields.io/badge/Medium%20Blog%20Walkthrough-Link-blue)]({blog_url})  
+    [![AWS Guardrails Documentation](https://img.shields.io/badge/AWS%20Guardrails%20Documentation-Link-green)]({aws_guardrails_url})
+    """
+)
+
 # User input section
 user_input = st.text_area("Enter your message:", height=100)
 
@@ -27,7 +45,6 @@ if st.button("Submit"):
         st.warning("Please enter a message to proceed.")
     else:
         try:
-
             payload = {
                 "modelId": "anthropic.claude-3-sonnet-20240229-v1:0",
                 "contentType": "application/json",
