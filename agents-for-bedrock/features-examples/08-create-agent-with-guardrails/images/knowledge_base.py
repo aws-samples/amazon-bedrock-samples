@@ -576,7 +576,6 @@ class BedrockKnowledgeBase:
         self.bedrock_agent_client.delete_knowledge_base(
             knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
         )
-        sleep(30)
         self.oss_client.indices.delete(index=self.index_name)
         self.aoss_client.delete_collection(id=self.collection_id)
         self.aoss_client.delete_access_policy(
