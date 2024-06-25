@@ -214,7 +214,7 @@
             "get": {
                 "summary": "Given the weather information, generate an image based on user's query and image provided",
                 "description":"This action generates images based on user's query and image provided by the user, the weather parameter is only needed if a location was mentioned in the user query. If weather is needed used the /weather api to get the weather input needed. In other cases where a location is not mentioned by the user query the weather parameter is optional.",
-                "operationId": "getImageGen",
+                "operationId": "get_image_gen",
 		"parameters": [{
                     "name": "input_query",
                     "description": "This is the part of the user query that describes the details to be included in the image.",
