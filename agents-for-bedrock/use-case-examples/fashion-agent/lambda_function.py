@@ -19,7 +19,7 @@ index_name = os.environ["index_name"]
 embeddingSize = int(os.environ["embeddingSize"])
 
 # similarity threshold - to retrieve the matching images from OpenSearch index
-RETRIEVE_THRESHOLD = 0.3
+RETRIEVE_THRESHOLD = 0.6
 
 def get_named_parameter(event, name):
     try:
