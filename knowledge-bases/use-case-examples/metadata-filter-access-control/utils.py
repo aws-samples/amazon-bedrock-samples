@@ -1,3 +1,4 @@
+import re
 import boto3
 import json
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
@@ -22,7 +23,7 @@ def create_base_infrastructure(solution_id):
     ]
 
     # Create the CloudFormation stack
-    stack_name = 'KB-E2E-Base'
+    stack_name = "KB-E2E-Base-{}".format(solution_id)
     response = cloudformation.create_stack(
         StackName=stack_name,
         TemplateBody=template_body,
@@ -107,7 +108,7 @@ def create_kb_infrastructure(solution_id, s3_bucket, embeddingModelArn, indexNam
         template_body = template_file.read()
 
     # Create the CloudFormation stack
-    stack_name = 'KB-E2E-KB'
+    stack_name = "KB-E2E-KB-{}".format(solution_id)
     response = cloudformation.create_stack(
         StackName=stack_name,
         TemplateBody=template_body,
@@ -206,3 +207,23 @@ def createAOSSIndex(indexName, region, collection_id):
     # Create index
     response = oss_client.indices.create(index=indexName, body=json.dumps(index_settings))
     print(response)
+    
+    
+def replace_vars(file_path, user_pool_id, client_id, client_secret, kb_id, lambda_function_arn, dynamo_table):
+    with open(file_path, 'r') as file:
+        content = file.read()
+
+    replacements = {
+        "<<replace_pool_id>>": user_pool_id,
+        "<<replace_app_client_id>>": client_id,
+        "<<replace_app_client_secret>>": client_secret,
+        "<<replace_kb_id>>": kb_id,
+        "<<replace_lambda_function_arn>>": lambda_function_arn,
+        "<<replace_dynamo_table_name>>": dynamo_table
+    }
+
+    for placeholder, value in replacements.items():
+        content = re.sub(rf'{placeholder}', value, content)
+
+    with open(file_path, 'w') as file:
+        file.write(content)
