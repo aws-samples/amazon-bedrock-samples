@@ -47,13 +47,13 @@ def create_dynamodb(table_name):
         print(f'Table {table_name} already exists, skipping table creation step')
 
 
-def create_lambda(lambda_function_name, lambda_iam_role):
+def create_lambda(lambda_function_name, lambda_iam_role, path_to_lambda = 'lambda_function.py'):
     # add to function
 
     # Package up the lambda function code
     s = BytesIO()
     z = zipfile.ZipFile(s, 'w')
-    z.write("lambda_function.py")
+    z.write(path_to_lambda)
     z.close()
     zip_content = s.getvalue()
     try:
