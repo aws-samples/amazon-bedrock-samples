@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template for creating a Knowledge Base for Amazon Bedrock 
+Parameters:
+    SolutionId:
+        Type: String
+        Description: Solution Identifier
+    InputBucketName:
+        Type: String
+        Description: S3 bucket name where data is stored
+    EmbeddingModel:
+        Type: String
+        Description: Choose Embedding model
+    IndexName:
+        Type: String
+        Description: Index name to be created in vector store
+    VectorFieldName:
+        Type: String
+        Description: Vector field name
+    MetaDataFieldName:
+        Type: String
+        Description: Metadata field name
+    TextFieldName:
+        Type: String
+        Description: Text field name
+    CollectionArn:
+        Type: String
+        Description: Name of the Collection Arn
+
+Resources:
+    KbRole:
+        Type: AWS::IAM::Role
+        Properties:
+          RoleName: !Join ['', [!Ref 'SolutionId', '-kbrole']]
+          AssumeRolePolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                - bedrock.amazonaws.com
+              Action:
+              - sts:AssumeRole
+              Condition:
+                StringEquals:
+                  aws:SourceAccount:
+                    Fn::Sub: ${AWS::AccountId}
+                ArnLike:
+                  aws:SourceArn:
+                    Fn::Sub: arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*
+          Policies:
+          - PolicyName: FoundationModelPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+              - Effect: Allow
+                Action:
+                - bedrock:InvokeModel
+                Resource:
+                  Fn::Sub: arn:aws:bedrock:${AWS::Region}::foundation-model/*
+                Sid: BedrockInvokeModelStatement
+          - PolicyName: OSSPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+              - Effect: Allow
+                Action:
+                - aoss:APIAccessAll
+                Resource:
+                  Fn::Sub: arn:aws:aoss:${AWS::Region}:${AWS::AccountId}:collection/*
+                Sid: OpenSearchServerlessAPIAccessAllStatement
+          - PolicyName: S3Policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+              - Effect: Allow
+                Action:
+                - s3:ListBucket
+                Resource: arn:aws:s3:::*
+                Sid: S3ListBucketStatement
+              - Effect: Allow
+                Action:
+                - s3:GetObject
+                Resource:
+                  Fn::Sub: arn:aws:s3:::${InputBucketName}/*
+                Sid: S3GetObjectStatement
+
+
+    KnowledgeBase:
+        Type: AWS::Bedrock::KnowledgeBase
+        Properties:
+          Description: Test KB Deployment
+          KnowledgeBaseConfiguration:
+            Type: VECTOR
+            VectorKnowledgeBaseConfiguration:
+              EmbeddingModelArn: !Ref EmbeddingModel
+          Name: !Join ['', [!Ref 'SolutionId', '_kb']]
+          RoleArn: !GetAtt KbRole.Arn
+          StorageConfiguration:
+            Type: OPENSEARCH_SERVERLESS
+            OpensearchServerlessConfiguration:
+                CollectionArn:
+                    Ref: CollectionArn
+                FieldMapping:
+                    MetadataField:
+                        Ref: MetaDataFieldName
+                    TextField:
+                        Ref: TextFieldName
+                    VectorField:
+                        Ref: VectorFieldName
+                VectorIndexName:
+                        Ref: IndexName
+
+    KnowledgeBaseDataSource:
+        Type: AWS::Bedrock::DataSource
+        DependsOn:
+        - KnowledgeBase
+        Properties:
+          DataSourceConfiguration:
+            Type: S3
+            S3Configuration:
+              BucketArn:
+                Fn::Sub: arn:aws:s3:::${InputBucketName}
+          Description: KB Data Source
+          KnowledgeBaseId:
+            Ref: KnowledgeBase
+          Name: !Join ['', [!Ref 'SolutionId', '_kb_datasource']]
+          VectorIngestionConfiguration:
+            ChunkingConfiguration:
+              ChunkingStrategy: "FIXED_SIZE"
+              FixedSizeChunkingConfiguration:
+                MaxTokens: 300
+                OverlapPercentage: 20
+
+Outputs:
+  KBID:
+    Value:
+      Ref: KnowledgeBase
+    Description: KnowledgeBase ID
+  DS:
+    Value:
+      Ref: KnowledgeBaseDataSource
+    Description: KnowledgeBase Datasource
