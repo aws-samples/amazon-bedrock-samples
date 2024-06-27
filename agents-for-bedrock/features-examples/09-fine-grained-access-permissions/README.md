@@ -1,6 +1,6 @@
 # Designing secure generative AI Application workflows with Amazon Verified Permissions and Agents for Bedrock
 
-[Link AWS Blog: https://aws.amazon.com/blogs/aws/](https://aws.amazon.com/blogs/aws/)
+[Link AWS Blog: https://aws.amazon.com/blogs/aws/](https://aws.amazon.com/blogs/aws/) \
 [Link to Amazon Verified Permissions: https://aws.amazon.com/verified-permissions/](https://aws.amazon.com/verified-permissions/)
 
 This is sample code we will demonstrate how to design fine-grained access controls using Verified Permissions for a generative AI application that uses agents for Bedrock to answer questions about insurance claims that exist in a claims review system using textual prompts as inputs and outputs.
@@ -48,7 +48,7 @@ The application architecture flow is as follows:
 The first step of utilizing this repo is performing a git clone of the repository and navigate to the folder.
 
 ```
-$ git clone hhttps://github.com/aws-samples/amazon-bedrock-samples.git
+$ git clone https://github.com/aws-samples/amazon-bedrock-samples.git
 
 $ cd amazon-bedrock-samples/agents-for-bedrock/features-examples/09-fine-grained-access-permissions/
 ```
@@ -136,7 +136,7 @@ $ echo "WS_USER_POOL_ARN=$WS_USER_POOL_ARN" >> .env
 $ echo "REACT_APP_API_GATEWAY_URL"=$REACT_APP_API_GATEWAY_URL >> .env
 
 #### install the dependencies ####
-$ npm install react-scripts
+$ npm install react-scripts@latest
 ```
 
 ### Step 6.2 - Initialize Amplify project
@@ -146,10 +146,10 @@ The amplify init command is used to initialize a new Amplify project. This comma
 ```
 $ amplify init
 ```
+You will enter "bedrocksecurity" for name of the project and follow the prompts. You can use the below to help you configure:
+```
+Enter a name for the project: bedrocksecurity
 
-amplify init
-Note: It is recommended to run this command from the root of your app directory
-? Enter a name for the project bedrocksecurity
 The following configuration will be applied:
 
 Project information
@@ -163,26 +163,35 @@ Project information
 | Build Command: npm run-script build
 | Start Command: npm run-script start
 
-? Initialize the project with the above configuration? Yes
+Initialize the project with the above configuration? Yes
+
 Using default provider  awscloudformation
-? Select the authentication method you want to use: AWS profile
+
+Select the authentication method you want to use: AWS profile
 
 For more information on AWS Profiles, see:
 https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
 
-? Please choose the profile you want to use oktank
+Please choose the profile you want to use oktank
 Adding backend environment dev to AWS Amplify app: d5np40989zxhn
-
+```
+After initialization, you'll see deployment progress:
+```
 Deployment completed.
 Deploying root stack bedrocksecurity [ ---------------------------------------- ] 0/4
         amplify-bedrocksecurity-dev-1… AWS::CloudFormation::Stack     CREATE_IN_PROGRESS             Sat May 18 2024 15:04:42…     
         AuthRole                       AWS::IAM::Role                 CREATE_IN_PROGRESS             Sat May 18 2024 15:04:44…     
         DeploymentBucket               AWS::S3::Bucket                CREATE_IN_PROGRESS             Sat May 18 2024 15:04:44…     
         UnauthRole                     AWS::IAM::Role                 CREATE_IN_PROGRESS             Sat May 18 2024 15:04:44…     
-
+```
+You'll be asked about sharing project configurations. Follow the prompts:
+```
 ✔ Help improve Amplify CLI by sharing non-sensitive project configurations on failures (y/N) · no
 
     You can always opt-in by running "amplify configure --share-project-config-on"
+```
+Finally, you'll see confirmation messages:
+```
 Deployment state saved successfully.
 ✔ Initialized provider successfully.
 ✅ Initialized your environment successfully.
@@ -194,12 +203,27 @@ Some next steps:
 "amplify push" will build all your local backend resources and provision it in the cloud
 "amplify console" to open the Amplify Console and view your project status
 "amplify publish" will build all your local backend and frontend resources (if you have hosting category added) and provision it in the cloud
-
-
-```
-$ cp src/aws-exports.tmplt.js  src/aws-exports.js
 ```
 
+Run this command to link the Cognito User pool that was created in CloudFormation to the Amplify application that we are deploying. This will ensure that the requests will be authenticated by the users in the Cognito userpool. 
+```
+$ amplify auth import
+```
+You will use the below details for configuration: 
+```
+What type of auth resource do you want to import? 
+
+Cognito User Pool only
+
+Select the User Pool you want to import: · 
+
+claims-app-demo
+```
+You will then see this message:
+
+```
+✅ Cognito User Pool 'claims-app-userpool' was successfully imported.
+```
 
 ### Step 6.3 - Add Amplify hosting 
 ```
@@ -207,28 +231,60 @@ $ amplify add hosting
 ```
 
 ### Step 6.4 - Publish Amplify project 
+
+Run the below command to publish the project to AWS Amplify. You will use the below details for configuration: 
 ```
 $ amplify publish
 ```
-✔ Select the plugin module to execute · Hosting with Amplify Console (Managed hosting with custom domains, Continuous deployment)
-? Choose a type Manual deployment
+```
+Select the plugin module to execute : 
+Hosting with Amplify Console (Managed hosting with custom domains, Continuous deployment)
 
+Choose a type:  Manual deployment
+
+```
+
+
+
+
+
+Deployment will complete with below information and a URL will be printed. : 
+```
 You can now publish your app using the following command:
 
 When the amplify project is published, it should show a message like this with the url of the frontend application: 
 
 ✔ Deployment complete!
 
+```
+Make a note of the URL and use that to login to the depoloyed application. 
 
 
 
 
 ## Step 7:
+At this time, please go to the AWS Bedrock console, then go to Model Access and add access to Claude 3 Sonnet under Anthropic models. This step important for the account to leverage the Claude 3 Sonnet model via Bedrock.
+![Alt text](images/bedrock-model-access.png "Bedrock Model Access")
 
-As soon as the application is up and running, login to the application with the username: claims-app-adjuster  followed by the password set for the user. 
+
+## Step 8:
+
+You will login to the application with the username: claims-app-adjuster followed by the password set for the user. Upon login, you will see the claims application.
+
+![Alt text](images/claims-app.png "Claims Application")
 
 You can begin asking questions in textbox like using natural language questions like :
 
 1. list all claims
 2. get claim details for claim 101
 3. update claim details for claim 101
+
+You can head over the CloudWatch logs console to view the logs and observe how the Identity token is being sent to the bedrock agent. 
+
+First observe logs for : Claims Iinvoke Bedrock Agent 
+
+![Alt text](images/claims-invoke-bedrock-agent.png "claims-invoke-bedrock-agent")
+
+Followed by logs for : Claims Actiongroup Lambda 
+![Alt text](images/claims-actiongroup-lambda.png "claims-actiongroup-lambda")
+
