@@ -1,6 +1,6 @@
 # Generative AI and Multi-Modal Agents in AWS: The Key to Unlocking New Value in Financial Markets
 
-This file walks you through how to set up the infrastructure and applications, and run the code to create a multi-modal agent using Amazon Bedrock. The blog post provides a detailed discussion of this solution. This Solution uses Full-Access policies for certain services involved in the architecture and may not meet the security standards of certain business units, however, this solution should be used to show the art-of-possible and access policy should be scoped down for any other use.
+This file walks you through how to set up the infrastructure and applications, and run the code to create a multi-modal agent using Amazon Bedrock. The blog post provides a detailed discussion of this solution.
 
 ## Technical Achitecture Diagram
 
@@ -35,14 +35,7 @@ Upload the files in folder *files* to the S3 bucket.
 <img src="images/files_uploaded.png" width="680"/>
 
 \
-**NOTE:** This Solution use Anthropic Claude 3 model in Bedrock. Make sure you have access to the model in Bedrock.
-Navigate to the Bedrock console and click on **Model Access** to the left tab. Select the **Manage model access** button to the top-right.
-
-<img src="images/bedrock-access.jpg" width="680"/>
-
-\
-Submit the **Use case details** and select the checkboxes beside the Anthropic models. Then select **save changes** button.
-<img src="images/bedrock-access2.JPG" width="680"/>
+This solution use Anthropic Claude 3 model in Amazon Bedrock. Use the following link as a reference to enable access to the model [link](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
 
 ## Create infrastructure using CloudFormation
 
@@ -215,7 +208,7 @@ As part of wrapping the business logic using [Lambda functions](https://aws.amaz
 
 ## Security
 
-See [Notifying issue](CONTRIBUTING.md#security-issue-notifications) for more information.
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
 
 ## License
 
