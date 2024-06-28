@@ -117,34 +117,22 @@ Resources:
       Name: e2e-rag-knowledgebase-ds
       VectorIngestionConfiguration:
         ChunkingConfiguration:
-          ChunkingStrategy:
-            Fn::If:
-              - IsChunkingStartegyFixedOrDefault
-              - FIXED_SIZE
-              - None
-          FixedSizeChunkingConfiguration:
-            MaxTokens:
-              Fn::If:
-                - IsChunkingStartegyFixed
-                - Ref: Q05pMaxTokens
+          Fn::If:
+            - IsChunkingStartegyFixed
+            - ChunkingStrategy: FIXED_SIZE
+              FixedSizeChunkingConfiguration:
+                MaxTokens: !Ref Q05pMaxTokens
+                OverlapPercentage: !Ref Q06pOverlapPercentage
+            - Fn::If:
+                - IsChunkingStartegyDefault
+                - ChunkingStrategy: FIXED_SIZE
+                  FixedSizeChunkingConfiguration:
+                    MaxTokens: 300
+                    OverlapPercentage: 20
                 - Fn::If:
-                    - IsChunkingStartegyDefault
-                    - 300
-                    - Ref: AWS::NoValue
-            OverlapPercentage:
-              Fn::If:
-                - IsChunkingStartegyFixed
-                - Ref: Q06pOverlapPercentage
-                - Fn::If:
-                    - IsChunkingStartegyDefault
-                    - 20
-                    - Ref: AWS::NoValue
-#      VectorIngestionConfiguration:
-#        ChunkingConfiguration:
-#          ChunkingStrategy: FIXED_SIZE
-#          FixedSizeChunkingConfiguration:
-#            MaxTokens: 300
-#            OverlapPercentage: 20
+                    - IsChunkingStartegyNoChunking
+                    - ChunkingStrategy: NONE
+                    - !Ref AWS::NoValue
 Outputs:
   KBID:
     Value:
