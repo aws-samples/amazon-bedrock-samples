@@ -1,0 +1,223 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Supporting resources for HR Agent powered by Agents and Knowledge base for Amazon Bedrock"
+Metadata:
+  LICENSE: >-
+    Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this
+    software and associated documentation files (the "Software"), to deal in the Software
+    without restriction, including without limitation the rights to use, copy, modify,
+    merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+    PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Code Asset S3 Bucket, Lambda Deployment Package Keys, and Lambda Layer ARNs
+        Parameters:
+          - ArtifactBucket
+          - HRFunctionKey
+      - Label:
+          default: SNS Configuration Settings
+        Parameters:
+          - SNSEmail
+    ParameterLabels:
+      ArtifactBucket:
+        default: your-code-assets-bucket-name
+      HRFunctionKey:
+        default: agent/lambda/hr_function.zip
+      SNSEmail:
+        default: your-sns-email
+
+Parameters:
+  ArtifactBucket:
+    Description: S3 Bucket Containing Code Assets for Agent Action Group Lambda Functions, and other artifacts
+    Type: String
+    Default: your-code-assets-bucket-name
+  HRFunctionKey:
+    Description: S3 Key for HR function code
+    Type: String
+    Default: agent/lambda/hr_function.zip
+  SNSEmail:
+    Description: SNS Email.
+    Type: String
+    Default: your-sns-email
+
+Resources:
+  HRAgentActionGroupLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-HRAgentActionGroupLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  HRAgentActionGroupLambdaRoleDefaultPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub ${AWS::StackName}-HRAgentActionGroupLambdaRoleDefaultPolicy
+      PolicyDocument:
+        Statement:
+          - Action:
+              - athena:StartQueryExecution
+              - athena:GetQueryExecution
+              - athena:GetQueryResults
+              - bedrock:InvokeModel
+              - sns:Publish
+              - s3:GetObject
+              - s3:PutObject
+              - s3:GetBucketLocation
+              - athena:StartQueryExecution
+              - athena:GetQueryExecution
+              - athena:GetQueryResults
+              - glue:*
+            Effect: Allow
+            Resource: '*'
+        Version: 2012-10-17
+      Roles:
+        - !Ref HRAgentActionGroupLambdaRole
+
+  BedrockCreateHrFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref BedrockHRFunction
+      Principal: 'bedrock.amazonaws.com'
+
+  BedrockHRFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Bedrock HR agent function.
+      FunctionName: !Sub ${AWS::StackName}-HRFunction
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref HRFunctionKey
+      Runtime: python3.8
+      MemorySize: 512
+      Timeout: 30
+      Handler: lambda.index.handler
+      Layers:
+        - 'arn:aws:lambda:us-east-1:017000801446:layer:AWSLambdaPowertoolsPythonV2:68'
+      Role: !GetAtt HRAgentActionGroupLambdaRole.Arn
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref ArtifactBucket
+          EMAIL_TOPIC_ARN: !Ref SNSTopic
+
+  SNSTopic:
+    Type: AWS::SNS::Topic
+
+  SNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref SNSEmail
+      Protocol: email
+      TopicArn: !Ref SNSTopic
+
+  AmazonBedrockExecutionRoleForAgentsHRAgent:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub AmazonBedrockExecutionRoleForAgents_HRAgent
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+        Version: 2012-10-17
+
+  HRAgentRoleDefaultPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub ${AWS::StackName}-HRAgentRoleDefaultPolicy
+      PolicyDocument:
+        Statement:
+          - Action:
+              - lambda:invokeFunction
+              - bedrock:InvokeModel
+              - bedrock:Retrieve
+              - s3:GetObject
+            Effect: Allow
+            Resource: '*'
+        Version: 2012-10-17
+      Roles:
+        - !Ref AmazonBedrockExecutionRoleForAgentsHRAgent
+
+  HRAgent:
+    Type: AWS::Bedrock::Agent
+    Properties:
+      AgentName: "HRAgent"
+      AgentResourceRoleArn: !GetAtt AmazonBedrockExecutionRoleForAgentsHRAgent.Arn
+      FoundationModel: "amazon.titan-text-premier-v1:0"
+      Instruction: "You are an AI assistant specializing in HR-related inquiries. Your role is to help employees with questions about time off, pay, retirement and other HR topics. You can also generate images and send meeting invites."
+      Description: "HR Agent."
+      IdleSessionTTLInSeconds: 900
+      ActionGroups:
+        - ActionGroupName: "employee-timeoff-database"
+          Description: "This action group contains tool to execute statements on the database to get or update time off balance."
+          ActionGroupExecutor:
+            Lambda: !GetAtt BedrockHRFunction.Arn
+          ApiSchema:
+            S3:
+              S3BucketName: !Ref ArtifactBucket
+              S3ObjectKey: "agent/api-schema/sql-action-group.json"
+        - ActionGroupName: "generate-image"
+          Description: "Generate an image or emoji image based on the provided description."
+          ActionGroupExecutor:
+            Lambda: !GetAtt BedrockHRFunction.Arn
+          ApiSchema:
+            S3:
+              S3BucketName: !Ref ArtifactBucket
+              S3ObjectKey: "agent/api-schema/generate-image-action-group.json"
+        - ActionGroupName: "send-email"
+          Description: "API for sending emails to employees. You can use this API to send emails."
+          ActionGroupExecutor:
+            Lambda: !GetAtt BedrockHRFunction.Arn
+          ApiSchema:
+            S3:
+              S3BucketName: !Ref ArtifactBucket
+              S3ObjectKey: "agent/api-schema/send-email-action-group.json"
+        - ActionGroupName: "send-slack-message"
+          Description: "This action group contains tool to send Slack message."
+          ActionGroupExecutor:
+            Lambda: !GetAtt BedrockHRFunction.Arn
+          ApiSchema:
+            S3:
+              S3BucketName: !Ref ArtifactBucket
+              S3ObjectKey: "agent/api-schema/slack-action-group.json"
+      PromptOverrideConfiguration:
+        PromptConfigurations:
+          - PromptType: "ORCHESTRATION"
+            PromptCreationMode: "OVERRIDDEN"
+            InferenceConfiguration:
+              Temperature: 0
+            BasePromptTemplate: |-
+              System: A chat between a curious User and an artificial intelligence Bot. The Bot gives helpful, detailed, and polite answers to the User's questions. In this session, the model has access to external functionalities.
+              To assist the user, you can reply to the user or invoke an action. Only invoke actions if relevant to the user request.
+              $instruction$
+  
+              The following actions are available:$tools$
+              Model Instructions:
+                $model_instructions$
+                $conversation_history$
+              User: $question$
+                $thought$ $bot_response$
+

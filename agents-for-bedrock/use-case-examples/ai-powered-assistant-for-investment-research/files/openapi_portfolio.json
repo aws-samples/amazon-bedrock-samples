@@ -1,0 +1,53 @@
+{
+  "openapi": "3.0.0",
+      "info": {
+          "title": "Multimodal actions API",
+          "version": "1.0.0",
+          "description": "Multimodal action APIs for a financial analyst"
+      },
+      "paths": {
+          "/portfolio_tool": {
+              "post": {
+                  "summary": "Portfolio Optimization Tool",
+                  "description": "Use this tool when you need to build optimal allocation portfolio. The API takes a list of comma separated stock symbols. The output results tell you if you have $10,000, how many stocks of each one in the list you should buy.",
+                  "operationId": "getOptimizePortfolio",
+                  "requestBody": {
+                    "required": true,
+                    "content": {
+                      "application/json": {
+                        "schema": {
+						  "properties": {
+							  "stocks": {
+								  "type": "string",
+								  "description": "Comma separated stock symbols"
+							  }
+						  },
+                          "required": [
+                            "stocks"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "responses": {
+                      "200": {
+                          "description": "Portfolio Optimization Tool",
+                          "content": {
+                              "application/json": {
+                                  "schema": {
+									  "type": "object",
+                                      "properties": {
+                                          "response": {
+                                              "type": "string",
+                                              "description": "Optimized portfolio allocation"
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }    
+  }

@@ -64,19 +64,19 @@ Parameters:
   DataLoaderKey:
     Description: S3 Key for Data Loader
     Type: String
-    Default: /agent/lambda/data-loader/loader_deployment_package.zip
+    Default: agent/lambda/data-loader/loader_deployment_package.zip
   CreateClaimKey:
     Description: S3 Key for create claim function code
     Type: String
-    Default: /agent/lambda/action-groups/create_claim.zip
+    Default: agent/lambda/action-groups/create_claim.zip
   GatherEvidenceKey:
     Description: S3 Key for gather evidence function code
     Type: String
-    Default: /agent/lambda/action-groups/gather_evidence.zip
+    Default: agent/lambda/action-groups/gather_evidence.zip
   SendReminderKey:
     Description: S3 Key for send reminder function code
     Type: String
-    Default: /agent/lambda/action-groups/send_reminder.zip
+    Default: agent/lambda/action-groups/send_reminder.zip
   BedrockAgentsLayerArn:
     Description: Agents for Bedrock Lambda Layer
     Type: String
@@ -281,3 +281,4 @@ Resources:
       Endpoint: !Ref SNSEmail
       Protocol: email
       TopicArn: !Ref SNSTopic
+      

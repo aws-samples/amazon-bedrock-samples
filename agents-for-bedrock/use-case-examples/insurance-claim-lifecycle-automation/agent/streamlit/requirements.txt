@@ -1,5 +1,4 @@
-boto3
-mammoth
+boto3==1.34.125
 openpyxl
 pandas
 pdfplumber
