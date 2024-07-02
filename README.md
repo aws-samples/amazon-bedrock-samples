@@ -7,6 +7,7 @@ This repository contains pre-built examples to help customers get started with t
 - [Introduction to Bedrock](introduction-to-bedrock) - Learn the basics of the Bedrock service
 - [Prompt Engineering ](prompt-engineering) - Tips for crafting effective prompts 
 - [Bedrock Fine-tuning](bedrock-fine-tuning) - Fine-tune Bedrock models for your specific use case
+- [Custom Mode Import](custom_models) - Import custom models into Bedrock
 - [Generative AI Solutions](generative-ai-solutions) - Example use cases for generative AI
 - [Knowledge Bases](knowledge-bases) - Build knowledge bases with Bedrock
 - [Retrival Augmented Generation (RAG)](rag-solutions) - Implementing RAG with Amazon Bedrock
