@@ -197,4 +197,31 @@ elif [ "$BENCHMARK" == "lighteval" ]; then
     python ../llm-autoeval/main.py ./evals/results $(($end-$start))
 
 elif [ "$BENCHMARK" == "eq-bench" ]; then
-    git
+    git clone https://github.com/EleutherAI/lm-evaluation-harness
+    cd lm-evaluation-harness
+    pip install -e .
+    pip install accelerate
+
+    benchmark="eq-bench"
+    echo "================== $(echo $benchmark | tr '[:lower:]' '[:upper:]') [1/1] =================="
+    accelerate launch -m lm_eval \
+        --model hf \
+        --model_args pretrained=${MODEL_ID},dtype=auto,trust_remote_code=$TRUST_REMOTE_CODE \
+        --tasks eq_bench \
+        --num_fewshot 0 \
+        --batch_size auto \
+        --output_path ./evals/${benchmark}.json
+
+    end=$(date +%s)
+
+    python ../llm-autoeval/main.py ./evals $(($end-$start))
+
+else
+    echo "Error: Invalid BENCHMARK value. Please set BENCHMARK to 'nous', 'openllm', 'lighteval', or 'eq-bench'."
+fi
+
+if [ "$DEBUG" == "False" ]; then
+    echo "Debug mode is off, no additional steps taken."
+fi
+
+sleep infinity
