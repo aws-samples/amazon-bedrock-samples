@@ -1,0 +1,9 @@
+torch==2.2.2
+transformers==4.40.2
+sagemaker>=2.190.0
+datasets==2.18.0
+accelerate==0.29.3
+evaluate==0.4.1
+bitsandbytes==0.43.1
+trl==0.8.6
+peft==0.10.0
