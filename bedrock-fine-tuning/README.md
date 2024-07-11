@@ -1,15 +1,11 @@
-# Fine-Tuning Foundation Models with Amazon Bedrock
+# Fine Tuning
 
-You can customize Foundation Models(FMs) on Bedrock through fine-tuning. We provide examples on how to set up the resources, fine-tune and evaluate the customized model, and clean up the resources after running the examples. 
+This folder contains examples related to Fine-tuning Bedrock Models
 
 ## Contents
 
-- [00_setup.ipynb](./00\_setup.ipynb) - Setup for running customization notebooks both for fine-tuning and continued pre-training using Amazon Bedrock. In this notebook, we will create set of roles and an S3 bucket which will be used for other notebooks in this module. 
-
-- [02_fine-tune_and_evaluate_llama2_bedrock_summarization.ipynb](./02\_fine-tune_and_evaluate_llama2_bedrock_summarization.ipynb) - In this notebook, we build an end-to-end workflow for fine-tuning, provisioning and evaluating the Foundation Models (FMs) in Amazon Bedrock. We choose [Meta Llama 2 13B](https://ai.meta.com/llama/) as our FM to perform the customization through fine-tuning, we then create provisioned throughput of the fine-tuned model, test the provisioned model invocation, and finally evaluate the fine-tuned model performance using [fmeval](https://github.com/aws/fmeval) on the summarization accuracy metrics.
-
-- [03_cleanup.ipynb](./03\_cleanup.ipynb) - Clean up all the resources that you have created in the previous notebooks to avoid unnecessary cost associated with the resources. 
-
+[Fine-tuning Amazon Titan Image Generator G1](amazon-titan-image-generator) - example code for fine-tuning [Amazon Titan Image Generator G1 model](https://docs.aws.amazon.com/bedrock/latest/userguide/cm-hp-titan-image.html)
+[Fine-tuning Meta Llama 2 for text summarization](meta-llama) - example code for fine-tuning and evaluating a [Meta Llama 2](https://docs.aws.amazon.com/bedrock/latest/userguide/cm-hp-meta-llama2.html) foundation model for text summarization
 
 ## Contributing
 

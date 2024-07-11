@@ -1,0 +1,15 @@
+.env
+node_modules/
+**/node_modules/
+006_Frontend/amplify/
+.DS_Store
+*.log
+ws-env.sh
+samconfig.toml
+aws-exports.js
+006_Frontend/build/
+**/aws-exports.js
+**/.aws-sam/
+**/build/
+005_Frontend/src/aws-exports.js
+005_Frontend/amplify/

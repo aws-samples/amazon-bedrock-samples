@@ -1,0 +1,1433 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Codepipeline for Streamlit App
+
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: '(Optional) Jira Configuration'
+      Parameters:
+      - JiraURL
+      - JiraAPIToken
+      - JiraUsername
+    - Label:
+        default: 'Environment Configuration'
+      Parameters:
+      - GitURL
+      - EnvironmentName
+      - DeployVPCInfrastructure
+    - Label:
+        default: 'Agent Configuration'
+      Parameters:
+      - BedrockModelId
+
+Parameters:
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-3-sonnet-20240229-v1:0
+    Description: Amazon Bedrock Model ID for the agent
+    MinLength: 1
+
+  JiraURL:
+    Type: String
+    Description: (Leave it unchanged if not using Jira) URL of the Jira without https://
+    Default: site-url/rest/api/3
+
+  JiraAPIToken:
+    Type: String
+    Description: (Leave it blank if not using Jira) API Token for Jira
+    Default: ""
+
+  JiraUsername:
+    Type: String
+    Description: (Leave it blank if not using Jira) Username for Jira
+    Default: ""
+
+  GitURL:
+    Type: String
+    Description: Initial repository for CRM Agent
+    Default: https://github.com/aws-samples/amazon-bedrock-samples.git
+
+  EnvironmentName:
+    Description: (containing only letters) Unique name to distinguish different web application in the same AWS account- min length 1 and max length 4
+    Type: String
+    MinLength: 1
+    MaxLength: 4
+
+  DeployVPCInfrastructure:
+    Description: Select false if you already have infrastructure.yaml nested stack deployed in this region
+    Type: String
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+Conditions:
+  IsDeployVPCInfrastructure: !Equals 
+    - !Ref DeployVPCInfrastructure
+    - 'true'
+  
+  NotDeployVPCInfrastructure: !Equals 
+    - !Ref DeployVPCInfrastructure
+    - 'false'
+
+  IsJiraImplementation: !Not [!Or [
+      !Equals ["", !Ref JiraURL],
+      !Equals ["", !Ref JiraAPIToken],
+      !Equals ["", !Ref JiraUsername]
+    ]]
+
+Resources:
+  #############################
+  ##### Nested VPC Stack #####
+  ###########################
+
+  # VPC Infrastructure
+  Infrastructure:
+    Condition: IsDeployVPCInfrastructure
+    DeletionPolicy: Retain
+    DependsOn: StreamlitBuildCustomResource
+    Description: Stack to created basic app infrastructure
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${StreamlitCodeS3Bucket}/infrastructure.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+
+  ##################################
+  ##### ECR for Streamlit App #####
+  ###############################
+
+  # Container Repository
+  StreamlitImageRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      EmptyOnDelete: true
+  
+  #######################
+  ##### S3 Buckets #####
+  #####################
+
+  # Artifact Bucket
+  StreamlitArtifactStore:
+    Type: AWS::S3::Bucket
+    Properties:
+      LoggingConfiguration:
+        DestinationBucketName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket]
+        LogFilePrefix: !Sub artifact-${EnvironmentName}-logs
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  
+  StreamlitArtifactStorePolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StreamlitArtifactStore
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Sid: DenyUnEncryptedObjectUploads
+            Effect: Deny
+            Principal: '*'
+            Action: s3:PutObject
+            Resource: !Join [ '', [ !GetAtt StreamlitArtifactStore.Arn, '/*' ] ]
+            Condition:
+              StringNotEquals: 
+                s3:x-amz-server-side-encryption: aws:kms
+          -
+            Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource: !Join [ '', [ !GetAtt StreamlitArtifactStore.Arn, '/*' ] ]
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+  
+  # CodeBucket
+  StreamlitCodeS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  
+  StreamlitCodeS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref StreamlitCodeS3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 's3:*'
+            Effect: Deny
+            Resource: 
+              - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}/*
+              - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}
+            Principal: "*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  # CloudTrail Bucket
+  StreamlitCloudTrailBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  StreamlitCloudTrailBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref StreamlitCloudTrailBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 's3:*'
+            Effect: Deny
+            Resource: 
+              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}/*
+              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}
+            Principal: "*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  ###########################
+  ##### CustomResource #####
+  #########################
+  
+  # Code Build Initial
+  StreamlitInitBuildRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Join ['-', ['StreamlitInitBuildRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - 'codebuild.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Path: "/"
+      Policies:
+        - PolicyName: 'CreateResources'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - "s3:PutObject"
+                  - "s3:PutObjectAcl"
+                Resource:
+                  - !Sub "arn:aws:s3:::${StreamlitCodeS3Bucket}/*"
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:PutRetentionPolicy'
+                Resource: '*'
+              - Effect: 'Allow'
+                Action:
+                  - 'dynamodb:PutItem'
+                Resource: 
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/customer-${EnvironmentName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/interactions-${EnvironmentName}
+
+  StreamlitInitCodebuild:
+    DependsOn:
+      - CustomerTable
+      - InteractionsTable
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Join ['-', ['StreamlitInitCodebuild', !Ref EnvironmentName]]
+      Source:
+        Type: GITHUB
+        Location: !Ref GitURL
+        BuildSpec: 
+          !Sub
+            - |
+              version: 0.2
+              phases:
+                pre_build:
+                  commands:
+                    - cd agents-for-bedrock
+                    - cd use-case-examples
+                    - cd customer-relationship-management-agent
+                    - pip3 install awscli --upgrade --user
+                build:
+                  commands:
+                    - echo Build started on `date`
+                    - aws s3 cp infrastructure.yaml s3://${StreamlitCodeS3Bucket}
+                    - zip -r app.zip .
+                    - unzip src/data/data.zip -d src/data/
+                    - python3 src/data/upload_data.py ${EnvironmentName}
+                post_build:
+                  commands:
+                    - echo Build completed on `date`
+                    - aws s3 cp app.zip s3://${StreamlitCodeS3Bucket}
+                    - aws s3 cp --recursive ${folder} s3://${StreamlitCodeS3Bucket}/agent
+            - { 
+                folder: !If [IsJiraImplementation, src/bedrock-agent/jira, src/bedrock-agent/basic]
+              }
+      # SourceVersion: branch
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+        ComputeType: BUILD_GENERAL1_SMALL
+      ServiceRole: !GetAtt StreamlitInitBuildRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+  
+  # Start initial codebuild
+  StreamlitBuildCustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['BuildResourceRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: "/"
+      Policies:
+        - PolicyName: LambdaCustomPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource:
+                  - !GetAtt StreamlitInitCodebuild.Arn
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:PutRetentionPolicy'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                  - s3:ListBucketVersions
+                Resource:
+                  - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}/*
+                  - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}
+  
+  StreamlitBuildCustomResourceFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: !Join ['-', ['BuildResourceF', !Ref EnvironmentName]]
+      Handler: index.handler
+      Role: !GetAtt StreamlitBuildCustomResourceRole.Arn
+      Timeout: 600
+      Runtime: python3.12
+      Code:
+        ZipFile: !Sub |
+                import boto3
+                from time import sleep
+                import cfnresponse
+
+                codebuild = boto3.client("codebuild")
+
+                def handler(event, context):
+                  try:
+                    request_type = event['RequestType']
+                    if request_type == 'Create':
+                      status = 'STARTING'
+                      
+                      build_id = codebuild.start_build(projectName=event['ResourceProperties']['PROJECT'])['build']['id']
+                      while status not in ['SUCCEEDED', 'FAILED', 'STOPPED', 'FAULT', 'TIMED_OUT']:
+                        status = codebuild.batch_get_builds(ids=[build_id])['builds'][0]['buildStatus']
+                        sleep(15)
+                      if status in ['FAILED', 'STOPPED', 'FAULT', 'TIMED_OUT']:
+                        print("Initial CodeBuild failed")
+                        cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                        return
+                    elif request_type == 'Delete':
+                      bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['CODEBUCKET'])
+                      bucket.object_versions.delete()
+                      bucket.objects.all().delete()
+
+                  except Exception as ex:
+                    print(ex)
+                    bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['CODEBUCKET'])
+                    bucket.object_versions.delete()
+                    bucket.objects.all().delete()
+                    cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                  else:
+                    cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+
+  StreamlitBuildCustomResource:
+    Type: Custom::BuildCode
+    Properties:
+      ServiceToken: !GetAtt StreamlitBuildCustomResourceFunction.Arn
+      PROJECT: !Ref StreamlitInitCodebuild
+      CODEBUCKET: !Ref StreamlitCodeS3Bucket
+
+  # Start Cleanup
+  StreamlitCleanCustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['CleanResourceRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: "/"
+      Policies:
+        - PolicyName: LambdaCustomPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                  - s3:ListBucketVersions
+                Resource:
+                  - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}/*
+                  - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}
+                  - !Sub arn:aws:s3:::${StreamlitArtifactStore}/*
+                  - !Sub arn:aws:s3:::${StreamlitArtifactStore}
+                  - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}/*
+                  - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:PutRetentionPolicy'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - cloudformation:DeleteStack
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}deploy${EnvironmentName}/*"
+
+  StreamlitCleanCustomResourceFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: !Join ['-', ['CleanResourceF', !Ref EnvironmentName]]
+      Handler: index.handler
+      Role: !GetAtt StreamlitCleanCustomResourceRole.Arn
+      Timeout: 600
+      Runtime: python3.12
+      Code:
+        ZipFile: !Sub 
+              - |
+                import boto3
+                from time import sleep
+                import cfnresponse
+                from botocore.exceptions import ClientError
+
+                cfn = boto3.client("cloudformation")
+                codebuild = boto3.client("codebuild")
+
+                def handler(event, context):
+                  try:
+                    request_type = event['RequestType']
+                    if request_type == 'Delete':
+
+                      bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['CODEBUCKET'])
+                      bucket.object_versions.delete()
+                      bucket.objects.all().delete()
+
+                      bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['ARTIFACTBUCKET'])
+                      bucket.object_versions.delete()
+                      bucket.objects.all().delete()
+                      
+                      bucket = boto3.resource("s3").Bucket(event['ResourceProperties']['TRAILBUCKET'])
+                      bucket.object_versions.delete()
+                      bucket.objects.all().delete()
+                      stack_name="${StackName}"
+                      try:
+                        data = cfn.delete_stack(StackName=stack_name)
+                        print(f"Deleting stack {stack_name}")
+                      
+                      except ClientError as e:
+                        if e.response['Error']['Code'] == 'ValidationError' and ('does not exist' in e.response['Error']['Message'] or 'already in progress' in e.response['Error']['Message']):
+                            print(f"Stack doesn't exist. No action taken.")
+                        else:
+                            raise
+                  except Exception as ex:
+                    print(ex)
+                    cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                  else:
+                    cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              - {
+                  StackName: !Join ['', [!Sub '${AWS::StackName}', 'deploy', !Ref EnvironmentName]]
+                }
+  
+  StreamlitCleanCustomResource:
+    Type: Custom::BuildCode
+    Properties:
+      ServiceToken: !GetAtt StreamlitCleanCustomResourceFunction.Arn
+      CODEBUCKET: !Ref StreamlitCodeS3Bucket
+      ARTIFACTBUCKET: !Ref StreamlitArtifactStore
+      TRAILBUCKET: !Ref StreamlitCloudTrailBucket
+  
+  #########################
+  ##### CodePipeline #####
+  #######################
+
+  # CodePipeline Roles
+  StreamlitCodeBuildExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Join ['-', ['StreamlitCodeBuildRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - 'codebuild.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy]
+      Policies:
+        - PolicyName: 'CodeBuildPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                Resource:
+                  - '*'
+              - Effect: 'Allow'
+                Action:
+                  - 'ecr:UploadLayerPart'
+                  - 'ecr:PutImage'
+                  - 'ecr:InitiateLayerUpload'
+                  - 'ecr:CompleteLayerUpload'
+                  - 'ecr:BatchCheckLayerAvailability'
+                Resource:
+                  - !GetAtt StreamlitImageRepo.Arn
+              - Effect: 'Allow'
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                Resource:
+                  - !Sub "arn:aws:s3:::${StreamlitArtifactStore}/*"
+  
+  StreamlitCodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['StreamlitCodePipelineRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        -
+          PolicyName: AWS-CodePipeline-Service-3
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                Resource: !GetAtt StreamlitCodeBuild.Arn
+              -
+                Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                  - lambda:ListFunctions
+                Resource: !GetAtt InvalidateCacheFunction.Arn
+              -
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: !GetAtt StreamlitCloudformationExecutionRole.Arn
+              -
+                Effect: Allow
+                Action:
+                  - cloudformation:UpdateStack
+                  - cloudformation:DescribeStacks
+                  - cloudformation:CreateStack
+                Resource: !Sub 
+                          - |-
+                            arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${StackName}/*
+                          - {
+                              StackName: !Join ['', [!Sub '${AWS::StackName}', 'deploy', !Ref EnvironmentName]]
+                            }
+              -
+                Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}/*
+                  - !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}
+                  - !Sub arn:aws:s3:::${StreamlitArtifactStore}/*
+                  - !Sub arn:aws:s3:::${StreamlitArtifactStore}
+  
+  StreamlitCloudformationExecutionRole:
+    DeletionPolicy: Retain
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy]
+      Policies:
+        - PolicyName: 'CloudFormationPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'iam:ListRolePolicies'
+                  - 'iam:ListAttachedRolePolicies'
+                  - 'iam:CreateServiceLinkedRole'
+                  - 'iam:CreateRole'
+                  - 'iam:GetRolePolicy'
+                  - 'iam:GetRole'
+                  - 'iam:AttachRolePolicy'
+                  - 'iam:PutRolePolicy'
+                  - 'iam:DetachRolePolicy'
+                  - 'iam:DeleteRole'
+                  - 'iam:DeleteRolePolicy'
+                  - 'iam:PassRole'
+                  - 'sts:AssumeRole'
+                Resource:
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/StreamlitExecutionRole-${EnvironmentName}
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/StreamlitECSTaskRole-${EnvironmentName}
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/ECSCustomRole-${EnvironmentName}
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/elasticloadbalancing.amazonaws.com/AWSServiceRoleForElasticLoadBalancing
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
+              - Effect: 'Allow'
+                Action:
+                  - 's3:GetBucketAcl'
+                  - 's3:PutBucketAcl'
+                Resource:
+                  - !Sub 
+                      - 'arn:aws:s3:::${LoggingBucket}'
+                      - LoggingBucket: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket]
+                  - !Sub 
+                      - 'arn:aws:s3:::${LoggingBucket}/*'
+                      - LoggingBucket: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket]
+              - Effect: 'Allow'
+                Action:
+                  - 'ecs:DeregisterTaskDefinition'
+                  - 'ecs:RegisterTaskDefinition'
+                Resource:
+                  - '*'
+              - Effect: 'Allow'
+                Action:                  
+                  - 'ecs:DescribeClusters'
+                  - 'ecs:DescribeServices'
+                  - 'ecs:CreateService'
+                  - 'ecs:UpdateService'
+                  - 'ecs:DeleteService'
+                Resource:
+                  - !Sub 
+                      - arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${StreamlitClusterName}
+                      - StreamlitClusterName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.StreamlitCluster, !ImportValue StreamlitCluster]
+                  - !Sub 
+                      - arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${StreamlitClusterName}/StreamlitECSService-${EnvironmentName}
+                      - StreamlitClusterName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.StreamlitCluster, !ImportValue StreamlitCluster]
+              - Effect: 'Allow'
+                Action:
+                  - 'lambda:GetRuntimeManagementConfig'
+                  - 'lambda:GetFunctionCodeSigningConfig'
+                  - 'lambda:GetFunction'
+                  - 'lambda:CreateFunction'
+                  - 'lambda:DeleteFunction'
+                  - 'lambda:InvokeFunction'
+                Resource:
+                  - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ECSCustomF-${EnvironmentName}
+              - Effect: 'Allow'
+                Action:
+                  - 'cloudfront:ListDistributions'
+                Resource:
+                  - '*'
+              - Effect: 'Allow'
+                Action:
+                  - 'cloudfront:CreateDistribution'
+                  - 'cloudfront:GetDistribution'
+                  - 'cloudfront:DeleteDistribution'
+                  - 'cloudfront:UpdateDistribution'
+                  - 'cloudfront:TagResource'
+                Resource:
+                  - '*'
+                Condition:
+                  StringEquals:
+                    'aws:ResourceTag/CloudfrontStreamlitApp': !Sub '${AWS::StackName}deploy${EnvironmentName}-Cloudfront'
+              - Effect: 'Allow'
+                Action:
+                  - 'application-autoscaling:DescribeScalableTargets'
+                  - 'application-autoscaling:DescribeScalingPolicies'
+                  - 'application-autoscaling:RegisterScalableTarget'
+                  - 'application-autoscaling:DeregisterScalableTarget'
+                Resource: 
+                  - !Sub arn:aws:application-autoscaling:${AWS::Region}:${AWS::AccountId}:scalable-target/*
+              - Effect: 'Allow'
+                Action:              
+                  - 'application-autoscaling:PutScalingPolicy'
+                  - 'application-autoscaling:DeleteScalingPolicy'
+                Resource:
+                  - !Sub arn:aws:application-autoscaling:${AWS::Region}:${AWS::AccountId}:scalable-target/*
+              - Effect: 'Allow'
+                Action:
+                  - 'autoscaling:PutScalingPolicy'
+                  - 'autoscaling:DescribeScheduledActions'
+                Resource:
+                  - '*'
+              - Effect: 'Allow'
+                Action:
+                  - 'wafv2:CreateWebACL'
+                Resource:
+                  - '*'
+              - Effect: 'Allow'
+                Action:                  
+                  - 'wafv2:GetWebACL'
+                  - 'wafv2:DeleteWebACL'
+                  - 'wafv2:ListTagsForResource'
+                Resource:
+                  - !Sub arn:aws:wafv2:${AWS::Region}:${AWS::AccountId}:*/webacl/CloudFrontWebACL${EnvironmentName}/*     
+              - Effect: 'Allow'
+                Action:                  
+                  - 'ec2:CreateSecurityGroup'
+                  - 'ec2:DescribeSecurityGroups'
+                  - 'ec2:CreateTags'
+                  - 'ec2:DescribeVpcs'
+                  - 'ec2:DescribeInternetGateways'
+                  - 'ec2:DescribeAccountAttributes'
+                  - 'ec2:DescribeSubnets'
+                Resource:
+                  - "*"        
+              - Effect: 'Allow'
+                Action:                  
+                  - 'ec2:DeleteSecurityGroup'
+                  - 'ec2:RevokeSecurityGroupIngress'
+                  - 'ec2:RevokeSecurityGroupEgress'
+                  - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:AuthorizeSecurityGroupEgress'
+                Resource:
+                  - "*"
+                Condition:
+                  StringEquals:
+                    'aws:ResourceTag/Name': !Join ['-', ['StreamlitALBSecurityGroup', !Ref EnvironmentName]]
+              - Effect: 'Allow'
+                Action:                  
+                  - 'ec2:DeleteSecurityGroup'
+                  - 'ec2:RevokeSecurityGroupIngress'
+                  - 'ec2:RevokeSecurityGroupEgress'
+                  - 'ec2:AuthorizeSecurityGroupIngress'
+                  - 'ec2:AuthorizeSecurityGroupEgress'
+                Resource:
+                  - "*"
+                Condition:                 
+                  StringEquals:
+                    'aws:ResourceTag/Name': !Join ['-', ['StreamlitContainerSecurityGroup', !Ref EnvironmentName]]
+              - Effect: 'Allow'
+                Action:                  
+                  - 'elasticloadbalancing:DeleteLoadBalancer'
+                  - 'elasticloadbalancing:DeleteListener'
+                  - 'elasticloadbalancing:DeleteRule'
+                  - 'elasticloadbalancing:DeleteTargetGroup'
+                Resource:
+                  - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:targetgroup/StreamlitContainerTG-${EnvironmentName}/*
+                  - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/app/StreamlitALB-${EnvironmentName}/*
+                  - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener/app/StreamlitALB-${EnvironmentName}/*/*
+                  - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/app/StreamlitALB-${EnvironmentName}/*/*/*
+              - Effect: 'Allow'
+                Action:                  
+                  - 'elasticloadbalancing:CreateLoadBalancer'
+                  - 'elasticloadbalancing:CreateListener'
+                  - 'elasticloadbalancing:CreateRule'
+                  - 'elasticloadbalancing:CreateTargetGroup'
+                  - 'elasticloadbalancing:DescribeTargetGroups'
+                  - 'elasticloadbalancing:DescribeListeners'
+                  - 'elasticloadbalancing:DescribeLoadBalancers'
+                  - 'elasticloadbalancing:DescribeRules'
+                  - 'elasticloadbalancing:ModifyLoadBalancerAttributes'
+                Resource:
+                  - "*"
+              - Effect: 'Allow'
+                Action:                  
+                  - 'iam:CreateServiceLinkedRole'
+                  - 'iam:AttachRolePolicy'
+                  - 'iam:PutRolePolicy'
+                  - 'sts:AssumeRole'
+                Resource:
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService
+
+  # CodeBuild CodePipeline
+  StreamlitCodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Join ['-', ['StreamlitCodeBuild', !Ref EnvironmentName]]
+      Description: CodeBuild for Code Pipeline
+      Cache:
+        Location: LOCAL
+        Modes:
+          - LOCAL_SOURCE_CACHE
+          - LOCAL_DOCKER_LAYER_CACHE
+        Type: LOCAL
+      Artifacts: 
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: 
+          !Sub
+            - |
+              version: 0.2
+              phases:
+                pre_build:
+                  commands:
+                    - pip3 install awscli 
+                    - aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+                    - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+                    - COMMIT_HASH=${!COMMIT_HASH//./a}
+                    - IMAGE_TAG=${!COMMIT_HASH:=latest}
+                build:
+                  commands:
+                    - echo Build started on `date`
+                    - printf '\n' >> Dockerfile
+                    - printf 'ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=80", "--", "--environmentName", "${EnvironmentName}"]' >> Dockerfile
+                    - cat Dockerfile
+                    - docker build -t ${StreamlitImageRepo} .
+                    - docker tag ${StreamlitImageRepo}:latest ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${StreamlitImageRepo}:$IMAGE_TAG
+                post_build:
+                  commands:
+                    - echo Build completed on `date`
+                    - docker push ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${StreamlitImageRepo}:$IMAGE_TAG
+                    - printf  '{"StreamLitImageURI":"%s"}' ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${StreamlitImageRepo}:$IMAGE_TAG > imageDetail.json
+              artifacts:
+                files:
+                  - imageDetail.json
+            - { 
+                StreamlitImageRepo: !Ref StreamlitImageRepo
+              }
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+        ComputeType: BUILD_GENERAL1_SMALL
+      ServiceRole: !GetAtt StreamlitCodeBuildExecutionRole.Arn
+      TimeoutInMinutes: 10
+  
+  StreamlitCodeBuildLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/codebuild/${StreamlitCodeBuild}"
+      RetentionInDays: 7
+
+  # Invalidate cache
+  InvalidateCacheFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['InvalidateCacheRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: "/"
+      ManagedPolicyArns:
+        - !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy]
+      Policies:
+        - PolicyName: LambdaCustomPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codepipeline:PutJobFailureResult
+                  - codepipeline:PutJobSuccessResult
+                  - cloudfront:CreateInvalidation
+                Resource:
+                  - '*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectAcl
+                  - s3:ListBucket
+                Resource: 
+                  - !Sub "arn:aws:s3:::${StreamlitArtifactStore}/*"
+
+  InvalidateCacheFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: !Join ['-', ['InvalidateCache', !Ref EnvironmentName]]
+      Handler: index.handler
+      Role: !GetAtt InvalidateCacheFunctionRole.Arn
+      Timeout: 300
+      Runtime: python3.12
+      Code:
+        ZipFile: !Sub |
+            import json
+            import boto3
+            import zipfile
+            import os
+
+            code_pipeline = boto3.client("codepipeline")
+            cloud_front = boto3.client("cloudfront")
+            s3 = boto3.client('s3')
+
+            def get_input_artifacts(inputArtifacts):
+              bucketName = inputArtifacts["location"]["s3Location"]["bucketName"]
+              objectKey = inputArtifacts["location"]["s3Location"]["objectKey"]
+              
+              s3.download_file(bucketName, objectKey, "/tmp/file.zip")
+              
+              with zipfile.ZipFile("/tmp/file.zip", 'r') as zip_ref:
+                  zip_ref.extractall("/tmp/extracted")
+              
+              json_file_path = os.path.join("/tmp/extracted", 'CreateStackOutput.json')
+              with open(json_file_path, 'r') as json_file:
+                  json_data = json.loads(json_file.read())
+                  # You can now use json_data as needed
+              return json_data["CloudfrontID"]
+                
+
+            def handler(event, context):
+                job_id = event["CodePipeline.job"]["id"]
+                try:
+                    CloudfrontID = get_input_artifacts(event["CodePipeline.job"]["data"]["inputArtifacts"][0])
+            
+                    cloud_front.create_invalidation(
+                        DistributionId=CloudfrontID,
+                        InvalidationBatch={
+                            "Paths": {
+                                "Quantity": 1,
+                                "Items": ["/*"],
+                            },
+                            "CallerReference": event["CodePipeline.job"]["id"],
+                        },
+                    )
+                except Exception as e:
+                    code_pipeline.put_job_failure_result(
+                        jobId=job_id,
+                        failureDetails={
+                            "type": "JobFailed",
+                            "message": str(e),
+                        },
+                    )
+                else:
+                    code_pipeline.put_job_success_result(
+                        jobId=job_id,
+                    )
+
+  # CodePipeline with Infra
+  StreamlitCodePipeLineInfra:
+    Type: AWS::CodePipeline::Pipeline
+    Condition: IsDeployVPCInfrastructure
+    DependsOn: Infrastructure
+    Properties:
+      Name: !Join ['-', ['StreamlitCodePipeLine', !Ref EnvironmentName]]
+      ArtifactStore: 
+        Location: !Ref StreamlitArtifactStore
+        Type: S3
+      RestartExecutionOnUpdate: False
+      RoleArn: !GetAtt StreamlitCodePipelineServiceRole.Arn
+      Stages:
+        - Name: Source
+          Actions: 
+          - Name: SourceAction
+            ActionTypeId: 
+              Category: Source
+              Owner: AWS
+              Provider: S3
+              Version: 1
+            Configuration:
+              S3Bucket: !Ref StreamlitCodeS3Bucket
+              S3ObjectKey: app.zip
+              PollForSourceChanges: false
+            RunOrder: 1
+            OutputArtifacts:
+              - Name: source-output-artifacts
+        # Build the project using the BuildProject and Output build artifacts to build-output-artifacts path in S3 Bucket
+        - Name: Build
+          Actions:
+          - Name: Build
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Version: 1
+              Provider: CodeBuild
+            OutputArtifacts:
+              - Name: build-output-artifacts
+            InputArtifacts:
+              - Name: source-output-artifacts
+            Configuration:
+                ProjectName: !Ref StreamlitCodeBuild
+            RunOrder: 1
+        # Deploy the project by executing Fargate-Cluster.yml file in the Source code with Cloudformation.
+        - Name: InfrastructureDeploy
+          Actions:
+          - Name: Deploy
+            ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CloudFormation
+            InputArtifacts:
+              - Name: source-output-artifacts
+              - Name: build-output-artifacts
+            OutputArtifacts:
+              - Name: cfn-output-artifacts
+            Configuration:
+              OutputFileName: CreateStackOutput.json
+              ActionMode: CREATE_UPDATE
+              Capabilities: CAPABILITY_NAMED_IAM
+              ParameterOverrides: !Sub 
+                  - | 
+                    {"StreamLitImageURI" : { "Fn::GetParam" : ["build-output-artifacts", "imageDetail.json", "StreamLitImageURI"] },"StreamlitCluster": "${Cluster}","EnvironmentName": "${EnvironmentName}","StreamlitLogsPolicyArn": "${StreamlitLogsPolicyArn}","StreamlitPublicSubnetA": "${PubSubnetA}","StreamlitPublicSubnetB": "${PubSubnetB}","StreamlitPrivateSubnetA": "${PvtSubnetA}","StreamlitPrivateSubnetB": "${PvtSubnetB}","LoggingBucketName": "${LoggingBucketName}","StreamlitVPC": "${VPC}"},
+                  - {  
+                      EnvironmentName: !Ref EnvironmentName,
+                      Cluster: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.StreamlitCluster, !ImportValue StreamlitCluster],
+                      StreamlitLogsPolicyArn: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy],
+                      PubSubnetA: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.PublicSubnetA, !ImportValue Basic-PublicSubnetA],
+                      PubSubnetB: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.PublicSubnetB, !ImportValue Basic-PublicSubnetB],
+                      PvtSubnetA: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.PrivateSubnetA, !ImportValue Basic-PrivateSubnetA],
+                      PvtSubnetB: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.PrivateSubnetB, !ImportValue Basic-PrivateSubnetB],
+                      LoggingBucketName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket],
+                      VPC: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.VPC, !ImportValue Basic-VPC]
+                   }
+              RoleArn: 
+                !GetAtt StreamlitCloudformationExecutionRole.Arn
+              StackName: !Join ['', [!Sub '${AWS::StackName}', 'deploy', !Ref EnvironmentName]]
+              TemplatePath: source-output-artifacts::deploy.yaml
+            RunOrder: 1
+        - Name: InvalidateCache
+          Actions:
+          - Name: Invalidate
+            ActionTypeId:
+              Category: Invoke
+              Owner: AWS
+              Version: 1
+              Provider: Lambda
+            InputArtifacts:
+              - Name: cfn-output-artifacts
+            Configuration:
+              FunctionName: !Ref InvalidateCacheFunction
+            RunOrder: 1             
+
+  # CodePipeline without Infra
+  StreamlitCodePipeLine:
+    Type: AWS::CodePipeline::Pipeline
+    Condition: NotDeployVPCInfrastructure
+    DependsOn: StreamlitBuildCustomResource
+    Properties:
+      Name: !Join ['-', ['StreamlitCodePipeLine', !Ref EnvironmentName]]
+      ArtifactStore: 
+        Location: !Ref StreamlitArtifactStore
+        Type: S3
+      RestartExecutionOnUpdate: False
+      RoleArn: !GetAtt StreamlitCodePipelineServiceRole.Arn
+      Stages:
+        - Name: Source
+          Actions: 
+          - Name: SourceAction
+            ActionTypeId: 
+              Category: Source
+              Owner: AWS
+              Provider: S3
+              Version: 1
+            Configuration:
+              S3Bucket: !Ref StreamlitCodeS3Bucket
+              S3ObjectKey: app.zip
+              PollForSourceChanges: false
+            RunOrder: 1
+            OutputArtifacts:
+              - Name: source-output-artifacts
+        # Build the project using the BuildProject and Output build artifacts to build-output-artifacts path in S3 Bucket
+        - Name: Build
+          Actions:
+          - Name: Build
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Version: 1
+              Provider: CodeBuild
+            OutputArtifacts:
+              - Name: build-output-artifacts
+            InputArtifacts:
+              - Name: source-output-artifacts
+            Configuration:
+                ProjectName: !Ref StreamlitCodeBuild
+            RunOrder: 1
+
+        # Deploy the project by executing Fargate-Cluster.yml file in the Source code with Cloudformation.
+        - Name: InfrastructureDeploy
+          Actions:
+          - Name: Deploy
+            ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Version: 1
+              Provider: CloudFormation
+            InputArtifacts:
+              - Name: source-output-artifacts
+              - Name: build-output-artifacts
+            OutputArtifacts:
+              - Name: cfn-output-artifacts
+            Configuration:
+              OutputFileName: CreateStackOutput.json
+              ActionMode: CREATE_UPDATE
+              Capabilities: CAPABILITY_NAMED_IAM
+              ParameterOverrides: !Sub 
+                  - | 
+                    {"StreamLitImageURI" : { "Fn::GetParam" : ["build-output-artifacts", "imageDetail.json", "StreamLitImageURI"] },"StreamlitCluster": "${Cluster}","EnvironmentName": "${EnvironmentName}","StreamlitLogsPolicyArn": "${StreamlitLogsPolicyArn}","StreamlitPublicSubnetA": "${PubSubnetA}","StreamlitPublicSubnetB": "${PubSubnetB}","StreamlitPrivateSubnetA": "${PvtSubnetA}","StreamlitPrivateSubnetB": "${PvtSubnetB}","LoggingBucketName": "${LoggingBucketName}","StreamlitVPC": "${VPC}"},
+                  - {  
+                      EnvironmentName: !Ref EnvironmentName,
+                      Cluster: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.StreamlitCluster, !ImportValue StreamlitCluster],
+                      StreamlitLogsPolicyArn: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy],
+                      PubSubnetA: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.PublicSubnetA, !ImportValue Basic-PublicSubnetA],
+                      PubSubnetB: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.PublicSubnetB, !ImportValue Basic-PublicSubnetB],
+                      PvtSubnetA: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.PrivateSubnetA, !ImportValue Basic-PrivateSubnetA],
+                      PvtSubnetB: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.PrivateSubnetB, !ImportValue Basic-PrivateSubnetB],
+                      LoggingBucketName: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LoggingBucket, !ImportValue Basic-LoggingBucket],
+                      VPC: !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.VPC, !ImportValue Basic-VPC]
+                   }
+              RoleArn: 
+                !GetAtt StreamlitCloudformationExecutionRole.Arn
+              StackName: !Join ['', [!Sub '${AWS::StackName}', 'deploy', !Ref EnvironmentName]]
+              TemplatePath: source-output-artifacts::deploy.yaml
+            RunOrder: 1
+        - Name: InvalidateCache
+          Actions:
+          - Name: Invalidate
+            ActionTypeId:
+              Category: Invoke
+              Owner: AWS
+              Version: 1
+              Provider: Lambda
+            InputArtifacts:
+              - Name: cfn-output-artifacts
+            Configuration:
+              FunctionName: !Ref InvalidateCacheFunction
+            RunOrder: 1             
+
+  # CloudWatch
+  StreamlitCloudWatchEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['CloudWatchEventRole', !Ref EnvironmentName]]
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        -
+          PolicyName: cwe-pipeline-execution
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Join ['-', ['StreamlitCodePipeLine', !Ref EnvironmentName]]] ]
+  
+  AmazonCloudWatchEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Join ['-', ['StreamlitEventRule', !Ref EnvironmentName]]
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - 'AWS API Call via CloudTrail'
+        detail:
+          eventSource:
+            - s3.amazonaws.com
+          eventName:
+            - PutObject
+            - CompleteMultipartUpload
+          resources:
+            ARN:
+              - !Join [ '', [ !GetAtt StreamlitCodeS3Bucket.Arn, '/', "app.zip" ] ]
+      Targets:
+        -
+          Arn:
+            !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':',  !Join ['-', ['StreamlitCodePipeLine', !Ref EnvironmentName]]]]
+          RoleArn: !GetAtt StreamlitCloudWatchEventRole.Arn
+          Id: codepipeline-AppPipeline
+  
+  # CloudTrail
+  StreamlitCloudTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StreamlitCloudTrailBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Sid: AWSCloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service:
+                - cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt StreamlitCloudTrailBucket.Arn
+          -
+            Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service:
+                - cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Join [ '', [ !GetAtt StreamlitCloudTrailBucket.Arn, '/AWSLogs/', !Ref 'AWS::AccountId', '/*' ] ]
+            Condition: 
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+  
+  StreamlitCloudTrail:
+    DependsOn:
+      - StreamlitCloudTrailBucketPolicy
+      - StreamlitBuildCustomResource
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      TrailName: !Join ['-', ['StreamlitCloudTrail', !Ref EnvironmentName]]
+      S3BucketName: !Ref StreamlitCloudTrailBucket
+      EventSelectors:
+        -
+          DataResources:
+            -
+              Type: AWS::S3::Object
+              Values:
+                - !Join [ '', [ !GetAtt StreamlitCodeS3Bucket.Arn, '/', "app.zip" ] ]
+          ReadWriteType: WriteOnly
+          IncludeManagementEvents: false
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: true
+
+  ###################
+  ##### Agents #####
+  #################
+  AgentResource:
+    DependsOn: StreamlitBuildCustomResource
+    Type: AWS::Bedrock::Agent
+    Properties:
+      AgentName: !Sub crm-agent-${EnvironmentName}
+      AgentResourceRoleArn: !GetAtt AgentRole.Arn
+      FoundationModel: !Ref BedrockModelId
+      Instruction: !If [IsJiraImplementation, "You are a customer relationship management agent tasked with helping a sales person plan their work with customers. You can provide information like company overview, company interaction history (meeting times and notes), company meeting preferences (meeting type, day of week, and time of day). You can also query Jira tasks and update their timeline. After receiving a response, clean it up into a readable format.If the output is a numbered list, format it as such with newline characters and numbers. You cannot output JSON structures.", "You are a customer relationship management agent tasked with helping a sales person plan their work with customers. You can provide information like company overview, company interaction history (meeting times and notes), company meeting preferences (meeting type, day of week, and time of day). After receiving a response, clean it up into a readable format.If the output is a numbered list, format it as such with newline characters and numbers. You cannot output JSON structures."]
+      Description: "Agent for Customer Relationship Management."
+      ActionGroups:
+        - ActionGroupName: crmActionGroup
+          Description: Action for getting Customer Information, getting open JIRA tasks and updating JIRA issue timeline
+          ActionGroupExecutor: 
+            Lambda: !GetAtt AgentLambdaFunction.Arn
+          ApiSchema:
+            S3:
+              S3BucketName: !Ref StreamlitCodeS3Bucket
+              S3ObjectKey: agent/crm_schema.json
+  
+  AgentAliasResource:
+    Type: AWS::Bedrock::AgentAlias
+    Properties:
+      AgentId: !GetAtt AgentResource.AgentId
+      AgentAliasName: !Sub crm-alias-${EnvironmentName}
+
+  AgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub AmazonBedrockExecutionRoleForAgents_${EnvironmentName}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - bedrock.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: BedrockInvokeModel
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub arn:aws:s3:::${StreamlitCodeS3Bucket}/agent/crm_schema.json
+    
+  ########################
+  ##### ActionGroup #####
+  ######################
+
+  AgentLambdaFunction:
+    DependsOn: StreamlitBuildCustomResource
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      FunctionName: !Sub crm-lambda-action-${EnvironmentName}
+      Handler: crm-bot-lambda.lambda_handler
+      Role: !GetAtt AgentLambdaRole.Arn
+      Timeout: 300
+      Environment:
+        Variables:
+          EnvironmentName: !Ref EnvironmentName
+          JIRA_URL: !If [IsJiraImplementation, !Ref JiraURL, !Ref 'AWS::NoValue']
+          JIRA_API_TOKEN: !If [IsJiraImplementation, !Ref JiraAPIToken, !Ref 'AWS::NoValue']
+          JIRA_USERNAME: !If [IsJiraImplementation, !Ref JiraUsername, !Ref 'AWS::NoValue']
+      Code:
+        S3Bucket: !Ref StreamlitCodeS3Bucket
+        S3Key: agent/crm-bot-lambda.zip
+
+  AgentLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoGetPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/customer-${EnvironmentName}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/interactions-${EnvironmentName}
+
+  AgentLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt AgentLambdaFunction.Arn
+      Principal: bedrock.amazonaws.com
+      SourceArn: !GetAtt AgentResource.AgentArn
+
+  ####################
+  ##### DynamoDB #####
+  ####################
+
+  CustomerTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub customer-${EnvironmentName}
+      AttributeDefinitions:
+        - AttributeName: customer_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: customer_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  InteractionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub interactions-${EnvironmentName}
+      AttributeDefinitions:
+        - AttributeName: customer_id
+          AttributeType: S
+        - AttributeName: date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: customer_id
+          KeyType: HASH
+        - AttributeName: date
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  ########################################
+  ##### Parameters for StreamlitApp #####
+  ######################################
+
+  AgentIdSSMParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /streamlitapp/${EnvironmentName}/AGENT_ID
+      Type: String
+      Value: !GetAtt AgentResource.AgentId
+      Description: !Sub SSM parameter for AgentId for ${EnvironmentName}
+
+  AgentAliasIdSSMParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /streamlitapp/${EnvironmentName}/AGENT_ALIAS_ID
+      Type: String
+      Value: !GetAtt AgentAliasResource.AgentAliasId
+      Description: !Sub SSM parameter for AgentAliasId for ${EnvironmentName}
+
+Outputs:
+  StreamlitCodeS3Bucket:
+    Value: !Ref StreamlitCodeS3Bucket
+    Description: Name of code S3 bucket
+

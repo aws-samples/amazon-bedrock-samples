@@ -1,0 +1,10 @@
+<s>[INST] <<SYS>>
+I broke a long video into chapters. Here is the transcript from one of the chapters:
+
+What should the chapter title be? Use 1 to 4 words. Make sure the title conveys the central focus of the conversation. Your answer should only contain the title, no explanations or choices. Start your title with the prefix "Title: ".
+
+<</SYS>>
+
+Chapter: {}
+
+[/INST]

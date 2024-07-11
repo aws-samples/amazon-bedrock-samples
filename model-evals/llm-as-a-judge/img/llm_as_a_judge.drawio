@@ -1,0 +1,37 @@
+<mxfile host="app.diagrams.net" modified="2024-06-08T14:10:12.505Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36" etag="hwVgiLRuONYx3Vq82dmR" version="24.5.2" type="device">
+  <diagram name="Page-1" id="1HxBYAlx7F6S68beqvnj">
+    <mxGraphModel dx="1434" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="FHxeO19GnBOAelQBnrXM-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FHxeO19GnBOAelQBnrXM-18" target="FHxeO19GnBOAelQBnrXM-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="FHxeO19GnBOAelQBnrXM-18" value="Dataset" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="430" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="FHxeO19GnBOAelQBnrXM-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="FHxeO19GnBOAelQBnrXM-19" target="FHxeO19GnBOAelQBnrXM-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="FHxeO19GnBOAelQBnrXM-19" value="Get inference from multiple candidate LLMs" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="430" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="FHxeO19GnBOAelQBnrXM-26" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FHxeO19GnBOAelQBnrXM-21" target="FHxeO19GnBOAelQBnrXM-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="FHxeO19GnBOAelQBnrXM-21" value="Use another &quot;LLM as a judge&quot; to evaluate outputs and provide explanation" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="430" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="FHxeO19GnBOAelQBnrXM-22" value="Determine model selection rate, inference latency and other metrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="600" y="370" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="FHxeO19GnBOAelQBnrXM-23" value="Ask an LLM to read explanations for choosing a model and summarize patterns" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="600" y="480" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="FHxeO19GnBOAelQBnrXM-27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=-0.008;entryY=0.383;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="FHxeO19GnBOAelQBnrXM-21" target="FHxeO19GnBOAelQBnrXM-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

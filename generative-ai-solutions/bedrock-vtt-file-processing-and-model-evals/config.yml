@@ -1,0 +1,136 @@
+---
+# Name of the application
+app_name: genai-chapterize-meeting-transcripts
+
+aws:
+  region: us-east-1
+
+# directory paths
+dir:
+  data: data
+  raw: data/source_data
+  processed: data/processed_data
+  completions: data/title_completions
+  model_eval_completions: data/model_eval_completions
+  golden: data/source_data/golden
+  prompts: data/prompts
+  metrics: data/metrics
+  processed_file: processed.csv
+  chapterized_file: chapterized.csv
+  metrics_file: per_request_results.csv
+  summary_metrics_file: summary_metrics.csv
+  model_evals_file: model_eval.csv
+  processed_prompts_for_eval: processed_evaluation_prompts.csv
+  filtered_titles_for_eval: filtered_titles_for_eval.csv
+  final_report: recommended_model.csv
+  model_distribution: model_distribution_count.csv
+  overall_eval_report: overall_evaluation_report.csv
+  # use "json" if you already have chapterized data, use
+  # "vtt" if you the data as a vtt transcript. See notes
+  # in the "run_steps" section below.
+  file_type_to_process: json
+
+
+# section that enables main.py to run each notebook without manually executing each of them
+run_steps:
+    # if working with JSON files that contain already chapterized data set this to yes
+    # and set the 0_chapterize_data.ipynb to no
+    0_already_chapterized_data.ipynb: yes
+
+    # if working with VTT files that need to be chapterized set this to yes
+    # and 0_already_chapterized_data.ipynb to no
+    0_chapterize_data.ipynb: no
+
+    1_generate_chapter_titles.ipynb: yes
+    2_summarize_metrics.ipynb: yes
+
+inference_parameters_for_title_generation: 
+  temperature: 0.1
+  caching: False
+
+inference_parameters_for_explanations:
+  temperature: 0.1
+  caching: False
+  max_tokens: 500
+
+title_generation_thresholds:
+  # set a cap of the length of each chapter to be set for title generation
+  max_chapter_length: 20
+
+parallel_inference_count: 15
+sleep_in_seconds_between_models: 5
+
+response_prefix_to_remove:
+- "Title:"
+- "<title>"
+- "</title>"
+- "Chapter: "
+- "Sure! Here is a possible title for the chapter based on the provided text:"
+response_suffix_to_clip: "["
+
+# bedrock FMs
+experiments:
+- name: chapterize-meeting-transcripts
+  prompt_template:
+  # ALWAYS REFER TO BEDROCK PRICING PAGE FOR MODEL PRICING
+  # NUMBERS HERE MAY NOT BE UP TO DATE WITH LATEST PRICING
+  model_list:
+  - model: meta.llama3-8b-instruct-v1:0
+    max_context_window: 4096
+    prompt_template: llama3_template.txt
+    input_tokens_pricing: 0.0004
+    output_tokens_pricing: 0.0006
+  - model: meta.llama3-70b-instruct-v1:0
+    max_context_window: 4096
+    prompt_template: llama3_template.txt
+    input_tokens_pricing: 0.00265
+    output_tokens_pricing: 0.0035
+  - model: mistral.mixtral-8x7b-instruct-v0:1
+    prompt_template: mistral_template.txt
+    max_context_window: 32000
+    input_tokens_pricing: 0.00045
+    output_tokens_pricing: 0.0007
+  - model: mistral.mistral-7b-instruct-v0:2
+    prompt_template: mistral_template.txt
+    max_context_window: 32000
+    input_tokens_pricing: 0.00015
+    output_tokens_pricing: 0.0002
+  - model: anthropic.claude-3-haiku-20240307-v1:0
+    prompt_template: anthropic_template.txt
+    max_context_window: 200000
+    input_tokens_pricing: 0.00025
+    output_tokens_pricing: 0.00125
+  - model: anthropic.claude-3-sonnet-20240229-v1:0
+    max_context_window: 200000
+    prompt_template: anthropic_template.txt
+    input_tokens_pricing: 0.00300
+    output_tokens_pricing: 0.01500
+  - model: amazon.titan-text-express-v1
+    max_context_window: 8000
+    prompt_template: titan_template.txt
+    input_tokens_pricing: 0.0008
+    output_tokens_pricing: 0.0016
+  # removing Llama2 from the list as some of the chapters are larger than the
+  # context window
+  # - model: meta.llama2-13b-chat-v1
+  #   max_context_window: 4096
+  #   prompt_template: llama_template.txt
+  #   input_tokens_pricing: 0.00075
+  #   output_tokens_pricing: 0.00100
+
+# judge in the loop model to evaluate completions against human generated/golden titles
+eval_model_info:
+  model: anthropic.claude-3-sonnet-20240229-v1:0
+  prompt_template: eval_template.txt
+  input_tokens_pricing: 0.00300
+  output_tokens_pricing: 0.01500
+
+embeddings_model_info:
+  model: amazon.titan-embed-text-v1
+  max_text_len_for_embedding: 500
+  rouge_metric_selection: 'rougeL' # can be rouge-1, rouge-2, rouge-w, rouge-s, etc
+
+report:
+  summary_text: 'The average inference latency for this workload with prompt tokens {avg_prompt_token_count} (p95 is {p95_prompt_token_count}) and completion tokens {avg_completion_token_count} (p95 is {p95_completion_token_count}) when using {model_id} is {avg_latency}s (p95 is {p95_latency}s) and the average cost for 10,000 requests is ${avg_cost} (p95 is ${p95_cost_per_txn}). The mean ROUGE-L score is {mean_rouge_l_score} and Cosine Similarity is {mean_cosine_similarity_score}. This is based on {count} requests.' 
+  model_recommendation: 'The recommended model with the best match title based on an evaluation of {count} titles is {model_id}, with a {percentage_of_occurrence}% selection rate. The total cost to run the LLM as a judge evaluation is ${total_evaluation_cost}.'
+  eval_report_explanation: 'The mean ROUGE-L score is {rouge_score}, mean Cosine Similarity is {cosine_score} and the LLM as a judge pick rate is {llm_as_a_judge}.'

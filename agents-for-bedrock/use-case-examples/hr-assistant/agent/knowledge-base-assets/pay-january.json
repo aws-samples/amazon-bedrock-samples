@@ -1,0 +1,28 @@
+{
+  "company": "Aglaia",
+  "employee": "Pepper Li",
+  "payStatement": {
+    "month": "January",
+    "year": 2024,
+    "earnings": {
+      "gross Pay": 4900,
+      "overtime Pay": 200,
+      "bonus": 300,
+      "total Earnings": 5400
+    },
+    "deductions": {
+      "federal Income Tax": 680,
+      "state Income Tax": 272,
+      "social Security Tax": 334.8,
+      "medicare Tax": 78.3,
+      "health Insurance Premium": 120,
+      "dental Insurance Premium": 35,
+      "401k Retirement Contribution": 500,
+      "life Insurance Premium": 25,
+      "parking Fee": 50,
+      "union Dues": 35,
+      "total Deductions": 2170.1
+    },
+    "net Pay": 3229.9
+  }
+}

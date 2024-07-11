@@ -1,0 +1,6 @@
+pandas==2.1.4
+boto3==1.34.69
+litellm==1.34.0
+papermill==2.5.0
+rouge-score==0.1.2
+ray==2.10.0

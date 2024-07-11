@@ -1,0 +1,138 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: end-to-end RAG solution using Knowledgebases for Amazon Bedrock
+Parameters:
+  Q01pInputBucketName:
+    Type: String
+    Description: Provide existing S3 bucket name where data is already stored
+  Q02pInputDocumentUploadFolderPrefix:
+    Type: String
+    Description: Prefix in S3 bucket [optional]
+#    MinLength: 1
+#    MaxLength: 63
+#    AllowedPattern: ^[a-z0-9](-*[a-z0-9])*
+#    ConstraintDescription: Must be lowercase or numbers with a length of 1-63 characters
+  Q03pEmbedModel:
+    Type: String
+    Description: Select Embedding model
+    AllowedValues:
+      - amazon.titan-embed-text-v1
+    Default: amazon.titan-embed-text-v1
+  Q04pChunkingStrategy:
+    Type: String
+    Description: Select Chunking strategy
+    AllowedValues:
+      - Default chunking
+      - Fixed-size chunking
+      - No chunking
+    Default: Default chunking
+  Q05pMaxTokens:
+    Type: String
+    Description: Maximum number of tokens in a chunk
+  Q06pOverlapPercentage:
+    Type: String
+    Description: Percent overlap in each chunk
+  Q07pVectorStore:
+    Type: String
+    Description: Select VectorStore
+    AllowedValues:
+    - Open-Search-Serverless
+    Default: Open-Search-Serverless
+  Q08pCollectionName:
+    Type: String
+    Description: Name of the Collection
+    MinLength: 1
+    MaxLength: 63
+    Default: e2e-rag-collection
+    AllowedPattern: ^[a-z0-9](-*[a-z0-9])*
+    ConstraintDescription: Must be lowercase or numbers with a length of 1-63 characters
+  Q09pIndexName:
+    Type: String
+    Description: Index name to be created in vector store
+    MinLength: 1
+    MaxLength: 63
+    Default: e2e-rag-index
+    AllowedPattern: ^[a-z0-9](-*[a-z0-9])*
+    ConstraintDescription: Must be lowercase or numbers with a length of 1-63 characters
+  # Q10pVectorFieldName:
+  #   Type: String
+  #   Description: Vector field name
+  #   Default: bedrock-knowledge-base-default-vector
+  # Q11pMetaDataFieldName:
+  #   Type: String
+  #   Description: Metadata field name
+  #   Default: AMAZON_BEDROCK_METADATA
+  # Q12pTextFieldName:
+  #   Type: String
+  #   Description: Text field name
+  #   Default: AMAZON_BEDROCK_TEXT_CHUNK
+Resources:
+  KbRoleStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://e2e-rag-deployment-525407566630-us-east-1.s3.amazonaws.com/templates/kb-role-template.template
+      TimeoutInMinutes: 15
+      Parameters:
+        Q01pInputBucketName:
+          Ref: Q01pInputBucketName
+  OSSInfraStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: KbRoleStack
+    Properties:
+      TemplateURL: https://e2e-rag-deployment-525407566630-us-east-1.s3.amazonaws.com/templates/oss-infra-template.template
+      TimeoutInMinutes: 15
+      Parameters:
+        Q03pEmbedModel:
+          Ref: Q03pEmbedModel
+        Q08pCollectionName:
+          Ref: Q08pCollectionName
+        Q09pIndexName:
+          Ref: Q09pIndexName
+        pKbRole:
+          Fn::GetAtt:
+          - KbRoleStack
+          - Outputs.KbRole
+        pKbRoleArn:
+          Fn::GetAtt:
+          - KbRoleStack
+          - Outputs.KbRoleArn
+  KbInfraStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: OSSInfraStack
+    Properties:
+      TemplateURL: https://e2e-rag-deployment-525407566630-us-east-1.s3.amazonaws.com/templates/kb-infra-template.template
+      TimeoutInMinutes: 15
+      Parameters:
+        Q01pInputBucketName:
+          Ref: Q01pInputBucketName
+        Q02pInputDocumentUploadFolderPrefix:
+          Ref: Q02pInputDocumentUploadFolderPrefix
+        Q03pEmbedModel:
+          Ref: Q03pEmbedModel
+        Q04pChunkingStrategy:
+          Ref: Q04pChunkingStrategy
+        Q05pMaxTokens:
+          Ref: Q05pMaxTokens
+        Q06pOverlapPercentage:
+          Ref: Q06pOverlapPercentage
+        Q08pCollectionName:
+          Ref: Q08pCollectionName
+        Q09pIndexName:
+          Ref: Q09pIndexName
+        # Q10pVectorFieldName:
+        #   Ref: Q10pVectorFieldName
+        # Q11pMetaDataFieldName:
+        #   Ref: Q11pMetaDataFieldName
+        # Q12pTextFieldName:
+        #   Ref: Q12pTextFieldName
+        pCollectionArn:
+          Fn::GetAtt:
+          - OSSInfraStack
+          - Outputs.CollectionArn
+        pKbRoleArn:
+          Fn::GetAtt:
+          - KbRoleStack
+          - Outputs.KbRoleArn
+        pKbRole:
+          Fn::GetAtt:
+          - KbRoleStack
+          - Outputs.KbRole

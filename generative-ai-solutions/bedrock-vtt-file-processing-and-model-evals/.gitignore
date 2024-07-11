@@ -1,0 +1,6 @@
+.DS_Store
+.ipynb_checkpoints
+data/model_eval_completions/*
+data/title_completions/*
+executed_notebooks/
+__pycache__/

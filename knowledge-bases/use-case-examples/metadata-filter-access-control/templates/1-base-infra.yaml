@@ -1,0 +1,255 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Access Control with Knowledge Bases for Amazon Bedrock infrastructure.
+
+Parameters:
+  SolutionId:
+    Type: String
+    Default: kb123
+    AllowedPattern: '[a-z0-9]*'
+
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Join ['', [!Ref 'SolutionId', '_userpool']]
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - Name: name
+          AttributeDataType: String
+          Required: true
+        - Name: sub
+          AttributeDataType: String
+          Required: true
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Join ['', [!Ref 'SolutionId', '_userpoolclient']]
+      GenerateSecret: true
+      UserPoolId: !Ref CognitoUserPool
+
+  DoctorPatientListAssociationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Join ['', [!Ref 'SolutionId', '_doctor_patient_list_association']]
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: doctor_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: doctor_id
+          KeyType: HASH
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join ['', [!Ref 'SolutionId', '-bucket']]
+
+  # Set up the Amazon Opensearch Serverless Service
+  EncryptionPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    Properties:
+      Name: !Join ['', [!Ref 'SolutionId', '-kbcollection-enc']]
+      Policy:
+        Fn::Sub: '{"Rules": [{"ResourceType": "collection", "Resource": ["collection/${SolutionId}-kbcollection"]}], "AWSOwnedKey": true}'
+      Type: encryption
+
+  NetworkPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    DependsOn:
+      - EncryptionPolicy
+    Properties:
+      Name: !Join ['', [!Ref 'SolutionId', '-kbcollection-net']]
+      Policy:
+        Fn::Sub: '[{"Description": "Public access for ct-kb-aoss-collection collection", "Rules": [{"ResourceType": "dashboard", "Resource": ["collection/${SolutionId}-kbcollection"]}, {"ResourceType": "collection", "Resource": ["collection/${SolutionId}-kbcollection"]}], "AllowFromPublic": true}]'
+      Type: network
+
+  DataAccessPolicy:
+    Type: AWS::OpenSearchServerless::AccessPolicy
+    DependsOn:
+      - NetworkPolicy
+    Properties:
+        Name: !Join ['', [!Ref 'SolutionId', '-kbcollection-access']]
+        Policy:
+            Fn::Sub: '[{"Rules": [{"Resource": ["collection/${SolutionId}-kbcollection"], "Permission": ["aoss:CreateCollectionItems", "aoss:UpdateCollectionItems", "aoss:DescribeCollectionItems"], "ResourceType": "collection"}, {"ResourceType": "index", "Resource": ["index/${SolutionId}-kbcollection/*"], "Permission": ["aoss:CreateIndex", "aoss:DescribeIndex", "aoss:ReadDocument", "aoss:WriteDocument", "aoss:UpdateIndex", "aoss:DeleteIndex"]}], "Principal": ["arn:aws:iam::${AWS::AccountId}:role/${SolutionId}-kbrole"]}]'
+        Type: data
+
+  Collection:
+    Type: AWS::OpenSearchServerless::Collection
+    DependsOn:
+      - EncryptionPolicy
+    Properties:
+      Description: KB AOSS Collection
+      Name: !Join ['', [!Ref 'SolutionId', '-kbcollection']]
+      Type: VECTORSEARCH
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join ['', [!Ref 'SolutionId', '-lambda-function']]
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 90
+      Environment:
+          Variables:
+            DOCTOR_PATIENT_TABLE: !Ref DoctorPatientListAssociationTable
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import os
+
+          def lambda_handler(event, context):
+              region = context.invoked_function_arn.split(':')[3]
+              knowledge_base_id = event['knowledgeBaseId']
+              doctor_id = event['doctorId']
+              patient_ids = set(event['patientIds'])
+              input_text = event['text']
+
+              # Initialize the DynamoDB client
+              dynamodb = boto3.client('dynamodb', region_name=region)
+
+              # Query the doctor_patient_association table
+              response = dynamodb.query(
+                  TableName=os.environ.get('DOCTOR_PATIENT_TABLE'),
+                  KeyConditionExpression='doctor_id = :doctor_id',
+                  ExpressionAttributeValues={
+                      ':doctor_id': {'S': doctor_id}
+                  }
+              )
+              
+              print(list(patient_ids))
+              # Extract the associated patient IDs from the query result
+              associated_patient_ids = set()
+              for item in response['Items']:
+                  patient_id_list = item.get('patient_id_list', {}).get('L', [])
+                  associated_patient_ids.update(pid['S'] for pid in patient_id_list)
+
+
+              # Check if the patient IDs from the event exist in the associated patient IDs
+              if not patient_ids.issubset(associated_patient_ids):
+                  return {
+                      'statusCode': 400,
+                      'body': json.dumps({
+                          'error': 'One or more patient IDs are not associated with the provided doctor ID.'
+                      })
+                  }
+
+              # Initialize the Bedrock Agent client
+              bedrock_agent = boto3.client('bedrock-agent-runtime')
+
+              # Call the Bedrock Agent API to retrieve and generate response
+              response = bedrock_agent.retrieve_and_generate(
+                  input={
+                      "text": input_text
+                  },
+                  retrieveAndGenerateConfiguration={
+                      "type": "KNOWLEDGE_BASE",
+                      "knowledgeBaseConfiguration": {
+                          'knowledgeBaseId': knowledge_base_id,
+                          "modelArn": "arn:aws:bedrock:{}::foundation-model/anthropic.claude-v2:1".format(region),
+                          "retrievalConfiguration": {
+                              "vectorSearchConfiguration": {
+                                  "numberOfResults": 5,
+                                  "filter": {
+                                      "in": {
+                                          "key": "patient_id",
+                                          "value": list(patient_ids)
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              )
+
+              # Get the response text
+              output_text = response['output']['text']
+
+              # Return the response
+              return {
+                  'statusCode': 200,
+                  'body': output_text
+              }
+        
+
+  LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - 'sts:AssumeRole'
+        Policies:
+          - PolicyName: !Join ['', [!Ref 'SolutionId', '-lambda-policy']]
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogGroup'
+                    - 'logs:CreateLogStream'
+                    - 'logs:PutLogEvents'
+                  Resource: 'arn:aws:logs:*:*:*'
+                - Sid: BedrockAll
+                  Effect: Allow
+                  Action:
+                    - 'bedrock:*'
+                  Resource: '*'
+                - Effect: Allow
+                  Action:
+                    - 'dynamodb:GetItem'
+                    - 'dynamodb:Query'
+                    - 'dynamodb:Scan'
+                  Resource: !Join
+                    - ''
+                    - - 'arn:aws:dynamodb:'
+                      - !Ref 'AWS::Region'
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':table/'
+                      - !Ref DoctorPatientListAssociationTable
+
+Outputs:
+  userpoolid:
+    Description: Cognito User Pool ID
+    Value: !Ref CognitoUserPool
+
+  userpoolarn:
+    Description: Cognito User Pool ARN
+    Value: !GetAtt CognitoUserPool.Arn
+
+  cognitoarn:
+    Description: Cognito ARN
+    Value: !GetAtt CognitoUserPool.Arn
+
+  clientid:
+    Description: Cognito User Pool Client ID
+    Value: !Ref CognitoUserPoolClient
+
+  clientsecret:
+    Description: Cognito User Pool Client Secret
+    Value: !GetAtt CognitoUserPoolClient.ClientSecret
+
+  dynamotable:
+    Description: DynamoDB Table Name
+    Value: !Ref DoctorPatientListAssociationTable
+
+  s3bucket:
+    Description: S3 Bucket Name
+    Value: !Ref S3Bucket
+
+  lambdafunctionarn:
+    Description: Lambda Function ARN
+    Value: !GetAtt LambdaFunction.Arn
+
+  OpenSearchCollectionId:
+    Description: OpenSearch Serverless Collection Id
+    Value: !Ref Collection
