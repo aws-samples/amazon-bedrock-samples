@@ -1,0 +1,19 @@
+evaluator:
+  model: claude-3
+target:
+  bedrock_agent_alias_id: {agent_id}
+  bedrock_agent_id: none
+  type: bedrock-agent
+tests:
+  check_for_chicken_dinner:
+    expected_results:
+    - The agent returns a list of dishes from the dinner menu that contains chicken.
+    steps:
+    - Ask agent for a the dishes in the dinner menu that contains chicken.
+  make_and_check_booking:
+    steps:
+    - Ask agent to make a booking for Anna, 2 people, 16 July at 7pm.
+    - Using the booking ID, check for the booking details
+    expected_results:
+    - The agent returns with the booking ID
+    - The booking details are.. Name Anna, Number of guests 2, Date 16 July, Time 7pm
