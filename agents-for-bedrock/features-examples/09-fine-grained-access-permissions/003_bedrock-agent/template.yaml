@@ -11,11 +11,6 @@ Parameters:
 
 Resources:
 
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'IAM Role for Amazon Bedrock Agents'
-
-Resources:
-
   AmazonBedrockRoleForAgentsAgentAccess:
     Type: AWS::IAM::Role
     Properties:
@@ -200,7 +195,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./agent/
-      Description: ''
+      Description: 'This is the Claims Action Group Lambda function'
       MemorySize: 128
       Timeout: 3
       Handler: agent.lambda_handler
@@ -224,7 +219,10 @@ Resources:
               Action:
                 - verifiedpermissions:IsAuthorized
                 - verifiedpermissions:IsAuthorizedWithToken
-                - verifiedpermissions:*
+                - verifiedpermissions:GetPolicyStore
+                - verifiedpermissions:ListPolicyStores
+                - verifiedpermissions:GetSchema
+                - verifiedpermissions:ListIdentitySources
               Resource: '*'
 
       SnapStart:
