@@ -55,6 +55,8 @@ response = bedrock_client.create_guardrail(
 
 To associate the guardrail you can use this function from agent.py:
 ```
+from agent import AgentsForAmazonBedrock
+agents = AgentsForAmazonBedrock()
 agents.update_agent( agent_name=agent_name, guardrail_id=response['guardrailId'])
 
 ```
