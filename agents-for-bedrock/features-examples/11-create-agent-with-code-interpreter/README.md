@@ -24,7 +24,8 @@ The code below shows how to configure the code interpretation capabilities when 
 )
 ```
 
-When invoking your agent, should supply parameter including the query text, agent id, agent alias, and a session id. Other parameters allow enabling tracing, to see the details of the model's return communication stream, ending the session, optionally storing conversational memory, and maintaining a state for this session.
+When invoking your agent, should supply parameter including the query text, agent id, agent alias, and a session id. Other parameters allow enabling tracing, to see the details of the model's return communication stream, ending the session, optionally storing conversational memory, and maintaining a state for this session. Code interpretation, however, is not controlled by any parameter; the action group with `parentActionGroupSignature='AMAZON.CodeInterpreter'` makes it available to the agent and, on every invocation, the agent determines whether to use it or not.
+
 ```python
     if not session_state:
         session_state = {}
@@ -41,3 +42,5 @@ When invoking your agent, should supply parameter including the query text, agen
     )    
     
 ```
+
+Refer to the `11-create-agent-with-code-interpreter.ipynb` notebook for more detailed implementation examples. 
