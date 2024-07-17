@@ -4,6 +4,8 @@ Description: 'CloudFormation template for creating an Amazon Cognito User Pool'
 Resources:
   UserPool:
     Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       UserPoolName: claims-app-userpool
       Policies:
