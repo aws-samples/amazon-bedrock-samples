@@ -28,7 +28,7 @@ from botocore.exceptions import ClientError
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth, RequestError
 import pprint
 from retrying import retry
-import random
+import uuid
 
 valid_embedding_models = [
     "cohere.embed-multilingual-v3", "cohere.embed-english-v3", "amazon.titan-embed-text-v1",
@@ -67,7 +67,8 @@ class KnowledgeBasesForAmazonBedrock:
         self.region_name = boto3_session.region_name
         self.iam_client = boto3_session.client('iam')
         self.account_number = boto3.client('sts').get_caller_identity().get('Account')
-        self.suffix = random.randrange(200, 900)
+        random_id = str(uuid.uuid1().int)
+        self.suffix = random_id[:4]
         self.identity = boto3.client('sts').get_caller_identity()['Arn']
         self.aoss_client = boto3_session.client('opensearchserverless')
         self.s3_client = boto3.client('s3')

@@ -349,23 +349,28 @@ class AgentsForAmazonBedrock:
         if delete_role_flag:
             try:
                 _function_resp = self._lambda_client.get_function(FunctionName=lambda_function_name)
+            except self._lambda_client.exceptions.ResourceNotFoundException:
+                print(f"No lambda function called {lambda_function_name} was found")
+            try:
                 _role_arn = _function_resp['Configuration']['Role']
                 _role_name = _role_arn.split('/')[1]
-                self._iam_client.detach_role_policy(RoleName=_role_name, 
-                                PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole')
+                self._iam_client.detach_role_policy(
+                    RoleName=_role_name, 
+                    PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+                )                
                 self._iam_client.delete_role(
                     RoleName=_role_name
                 )
-            except:
-                pass
+            except self._iam_client.exceptions.NoSuchEntityException:
+                print(f"Resource not found: {_role_name}")
 
         # Delete Lambda function
         try:
             self._lambda_client.delete_function(
                 FunctionName=lambda_function_name
             )
-        except:
-            pass
+        except self._lambda_client.exceptions.ResourceNotFoundException:
+            print(f"{lambda_function_name} lambda function could not be deleted")
 
     def get_agent_role(self, agent_name: str) -> str:
         """Gets the ARN of the IAM role that is associated with the specified Agent.
@@ -415,35 +420,33 @@ class AgentsForAmazonBedrock:
                     PolicyName="bedrock_gr_allow_policy", 
                     RoleName=_agent_role_name
                 )
-            except Exception as e:
-                # print(f'Error when deleting bedrock_kb_allow_policy from role: {_agent_role_name}\n{e}')
-                pass
+            except self._iam_client.exceptions.NoSuchEntityException:
+                print(f'Error when deleting bedrock_kb_allow_policy from role: {_agent_role_name}\n{e}')
+                
 
             try:
                 self._iam_client.delete_role_policy(
                     PolicyName="bedrock_allow_policy", 
                     RoleName=_agent_role_name
                 )
-            except Exception as e:
+            except self._iam_client.exceptions.NoSuchEntityException:
                 print(f'Error when deleting bedrock_allow_policy from role: {_agent_role_name}\n{e}')
-                pass
 
             try:
                 self._iam_client.delete_role_policy(
                     PolicyName="bedrock_kb_allow_policy", 
                     RoleName=_agent_role_name
                 )
-            except Exception as e:
-                # print(f'Error when deleting bedrock_kb_allow_policy from role: {_agent_role_name}\n{e}')
-                pass
+            except self._iam_client.exceptions.NoSuchEntityException:
+                print(f'Error when deleting bedrock_kb_allow_policy from role: {_agent_role_name}\n{e}')
 
             try:
                 self._iam_client.delete_role(
                     RoleName=_agent_role_name
                 )
-            except Exception as e:
+            except self._iam_client.exceptions.NoSuchEntityException:
                 print(f'Error when deleting role: {_agent_role_name} from agent: {agent_name}\n{e}')
-                pass
+                
 
         # if the agent exists, delete the agent
         if _target_agent is not None:
