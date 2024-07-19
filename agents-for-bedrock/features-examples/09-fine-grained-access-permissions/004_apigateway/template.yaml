@@ -160,7 +160,7 @@ Resources:
             - Effect: Allow
               Action:
                 - bedrock:InvokeAgent
-              Resource: '*'
+              Resource:  !Sub 'arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/${BedrockAgentId}/alias/${BedrockAgentAliasId}'
       SnapStart:
         ApplyOn: None
       Events:
