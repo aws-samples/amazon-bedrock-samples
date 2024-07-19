@@ -219,11 +219,14 @@ Resources:
               Action:
                 - verifiedpermissions:IsAuthorized
                 - verifiedpermissions:IsAuthorizedWithToken
+              Resource: !Sub 'arn:aws:verifiedpermissions:${AWS::Region}:${AWS::AccountId}:policy-store/${PolicyStoreId}'
+            - Effect: Allow
+              Action:
                 - verifiedpermissions:GetPolicyStore
                 - verifiedpermissions:ListPolicyStores
                 - verifiedpermissions:GetSchema
                 - verifiedpermissions:ListIdentitySources
-              Resource: '*'
+              Resource: !Sub 'arn:aws:verifiedpermissions:${AWS::Region}:${AWS::AccountId}:policy-store/*'
 
       SnapStart:
         ApplyOn: None
