@@ -38,7 +38,8 @@ Resources:
         CognitoUserPoolArn: !GetAtt CognitoUserPoolStack.Outputs.UserPoolArn
         BedrockAgentAliasId: !GetAtt BedrockAgentStack.Outputs.BedrockAgentAliasId
         BedrockAgentId: !GetAtt BedrockAgentStack.Outputs.BedrockAgentId
-
+        KmsKeyId: !GetAtt KmsStack.Outputs.KmsKeyId
+        
 Outputs:
   APIEndpoint:
     Description: "The endpoint of the API Gateway"
