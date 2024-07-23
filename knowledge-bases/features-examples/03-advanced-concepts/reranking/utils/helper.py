@@ -12,27 +12,17 @@ from sagemaker.base_serializers import JSONSerializer
 from sagemaker.base_deserializers import JSONDeserializer
 
 
-llm_prompt_template = """
-
-Human: Given the following texts, find the best answer to the user question. The accuracy of the answer is critical. If the answer is not found in the context, please say I do not know. Give your answer in just a couple of sentences. Do not give long answer.
+llm_prompt_template = """Given the following texts, find the best answer to the user question. The accuracy of the answer is critical. If the answer is not found in the context, please say I do not know. Give your answer in just a couple of sentences. Do not give long answer.
 
 ####
 {{documents}}
 ####
 
 
-User Question: {{query}}
-
-Assistant:"""
-
+{{query}}"""
 def generate_questions(bedrock_runtime, model_id, documents):
 
-    prompt_template = """
-
-Human: You are a professor. Your task is to setup \
-1 question for an upcoming \
-quiz/examination based on the given document wrapped in <document></document> XML tag. \
-The question should be diverse in nature \
+    prompt_template = """The question should be diverse in nature \
 across the document. The question should not contain options, not start with Q1/ Q2. \
 Restrict the question to the context information provided.\
 
@@ -47,31 +37,29 @@ Your response should follow the format as followed:
 Question: question
 Answer: answer
 
+"""
+    system_prompt = """You are a professor. Your task is to setup 1 question for an upcoming \
+quiz/examination based on the given document wrapped in <document></document> XML tag."""
 
-Assistant:"""
-    
-    # prompt = prompt_template.replace("{{num_questions}}", str(num_questions))
     prompt = prompt_template.replace("{{document}}", documents)
+    temperature = 0.9
+    top_k = 250
+    messages = [{"role": "user", "content": [{"text": prompt}]}]
+    # Base inference parameters to use.
+    inference_config = {"temperature": temperature, "maxTokens": 512, "topP": 1.0}
+    # Additional inference parameters to use.
+    additional_model_fields = {"top_k": top_k}
 
-
-    body = {
-        "prompt": prompt,
-        "max_tokens_to_sample": 512,
-        "temperature":0.9,
-        "top_k":250,
-        "top_p":1,
-        "stop_sequences":["\n\nHuman:"]
-    }
-
-    response = bedrock_runtime.invoke_model(
-        body=json.dumps(body),
-        contentType="application/json",
-        accept="application/json",
-        modelId=model_id
+    # Send the message.
+    response = bedrock_runtime.converse(
+        modelId=model_id,
+        messages=messages,
+        system=[{"text": system_prompt}],
+        inferenceConfig=inference_config,
+        additionalModelRequestFields=additional_model_fields
     )
-
-    output = json.loads(response['body'].read())
-    result = output['completion']
+    print(response['output']['message']['content'][0]['text'])
+    result = response['output']['message']['content'][0]['text']
     q_pos = [(a.start(), a.end()) for a in list(re.finditer("Question:", result))]
     a_pos = [(a.start(), a.end()) for a in list(re.finditer("Answer:", result))]
 
@@ -89,8 +77,8 @@ Assistant:"""
         else:
             next_q_start = q_pos[idx+1][0]
             answer = result[a_end:next_q_start-2]
-        questions.append(question)
-        answers.append(answer)
+        questions.append(question.strip())
+        answers.append(answer.strip())
 
     data_samples['question'] = questions
     data_samples['ground_truth'] = answers
@@ -121,90 +109,25 @@ def generate_context_answers(bedrock_runtime, agent_runtime, model_id, knowledge
         combined_docs = "\n".join(local_contexts)
         prompt = llm_prompt_template.replace("{{documents}}", combined_docs)
         prompt = prompt.replace("{{query}}", question)
-        body = {
-            "prompt": prompt,
-            "max_tokens_to_sample": 512,
-            "temperature":0.9,
-            "top_k":250,
-            "top_p":1,
-            "stop_sequences":["\n\nHuman:"]
-        }
+        temperature = 0.9
+        top_k = 250
+        messages = [{"role": "user", "content": [{"text": prompt}]}]
+        # Base inference parameters to use.
+        inference_config = {"temperature": temperature, "maxTokens": 512, "topP": 1.0}
+        # Additional inference parameters to use.
+        additional_model_fields = {"top_k": top_k}
 
-        response = bedrock_runtime.invoke_model(
-            body=json.dumps(body),
-            contentType="application/json",
-            accept="application/json",
-            modelId=model_id
+        # Send the message.
+        response = bedrock_runtime.converse(
+            modelId=model_id,
+            messages=messages,
+            inferenceConfig=inference_config,
+            additionalModelRequestFields=additional_model_fields
         )
-        output_bytes = response['body'].read()
-        output = json.loads(output_bytes.decode("utf-8"))['completion']
-        answers.append(output)
-        
-    return contexts, answers    
+        answers.append(response['output']['message']['content'][0]['text'])
 
+    return contexts, answers
 
-class Prompt(ragas.llms.prompt.Prompt):
-    def to_string(self) -> str:
-        """
-        Generate the prompt string from the variables.
-        """
-        prompt_str = self.instruction + "\n"
-
-        if self.examples:
-            # Format the examples to match the Langchain prompt template
-            for example in self.examples:
-                prompt_str += "<example>"
-                for key, value in example.items():
-                    value = (
-                        json.dumps(value, ensure_ascii=False).encode("utf8").decode()
-                    )
-                    value = (
-                        value.replace("{", "{{").replace("}", "}}")
-                        if self.output_type.lower() == "json"
-                        else value
-                    )
-                    prompt_str += f"\n{key}: {value}"
-                prompt_str += "\n"
-                prompt_str += "</example>"
-                prompt_str += "\n"
-        if self.input_keys:
-            prompt_str += "".join(f"\n{key}: {{{key}}}" for key in self.input_keys)
-
-        return prompt_str
-
-class AnswerCorrectnessPrompt(ragas.llms.prompt.Prompt):
-    def to_string(self) -> str:
-        """
-        Generate the prompt string from the variables.
-        """
-        prompt_str = self.instruction + "\n"
-
-        if self.examples:
-            # Format the examples to match the Langchain prompt template
-            for example in self.examples:
-                prompt_str += "<example>"
-                for key, value in example.items():
-                    value = (
-                        json.dumps(value, ensure_ascii=False).encode("utf8").decode()
-                    )
-                    value = (
-                        value.replace("{", "{{").replace("}", "}}")
-                        if self.output_type.lower() == "json"
-                        else value
-                    )
-                    prompt_str += f"\n{key}: {value}"
-                prompt_str += "\n"
-                prompt_str += "</example>"
-                prompt_str += "\n"
-        # prompt_str += "Assistant:"
-        prompt_str += "\nYour answer must be in JSON format, do not add any other statements in the response."
-        if self.input_keys:
-            prompt_str += "".join(f"\n{key}: {{{key}}}" for key in self.input_keys)
-
-        if self.output_key:
-            prompt_str += f"\n{self.output_key}:"
-
-        return prompt_str
         
 def two_stage_retrieval(agent_runtime, knowledge_base_id, input_query, retrieval_topk, reranking_model, rerank_top_k=2):
     # first stage: Retrieving the context.
@@ -226,11 +149,47 @@ def two_stage_retrieval(agent_runtime, knowledge_base_id, input_query, retrieval
     # second stage: Rerank the query / context pair
     documents = []
     response = reranking_model.predict({ "query": input_query, "documents" : input_texts, "topk" : rerank_top_k })
-    print(f"response: {response}")
     for hit in response:
             documents.append(input_texts[hit['index']])
     return documents
 
+def generate_conversation(bedrock_client,
+                          model_id,
+                          system_prompts,
+                          messages):
+    """
+    Sends messages to a model.
+    Args:
+        bedrock_client: The Boto3 Bedrock runtime client.
+        model_id (str): The model ID to use.
+        system_prompts (JSON) : The system prompts for the model to use.
+        messages (JSON) : The messages to send to the model.
+
+    Returns:
+        response (JSON): The conversation that the model generated.
+
+    """
+
+    logger.info("Generating message with model %s", model_id)
+
+    # Inference parameters to use.
+    temperature = 0.5
+    top_k = 200
+
+    # Base inference parameters to use.
+    inference_config = {"temperature": temperature}
+    # Additional inference parameters to use.
+    additional_model_fields = {"top_k": top_k}
+
+    # Send the message.
+    response = bedrock_client.converse(
+        modelId=model_id,
+        messages=messages,
+        system=system_prompts,
+        inferenceConfig=inference_config,
+        additionalModelRequestFields=additional_model_fields
+    )
+    return response
 
 def generate_two_stage_context_answers(bedrock_runtime, agent_runtime, model_id, knowledge_base_id, retrieval_topk, reranking_model, questions, rerank_top_k):
     contexts = []
@@ -242,130 +201,29 @@ def generate_two_stage_context_answers(bedrock_runtime, agent_runtime, model_id,
         documents = []
         for result in retrieval_results:
             local_contexts.append(result)
-            
+
         contexts.append(local_contexts)
         # combined_docs = "\n".join(documents)
         combined_docs = "\n".join(local_contexts)
         prompt = llm_prompt_template.replace("{{documents}}", combined_docs)
         prompt = prompt.replace("{{query}}", question)
-        body = {
-            "prompt": prompt,
-            "max_tokens_to_sample": 512,
-            "temperature":0.9,
-            "top_k":250,
-            "top_p":1,
-            "stop_sequences":["\n\nHuman:"]
-        }
+        temperature = 0.9
+        top_k = 250
+        messages = [{"role": "user", "content": [{"text": prompt}]}]
+        # Base inference parameters to use.
+        inference_config = {"temperature": temperature, "maxTokens": 512, "topP": 1.0}
+        # Additional inference parameters to use.
+        additional_model_fields = {"top_k": top_k}
 
-        response = bedrock_runtime.invoke_model(
-            body=json.dumps(body),
-            contentType="application/json",
-            accept="application/json",
-            modelId=model_id
+        # Send the message.
+        response = bedrock_runtime.converse(
+            modelId=model_id,
+            messages=messages,
+            inferenceConfig=inference_config,
+            additionalModelRequestFields=additional_model_fields
         )
-        output_bytes = response['body'].read()
-        output = json.loads(output_bytes.decode("utf-8"))['completion']
-        answers.append(output)
+        answers.append(response['output']['message']['content'][0]['text'])
     return contexts, answers
-    
-    
-QUESTION_GEN = Prompt(
-    name="question_generation",
-    instruction="""Generate a question for the given answer and Identify if answer is noncommittal. Here are a few examples contained in <example></example> XML tag:
-""",
-    examples=[
-        {
-            "answer": """Albert Einstein was born in Germany.""",
-            "context": """Albert Einstein was a German-born theoretical physicist who is widely held to be one of the greatest and most influential scientists of all time""",
-            "output": """{"question":"Where was Albert Einstein born?","noncommittal":false}""",
-        },
-        {
-            "answer": """It can change its skin color based on the temperature of its environment.""",
-            "context": """A recent scientific study has discovered a new species of frog in the Amazon rainforest that has the unique ability to change its skin color based on the temperature of its environment.""",
-            "output": """{"question":"What unique ability does the newly discovered species of frog have?","noncommittal":false}""",
-        },
-        {
-            "answer": """Everest""",
-            "context": """The tallest mountain on Earth, measured from sea level, is a renowned peak located in the Himalayas.""",
-            "output": """{"question":"What is the tallest mountain on Earth?","noncommittal":false}""",
-        },
-        {
-            "answer": """I don't know about the  groundbreaking feature of the smartphone invented in 2023 as am unware of information beyond 2022. """,
-            "context": """In 2023, a groundbreaking invention was announced: a smartphone with a battery life of one month, revolutionizing the way people use mobile technology.""",
-            "output": """{"question":"What was the groundbreaking feature of the smartphone invented in 2023?", "noncommittal":true}""",
-        },
-    ],
-    input_keys=["answer", "context"],
-    output_key="output",
-    output_type="json",
-)
-
-CORRECTNESS_PROMPT = AnswerCorrectnessPrompt(
-    name="answer_correctness",
-    instruction="""Given a question and a ground truth, extract any statements matching the following categories:
-    
-"statements that are present in both the answer and the ground truth"
-"statements present in the answer but not found in the ground truth"
-"relevant statements found in the ground truth but omitted in the answer"
-
-Here are a few examples contained in <example></example> XML tag:
-
-    """,
-    examples=[
-        {
-            "question": """What powers the sun and what is its primary function?""",
-            "answer": """The sun is powered by nuclear fission, similar to nuclear reactors on Earth, and its primary function is to provide light to the solar system.""",
-            "ground_truth": """The sun is actually powered by nuclear fusion, not fission. In its core, hydrogen atoms fuse to form helium, releasing a tremendous amount of energy. This energy is what lights up the sun and provides heat and light, essential for life on Earth. The sun's light also plays a critical role in Earth's climate system and helps to drive the weather and ocean currents.""",
-            "Extracted statements": [
-                {
-                    "statements that are present in both the answer and the ground truth": [
-                        "The sun's primary function is to provide light"
-                    ],
-                    "statements present in the answer but not found in the ground truth": [
-                        "The sun is powered by nuclear fission",
-                        "similar to nuclear reactors on Earth",
-                    ],
-                    "relevant statements found in the ground truth but omitted in the answer": [
-                        "The sun is powered by nuclear fusion, not fission",
-                        "In its core, hydrogen atoms fuse to form helium, releasing a tremendous amount of energy",
-                        "This energy provides heat and light, essential for life on Earth",
-                        "The sun's light plays a critical role in Earth's climate system",
-                        "The sun helps to drive the weather and ocean currents",
-                    ],
-                }
-            ],
-        },
-        {
-            "question": """What is the boiling point of water?""",
-            "answer": """The boiling point of water is 100 degrees Celsius at sea level.""",
-            "ground_truth": """The boiling point of water is 100 degrees Celsius (212 degrees Fahrenheit) at sea level, but it can change with altitude.""",
-            "Extracted statements": [
-                {
-                    "statements that are present in both the answer and the ground truth": [
-                        "The boiling point of water is 100 degrees Celsius at sea level"
-                    ],
-                    "statements present in the answer but not found in the ground truth": [],
-                    "relevant statements found in the ground truth but omitted in the answer": [
-                        "The boiling point can change with altitude",
-                        "The boiling point of water is 212 degrees Fahrenheit at sea level",
-                    ],
-                }
-            ],
-        },
-    ],
-    input_keys=["question", "answer", "ground_truth"],
-    output_key="Extracted statements",
-    output_type="json",
-)
-
-@dataclass
-class AnswerCorrectness(ragas.metrics._answer_correctness.AnswerCorrectness):
-    correctness_prompt: Prompt = field(default_factory=lambda: CORRECTNESS_PROMPT)
-
-@dataclass
-class AnswerRelevancy(ragas.metrics._answer_relevance.AnswerRelevancy):
-    question_generation: Prompt = field(default_factory=lambda: QUESTION_GEN)
-
 
 def create_opensearch_serverless_collection(vector_store_name, 
                                             index_name, 
@@ -653,7 +511,7 @@ def _create_knowledge_base(knowledge_base_name, role_arn, embedding_model_arn, c
         }
     )
     data_source_id = response['dataSource']['dataSourceId']
-    
+
     # Check status to make sure the KB is created before we could start the ingestion job.
     kb_status = bedrock_agent.get_knowledge_base(knowledgeBaseId=knowledge_base_id)
     while kb_status not in [ "ACTIVE", "FAILED", "DELETE_UNSUCCESSFUL" ]:
@@ -662,7 +520,7 @@ def _create_knowledge_base(knowledge_base_name, role_arn, embedding_model_arn, c
 
     if kb_status != "ACTIVE":
         raise Exception("Bedrock Knowledgebase did not create successfully. Please check for error before proceeding") 
-    
+
     print(f"Bedrock KnowledgeBase {knowledge_base_id} created successfully")
     response = bedrock_agent.start_ingestion_job(
         knowledgeBaseId=knowledge_base_id,
@@ -696,6 +554,3 @@ def create_knowledge_base(knowledge_base_name, kb_role_name, embedding_model_arn
     time.sleep(60) # sleeps until the IAM role is created successfully
     knowledge_base_id = _create_knowledge_base(knowledge_base_name, role_arn, embedding_model_arn, collection_arn, index_name, s3_bucket, s3_prefix)
     return knowledge_base_id
-    
-    
-    
