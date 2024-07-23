@@ -7,7 +7,8 @@ Parameters:
     Type: String
   UserPoolId:
     Type: String    
-
+  KmsKeyId: 
+    Type: String  
 
 Resources:
 
@@ -190,6 +191,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${ClaimsActionGroupLambdaExecutor}"
       RetentionInDays: 7
+      KmsKeyId: !Ref KmsKeyId      
       
   ClaimsActionGroupLambdaExecutor:
     Type: AWS::Serverless::Function

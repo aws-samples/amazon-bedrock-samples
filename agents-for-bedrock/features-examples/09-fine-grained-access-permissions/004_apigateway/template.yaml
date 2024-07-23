@@ -9,6 +9,8 @@ Parameters:
     Type: String
   BedrockAgentId:
     Type: String
+  KmsKeyId: 
+    Type: String  
 
 Resources:
 
@@ -36,7 +38,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 30
-      LogGroupName: !Sub "/${AWS::StackName}/APIAccessLogs"
+      KmsKeyId: !Ref KmsKeyId
 
   ClaimsAPI:
     Type: AWS::ApiGateway::RestApi
@@ -136,6 +138,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/claimsinvokebedrockagents"
       RetentionInDays: 7
+      KmsKeyId: !Ref KmsKeyId      
 
   claimsinvokebedrockagents:
     Type: AWS::Serverless::Function
