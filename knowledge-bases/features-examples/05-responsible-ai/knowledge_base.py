@@ -1,26 +1,3 @@
-# Copyright 2024 Amazon.com and its affiliates; all rights reserved.
-# This file is AWS Content and may not be duplicated or distributed without permission
-
-"""
-This module contains a helper class for building and using Knowledge Bases for Amazon Bedrock.
-The KnowledgeBasesForAmazonBedrock class provides a convenient interface for working with Knowledge Bases.
-It includes methods for creating, updating, and invoking Knowledge Bases, as well as managing
-IAM roles and OpenSearch Serverless. Here is a quick example of using
-the class:
-
-    >>> from knowledge_base import KnowledgeBasesForAmazonBedrock
-    >>> kb = KnowledgeBasesForAmazonBedrock()
-    >>> kb_name = "my-knowledge-base-test"
-    >>> kb_description = "my knowledge base description"
-    >>> data_bucket_name = "<s3_bucket_with_kb_dataset>"
-    >>> kb_id, ds_id = kb.create_or_retrieve_knowledge_base(kb_name, kb_description, data_bucket_name)
-    >>> kb.synchronize_data(kb_id, ds_id)
-
-Here is a summary of the most important methods:
-
-- create_or_retrieve_knowledge_base: Creates a new Knowledge Base or retrieves an existent one.
-- synchronize_data: Syncronize the Knowledge Base with the
-"""
 import json
 import boto3
 import time
@@ -28,12 +5,23 @@ from botocore.exceptions import ClientError
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth, RequestError
 import pprint
 from retrying import retry
-import random
+import zipfile
+from io import BytesIO
+import warnings
+warnings.filterwarnings('ignore')
 
-valid_embedding_models = [
-    "cohere.embed-multilingual-v3", "cohere.embed-english-v3", "amazon.titan-embed-text-v1",
-    "amazon.titan-embed-text-v2:0"
-]
+valid_embedding_models = ["cohere.embed-multilingual-v3", 
+                          "cohere.embed-english-v3", 
+                          "amazon.titan-embed-text-v1", 
+                          "amazon.titan-embed-text-v2:0"]
+
+# create a dictionary with model id as key and context length as value
+embedding_context_dimensions = {
+    "cohere.embed-multilingual-v3": 512,
+    "cohere.embed-english-v3": 512,
+    "amazon.titan-embed-text-v1": 1536,
+    "amazon.titan-embed-text-v2:0": 1024
+}
 pp = pprint.PrettyPrinter(indent=2)
 
 
@@ -50,7 +38,7 @@ def interactive_sleep(seconds: int):
         time.sleep(1)
 
 
-class KnowledgeBasesForAmazonBedrock:
+class BedrockKnowledgeBase:
     """
     Support class that allows for:
         - creation (or retrieval) of a Knowledge Base for Amazon Bedrock with all its pre-requisites
@@ -58,138 +46,141 @@ class KnowledgeBasesForAmazonBedrock:
         - Ingestion of data into the Knowledge Base
         - Deletion of all resources created
     """
+    account_number = boto3.client('sts').get_caller_identity().get('Account')
+    region_name=boto3.session.Session().region_name
+    suffix = f'{region_name}-{account_number}'
+    kb_name = f"default-knowledge-base-{suffix}"
+    kb_description = "Default Knowledge Base"
+    bucket_name = f"{kb_name}-{suffix}"
 
-    def __init__(self, suffix=None):
+    def __init__(
+            self,
+            kb_name=kb_name,
+            kb_description=kb_description,
+            data_bucket_name=bucket_name,
+            intermediate_bucket_name=f"{kb_name}-intermediate-{suffix}",
+            lambda_function_name=f"{kb_name}-intermediate-{suffix}",
+            embedding_model="amazon.titan-embed-text-v2:0",
+            chunking_strategy="FIXED_SIZE", 
+            suffix=suffix,
+    ):
         """
         Class initializer
+        Args:
+            kb_name(str): The name of the Knowledge Base.
+            kb_description(str): The description of the Knowledge Base.
+            data_bucket_name(str): The name of the S3 bucket to be used as the data source for the Knowledge Base.
+            intermediate_bucket_name(str): The name of the intermediate S3 bucket to be used for custom chunking strategy.
+            lambda_function_name(str): The name of the Lambda function to be used for custom chunking strategy.
+            embedding_model(str): The embedding model to be used for the Knowledge Base.
+            chunking_strategy(str): The chunking strategy to be used for the Knowledge Base.
+            suffix(str): A suffix to be used for naming resources.
         """
         boto3_session = boto3.session.Session()
         self.region_name = boto3_session.region_name
         self.iam_client = boto3_session.client('iam')
+        self.lambda_client = boto3.client('lambda')
         self.account_number = boto3.client('sts').get_caller_identity().get('Account')
-        self.suffix = random.randrange(200, 900)
+        self.suffix = suffix
         self.identity = boto3.client('sts').get_caller_identity()['Arn']
         self.aoss_client = boto3_session.client('opensearchserverless')
         self.s3_client = boto3.client('s3')
         self.bedrock_agent_client = boto3.client('bedrock-agent')
         credentials = boto3.Session().get_credentials()
         self.awsauth = AWSV4SignerAuth(credentials, self.region_name, 'aoss')
-        self.oss_client = None
-
-    def create_or_retrieve_knowledge_base(
-            self,
-            kb_name: str,
-            kb_description: str = None,
-            data_bucket_name: str = None,
-            embedding_model: str = "amazon.titan-embed-text-v2:0"
-    ):
-        """
-        Function used to create a new Knowledge Base or retrieve an existent one
-
-        Args:
-            kb_name: Knowledge Base Name
-            kb_description: Knowledge Base Description
-            data_bucket_name: Name of s3 Bucket containing Knowledge Base Data
-            embedding_model: Name of Embedding model to be used on Knowledge Base creation
-
-        Returns:
-            kb_id: str - Knowledge base id
-            ds_id: str - Data Source id
-        """
-        kb_id = None
-        ds_id = None
-        kbs_available = self.bedrock_agent_client.list_knowledge_bases(
-            maxResults=100,
-        )
-        for kb in kbs_available["knowledgeBaseSummaries"]:
-            if kb_name == kb["name"]:
-                kb_id = kb["knowledgeBaseId"]
-        if kb_id is not None:
-            ds_available = self.bedrock_agent_client.list_data_sources(
-                knowledgeBaseId=kb_id,
-                maxResults=100,
-            )
-            for ds in ds_available["dataSourceSummaries"]:
-                if kb_id == ds["knowledgeBaseId"]:
-                    ds_id = ds["dataSourceId"]
-            print(f"Knowledge Base {kb_name} already exists.")
-            print(f"Retrieved Knowledge Base Id: {kb_id}")
-            print(f"Retrieved Data Source Id: {ds_id}")
+        self.bucket_name = data_bucket_name
+        
+        if chunking_strategy == "CUSTOM":
+                self.intermediate_bucket_name = intermediate_bucket_name
+                self.lambda_function_name = lambda_function_name
         else:
-            print(f"Creating KB {kb_name}")
-            # self.kb_name = kb_name
-            # self.kb_description = kb_description
-            if data_bucket_name is None:
-                kb_name_temp = kb_name.replace("_", "-")
-                data_bucket_name = f"{kb_name_temp}-{self.suffix}"
-                print(f"KB bucket name not provided, creating a new one called: {data_bucket_name}")
-            if embedding_model not in valid_embedding_models:
-                valid_embeddings_str = str(valid_embedding_models)
-                raise ValueError(f"Invalid embedding model. Your embedding model should be one of {valid_embeddings_str}")
-            # self.embedding_model = embedding_model
-            encryption_policy_name = f"{kb_name}-sp-{self.suffix}"
-            network_policy_name = f"{kb_name}-np-{self.suffix}"
-            access_policy_name = f'{kb_name}-ap-{self.suffix}'
-            kb_execution_role_name = f'AmazonBedrockExecutionRoleForKnowledgeBase_{self.suffix}'
-            fm_policy_name = f'AmazonBedrockFoundationModelPolicyForKnowledgeBase_{self.suffix}'
-            s3_policy_name = f'AmazonBedrockS3PolicyForKnowledgeBase_{self.suffix}'
-            oss_policy_name = f'AmazonBedrockOSSPolicyForKnowledgeBase_{self.suffix}'
-            vector_store_name = f'{kb_name}-{self.suffix}'
-            index_name = f"{kb_name}-index-{self.suffix}"
-            print("========================================================================================")
-            print(f"Step 1 - Creating or retrieving {data_bucket_name} S3 bucket for Knowledge Base documents")
-            self.create_s3_bucket(data_bucket_name)
-            print("========================================================================================")
-            print(f"Step 2 - Creating Knowledge Base Execution Role ({kb_execution_role_name}) and Policies")
-            bedrock_kb_execution_role = self.create_bedrock_kb_execution_role(
-                embedding_model, data_bucket_name, fm_policy_name, s3_policy_name, kb_execution_role_name
-            )
-            print("========================================================================================")
-            print(f"Step 3 - Creating OSS encryption, network and data access policies")
-            encryption_policy, network_policy, access_policy = self.create_policies_in_oss(
-                encryption_policy_name, vector_store_name, network_policy_name,
-                bedrock_kb_execution_role, access_policy_name
-            )
-            print("========================================================================================")
-            print(f"Step 4 - Creating OSS Collection (this step takes a couple of minutes to complete)")
-            host, collection, collection_id, collection_arn = self.create_oss(
-                vector_store_name, oss_policy_name, bedrock_kb_execution_role
-            )
-            # Build the OpenSearch client
-            self.oss_client = OpenSearch(
-                hosts=[{'host': host, 'port': 443}],
-                http_auth=self.awsauth,
-                use_ssl=True,
-                verify_certs=True,
-                connection_class=RequestsHttpConnection,
-                timeout=300
-            )
+            self.intermediate_bucket_name = None
+            self.lambda_function_name = None
+        
+        self.kb_name = kb_name
+        self.kb_description = kb_description
+        self.chunking_strategy = chunking_strategy
+        if embedding_model not in valid_embedding_models:
+            valid_embeddings_str = str(valid_embedding_models)
+            raise ValueError(f"Invalid embedding model. Your embedding model should be one of {valid_embeddings_str}")
+        self.embedding_model = embedding_model
+        self.encryption_policy_name = f"bedrock-sample-rag-sp-{self.suffix}"
+        self.network_policy_name = f"bedrock-sample-rag-np-{self.suffix}"
+        self.access_policy_name = f'bedrock-sample-rag-ap-{self.suffix}'
+        self.kb_execution_role_name = f'AmazonBedrockExecutionRoleForKnowledgeBase_{self.suffix}'
+        self.fm_policy_name = f'AmazonBedrockFoundationModelPolicyForKnowledgeBase_{self.suffix}'
+        self.s3_policy_name = f'AmazonBedrockS3PolicyForKnowledgeBase_{self.suffix}'
+        self.oss_policy_name = f'AmazonBedrockOSSPolicyForKnowledgeBase_{self.suffix}'
+        self.lambda_policy_name = f'AmazonBedrockLambdaPolicyForKnowledgeBase_{self.suffix}'
+        self.lambda_arn = None
+        self.roles = []
+        self.roles.append(self.kb_execution_role_name)
 
-            print("========================================================================================")
-            print(f"Step 5 - Creating OSS Vector Index")
-            self.create_vector_index(index_name)
-            print("========================================================================================")
-            print(f"Step 6 - Creating Knowledge Base")
-            knowledge_base, data_source = self.create_knowledge_base(
-                collection_arn, index_name, data_bucket_name, embedding_model,
-                kb_name, kb_description, bedrock_kb_execution_role
-            )
-            interactive_sleep(60)
-            print("========================================================================================")
-            kb_id = knowledge_base['knowledgeBaseId']
-            ds_id = data_source["dataSourceId"]
-        return kb_id, ds_id
+        self.vector_store_name = f'bedrock-sample-rag-{self.suffix}'
+        self.index_name = f"bedrock-sample-rag-index-{self.suffix}"
+        print("========================================================================================")
+        print(f"Step 1 - Creating or retrieving S3 bucket(s) for Knowledge Base documents")
+        self.create_s3_bucket()
+        
+        print("========================================================================================")
+        print(f"Step 2 - Creating Knowledge Base Execution Role ({self.kb_execution_role_name}) and Policies")
+        self.bedrock_kb_execution_role = self.create_bedrock_kb_execution_role()
+        self.bedrock_kb_execution_role_name = self.bedrock_kb_execution_role['Role']['RoleName']
+        print("========================================================================================")
+        print(f"Step 3 - Creating OSS encryption, network and data access policies")
+        self.encryption_policy, self.network_policy, self.access_policy = self.create_policies_in_oss()
+        print("========================================================================================")
+        print(f"Step 4 - Creating OSS Collection (this step takes a couple of minutes to complete)")
+        self.host, self.collection, self.collection_id, self.collection_arn = self.create_oss()
+        # Build the OpenSearch client
+        self.oss_client = OpenSearch(
+            hosts=[{'host': self.host, 'port': 443}],
+            http_auth=self.awsauth,
+            use_ssl=True,
+            verify_certs=True,
+            connection_class=RequestsHttpConnection,
+            timeout=300
+        )
+        print("========================================================================================")
+        print(f"Step 5 - Creating OSS Vector Index")
+        self.create_vector_index()
+        print("========================================================================================")
+        print(f"Step 6 - Will create Lambda Function if chunking strategy selected as CUSTOM")
+        if self.chunking_strategy == "CUSTOM":
+            print(f"Creating lambda function... as chunking strategy is {self.chunking_strategy}")
+            response = self.create_lambda()
+            self.lambda_arn = response['FunctionArn']
+            print(response)
+            print(f"Lambda function ARN: {self.lambda_arn}")
+        else: 
+            print(f"Not creating lambda function as chunking strategy is {self.chunking_strategy}")
+        print("========================================================================================")
+        print(f"Step 7 - Creating Knowledge Base")
+        self.knowledge_base, self.data_source = self.create_knowledge_base()
+        print("========================================================================================")
 
-    def create_s3_bucket(self, bucket_name: str):
+    
+    def create_s3_bucket(self):
         """
-        Check if bucket exists, and if not create S3 bucket for knowledge base data source
-        Args:
-            bucket_name: s3 bucket name
+        Check if buckets exist, and if not create S3 buckets for knowledge base data source
         """
-        try:
-            self.s3_client.head_bucket(Bucket=bucket_name)
-            print(f'Bucket {bucket_name} already exists - retrieving it!')
-        except ClientError as e:
+        buckets_to_check = [self.bucket_name]
+        if self.chunking_strategy == "CUSTOM":
+            buckets_to_check.append(self.intermediate_bucket_name)
+
+        existing_buckets = []
+        for bucket_name in buckets_to_check:
+            try:
+                self.s3_client.head_bucket(Bucket=bucket_name)
+                existing_buckets.append(bucket_name)
+                print(f'Bucket {bucket_name} already exists - retrieving it!')
+            except ClientError:
+                pass
+
+        buckets_to_create = [b for b in buckets_to_check if b not in existing_buckets]
+        print(buckets_to_create)
+
+        for bucket_name in buckets_to_create:
             print(f'Creating bucket {bucket_name}')
             if self.region_name == "us-east-1":
                 self.s3_client.create_bucket(
@@ -200,55 +191,84 @@ class KnowledgeBasesForAmazonBedrock:
                     Bucket=bucket_name,
                     CreateBucketConfiguration={'LocationConstraint': self.region_name}
                 )
+            # bucket_config = {'LocationConstraint': self.region_name} if self.region_name != "us-east-1" else {}
+            # self.s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=bucket_config)
 
-    def create_bedrock_kb_execution_role(
-            self,
-            embedding_model: str,
-            bucket_name: str,
-            fm_policy_name: str,
-            s3_policy_name: str,
-            kb_execution_role_name: str
-    ):
-        """
-        Create Knowledge Base Execution IAM Role and its required policies.
-        If role and/or policies already exist, retrieve them
-        Args:
-            embedding_model: the embedding model used by the knowledge base
-            bucket_name: the bucket name used by the knowledge base
-            fm_policy_name: the name of the foundation model access policy
-            s3_policy_name: the name of the s3 access policy
-            kb_execution_role_name: the name of the knowledge base execution role
+    
+    def create_lambda(self):
+        # add to function
+        lambda_iam_role = self.create_lambda_role()
+        self.lambda_iam_role_name = lambda_iam_role['Role']['RoleName']
+        self.roles.append(self.lambda_iam_role_name)
+        # Package up the lambda function code
+        s = BytesIO()
+        z = zipfile.ZipFile(s, 'w')
+        z.write("lambda_function.py")
+        z.close()
+        zip_content = s.getvalue()
 
-        Returns:
-            IAM role created
-        """
-        foundation_model_policy_document = {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "bedrock:InvokeModel",
-                    ],
-                    "Resource": [
-                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{embedding_model}"
-                    ]
-                }
-            ]
-        }
+        # Create Lambda Function
+        lambda_function = self.lambda_client.create_function(
+            FunctionName=self.lambda_function_name,
+            Runtime='python3.12',
+            Timeout=60,
+            Role=lambda_iam_role['Role']['Arn'],
+            Code={'ZipFile': zip_content},
+            Handler='lambda_function.lambda_handler'
+        )
+        return lambda_function
 
-        s3_policy_document = {
+
+    def create_lambda_role(self):
+        lambda_function_role = f'{self.kb_name}-lambda-role-{self.suffix}'
+        s3_access_policy_name = f'{self.kb_name}-s3-policy'
+        # Create IAM Role for the Lambda function
+        try:
+            assume_role_policy_document = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            }
+
+            assume_role_policy_document_json = json.dumps(assume_role_policy_document)
+
+            lambda_iam_role = self.iam_client.create_role(
+                RoleName=lambda_function_role,
+                AssumeRolePolicyDocument=assume_role_policy_document_json
+            )
+
+            # Pause to make sure role is created
+            time.sleep(10)
+        except self.iam_client.exceptions.EntityAlreadyExistsException:
+            lambda_iam_role = self.iam_client.get_role(RoleName=lambda_function_role)
+
+        # Attach the AWSLambdaBasicExecutionRole policy
+        self.iam_client.attach_role_policy(
+            RoleName=lambda_function_role,
+            PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        )
+
+        # Create a policy to grant access to the intermediate S3 bucket
+        s3_access_policy = {
             "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Allow",
                     "Action": [
                         "s3:GetObject",
-                        "s3:ListBucket"
+                        "s3:ListBucket", 
+                        "s3:PutObject"
                     ],
                     "Resource": [
-                        f"arn:aws:s3:::{bucket_name}",
-                        f"arn:aws:s3:::{bucket_name}/*"
+                        f"arn:aws:s3:::{self.intermediate_bucket_name}",
+                        f"arn:aws:s3:::{self.intermediate_bucket_name}/*"
                     ],
                     "Condition": {
                         "StringEquals": {
@@ -259,6 +279,142 @@ class KnowledgeBasesForAmazonBedrock:
             ]
         }
 
+        # Create the policy
+        s3_access_policy_json = json.dumps(s3_access_policy)
+        s3_access_policy_response = self.iam_client.create_policy(
+            PolicyName=s3_access_policy_name,
+            PolicyDocument= s3_access_policy_json
+        )
+
+        # Attach the policy to the Lambda function's role
+        self.iam_client.attach_role_policy(
+            RoleName=lambda_function_role,
+            PolicyArn=s3_access_policy_response['Policy']['Arn']
+        )
+        return lambda_iam_role
+
+    def create_bedrock_kb_execution_role(self):
+        """
+        Create Knowledge Base Execution IAM Role and its required policies.
+        If role and/or policies already exist, retrieve them
+        Returns:
+            IAM role
+        """
+        foundation_model_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "bedrock:InvokeModel",
+                    ],
+                    "Resource": [
+                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.embedding_model}"
+                    ]
+                }
+            ]
+        }
+        if self.chunking_strategy == "CUSTOM":
+            s3_policy_document = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "S3ListBucketStatement",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:ListBucket"
+                        ],
+                        "Resource": [
+                            f"arn:aws:s3:::{self.bucket_name}"
+                        ],
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:ResourceAccount": [
+                                    f"{self.account_number}"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "Sid": "S3GetObjectStatement",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject"
+                        ],
+                        "Resource": [
+                            f"arn:aws:s3:::{self.bucket_name}",
+                            f"arn:aws:s3:::{self.intermediate_bucket_name}/*",
+                            f"arn:aws:s3:::{self.bucket_name}/*"
+                        ],
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:ResourceAccount": [
+                                    f"{self.account_number}"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "Sid": "S3PutObjectStatement",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:PutObject"
+                        ],
+                        "Resource": [
+                            f"arn:aws:s3:::{self.intermediate_bucket_name}/*"
+                        ],
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:ResourceAccount": f"{self.account_number}"
+                            }
+                        }
+                    }
+                ]
+            }
+        else:
+            s3_policy_document = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject",
+                            "s3:ListBucket"
+                        ],
+                        "Resource": [
+                            f"arn:aws:s3:::{self.bucket_name}",
+                            f"arn:aws:s3:::{self.bucket_name}/*"
+                        ],
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:ResourceAccount": f"{self.account_number}"
+                            }
+                        }
+                    }
+                ]
+            }
+        if self.chunking_strategy == "CUSTOM":
+            lambda_policy_document = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "LambdaInvokeFunctionStatement",
+                        "Effect": "Allow",
+                        "Action": [
+                            "lambda:InvokeFunction"
+                        ],
+                        "Resource": [
+                            f"arn:aws:lambda:{self.region_name}:{self.account_number}:function:{self.lambda_function_name}:*"
+                        ],
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:ResourceAccount": f"{self.account_number}"
+                            }
+                        }
+                    }
+                ]
+            }
+            
         assume_role_policy_document = {
             "Version": "2012-10-17",
             "Statement": [
@@ -274,39 +430,58 @@ class KnowledgeBasesForAmazonBedrock:
         try:
             # create policies based on the policy documents
             fm_policy = self.iam_client.create_policy(
-                PolicyName=fm_policy_name,
+                PolicyName=self.fm_policy_name,
                 PolicyDocument=json.dumps(foundation_model_policy_document),
                 Description='Policy for accessing foundation model',
             )
         except self.iam_client.exceptions.EntityAlreadyExistsException:
-            print(f"{fm_policy_name} already exists, retrieving it!")
             fm_policy = self.iam_client.get_policy(
-                PolicyArn=f"arn:aws:iam::{self.account_number}:policy/{fm_policy_name}"
+                PolicyArn=f"arn:aws:iam::{self.account_number}:policy/{self.fm_policy_name}"
             )
 
         try:
             s3_policy = self.iam_client.create_policy(
-                PolicyName=s3_policy_name,
+                PolicyName=self.s3_policy_name,
                 PolicyDocument=json.dumps(s3_policy_document),
                 Description='Policy for reading documents from s3')
         except self.iam_client.exceptions.EntityAlreadyExistsException:
-            print(f"{s3_policy_name} already exists, retrieving it!")
             s3_policy = self.iam_client.get_policy(
-                PolicyArn=f"arn:aws:iam::{self.account_number}:policy/{s3_policy_name}"
+                PolicyArn=f"arn:aws:iam::{self.account_number}:policy/{self.s3_policy_name}"
             )
-        # create bedrock execution role
+        
+         # create bedrock execution role
         try:
             bedrock_kb_execution_role = self.iam_client.create_role(
-                RoleName=kb_execution_role_name,
+                RoleName=self.kb_execution_role_name,
                 AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
                 Description='Amazon Bedrock Knowledge Base Execution Role for accessing OSS and S3',
                 MaxSessionDuration=3600
             )
         except self.iam_client.exceptions.EntityAlreadyExistsException:
-            print(f"{kb_execution_role_name} already exists, retrieving it!")
             bedrock_kb_execution_role = self.iam_client.get_role(
-                RoleName=kb_execution_role_name
+                RoleName=self.kb_execution_role_name
             )
+        
+        # create lambda policy if chunking strategy is CUSTOM
+        if self.chunking_strategy == "CUSTOM":
+            try: 
+                lambda_policy = self.iam_client.create_policy(
+                    PolicyName=self.lambda_policy_name,
+                    PolicyDocument=json.dumps(lambda_policy_document),
+                    Description='Policy for invoking lambda function'
+                )
+            except self.iam_client.exceptions.EntityAlreadyExistsException:
+                lambda_policy = self.iam_client.get_policy(
+                    PolicyArn=f"arn:aws:iam::{self.account_number}:policy/{self.lambda_policy_name}"
+                )
+
+            lambda_policy_arn = lambda_policy["Policy"]["Arn"]
+            self.iam_client.attach_role_policy(
+                RoleName=bedrock_kb_execution_role["Role"]["RoleName"],
+                PolicyArn=lambda_policy_arn
+            )
+               
+       
         # fetch arn of the policies and role created above
         s3_policy_arn = s3_policy["Policy"]["Arn"]
         fm_policy_arn = fm_policy["Policy"]["Arn"]
@@ -322,21 +497,10 @@ class KnowledgeBasesForAmazonBedrock:
         )
         return bedrock_kb_execution_role
 
-    def create_oss_policy_attach_bedrock_execution_role(
-            self,
-            collection_id: str, oss_policy_name: str,
-            bedrock_kb_execution_role: str
-    ):
+    def create_oss_policy_attach_bedrock_execution_role(self, collection_id):
         """
         Create OpenSearch Serverless policy and attach it to the Knowledge Base Execution role.
         If policy already exists, attaches it
-        Args:
-            collection_id: collection id
-            oss_policy_name: opensearch serverless policy name
-            bedrock_kb_execution_role: knowledge base execution role
-
-        Returns:
-            created: bool - boolean to indicate if role was created
         """
         # define oss policy document
         oss_policy_document = {
@@ -354,87 +518,73 @@ class KnowledgeBasesForAmazonBedrock:
             ]
         }
 
-        oss_policy_arn = f"arn:aws:iam::{self.account_number}:policy/{oss_policy_name}"
+        oss_policy_arn = f"arn:aws:iam::{self.account_number}:policy/{self.oss_policy_name}"
         created = False
         try:
             self.iam_client.create_policy(
-                PolicyName=oss_policy_name,
+                PolicyName=self.oss_policy_name,
                 PolicyDocument=json.dumps(oss_policy_document),
                 Description='Policy for accessing opensearch serverless',
             )
             created = True
         except self.iam_client.exceptions.EntityAlreadyExistsException:
-            print(f"Policy {oss_policy_arn} already exists, updating it")
+            print(f"Policy {oss_policy_arn} already exists, skipping creation")
         print("Opensearch serverless arn: ", oss_policy_arn)
 
         self.iam_client.attach_role_policy(
-            RoleName=bedrock_kb_execution_role["Role"]["RoleName"],
+            RoleName=self.bedrock_kb_execution_role["Role"]["RoleName"],
             PolicyArn=oss_policy_arn
         )
         return created
 
-    def create_policies_in_oss(
-            self, encryption_policy_name: str, vector_store_name: str, network_policy_name: str,
-            bedrock_kb_execution_role: str, access_policy_name: str
-    ):
+    def create_policies_in_oss(self):
         """
         Create OpenSearch Serverless encryption, network and data access policies.
         If policies already exist, retrieve them
-        Args:
-            encryption_policy_name: name of the data encryption policy
-            vector_store_name: name of the vector store
-            network_policy_name: name of the network policy
-            bedrock_kb_execution_role: name of the knowledge base execution role
-            access_policy_name: name of the data access policy
-
-        Returns:
-            encryption_policy, network_policy, access_policy
         """
         try:
             encryption_policy = self.aoss_client.create_security_policy(
-                name=encryption_policy_name,
+                name=self.encryption_policy_name,
                 policy=json.dumps(
                     {
-                        'Rules': [{'Resource': ['collection/' + vector_store_name],
+                        'Rules': [{'Resource': ['collection/' + self.vector_store_name],
                                    'ResourceType': 'collection'}],
                         'AWSOwnedKey': True
                     }),
                 type='encryption'
             )
         except self.aoss_client.exceptions.ConflictException:
-            print(f"{encryption_policy_name} already exists, retrieving it!")
             encryption_policy = self.aoss_client.get_security_policy(
-                name=encryption_policy_name,
+                name=self.encryption_policy_name,
                 type='encryption'
             )
 
         try:
             network_policy = self.aoss_client.create_security_policy(
-                name=network_policy_name,
+                name=self.network_policy_name,
                 policy=json.dumps(
                     [
-                        {'Rules': [{'Resource': ['collection/' + vector_store_name],
+                        {'Rules': [{'Resource': ['collection/' + self.vector_store_name],
                                     'ResourceType': 'collection'}],
                          'AllowFromPublic': True}
                     ]),
                 type='network'
             )
         except self.aoss_client.exceptions.ConflictException:
-            print(f"{network_policy_name} already exists, retrieving it!")
             network_policy = self.aoss_client.get_security_policy(
-                name=network_policy_name,
+                name=self.network_policy_name,
                 type='network'
             )
 
         try:
             access_policy = self.aoss_client.create_access_policy(
-                name=access_policy_name,
+                name=self.access_policy_name,
                 policy=json.dumps(
                     [
                         {
                             'Rules': [
                                 {
-                                    'Resource': ['collection/' + vector_store_name],
+                                    'Resource': ['collection/' + self.vector_store_name],
                                     'Permission': [
                                         'aoss:CreateCollectionItems',
                                         'aoss:DeleteCollectionItems',
@@ -443,7 +593,7 @@ class KnowledgeBasesForAmazonBedrock:
                                     'ResourceType': 'collection'
                                 },
                                 {
-                                    'Resource': ['index/' + vector_store_name + '/*'],
+                                    'Resource': ['index/' + self.vector_store_name + '/*'],
                                     'Permission': [
                                         'aoss:CreateIndex',
                                         'aoss:DeleteIndex',
@@ -453,37 +603,29 @@ class KnowledgeBasesForAmazonBedrock:
                                         'aoss:WriteDocument'],
                                     'ResourceType': 'index'
                                 }],
-                            'Principal': [self.identity, bedrock_kb_execution_role['Role']['Arn']],
+                            'Principal': [self.identity, self.bedrock_kb_execution_role['Role']['Arn']],
                             'Description': 'Easy data policy'}
                     ]),
                 type='data'
             )
         except self.aoss_client.exceptions.ConflictException:
-            print(f"{access_policy_name} already exists, retrieving it!")
             access_policy = self.aoss_client.get_access_policy(
-                name=access_policy_name,
+                name=self.access_policy_name,
                 type='data'
             )
+
         return encryption_policy, network_policy, access_policy
 
-    def create_oss(self, vector_store_name: str, oss_policy_name: str, bedrock_kb_execution_role: str):
+    def create_oss(self):
         """
         Create OpenSearch Serverless Collection. If already existent, retrieve
-        Args:
-            vector_store_name: name of the vector store
-            oss_policy_name: name of the opensearch serverless access policy
-            bedrock_kb_execution_role: name of the knowledge base execution role
         """
         try:
-            collection = self.aoss_client.create_collection(
-                name=vector_store_name, type='VECTORSEARCH'
-            )
+            collection = self.aoss_client.create_collection(name=self.vector_store_name, type='VECTORSEARCH')
             collection_id = collection['createCollectionDetail']['id']
             collection_arn = collection['createCollectionDetail']['arn']
         except self.aoss_client.exceptions.ConflictException:
-            collection = self.aoss_client.batch_get_collection(
-                names=[vector_store_name]
-            )['collectionDetails'][0]
+            collection = self.aoss_client.batch_get_collection(names=[self.vector_store_name])['collectionDetails'][0]
             pp.pprint(collection)
             collection_id = collection['id']
             collection_arn = collection['arn']
@@ -494,19 +636,17 @@ class KnowledgeBasesForAmazonBedrock:
         print(host)
         # wait for collection creation
         # This can take couple of minutes to finish
-        response = self.aoss_client.batch_get_collection(names=[vector_store_name])
+        response = self.aoss_client.batch_get_collection(names=[self.vector_store_name])
         # Periodically check collection status
         while (response['collectionDetails'][0]['status']) == 'CREATING':
             print('Creating collection...')
             interactive_sleep(30)
-            response = self.aoss_client.batch_get_collection(names=[vector_store_name])
+            response = self.aoss_client.batch_get_collection(names=[self.vector_store_name])
         print('\nCollection successfully created:')
         pp.pprint(response["collectionDetails"])
         # create opensearch serverless access policy and attach it to Bedrock execution role
         try:
-            created = self.create_oss_policy_attach_bedrock_execution_role(
-                collection_id, oss_policy_name, bedrock_kb_execution_role
-            )
+            created = self.create_oss_policy_attach_bedrock_execution_role(collection_id)
             if created:
                 # It can take up to a minute for data access rules to be enforced
                 print("Sleeping for a minute to ensure data access rules have been enforced")
@@ -516,11 +656,9 @@ class KnowledgeBasesForAmazonBedrock:
             print("Policy already exists")
             pp.pprint(e)
 
-    def create_vector_index(self, index_name: str):
+    def create_vector_index(self):
         """
         Create OpenSearch Serverless vector index. If existent, ignore
-        Args:
-            index_name: name of the vector index
         """
         body_json = {
             "settings": {
@@ -533,7 +671,7 @@ class KnowledgeBasesForAmazonBedrock:
                 "properties": {
                     "vector": {
                         "type": "knn_vector",
-                        "dimension": 1024,
+                        "dimension": embedding_context_dimensions[self.embedding_model], # use dimension as per the context length of embeddings model selected.
                         "method": {
                             "name": "hnsw",
                             "engine": "faiss",
@@ -551,7 +689,7 @@ class KnowledgeBasesForAmazonBedrock:
 
         # Create index
         try:
-            response = self.oss_client.indices.create(index=index_name, body=json.dumps(body_json))
+            response = self.oss_client.indices.create(index=self.index_name, body=json.dumps(body_json))
             print('\nCreating index:')
             pp.pprint(response)
 
@@ -563,30 +701,70 @@ class KnowledgeBasesForAmazonBedrock:
             print(
                 f'Error while trying to create the index, with error {e.error}\nyou may unmark the delete above to '
                 f'delete, and recreate the index')
+    
+    def create_chunking_strategy_config(self, strategy):
+        configs = {
+            "NONE": {
+                "chunkingConfiguration": {"chunkingStrategy": "NONE"}
+            },
+            "FIXED_SIZE": {
+                "chunkingConfiguration": {
+                "chunkingStrategy": "FIXED_SIZE",
+                "fixedSizeChunkingConfiguration": {
+                    "maxTokens": 300,
+                    "overlapPercentage": 20
+                    }
+                }
+            },
+            "HIERARCHICAL": {
+                "chunkingConfiguration": {
+                "chunkingStrategy": "HIERARCHICAL",
+                "hierarchicalChunkingConfiguration": {
+                    "levelConfigurations": [{"maxTokens": 1500}, {"maxTokens": 300}],
+                    "overlapTokens": 60
+                    }
+                }
+            },
+            "SEMANTIC": {
+                "chunkingConfiguration": {
+                "chunkingStrategy": "SEMANTIC",
+                "semanticChunkingConfiguration": {
+                    "maxTokens": 300,
+                    "bufferSize": 1,
+                    "breakpointPercentileThreshold": 95}
+                }
+            },
+            "CUSTOM": {
+                "customTransformationConfiguration": {
+                    "intermediateStorage": {
+                        "s3Location": {
+                            "uri": f"s3://{self.intermediate_bucket_name}/"
+                        }
+                    },
+                    "transformations": [
+                        {
+                            "transformationFunction": {
+                                "transformationLambdaConfiguration": {
+                                    "lambdaArn": self.lambda_arn
+                                }
+                            },
+                            "stepToApply": "POST_CHUNKING"
+                        }
+                    ]
+                }, 
+                "chunkingConfiguration": {"chunkingStrategy": "NONE"}
+            }
+        }
+        return configs.get(strategy, configs["NONE"])
 
     @retry(wait_random_min=1000, wait_random_max=2000, stop_max_attempt_number=7)
-    def create_knowledge_base(
-            self, collection_arn: str, index_name: str, bucket_name: str, embedding_model: str,
-            kb_name: str, kb_description: str, bedrock_kb_execution_role: str
-    ):
+    def create_knowledge_base(self):
         """
         Create Knowledge Base and its Data Source. If existent, retrieve
-        Args:
-            collection_arn: ARN of the opensearch serverless collection
-            index_name: name of the opensearch serverless index
-            bucket_name: name of the s3 bucket containing the knowledge base data
-            embedding_model: id of the embedding model used
-            kb_name: knowledge base name
-            kb_description: knowledge base description
-            bedrock_kb_execution_role: knowledge base execution role
-
-        Returns:
-            knowledge base object,
-            data source object
         """
         opensearch_serverless_configuration = {
-            "collectionArn": collection_arn,
-            "vectorIndexName": index_name,
+            "collectionArn": self.collection_arn,
+            "vectorIndexName": self.index_name,
             "fieldMapping": {
                 "vectorField": "vector",
                 "textField": "text",
@@ -594,34 +772,26 @@ class KnowledgeBasesForAmazonBedrock:
             }
         }
 
-        # Ingest strategy - How to ingest data from the data source
-        chunking_strategy_configuration = {
-            "chunkingStrategy": "FIXED_SIZE",
-            "fixedSizeChunkingConfiguration": {
-                "maxTokens": 512,
-                "overlapPercentage": 20
-            }
-        }
+        chunking_strategy_configuration = {}
+        # vectorIngestionConfiguration = {}
+
+        print(f"Creating KB with chunking strategy - {self.chunking_strategy}")
+        chunking_strategy_configuration = self.create_chunking_strategy_config(self.chunking_strategy)
+        print("============Chunking config========\n", chunking_strategy_configuration)
 
         # The data source to ingest documents from, into the OpenSearch serverless knowledge base index
         s3_configuration = {
-            "bucketArn": f"arn:aws:s3:::{bucket_name}",
+            "bucketArn": f"arn:aws:s3:::{self.bucket_name}",
             # "inclusionPrefixes":["*.*"] # you can use this if you want to create a KB using data within s3 prefixes.
         }
 
         # The embedding model used by Bedrock to embed ingested documents, and realtime prompts
-        embedding_model_arn = f"arn:aws:bedrock:{self.region_name}::foundation-model/{embedding_model}"
-        print(str({
-            "type": "VECTOR",
-            "vectorKnowledgeBaseConfiguration": {
-                "embeddingModelArn": embedding_model_arn
-            }
-        }))
+        embedding_model_arn = f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.embedding_model}"
         try:
             create_kb_response = self.bedrock_agent_client.create_knowledge_base(
-                name=kb_name,
-                description=kb_description,
-                roleArn=bedrock_kb_execution_role['Role']['Arn'],
+                name=self.kb_name,
+                description=self.kb_description,
+                roleArn=self.bedrock_kb_execution_role['Role']['Arn'],
                 knowledgeBaseConfiguration={
                     "type": "VECTOR",
                     "vectorKnowledgeBaseConfiguration": {
@@ -641,7 +811,7 @@ class KnowledgeBasesForAmazonBedrock:
             )
             kb_id = None
             for kb in kbs['knowledgeBaseSummaries']:
-                if kb['name'] == kb_name:
+                if kb['name'] == self.kb_name:
                     kb_id = kb['knowledgeBaseId']
             response = self.bedrock_agent_client.get_knowledge_base(knowledgeBaseId=kb_id)
             kb = response['knowledgeBase']
@@ -649,18 +819,19 @@ class KnowledgeBasesForAmazonBedrock:
 
         # Create a DataSource in KnowledgeBase
         try:
+            print(self.kb_name)
+            print(kb['knowledgeBaseId'])
+            print(s3_configuration)
             create_ds_response = self.bedrock_agent_client.create_data_source(
-                name=kb_name,
-                description=kb_description,
+                name=self.kb_name,
+                description=self.kb_description,
                 knowledgeBaseId=kb['knowledgeBaseId'],
-                dataDeletionPolicy='RETAIN',
                 dataSourceConfiguration={
                     "type": "S3",
                     "s3Configuration": s3_configuration
                 },
-                vectorIngestionConfiguration={
-                    "chunkingConfiguration": chunking_strategy_configuration
-                }
+                vectorIngestionConfiguration = chunking_strategy_configuration, 
+                dataDeletionPolicy='RETAIN'
             )
             ds = create_ds_response["dataSource"]
             pp.pprint(ds)
@@ -677,195 +848,179 @@ class KnowledgeBasesForAmazonBedrock:
             pp.pprint(ds)
         return kb, ds
 
-    def synchronize_data(self, kb_id, ds_id):
+    def start_ingestion_job(self):
         """
         Start an ingestion job to synchronize data from an S3 bucket to the Knowledge Base
-        and waits for the job to be completed
-        Args:
-            kb_id: knowledge base id
-            ds_id: data source id
         """
         # Start an ingestion job
         start_job_response = self.bedrock_agent_client.start_ingestion_job(
-            knowledgeBaseId=kb_id,
-            dataSourceId=ds_id
+            knowledgeBaseId=self.knowledge_base['knowledgeBaseId'],
+            dataSourceId=self.data_source["dataSourceId"]
         )
         job = start_job_response["ingestionJob"]
         pp.pprint(job)
         # Get job
         while job['status'] != 'COMPLETE':
             get_job_response = self.bedrock_agent_client.get_ingestion_job(
-                knowledgeBaseId=kb_id,
-                dataSourceId=ds_id,
+                knowledgeBaseId=self.knowledge_base['knowledgeBaseId'],
+                dataSourceId=self.data_source["dataSourceId"],
                 ingestionJobId=job["ingestionJobId"]
             )
             job = get_job_response["ingestionJob"]
         pp.pprint(job)
         interactive_sleep(40)
 
-    def delete_kb(self, kb_name: str, delete_s3_bucket: bool = True, delete_iam_roles_and_policies: bool = True,
-                  delete_aoss: bool = True):
+    def get_knowledge_base_id(self):
+        """
+        Get Knowledge Base Id
+        """
+        pp.pprint(self.knowledge_base["knowledgeBaseId"])
+        return self.knowledge_base["knowledgeBaseId"]
+
+    def get_bucket_name(self):
+        """
+        Get the name of the bucket connected with the Knowledge Base Data Source
+        """
+        pp.pprint(f"Bucket connected with KB: {self.bucket_name}")
+        return self.bucket_name
+
+    def delete_kb(self, delete_s3_bucket=False, delete_iam_roles_and_policies=True, delete_lambda_function=False):
         """
         Delete the Knowledge Base resources
         Args:
-            kb_name: name of the knowledge base to delete
             delete_s3_bucket (bool): boolean to indicate if s3 bucket should also be deleted
             delete_iam_roles_and_policies (bool): boolean to indicate if IAM roles and Policies should also be deleted
-            delete_aoss: boolean to indicate if amazon opensearch serverless resources should also be deleted
+            delete_lambda_function (bool): boolean to indicate if Lambda function should also be deleted
         """
-        kbs_available = self.bedrock_agent_client.list_knowledge_bases(
-            maxResults=100,
-        )
-        kb_id = None
-        ds_id = None
-        for kb in kbs_available["knowledgeBaseSummaries"]:
-            if kb_name == kb["name"]:
-                kb_id = kb["knowledgeBaseId"]
-        kb_details = self.bedrock_agent_client.get_knowledge_base(
-            knowledgeBaseId=kb_id
-        )
-        kb_role = kb_details['knowledgeBase']['roleArn'].split("/")[1]
-        collection_id = kb_details['knowledgeBase']['storageConfiguration']['opensearchServerlessConfiguration']['collectionArn'].split(
-            '/')[1]
-        index_name = kb_details['knowledgeBase']['storageConfiguration']['opensearchServerlessConfiguration'][
-            'vectorIndexName']
-
-        encryption_policies = self.aoss_client.list_security_policies(
-            maxResults=100,
-            type='encryption'
-        )
-        encryption_policy_name = None
-        for ep in encryption_policies['securityPolicySummaries']:
-            if ep['name'].startswith(kb_name):
-                encryption_policy_name = ep['name']
-
-        network_policies = self.aoss_client.list_security_policies(
-            maxResults=100,
-            type='network'
-        )
-        network_policy_name = None
-        for np in network_policies['securityPolicySummaries']:
-            if np['name'].startswith(kb_name):
-                network_policy_name = np['name']
-
-        data_policies = self.aoss_client.list_access_policies(
-            maxResults=100,
-            type='data'
-        )
-        access_policy_name = None
-        for dp in data_policies['accessPolicySummaries']:
-            if dp['name'].startswith(kb_name):
-                access_policy_name = dp['name']
-
-        ds_available = self.bedrock_agent_client.list_data_sources(
-            knowledgeBaseId=kb_id,
-            maxResults=100,
-        )
-        for ds in ds_available["dataSourceSummaries"]:
-            if kb_id == ds["knowledgeBaseId"]:
-                ds_id = ds["dataSourceId"]
-        ds_details = self.bedrock_agent_client.get_data_source(
-            dataSourceId=ds_id,
-            knowledgeBaseId=kb_id,
-        )
-        bucket_name = ds_details['dataSource']['dataSourceConfiguration']['s3Configuration']['bucketArn'].replace(
-            "arn:aws:s3:::", "")
-        try:
-            self.bedrock_agent_client.delete_data_source(
-                dataSourceId=ds_id,
-                knowledgeBaseId=kb_id
-            )
-            print("Data Source deleted successfully!")
-        except Exception as e:
-            print(e)
-        try:
-            self.bedrock_agent_client.delete_knowledge_base(
-                knowledgeBaseId=kb_id
-            )
-            print("Knowledge Base deleted successfully!")
-        except Exception as e:
-            print(e)
-        if delete_aoss:
+        
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            # delete vector index and collection from vector store
             try:
-                self.oss_client.indices.delete(index=index_name)
-                print("OpenSource Serveless Index deleted successfully!")
-            except Exception as e:
-                print(e)
-            try:
-                self.aoss_client.delete_collection(id=collection_id)
-                print("OpenSource Collection Index deleted successfully!")
-            except Exception as e:
-                print(e)
-            try:
+                self.aoss_client.delete_collection(id=self.collection_id)
                 self.aoss_client.delete_access_policy(
                     type="data",
-                    name=access_policy_name
+                    name=self.access_policy_name
                 )
-                print("OpenSource Serveless access policy deleted successfully!")
-            except Exception as e:
-                print(e)
-            try:
                 self.aoss_client.delete_security_policy(
                     type="network",
-                    name=network_policy_name
+                    name=self.network_policy_name
                 )
-                print("OpenSource Serveless network policy deleted successfully!")
-            except Exception as e:
-                print(e)
-            try:
                 self.aoss_client.delete_security_policy(
                     type="encryption",
-                    name=encryption_policy_name
+                    name=self.encryption_policy_name
                 )
-                print("OpenSource Serveless encryption policy deleted successfully!")
+                print("======== Vector Index, collection and associated policies deleted =========")
             except Exception as e:
                 print(e)
-        if delete_s3_bucket:
-            try:
-                self.delete_s3(bucket_name)
-                print("Knowledge Base S3 bucket deleted successfully!")
-            except Exception as e:
-                print(e)
-        if delete_iam_roles_and_policies:
-            try:
-                self.delete_iam_roles_and_policies(kb_role)
-                print("Knowledge Base Roles and Policies deleted successfully!")
-            except Exception as e:
-                print(e)
-        print("Resources deleted successfully!")
 
-    def delete_iam_roles_and_policies(self, kb_execution_role_name: str):
-        """
-        Delete IAM Roles and policies used by the Knowledge Base
-        Args:
-            kb_execution_role_name: knowledge base execution role
-        """
-        attached_policies = self.iam_client.list_attached_role_policies(
-            RoleName=kb_execution_role_name,
-            MaxItems=100
-        )
-        policies_arns = []
-        for policy in attached_policies['AttachedPolicies']:
-            policies_arns.append(policy['PolicyArn'])
-        for policy in policies_arns:
-            self.iam_client.detach_role_policy(
-                RoleName=kb_execution_role_name,
-                PolicyArn=policy
-            )
-            self.iam_client.delete_policy(PolicyArn=policy)
-        self.iam_client.delete_role(RoleName=kb_execution_role_name)
-        return 0
+            # delete knowledge base and vector store.
+            
+            try:
+                self.bedrock_agent_client.delete_data_source(
+                    dataSourceId=self.data_source["dataSourceId"],
+                    knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
+                )
+                self.bedrock_agent_client.delete_knowledge_base(
+                    knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
+                )
+                print("======== Knowledge base and data source deleted =========")
+            except self.bedrock_agent_client.exceptions.ResourceNotFoundException as e:
+                print("Resource not found", e)
+                pass
+            except Exception as e:
+                print(e)
 
-    def delete_s3(self, bucket_name: str):
+            # delete s3 bucket
+            if delete_s3_bucket==True:
+                    self.delete_s3()
+                    
+            # delete IAM role and policies
+            if delete_iam_roles_and_policies:
+                self.delete_iam_roles_and_policies()
+            
+            if delete_lambda_function:
+                try:
+                    self.delete_lambda_function()
+                    print(f"Deleted Lambda function {self.lambda_function_name}")
+                except self.lambda_client.exceptions.ResourceNotFoundException:
+                    print(f"Lambda function {self.lambda_function_name} not found.")
+                    
+
+    def delete_iam_roles_and_policies(self):
+        for role_name in self.roles:
+            print(f"Found role {role_name}")
+            try:
+                self.iam_client.get_role(RoleName=role_name)
+            except self.iam_client.exceptions.NoSuchEntityException:
+                print(f"Role {role_name} does not exist") 
+                continue
+            attached_policies = self.iam_client.list_attached_role_policies(RoleName=role_name)["AttachedPolicies"]
+            print(f"======Attached policies with role {role_name}========\n", attached_policies)
+            for attached_policy in attached_policies:
+                policy_arn = attached_policy["PolicyArn"]
+                policy_name = attached_policy["PolicyName"]
+                self.iam_client.detach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
+                print(f"Detached policy {policy_name} from role {role_name}")
+                if str(policy_arn.split("/")[1]) == "service-role":
+                    print(f"Skipping deletion of service-linked role policy {policy_name}")
+                else: 
+                    self.iam_client.delete_policy(PolicyArn=policy_arn)
+                    print(f"Deleted policy {policy_name} from role {role_name}")
+                
+            self.iam_client.delete_role(RoleName=role_name)
+            print(f"Deleted role {role_name}")
+        print("======== All IAM roles and policies deleted =========")
+
+    def bucket_exists(bucket):
+        s3 = boto3.resource('s3')
+        return s3.Bucket(bucket) in s3.buckets.all()
+
+    def delete_s3(self):
         """
         Delete the objects contained in the Knowledge Base S3 bucket.
         Once the bucket is empty, delete the bucket
-        Args:
-            bucket_name: bucket name
-
         """
-        objects = self.s3_client.list_objects(Bucket=bucket_name)
-        if 'Contents' in objects:
-            for obj in objects['Contents']:
-                self.s3_client.delete_object(Bucket=bucket_name, Key=obj['Key'])
-        self.s3_client.delete_bucket(Bucket=bucket_name)
+        s3 = boto3.resource('s3')
+        try:
+            objects = self.s3_client.list_objects(Bucket=self.bucket_name)
+            if 'Contents' in objects:
+                for obj in objects['Contents']:
+                    self.s3_client.delete_object(Bucket=self.bucket_name, Key=obj['Key'])
+            self.s3_client.delete_bucket(Bucket=self.bucket_name)
+            print("======== S3 data bucket deleted =========")
+        except Exception as e:
+            print(e)
+
+        if self.intermediate_bucket_name is not None:
+            bucket = s3.Bucket(self.intermediate_bucket_name)
+            print("intermediate bucket: ", bucket)
+            if bucket in s3.buckets.all():
+                print(f"Found intermediate bucket {self.intermediate_bucket_name}")
+                try:
+                    objects = self.s3_client.list_objects(Bucket=self.intermediate_bucket_name)
+                    if 'Contents' in objects:
+                        for obj in objects['Contents']:
+                            print(f"Deleting {obj['Key']}")
+                            self.s3_client.delete_object(Bucket=self.intermediate_bucket_name, Key=obj['Key'])
+                        print("======== Intermediate S3 bucket emptied - will wait for 20s before deleting bucket =========")
+                        interactive_sleep(20)
+                    self.s3_client.delete_bucket(Bucket=self.intermediate_bucket_name)
+                    print("======== Intermediate S3 bucket deleted =========")
+                except Exception as e:
+                    print(f"{self.intermediate_bucket_name} does not exist, therefore, will skip deleting")
+        else:
+            print("No intermediate bucket found")
+
+
+    def delete_lambda_function(self):
+        """
+        Delete the Knowledge Base Lambda function
+        Delete the IAM role used by the Knowledge Base Lambda function
+        """
+        # delete lambda function
+        try:
+            self.lambda_client.delete_function(FunctionName=self.lambda_function_name)
+            print(f"======== Lambda function {self.lambda_function_name} deleted =========")
+        except Exception as e:
+            print(e)
