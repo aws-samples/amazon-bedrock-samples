@@ -1,0 +1,14 @@
+{
+    "manifest": {
+        "s3Path": "s3://bedrockidpclaude3workflow-bedrockidpclaude3bucket0-pgrdbpkwtsfg/uploads/unc_paystub.pdf"
+    },
+    "numberOfPages": 1,
+    "mime": "application/pdf",
+    "textract_result": {
+        "TextractTempOutputJsonPath": "s3://opensearchworkflow-opensearchworkflowbucket68e805-1sftyrox2dazy/textract-temp/cea1195ded3dd81b0bacaf75d365a12dce1f9290cc6e4f4ec381f70378e7c1c5",
+        "TextractOutputJsonPath": "s3://opensearchworkflow-opensearchworkflowbucket68e805-1sftyrox2dazy/textract-output/0-02023-05-18T22:06:20.360122/0-0.json"
+    },
+    "opensearch_output_location": {
+        "TextractOutputCSVPath": "s3://opensearchworkflow-opensearchworkflowbucket68e805-1sftyrox2dazy/textract-text-output/2023-05-18T22:06:21+00:00/0-0.json"
+    }
+}
