@@ -86,7 +86,9 @@ Resources:
               - athena:StartQueryExecution
               - athena:GetQueryExecution
               - athena:GetQueryResults
-              - glue:*
+              - glue:GetDatabase
+              - glue:GetSchemaVersion
+              - glue:ListSchemaVersions
             Effect: Allow
             Resource: '*'
         Version: 2012-10-17
