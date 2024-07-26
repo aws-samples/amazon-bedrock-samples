@@ -1,6 +1,6 @@
 import boto3
 
-bucket = 'bucketname' ### REPLACE WITH YOUR AMAZON S3 BUCKET
+bucket = 'BUCKET_NAME' ### REPLACE WITH YOUR AMAZON S3 BUCKET
 
 ### Setup boto3 client for Athena
 athena = boto3.client('athena', region_name='us-east-1')
