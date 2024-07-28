@@ -39,7 +39,7 @@ Contains following folders:
 
 ### 03-advanced-concepts
 
-Coming Soon
+- Provides sample code that demonstrates advanced concepts that could be applied to improve retrieval quality/results for Knowledge Base on Amazon Bedrock..
 
 ### 04-infrastructure
 - Provides sample code for creating knowledge base and associated data sources using AWS CloudFormation templates.
