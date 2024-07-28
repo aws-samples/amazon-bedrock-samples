@@ -1,12 +1,11 @@
-# Advanced Concepts
+# Knowledge Bases for Amazon Bedrock - Advanced Topics
 
 ## Contents
-Coming Soon!
+Contains following folders: 
+- reranking
 
-***
-
-### Note
-TBD
+### Reranking Model
+In the context of RAG systems, reranker refers to a secondary document filtering mechanism responsible for reordering the documents retrieved by the initial retrieval module. This reordering process is designed to enhance the quality of document ranking. In general, rerankers aim to strike a balance between efficiency and effectiveness, prioritizing the improvement of search result quality. 
 
 ## Contributing
 
