@@ -11,7 +11,7 @@ If you don't have these prerequisites, follow these steps:
 
 1. Create a knowledge base and ingest documents by following [this notebook](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/knowledge-bases/features-examples/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb). Note down the knowledge base ID.
 2. For synthetic text data to create your knowledge base, refer to [this link](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/synthetic_dataset).
-3. Use the CSV files in the `dummy-dataset` folder to set up your Amazon Athena database.
+3. To get access to tabular data, you can run `0-create-dummy-structured-data.ipynb` and `1_create_sql_dataset_optional.ipynb` notebook to setup an Amazon Atehna database. 
 
 ## Implementation
 
