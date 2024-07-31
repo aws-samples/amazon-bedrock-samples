@@ -39,9 +39,7 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
     start_time = time.time()
 
     event_stream = resp['completion']
-    #print('before event stream')
     for event in event_stream:
-        #print(event)
         if 'files' in event.keys():
             files_event = event['files']
             #print("\n### Files")
@@ -62,14 +60,10 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
                 #    plt.show()
                 
                 trace_for_response += f"Saved {file_name} as output"
-        #print('before trace')
         if 'trace' in event.keys():
             trace_object = event.get('trace')['trace']
-            #print('before guardrail trace')
             if "guardrailTrace" in trace_object:
-                #print("entering trace")
                 guardrail_trace = trace_object['guardrailTrace']
-                #print(guardrail_trace)
                 
                 guardrail_action = guardrail_trace['action']
                 #print(f"\n### Guardrails\nAction: {guardrail_action}")
@@ -82,7 +76,6 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
                     execution_time = (end_time - start_time)
                     return input_assessments, trace_for_response, execution_time
             elif "orchestrationTrace" in trace_object:
-                #print('in orchestrationTrace')
                 trace_event = trace_object['orchestrationTrace']
 
                 if 'modelInvocationInput' in trace_event.keys():
@@ -94,7 +87,6 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
                     trace_for_response +=f"\n### Rationale\n{rationale}"
 
                 if 'invocationInput' in trace_event.keys():
-                    #print(f'in invocationInput{trace_event}')
                     inv_input = trace_event['invocationInput']
                     parameters = []
                     if 'codeInterpreterInvocationInput' in inv_input:
@@ -392,10 +384,8 @@ if __name__ == "__main__":
         f = open(args.test_file)
         test_cases = json.load(f)
         for key in test_cases:
-            #print('key',key)
 
             queries = test_cases[key]
-            #print(f'queries{queries}')
             test_query(
                 queries, args.agent_id, args.agent_alias_id,
                 args.number_trials, None, args.show_code_use,
