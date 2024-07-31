@@ -32,7 +32,7 @@ def lambda_handler(event, context):
                 user=_get_parameter( event, 'user'),
                 campaign=_get_parameter( event, 'campaign'),
                 sample=_get_parameter( event, 'sample'),
-                image=_get_parameter( event, 'image')
+                image_url=_get_parameter( event, 'image_url')
             )
         else:
             response_code = 404
@@ -106,8 +106,8 @@ def get_user_info(item_id):
         )
     )
 
-def content_generate(item, user, campaign, sample, image_key):
-    image_data = download_and_decode_image(BUCKET_IMAGE, image_key)
+def content_generate(item, user, campaign, sample, image_url):
+    image_data = download_and_decode_image(BUCKET_IMAGE, image_url)
     prompt = f"This is a {item} photo, please write a recommendation context \
         about {campaign} campaign and follow the rules below \
         <rules> \

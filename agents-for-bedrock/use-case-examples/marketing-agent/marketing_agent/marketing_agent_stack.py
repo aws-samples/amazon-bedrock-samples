@@ -5,24 +5,16 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_s3_deployment as s3_deployment,
     aws_dynamodb as dynamodb,
-    # aws_opensearchserverless as oss,
     aws_iam as iam,
     aws_lambda as lambda_,
-    # aws_lambda_python_alpha as lambda_python,
-    # aws_logs as logs,
-    # custom_resources,
-    # CustomResource,
 )
 
 from cdklabs.generative_ai_cdk_constructs import (
     bedrock,
-    opensearchserverless,
-    opensearch_vectorindex
 )
 
 from constructs import Construct
 
-# import json
 
 AGENT_FOUNDATION_MODEL_NAME = "anthropic.claude-3-haiku-20240307-v1:0"
 AGENT_INSTRUCTION = "You are a professional marketing expert of social media marketing \
@@ -105,7 +97,19 @@ class MarketingAgentStack(Stack):
         bedrock_agent_lambda_role = iam.Role(self, "BerockAgentLambdaRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("AdministratorAccess")]
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"
+                )
+            ]
+        )
+        _data_bucket.grant_read(bedrock_agent_lambda_role)
+        _item_table.grant_read_data(bedrock_agent_lambda_role)
+        _user_table.grant_read_data(bedrock_agent_lambda_role)
+        bedrock_agent_lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:*"],
+                resources=["*"]
+            )
         )
 
         # Pandas Lambda layer
