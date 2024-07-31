@@ -41,7 +41,8 @@ class MarketingAgentStack(Stack):
         # Upload Related Data to S3 Bucket
         _deploy_data = s3_deployment.BucketDeployment(self, "deploy-data",
             sources=[s3_deployment.Source.asset("data/")],
-            destination_bucket=_data_bucket
+            destination_bucket=_data_bucket,
+            exclude=[".DS_Store"],
         )
 
         # Create DynamoDB table for item data
