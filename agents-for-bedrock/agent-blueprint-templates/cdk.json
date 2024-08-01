@@ -1,6 +1,5 @@
 {
-
-  "app": "npx ts-node --prefer-ts-exts agent-blueprint-templates/bin/05-agent-with-classification-instructions/main.ts",
+  "app": "npx ts-node --prefer-ts-exts bin/01-agent-with-function-definitions/main.ts",
   "watch": {
     "include": [
       "**"
