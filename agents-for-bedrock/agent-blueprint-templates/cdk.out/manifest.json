@@ -1,28 +1,28 @@
 {
   "version": "36.0.0",
   "artifacts": {
-    "AgentWithSimpleClassificationStack.assets": {
+    "AgentWithCustomLambdaParserStack.assets": {
       "type": "cdk:asset-manifest",
       "properties": {
-        "file": "AgentWithSimpleClassificationStack.assets.json",
+        "file": "AgentWithCustomLambdaParserStack.assets.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
       }
     },
-    "AgentWithSimpleClassificationStack": {
+    "AgentWithCustomLambdaParserStack": {
       "type": "aws:cloudformation:stack",
       "environment": "aws://533267284022/us-east-1",
       "properties": {
-        "templateFile": "AgentWithSimpleClassificationStack.template.json",
+        "templateFile": "AgentWithCustomLambdaParserStack.template.json",
         "terminationProtection": false,
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-533267284022-us-east-1/c58ba22447450d06cdd927b5957d0b8d3d0bc9f28886bbadc4d52322316b8ccd.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-533267284022-us-east-1/efdf24b0baa416eb53fa3159a460ecbb9f40eb375a1eb81d204b1a94485a49fd.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
-          "AgentWithSimpleClassificationStack.assets"
+          "AgentWithCustomLambdaParserStack.assets"
         ],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-lookup-role-533267284022-us-east-1",
@@ -31,47 +31,192 @@
         }
       },
       "dependencies": [
-        "AgentWithSimpleClassificationStack.assets"
+        "AgentWithCustomLambdaParserStack.assets"
       ],
       "metadata": {
-        "/AgentWithSimpleClassificationStack/AgentWithSimpleClassificationStack/BedrockServiceRole/Resource": [
+        "/AgentWithCustomLambdaParserStack/RDSDatabaseForAgentWithLP/AuroraSecretForAgentWithLP/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "AgentWithSimpleClassificationStackBedrockServiceRole1FD10F8D"
+            "data": "RDSDatabaseForAgentWithLPAuroraSecretForAgentWithLP1E551E27"
           }
         ],
-        "/AgentWithSimpleClassificationStack/AgentWithSimpleClassificationStack/BedrockServiceRole/DefaultPolicy/Resource": [
+        "/AgentWithCustomLambdaParserStack/RDSDatabaseForAgentWithLP/AuroraSecretForAgentWithLP/Attachment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "AgentWithSimpleClassificationStackBedrockServiceRoleDefaultPolicy9ACF89E3"
+            "data": "RDSDatabaseForAgentWithLPAuroraSecretForAgentWithLPAttachment549F2977"
           }
         ],
-        "/AgentWithSimpleClassificationStack/AgentWithSimpleClassificationStack/AgentBlueprint-custom-classification-agent": [
+        "/AgentWithCustomLambdaParserStack/RDSDatabaseForAgentWithLP/AuroraClusterForAgentWithLP/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "AgentWithSimpleClassificationStackAgentBlueprintcustomclassificationagent6B6C5066"
+            "data": "RDSDatabaseForAgentWithLPAuroraClusterForAgentWithLP99B11CB8"
           }
         ],
-        "/AgentWithSimpleClassificationStack/CDKMetadata/Default": [
+        "/AgentWithCustomLambdaParserStack/RDSDatabaseForAgentWithLP/LambdaRoleToPopulateData/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RDSDatabaseForAgentWithLPLambdaRoleToPopulateData1A8E660A"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/RDSDatabaseForAgentWithLP/PopulateSampleDataFunc/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RDSDatabaseForAgentWithLPPopulateSampleDataFunc43DDEC1E"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/RDSDatabaseForAgentWithLP/TriggerPopulateDataFunction": [
+          {
+            "type": "aws:cdk:warning",
+            "data": "installLatestAwsSdk was not specified, and defaults to true. You probably do not want this. Set the global context flag '@aws-cdk/customresources:installLatestAwsSdkDefault' to false to switch this behavior off project-wide, or set the property explicitly to true if you know you need to call APIs that are not in Lambda's built-in SDK version. [ack: @aws-cdk/custom-resources:installLatestAwsSdkNotSpecified]",
+            "trace": [
+              "Annotations.addMessage (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1608)",
+              "Annotations.addWarningV2 (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/aws-cdk-lib/core/lib/annotations.js:1:825)",
+              "new AwsCustomResource (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/aws-cdk-lib/custom-resources/lib/aws-custom-resource/aws-custom-resource.js:1:5212)",
+              "new RDSDatabaseForAgentWithLP (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/lib/stacks/04-agent-with-lambda-parser/rds-database-lp-construct.ts:69:9)",
+              "new AgentWithCustomLambdaParserStack (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/lib/stacks/04-agent-with-lambda-parser/agent-with-lambda-parser-stack.ts:18:29)",
+              "Object.<anonymous> (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/bin/04-agent-with-lambda-parser/main.ts:21:1)",
+              "Module._compile (node:internal/modules/cjs/loader:1358:14)",
+              "Module.m._compile (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/ts-node/src/index.ts:1618:23)",
+              "Module._extensions..js (node:internal/modules/cjs/loader:1416:10)",
+              "Object.require.extensions.<computed> [as .ts] (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/ts-node/src/index.ts:1621:12)",
+              "Module.load (node:internal/modules/cjs/loader:1208:32)",
+              "Function.Module._load (node:internal/modules/cjs/loader:1024:12)",
+              "Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:174:12)",
+              "phase4 (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/ts-node/src/bin.ts:649:14)",
+              "bootstrap (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/ts-node/src/bin.ts:95:10)",
+              "main (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/ts-node/src/bin.ts:55:10)",
+              "Object.<anonymous> (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/ts-node/src/bin.ts:800:3)",
+              "Module._compile (node:internal/modules/cjs/loader:1358:14)",
+              "Object.Module._extensions..js (node:internal/modules/cjs/loader:1416:10)",
+              "Module.load (node:internal/modules/cjs/loader:1208:32)",
+              "Function.Module._load (node:internal/modules/cjs/loader:1024:12)",
+              "Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:174:12)",
+              "node:internal/main/run_main_module:28:49"
+            ]
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/RDSDatabaseForAgentWithLP/TriggerPopulateDataFunction/Resource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RDSDatabaseForAgentWithLPTriggerPopulateDataFunctionE23A2BE3"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/RDSDatabaseForAgentWithLP/TriggerPopulateDataFunction/CustomResourcePolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RDSDatabaseForAgentWithLPTriggerPopulateDataFunctionCustomResourcePolicyBEA35ABB"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/AWS679f53fac002430cb0da5b7982bd2287/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/AWS679f53fac002430cb0da5b7982bd2287/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AWS679f53fac002430cb0da5b7982bd22872D164C4C"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/LambdaExecutionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaExecutionRoleD5C26073"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/CustomParserFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomParserFunction005A8616"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/CustomParserFunction/AllowBedrockToInvokeFunction": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomParserFunctionAllowBedrockToInvokeFunctionB26C0648"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/CustomParserProvider/framework-onEvent/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomParserProviderframeworkonEventServiceRoleF068ED52"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/CustomParserProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomParserProviderframeworkonEventServiceRoleDefaultPolicyD4FA55AD"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/CustomParserProvider/framework-onEvent/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomParserProviderframeworkonEvent9AAA1E5C"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/CustomParserResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomParserResource"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/VacationsActionGroup/LambdaRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationsActionGroupLambdaRoleAF8D096D"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/VacationsActionGroup/VacationsActionGroupLambdaFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationsActionGroupVacationsActionGroupLambdaFunction17AAB9FC"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/VacationsActionGroup/VacationsActionGroupLambdaFunction/BedrockAgentInvokePermission-44ceb492-4e4": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationsActionGroupVacationsActionGroupLambdaFunctionBedrockAgentInvokePermission44ceb4924e4E15B93E1"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/AmazonBedrockAgentBlueprintsStack/BedrockServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AmazonBedrockAgentBlueprintsStackBedrockServiceRole55949A6B"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/AmazonBedrockAgentBlueprintsStack/BedrockServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AmazonBedrockAgentBlueprintsStackBedrockServiceRoleDefaultPolicy52DAA442"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/AmazonBedrockAgentBlueprintsStack/AgentBlueprint-hr-assistant-agent-with-custom-parser": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AmazonBedrockAgentBlueprintsStackAgentBlueprinthrassistantagentwithcustomparser8DA50475"
+          }
+        ],
+        "/AgentWithCustomLambdaParserStack/CDKMetadata/Default": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CDKMetadata"
           }
         ],
-        "/AgentWithSimpleClassificationStack/BootstrapVersion": [
+        "/AgentWithCustomLambdaParserStack/BootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "BootstrapVersion"
           }
         ],
-        "/AgentWithSimpleClassificationStack/CheckBootstrapVersion": [
+        "/AgentWithCustomLambdaParserStack/CheckBootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CheckBootstrapVersion"
           }
         ]
       },
-      "displayName": "AgentWithSimpleClassificationStack"
+      "displayName": "AgentWithCustomLambdaParserStack"
     },
     "Tree": {
       "type": "cdk:tree",

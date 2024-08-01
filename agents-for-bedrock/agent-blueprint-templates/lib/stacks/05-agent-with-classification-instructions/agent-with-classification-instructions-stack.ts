@@ -18,8 +18,7 @@ export class AgentWithSimpleClassificationStack extends cdk.Stack {
             'You ALWAYS answer with the email classification only, without adding any other text to it.'
                 )
             .withFoundationModel('anthropic.claude-3-sonnet-20240229-v1:0');
-            // .withUserInput() # disable user input
-            // .build();
+           
 
             const agent = new BedrockAgentBlueprintsConstruct(this, 'AgentWithSimpleClassificationStack', {
                 agentDefinition: agentDef.build(),
