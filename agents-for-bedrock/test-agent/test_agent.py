@@ -14,6 +14,7 @@ global bedrock_agent_runtime_client
 
 
 def process_response(query, session_state, trial_id, query_id, resp, show_code_use: bool = False):
+
     """
     Function that parsers the invoke_model response of an agent
     
@@ -59,14 +60,10 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
                 #    plt.show()
                 
                 trace_for_response += f"Saved {file_name} as output"
-
         if 'trace' in event.keys():
             trace_object = event.get('trace')['trace']
-            
             if "guardrailTrace" in trace_object:
-                #print("entering trace")
                 guardrail_trace = trace_object['guardrailTrace']
-                #print(guardrail_trace)
                 
                 guardrail_action = guardrail_trace['action']
                 #print(f"\n### Guardrails\nAction: {guardrail_action}")
@@ -78,7 +75,6 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
                     end_time = time.time()
                     execution_time = (end_time - start_time)
                     return input_assessments, trace_for_response, execution_time
-                
             elif "orchestrationTrace" in trace_object:
                 trace_event = trace_object['orchestrationTrace']
 
@@ -92,6 +88,7 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
 
                 if 'invocationInput' in trace_event.keys():
                     inv_input = trace_event['invocationInput']
+                    parameters = []
                     if 'codeInterpreterInvocationInput' in inv_input:
                         gen_code = inv_input['codeInterpreterInvocationInput']['code']
                         code = f"```python\n{gen_code}\n```"
@@ -100,14 +97,27 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
                     if "actionGroupInvocationInput" in inv_input:
                         action_group_name = inv_input["actionGroupInvocationInput"]["actionGroupName"]
                         execution_type = inv_input["actionGroupInvocationInput"]["executionType"]
-                        execution_function = inv_input["actionGroupInvocationInput"]["function"]
-                        parameters = inv_input["actionGroupInvocationInput"]["parameters"]
+                        
                         #print("\n### Action group invocation call")
                         trace_for_response += "\n### Action group invocation call"
-                        #print(f"\nInvoking action group {action_group_name} function {execution_function}")
-                        trace_for_response += f"\nInvoking action group {action_group_name} function {execution_function}"
                         #print(f"\nExecution Type {execution_type}")
                         trace_for_response += f"\nExecution Type {execution_type}"
+                        if "parameters" in inv_input["actionGroupInvocationInput"]:
+                            parameters = inv_input["actionGroupInvocationInput"]["parameters"]
+                        if "requestBody" in inv_input["actionGroupInvocationInput"]:
+                            try:
+                                parameters = inv_input["actionGroupInvocationInput"]['requestBody']['content']['application/json']
+                            except:
+                                parameters = []
+                            
+                        if "function" in inv_input["actionGroupInvocationInput"]:
+                            execution_function = inv_input["actionGroupInvocationInput"]["function"]
+                            # print(f"\nInvoking action group {action_group_name} function {execution_function}")
+                            trace_for_response += f"\nInvoking action group {action_group_name} function {execution_function}"
+                        if "apiPath" in inv_input["actionGroupInvocationInput"]:
+                            execution_function = inv_input["actionGroupInvocationInput"]["apiPath"]
+                            # print(f"\nInvoking action group {action_group_name} function {execution_function}")
+                            trace_for_response += f"\nInvoking action group {action_group_name} function {execution_function}"
                         if len(parameters) > 0:
                             #print(f"\n#### Parameters")
                             trace_for_response += f"\n#### Parameters"
@@ -169,7 +179,6 @@ def process_response(query, session_state, trial_id, query_id, resp, show_code_u
                         return final_resp, trace_for_response, execution_time
             else:
                 print(trace_object)
-
 
 def add_file_to_session_state(local_file_name=None, file_url=None, use_case='CODE_INTERPRETER', session_state=None):
     """
@@ -272,6 +281,7 @@ def test_query(
     queries_list, agent_id, alias_id, number_trials,
     session_state=None, show_code_use=False, file_prefix=""
 ):
+    #print('parms for test_query',queries_list, agent_id, alias_id, number_trials,session_state)
     """
     Support function to test invoke agent for latency and responses
     
@@ -285,12 +295,16 @@ def test_query(
         file_prefix (str): prefix to add to output files
     """
     latency_data = []
+    folder_prefix = "conversation"
+    
     if file_prefix != "":
+        folder_prefix = file_prefix
         file_prefix += "_"
     Path("output/").mkdir(parents=True, exist_ok=True)
     
     now = datetime.now() # current date and time
     date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
+    Path(f"output/{folder_prefix}/").mkdir(parents=True, exist_ok=True)
     for i in range(number_trials):
         print(f"================== trial {i} ==================")
         session_id:str = str(uuid.uuid1())
@@ -322,13 +336,15 @@ def test_query(
                 if "query" in query:
                     query = query["query"]
             print(f"Query: {query}")
+            #print('before invoke_agent',query, i, j, session_id, agent_id, alias_id)
             final_resp, trace_for_response, execution_time = invoke_agent_helper(
                 query, i, j, session_id, agent_id, alias_id,
                 session_state=session_state,
                 end_session=False, show_code_use=show_code_use
             )
+            print(f"Final response: {final_resp}")
             print(f"Execution time: {execution_time}")
-            trace_file = f'output/{file_prefix}test_{i}_query_{j}_{date_time}.md'
+            trace_file = f'output/{folder_prefix}/{file_prefix}test_{i}_query_{j}_{date_time}.md'
             with open(trace_file, 'w') as output:
                 output.write(trace_for_response)
             latency_data.append({
@@ -346,7 +362,7 @@ def test_query(
             end_session=True, show_code_use=show_code_use
         )
     latency_df = pd.DataFrame(latency_data)
-    latency_df.to_excel(f"output/{file_prefix}latency_summary_{date_time}.xlsx", index=False)
+    latency_df.to_excel(f"output/{folder_prefix}/{file_prefix}latency_summary_{date_time}.xlsx", index=False)
     
     
 if __name__ == "__main__":
@@ -368,6 +384,7 @@ if __name__ == "__main__":
         f = open(args.test_file)
         test_cases = json.load(f)
         for key in test_cases:
+
             queries = test_cases[key]
             test_query(
                 queries, args.agent_id, args.agent_alias_id,
