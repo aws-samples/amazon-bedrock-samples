@@ -1,0 +1,134 @@
+{
+ "Resources": {
+  "AgentWithSimpleClassificationStackBedrockServiceRole1FD10F8D": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Condition": {
+        "StringEquals": {
+         "aws:SourceAccount": {
+          "Ref": "AWS::AccountId"
+         }
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "bedrock.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Service role for Amazon Bedrock",
+    "RoleName": "AmazonBedrockExecutionRoleForAgents_15fa6a8c-d87"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentWithSimpleClassificationStack/AgentWithSimpleClassificationStack/BedrockServiceRole/Resource"
+   }
+  },
+  "AgentWithSimpleClassificationStackBedrockServiceRoleDefaultPolicy9ACF89E3": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "bedrock:InvokeModel",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:aws:bedrock:",
+          {
+           "Ref": "AWS::Region"
+          },
+          "::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+         ]
+        ]
+       },
+       "Sid": "AllowModelInvocationForOrchestration"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AgentWithSimpleClassificationStackBedrockServiceRoleDefaultPolicy9ACF89E3",
+    "Roles": [
+     {
+      "Ref": "AgentWithSimpleClassificationStackBedrockServiceRole1FD10F8D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentWithSimpleClassificationStack/AgentWithSimpleClassificationStack/BedrockServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "AgentWithSimpleClassificationStackAgentBlueprintcustomclassificationagent6B6C5066": {
+   "Type": "AWS::Bedrock::Agent",
+   "Properties": {
+    "AgentName": "custom-classification-agent",
+    "AgentResourceRoleArn": {
+     "Fn::GetAtt": [
+      "AgentWithSimpleClassificationStackBedrockServiceRole1FD10F8D",
+      "Arn"
+     ]
+    },
+    "FoundationModel": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "IdleSessionTTLInSeconds": 1200,
+    "Instruction": "You are an agent that classifies customer emails into 4 main categories:* CUSTOMER_SUPPORT: when customers require the support of a service specialist that solve an existing pain point* COMPLAINT: when customer wants to submit a complain about a certain service or employee* FEEDBACK: when the customer is providing feedback about a service that he/she received* OTHERS: any other topicYou ALWAYS answer with the email classification only, without adding any other text to it.",
+    "PromptOverrideConfiguration": {
+     "PromptConfigurations": []
+    },
+    "TestAliasTags": {}
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentWithSimpleClassificationStack/AgentWithSimpleClassificationStack/AgentBlueprint-custom-classification-agent"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/y2NUQoCIRRF19K/vmygBUQbCFtAOM9XvNFRUKcIce9Z9nXOvXC5ExyOCtTOvLJE66TnGeq1GHSiV7fKZoWqoydxvocfL9Ezvr9xWBMz2RTRQa9ODwqlCU05bgnH6O9NhGgJlrx/Tqq/9tMlM8u0hcIrgR78ADkzBWmRAAAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentWithSimpleClassificationStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
