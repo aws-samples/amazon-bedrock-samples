@@ -1,28 +1,28 @@
 {
   "version": "36.0.0",
   "artifacts": {
-    "AgentWithFunctionDefinitionStack.assets": {
+    "AgentWithROCStack.assets": {
       "type": "cdk:asset-manifest",
       "properties": {
-        "file": "AgentWithFunctionDefinitionStack.assets.json",
+        "file": "AgentWithROCStack.assets.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
       }
     },
-    "AgentWithFunctionDefinitionStack": {
+    "AgentWithROCStack": {
       "type": "aws:cloudformation:stack",
       "environment": "aws://533267284022/us-east-1",
       "properties": {
-        "templateFile": "AgentWithFunctionDefinitionStack.template.json",
+        "templateFile": "AgentWithROCStack.template.json",
         "terminationProtection": false,
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-533267284022-us-east-1/a4c9ad2ef7d113df7aaa85155b96f70e555b8adcab15a939195770fe2013bb18.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-533267284022-us-east-1/6e7dab7c0077ef98540c3d3a73169ebe478386024a84b573d0d3f98c4910b1f6.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
-          "AgentWithFunctionDefinitionStack.assets"
+          "AgentWithROCStack.assets"
         ],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-lookup-role-533267284022-us-east-1",
@@ -31,40 +31,58 @@
         }
       },
       "dependencies": [
-        "AgentWithFunctionDefinitionStack.assets"
+        "AgentWithROCStack.assets"
       ],
       "metadata": {
-        "/AgentWithFunctionDefinitionStack/RDSDatabaseForAgentWithFD/AuroraSecretForAgentWithFD/Resource": [
+        "/AgentWithROCStack/AmazonBedrockAgentBlueprintsStack/BedrockServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "RDSDatabaseForAgentWithFDAuroraSecretForAgentWithFD8B12F67F"
+            "data": "AmazonBedrockAgentBlueprintsStackBedrockServiceRole55949A6B"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/RDSDatabaseForAgentWithFD/AuroraSecretForAgentWithFD/Attachment/Resource": [
+        "/AgentWithROCStack/AmazonBedrockAgentBlueprintsStack/BedrockServiceRole/DefaultPolicy/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "RDSDatabaseForAgentWithFDAuroraSecretForAgentWithFDAttachment4D738340"
+            "data": "AmazonBedrockAgentBlueprintsStackBedrockServiceRoleDefaultPolicy52DAA442"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/RDSDatabaseForAgentWithFD/AuroraClusterForAgentWithFD/Resource": [
+        "/AgentWithROCStack/AmazonBedrockAgentBlueprintsStack/AgentBlueprint-hr-assistant-agent-with-ROC": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "RDSDatabaseForAgentWithFDAuroraClusterForAgentWithFD382D4012"
+            "data": "AmazonBedrockAgentBlueprintsStackAgentBlueprinthrassistantagentwithROC4D531948"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/RDSDatabaseForAgentWithFD/LambdaRoleToPopulateData/Resource": [
+        "/AgentWithROCStack/VacationAPILambdaSetup/RDSDatabaseForAgentWithFD/AuroraSecretForAgentWithROC/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "RDSDatabaseForAgentWithFDLambdaRoleToPopulateData3DFAB4C7"
+            "data": "VacationAPILambdaSetupRDSDatabaseForAgentWithFDAuroraSecretForAgentWithROC6E850D80"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/RDSDatabaseForAgentWithFD/PopulateSampleDataFunc/Resource": [
+        "/AgentWithROCStack/VacationAPILambdaSetup/RDSDatabaseForAgentWithFD/AuroraSecretForAgentWithROC/Attachment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "RDSDatabaseForAgentWithFDPopulateSampleDataFuncB4C9989C"
+            "data": "VacationAPILambdaSetupRDSDatabaseForAgentWithFDAuroraSecretForAgentWithROCAttachmentB67EE26B"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/RDSDatabaseForAgentWithFD/TriggerPopulateDataFunction": [
+        "/AgentWithROCStack/VacationAPILambdaSetup/RDSDatabaseForAgentWithFD/AuroraClusterForAgentWithROC/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupRDSDatabaseForAgentWithFDAuroraClusterForAgentWithROC9E52523D"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/RDSDatabaseForAgentWithFD/LambdaRoleToPopulateData/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupRDSDatabaseForAgentWithFDLambdaRoleToPopulateDataE7279947"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/RDSDatabaseForAgentWithFD/PopulateSampleDataFunc/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupRDSDatabaseForAgentWithFDPopulateSampleDataFuncD8246A9E"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/RDSDatabaseForAgentWithFD/TriggerPopulateDataFunction": [
           {
             "type": "aws:cdk:warning",
             "data": "installLatestAwsSdk was not specified, and defaults to true. You probably do not want this. Set the global context flag '@aws-cdk/customresources:installLatestAwsSdkDefault' to false to switch this behavior off project-wide, or set the property explicitly to true if you know you need to call APIs that are not in Lambda's built-in SDK version. [ack: @aws-cdk/custom-resources:installLatestAwsSdkNotSpecified]",
@@ -72,9 +90,10 @@
               "Annotations.addMessage (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1608)",
               "Annotations.addWarningV2 (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/aws-cdk-lib/core/lib/annotations.js:1:825)",
               "new AwsCustomResource (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/aws-cdk-lib/custom-resources/lib/aws-custom-resource/aws-custom-resource.js:1:5212)",
-              "new RDSDatabaseForAgentWithFD (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/lib/stacks/01-agent-with-function-definitions/rds-database-fd-construct.ts:69:9)",
-              "new AgentWithFunctionDefinitionStack (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/lib/stacks/01-agent-with-function-definitions/agent-with-function-definition-stack.ts:68:29)",
-              "Object.<anonymous> (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/bin/01-agent-with-function-definitions/main.ts:18:1)",
+              "new RDSDatabaseForAgentWithROC (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/lib/stacks/02-agent-with-return-of-control/rds-database-roc-construct.ts:65:9)",
+              "new VacationAPILambdaSetup (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/lib/stacks/02-agent-with-return-of-control/vacation-api-lambda-construct.ts:17:29)",
+              "new AgentWithROCStack (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/lib/stacks/02-agent-with-return-of-control/agent-with-ROC-stack.ts:84:9)",
+              "Object.<anonymous> (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/bin/02-agent-with-return-of-control/main.ts:16:1)",
               "Module._compile (node:internal/modules/cjs/loader:1358:14)",
               "Module.m._compile (/Users/manojskr/Documents/amazon-bedrock-samples/amazon-bedrock-samples/agents-for-bedrock/agent-blueprint-templates/node_modules/ts-node/src/index.ts:1618:23)",
               "Module._extensions..js (node:internal/modules/cjs/loader:1416:10)",
@@ -95,86 +114,170 @@
             ]
           }
         ],
-        "/AgentWithFunctionDefinitionStack/RDSDatabaseForAgentWithFD/TriggerPopulateDataFunction/Resource/Default": [
+        "/AgentWithROCStack/VacationAPILambdaSetup/RDSDatabaseForAgentWithFD/TriggerPopulateDataFunction/Resource/Default": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "RDSDatabaseForAgentWithFDTriggerPopulateDataFunction0445536E"
+            "data": "VacationAPILambdaSetupRDSDatabaseForAgentWithFDTriggerPopulateDataFunction1D5EC552"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/RDSDatabaseForAgentWithFD/TriggerPopulateDataFunction/CustomResourcePolicy/Resource": [
+        "/AgentWithROCStack/VacationAPILambdaSetup/RDSDatabaseForAgentWithFD/TriggerPopulateDataFunction/CustomResourcePolicy/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "RDSDatabaseForAgentWithFDTriggerPopulateDataFunctionCustomResourcePolicy651A2782"
+            "data": "VacationAPILambdaSetupRDSDatabaseForAgentWithFDTriggerPopulateDataFunctionCustomResourcePolicyBD5CDDE7"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/AWS679f53fac002430cb0da5b7982bd2287/ServiceRole/Resource": [
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationFunctionServiceRole99715B99"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationFunction59DBC89C"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/AllowAccessSecretManagerPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupAllowAccessSecretManagerPolicy88B87267"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPI4351C111"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Deployment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIDeploymentB3B795238c390b984d29a04e80962b2b06ffe523"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/DeploymentStage.prod/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIDeploymentStageprod7494E48A"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIEndpointD9281157"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Default/vacation/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIvacationEF199E5A"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Default/vacation/POST/ApiPermission.AgentWithROCStackVacationAPILambdaSetupVacationAPI51B654D2.POST..vacation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIvacationPOSTApiPermissionAgentWithROCStackVacationAPILambdaSetupVacationAPI51B654D2POSTvacationD1B30297"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Default/vacation/POST/ApiPermission.Test.AgentWithROCStackVacationAPILambdaSetupVacationAPI51B654D2.POST..vacation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIvacationPOSTApiPermissionTestAgentWithROCStackVacationAPILambdaSetupVacationAPI51B654D2POSTvacationA2298AF9"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Default/vacation/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIvacationPOST385BA8B1"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Default/vacation/GET/ApiPermission.AgentWithROCStackVacationAPILambdaSetupVacationAPI51B654D2.GET..vacation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIvacationGETApiPermissionAgentWithROCStackVacationAPILambdaSetupVacationAPI51B654D2GETvacation0537F131"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Default/vacation/GET/ApiPermission.Test.AgentWithROCStackVacationAPILambdaSetupVacationAPI51B654D2.GET..vacation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIvacationGETApiPermissionTestAgentWithROCStackVacationAPILambdaSetupVacationAPI51B654D2GETvacation4908D54E"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/Default/vacation/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIvacationGETC6DCB3DF"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/VacationApiKey/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIVacationApiKey4F85AB6D"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/VacationUsagePlan/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIVacationUsagePlan5D045C7F"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/VacationAPI/VacationUsagePlan/UsagePlanKeyResource:AgentWithROCStackVacationAPILambdaSetupVacationAPIVacationApiKey37193292": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupVacationAPIVacationUsagePlanUsagePlanKeyResourceAgentWithROCStackVacationAPILambdaSetupVacationAPIVacationApiKey37193292DD783B0A"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/PostRequestModel/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupPostRequestModelE0A2D2D2"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/GetRequestModel/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupGetRequestModelE480BEF2"
+          }
+        ],
+        "/AgentWithROCStack/VacationAPILambdaSetup/APIEndpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VacationAPILambdaSetupAPIEndpoint0F7AAC61"
+          }
+        ],
+        "/AgentWithROCStack/AWS679f53fac002430cb0da5b7982bd2287/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/AWS679f53fac002430cb0da5b7982bd2287/Resource": [
+        "/AgentWithROCStack/AWS679f53fac002430cb0da5b7982bd2287/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "AWS679f53fac002430cb0da5b7982bd22872D164C4C"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/VacationsActionGroup/LambdaRole/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "VacationsActionGroupLambdaRoleAF8D096D"
-          }
-        ],
-        "/AgentWithFunctionDefinitionStack/VacationsActionGroup/VacationsActionGroupLambdaFunction/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "VacationsActionGroupVacationsActionGroupLambdaFunction17AAB9FC"
-          }
-        ],
-        "/AgentWithFunctionDefinitionStack/VacationsActionGroup/VacationsActionGroupLambdaFunction/BedrockAgentInvokePermission-9fc670c3-634": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "VacationsActionGroupVacationsActionGroupLambdaFunctionBedrockAgentInvokePermission9fc670c3634E8F3A0B2"
-          }
-        ],
-        "/AgentWithFunctionDefinitionStack/AmazonBedrockAgentBlueprintsStack/BedrockServiceRole/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "AmazonBedrockAgentBlueprintsStackBedrockServiceRole55949A6B"
-          }
-        ],
-        "/AgentWithFunctionDefinitionStack/AmazonBedrockAgentBlueprintsStack/BedrockServiceRole/DefaultPolicy/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "AmazonBedrockAgentBlueprintsStackBedrockServiceRoleDefaultPolicy52DAA442"
-          }
-        ],
-        "/AgentWithFunctionDefinitionStack/AmazonBedrockAgentBlueprintsStack/AgentBlueprint-hr-assistant-agent-with-function-definition": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "AmazonBedrockAgentBlueprintsStackAgentBlueprinthrassistantagentwithfunctiondefinition1D2A9A47"
-          }
-        ],
-        "/AgentWithFunctionDefinitionStack/CDKMetadata/Default": [
+        "/AgentWithROCStack/CDKMetadata/Default": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CDKMetadata"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/BootstrapVersion": [
+        "/AgentWithROCStack/BootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "BootstrapVersion"
           }
         ],
-        "/AgentWithFunctionDefinitionStack/CheckBootstrapVersion": [
+        "/AgentWithROCStack/CheckBootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CheckBootstrapVersion"
           }
         ]
       },
-      "displayName": "AgentWithFunctionDefinitionStack"
+      "displayName": "AgentWithROCStack"
     },
     "Tree": {
       "type": "cdk:tree",

@@ -57,13 +57,8 @@ export class RDSDatabaseForAgentWithFD extends Construct {
         });
 
 
-        // The custom resource is granted necessary permissions to invoke the Lambda function
-        // Grants the necessary permissions for the custom resource to make SDK calls, specifically to invoke the Lambda function 
+        // Grants the necessary permissions for the custom resource
         const customResourcePolicy = AwsCustomResourcePolicy.fromStatements([invokePermission]);
-
-        // AwsCustomResourcePolicy.fromSdkCalls({
-        //     resources: [populateSampleDataFunction.functionArn],
-        // });
 
         // Create a custom resource to trigger the execution of populateSampleDataFunction Lambda function whenever the stack is updated
         new AwsCustomResource(this, 'TriggerPopulateDataFunction', {
