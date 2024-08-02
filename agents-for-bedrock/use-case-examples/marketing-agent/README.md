@@ -1,8 +1,29 @@
 
-# Bedrock Agent for generating marketing content
+# Bedrock agent for generating marketing content
 
 ## Introduction
+
 Marketing effectiveness hinges heavily on creative content, with personalized material proving especially impactful. However, crafting such tailored content has long been a formidable obstacle for marketers, demanding significant time and resources. This challenge is particularly acute for small and medium-sized businesses (SMBs), where scaling personalized content creation can seem insurmountable. Enter generative AI: a game-changing technology that empowers marketers to produce personalized creative content efficiently and at scale, even with constrained resources. This innovation is democratizing personalized marketing, allowing businesses of all sizes to compete more effectively in the digital landscape.
+
+
+## Architecture
+
+![Architecture](./images/architecture.png)
+
+Agents for Amazon Bedrock is a crucial tool in developing our marketing agent. This feature allows for the creation and configuration of autonomous agents within your application. These agents coordinate interactions between Foundation Models (FMs), various data sources, software applications, and user conversations. They can automatically invoke APIs to perform actions and access knowledge bases to enhance the information needed for these tasks. You have the flexibility to define custom actions for the agent and specify how to handle them by creating AWS Lambda functions in your preferred programming language. For comprehensive information, please consult the Agents for Amazon Bedrock documentation.
+
+To simplify the process, the CDK has prepared sample data within following folders:
+
+- `data/agent-schema`:
+  - Contains the OpenAPI format for Bedrock Agent. Defines how to interact with the Lambda function.
+- `data/dynamodb`:
+  - Contains user and item tables data for uploading to S3 and importing into DynamoDB.Used for querying user and product information.
+- `data/context`:
+  - Provides marketing context for LLMs with information on 10 test products.
+- `data/image`:
+  - Contains images of the 10 products for easy reference by LLMs.
+- `data/personalize`:
+  - Includes Amazon Personalize batch inference results with user segmentation and the same 10 products as in the context and image folders.
 
 
 ## Prerequisites
@@ -22,26 +43,53 @@ Before installing the AWS CDK, ensure you have the following:
   - Access and manage Amazon Bedrock agents and models.
   - Create and manage Amazon DynamoDB.
   - Create and manage OpenSearch Serverless Collection.
-  - Access to Amazon Bedrock foundation models (Anthropic’s Claude 3 haiku and sonnet model for this solution)
+  - Enable and able to access to Amazon Bedrock foundation models 
+    - Anthropic’s Claude 3 haiku model for this solution
 
 ## Installation
+
+Please NOTE: The CDK will ONLY deploy in **us-east-1** region.
 
 1. Clone the repository to your local machine or AWS environment, set up a virtual environment and activate it and install required Python packages using below code:
 ```bash
 git clone https://github.com/aws-samples/amazon-bedrock-samples.git
 cd ./amazon-bedrock-samples/agents-for-bedrock/use-case-examples/marketing-agent
-python3.9 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
 
 2. Deploymant
+
 ```bash
-cdk deploy --context region=us-east-1
+cdk deploy
 ```
 
-3. Cleaning Up
+## Testing the agent via AWS Console
+
+1. Find out he agent name on output of `cdk deploy`. For example:
+
+![BedrockAgentName](./images/bedrock-agent-name.png)
+
+The bedrock agent name is `bedrock-agent-markegent-2e1ece3c`
+
+2. Follow the [document](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-test.html) to test the bedrock.
+
+
+Enter following message and choose `Run`
+
+`I would like to create marketing content for Sans pareil scarf (e1669081-8ffc-4dec-97a6-e9176d7f6651) which post on social media. Please help me write marketing context.`
+
+Following is a sample agent output:
+
+`Here is the recommended marketing content for the Sans Pareil Scarf to post on social media: Attention-Grabbing Subject Line: Elevate Your Style with the Sans Pareil Scarf - Now 30% Off! Primary Text: Introducing the exquisite Sans Pareil Scarf - a timeless accessory that effortlessly elevates your look. Crafted with unparalleled attention to detail, this luxurious scarf is a testament to the art of fashion. Call to Action: Don't miss out on this limited-time offer! Indulge in the ultimate luxury and experience everyday opulence with the Sans Pareil Scarf, now available at a 30% discount. Headline: Unwrap the Elegance: Embrace Effortless Sophistication with the Sans Pareil Scarf Description: The Sans Pareil Scarf is the perfect addition to the wardrobe of the modern, fashion-forward woman. Designed to complement a wide range of styles, this versatile accessory can be worn in countless ways, seamlessly transitioning from the office to a night out. With its exceptional quality and timeless appeal, the Sans Pareil Scarf is a must-have for women aged 20-50 who value style, luxury, and a touch of everyday opulence. Social Testimonials: "The Sans Pareil Scarf has become an indispensable part of my wardrobe. It adds an effortless elegance to every outfit and never fails to garner compliments." - Sarah, 32 "As someone who loves to elevate my look, the Sans Pareil Scarf has been a game-changer. The quality and craftsmanship are truly unparalleled." - Emily, 45`
+
+
+## Cleaning Up
+
+Please **empty** the s3 bucket before running following command.
+
 ```bash
-cdk destroy --context region=us-east-1
+cdk destroy
 ```
 

@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_iam as iam,
     aws_lambda as lambda_,
+    CfnOutput,
 )
 
 from cdklabs.generative_ai_cdk_constructs import (
@@ -156,3 +157,15 @@ class MarketingAgentStack(Stack):
             knowledge_bases=[_marketing_agent_kb],
         )
         _marketing_agent.add_action_group(_action_group)
+
+        CfnOutput(
+            self, 'agent-name', 
+            value=_marketing_agent.name,
+            key='BedrockAgentName'
+        )
+        
+        CfnOutput(
+            self, 's3-bucket-name', 
+            value=_data_bucket.bucket_name,
+            key='s3DataBucketName'
+        )
