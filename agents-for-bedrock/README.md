@@ -44,7 +44,7 @@ This repository contains examples and use-cases to get you started with Agents f
 1. [Create Agent with Knowledge Base and Action Group](features-examples/05-create-agent-with-knowledge-base-and-action-group): Example of how to create extend the Insurance Claim's handler to connect to a Knowledge Base and get the requirements for missing documents. 
 1. [Using Agent's Prompt and Session Parameters](features-examples/06-prompt-and-session-parameters): Example of how to pass prompt and session parameters to an agent invocation in order to extend the agent's knowledge.
 1. [Changing Agent's Advanced Prompts and creating custom Lambda Parsers](features-examples/07-advanced-prompts-and-custom-parsers): Example of how to change an Agent's advanced prompt and how to create a custom lambda parser for advanced agents use cases
-
+1. [Securing Bedrock Agents using session attributes and Amazon Verified Permissions](features-examples/09-fine-grained-access-permissions): Example of how to use session parameters and use Amazon Verified Permissions to implement fine grained permissions
 
 ## Contributing
 

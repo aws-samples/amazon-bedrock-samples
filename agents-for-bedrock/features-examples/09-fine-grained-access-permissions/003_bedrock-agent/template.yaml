@@ -7,12 +7,8 @@ Parameters:
     Type: String
   UserPoolId:
     Type: String    
-
-
-Resources:
-
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'IAM Role for Amazon Bedrock Agents'
+  KmsKeyId: 
+    Type: String  
 
 Resources:
 
@@ -195,12 +191,13 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${ClaimsActionGroupLambdaExecutor}"
       RetentionInDays: 7
+      KmsKeyId: !Ref KmsKeyId      
       
   ClaimsActionGroupLambdaExecutor:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./agent/
-      Description: ''
+      Description: 'This is the Claims Action Group Lambda function'
       MemorySize: 128
       Timeout: 3
       Handler: agent.lambda_handler
@@ -224,8 +221,14 @@ Resources:
               Action:
                 - verifiedpermissions:IsAuthorized
                 - verifiedpermissions:IsAuthorizedWithToken
-                - verifiedpermissions:*
-              Resource: '*'
+              Resource: !Sub 'arn:aws:verifiedpermissions:${AWS::Region}:${AWS::AccountId}:policy-store/${PolicyStoreId}'
+            - Effect: Allow
+              Action:
+                - verifiedpermissions:GetPolicyStore
+                - verifiedpermissions:ListPolicyStores
+                - verifiedpermissions:GetSchema
+                - verifiedpermissions:ListIdentitySources
+              Resource: !Sub 'arn:aws:verifiedpermissions:${AWS::Region}:${AWS::AccountId}:policy-store/*'
 
       SnapStart:
         ApplyOn: None

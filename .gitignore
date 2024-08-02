@@ -40,3 +40,13 @@ multimodal/rag/LICENSE-CC-BY-4.0.txt
 multimodal/rag/listings.json
 multimodal/rag/*.tar
 multimodal/rag/__pycache__/
+
+
+# ignore cdk-related directories
+agents-for-bedrock/agent-blueprint-templates/node_modules
+agents-for-bedrock/agent-blueprint-templates/dist
+agents-for-bedrock/agent-blueprint-templates/cdk.out
+agents-for-bedrock/agent-blueprint-templates/.cdk.staging
+agents-for-bedrock/agent-blueprint-templates/.package-lock.json
+agents-for-bedrock/agent-blueprint-templates/yarn.lock
+

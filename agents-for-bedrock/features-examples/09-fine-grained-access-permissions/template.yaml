@@ -16,6 +16,11 @@ Resources:
     Properties:
       TemplateURL: 002_cognito/template.yaml
 
+  KmsStack: 
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: kms/kms.yaml  
+
   BedrockAgentStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -23,6 +28,7 @@ Resources:
       Parameters:
         PolicyStoreId: !GetAtt AmazonVerifiedPermissionsStack.Outputs.PolicyStoreId
         UserPoolId: !GetAtt CognitoUserPoolStack.Outputs.UserPoolId
+        KmsKeyId: !GetAtt KmsStack.Outputs.KmsKeyId
 
   ApiGatewayStack:
     Type: AWS::CloudFormation::Stack
@@ -32,7 +38,8 @@ Resources:
         CognitoUserPoolArn: !GetAtt CognitoUserPoolStack.Outputs.UserPoolArn
         BedrockAgentAliasId: !GetAtt BedrockAgentStack.Outputs.BedrockAgentAliasId
         BedrockAgentId: !GetAtt BedrockAgentStack.Outputs.BedrockAgentId
-
+        KmsKeyId: !GetAtt KmsStack.Outputs.KmsKeyId
+        
 Outputs:
   APIEndpoint:
     Description: "The endpoint of the API Gateway"

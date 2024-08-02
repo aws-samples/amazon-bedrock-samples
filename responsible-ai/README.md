@@ -5,6 +5,7 @@ This folder contains examples related to Responsible AI on Bedrock
 ## Contents
 
 [Guardrails for Amazon Bedrock Samples](guardrails-for-amazon-bedrock-samples) - Examples of Building, Updating, Versioning and Testing your Guardrails
+[Using the ApplyGuardrail API with Boto3 and Self Managed RAG](guardrails-for-amazon-bedrock-samples/bedrock_guardrails_apply_guardrail_api.ipynb) - Examples of using the ApplyGuardrail API for Self-Hosted Models + RAG
 
 
 ## Contributing
