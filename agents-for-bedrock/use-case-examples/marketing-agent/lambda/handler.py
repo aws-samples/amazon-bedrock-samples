@@ -32,7 +32,7 @@ def lambda_handler(event, context):
                 user=_get_parameter( event, 'user'),
                 campaign=_get_parameter( event, 'campaign'),
                 sample=_get_parameter( event, 'sample'),
-                image_url=_get_parameter( event, 'image_url')
+                image=_get_parameter( event, 'image')
             )
         else:
             response_code = 404
@@ -106,10 +106,10 @@ def get_user_info(item_id):
         )
     )
 
-def content_generate(item, user, campaign, sample, image_url):
-    image_data = download_and_decode_image(BUCKET_IMAGE, image_url)
+def content_generate(item, user, campaign, sample, image):
+    image_data = download_and_decode_image(BUCKET_IMAGE, image)
     prompt = f"This is a {item} photo, please write a recommendation context \
-        about {campaign} campaign and follow the rules below \
+        about {str(campaign)} campaign and follow the rules below \
         <rules> \
         1. Provide Primary text, Call to action, \
             Headline, Description in new paragraphs with title. \
@@ -129,7 +129,7 @@ def content_generate(item, user, campaign, sample, image_url):
             complex language or lengthy paragraphs. \
         9. Consider your target audience including age, \
             gender summarize in {user}. \
-        10. Reference historical context sample: {sample}.\
+        10. Reference historical context sample: {str(sample)}.\
         <\rules> "
     return call_bedrock(prompt, image_data)
     
@@ -139,40 +139,36 @@ def download_and_decode_image(bucket, key):
     image_data = s3_response['Body'].read()
     return base64.b64encode(image_data).decode("utf-8")
 
-def call_bedrock(prompt, image_data=None):
+def call_bedrock(prompt, image_data = None):
     model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
     max_tokens = 1000
-    if image_data is None:
-        messages = [{
-            "role": "user",
-             "content": [
-                {
-                    "type": "text", 
-                    "text": prompt
-                }
-            ]
-        }]
+    
+    # Create the text content
+    text_content = {
+        "type": "text",
+        "text": prompt
+    }
+    
+    # Create the image content if image_data is provided
+    if image_data:
+        image_content = {
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": "image/jpeg",
+                "data": image_data
+            }
+        }
+        content = [image_content, text_content]
     else:
-        messages = [{
-            "role": "user",
-             "content": [
-                {
-                    "type": "image", 
-                    "source": {
-                        "type": "base64",
-                        "media_type": "image/jpeg", 
-                        "data": image_data
-                    }
-                },
-                {
-                    "type": "text", 
-                    "text": prompt
-                }
-            ]
-        }]
-    bedrock_runtime = boto3.client(
-        service_name='bedrock-runtime', region_name='us-east-1'
-    )
+        content = [text_content]
+
+    messages = [{
+        "role": "user",
+        "content": content
+    }]
+    
+    bedrock_runtime = boto3.client(service_name='bedrock-runtime', region_name='us-east-1')
     body = json.dumps(
         {
             "anthropic_version": "bedrock-2023-05-31",
