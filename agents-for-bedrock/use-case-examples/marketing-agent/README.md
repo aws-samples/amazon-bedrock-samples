@@ -80,9 +80,9 @@ Enter following message and choose `Run`
 
 `I would like to create marketing content for Sans pareil scarf (e1669081-8ffc-4dec-97a6-e9176d7f6651) which post on social media. Please help me write marketing context.`
 
-Following is a sample agent output:
+Following is a sample test result:
 
-`Here is the recommended marketing content for the Sans Pareil Scarf to post on social media: Attention-Grabbing Subject Line: Elevate Your Style with the Sans Pareil Scarf - Now 30% Off! Primary Text: Introducing the exquisite Sans Pareil Scarf - a timeless accessory that effortlessly elevates your look. Crafted with unparalleled attention to detail, this luxurious scarf is a testament to the art of fashion. Call to Action: Don't miss out on this limited-time offer! Indulge in the ultimate luxury and experience everyday opulence with the Sans Pareil Scarf, now available at a 30% discount. Headline: Unwrap the Elegance: Embrace Effortless Sophistication with the Sans Pareil Scarf Description: The Sans Pareil Scarf is the perfect addition to the wardrobe of the modern, fashion-forward woman. Designed to complement a wide range of styles, this versatile accessory can be worn in countless ways, seamlessly transitioning from the office to a night out. With its exceptional quality and timeless appeal, the Sans Pareil Scarf is a must-have for women aged 20-50 who value style, luxury, and a touch of everyday opulence. Social Testimonials: "The Sans Pareil Scarf has become an indispensable part of my wardrobe. It adds an effortless elegance to every outfit and never fails to garner compliments." - Sarah, 32 "As someone who loves to elevate my look, the Sans Pareil Scarf has been a game-changer. The quality and craftsmanship are truly unparalleled." - Emily, 45`
+![BedRockTestResult](./images/test-result.png)
 
 
 ## Cleaning Up
