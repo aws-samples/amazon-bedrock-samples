@@ -69,7 +69,7 @@ cdk deploy
 
 1. Find out he agent name on output of `cdk deploy`. For example:
 
-![BedrockAgentName](./images/bedrock-agent-name.png)
+![BedrockAgentName](./images/cdk-output.png)
 
 The bedrock agent name is `bedrock-agent-markegent-2e1ece3c`
 
@@ -87,7 +87,7 @@ Following is a sample agent output:
 
 ## Cleaning Up
 
-Please **empty** the s3 bucket before running following command.
+Please **empty** the s3 bucket before running following command. You can find the s3 bucket name on the command output of `cdk deploy`. Once done, you can issue following command to clean up the resources.
 
 ```bash
 cdk destroy
