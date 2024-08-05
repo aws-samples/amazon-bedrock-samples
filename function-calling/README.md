@@ -30,6 +30,12 @@ This repository contains examples and use-cases to get you started with Function
         * [Notebook](fc_migration_from_oai_converse_bedrock.ipynb)
         * [Streamlit demo](fc_migrations_converse_bedrock_streamlit.py)
 
+    - Query Neptune Graph with SPARQL in Natural Language Using Function Calling
+        * [Notebook](knowledge-graph/neptune_graph_sparql_tool.ipynb)
+
+    - SQL Query and Matplotlib Tool with Converse API in Bedrock
+        * [Notebook](multi-tool/SQLquery_and_matplotlib_tool.ipynb)
+
 - **Legacy function calling with Claude 3**
     * [Notebook](./legacy-function-calling-with-Claude.ipynb) - An introduction to function calling using Claude 3
 
