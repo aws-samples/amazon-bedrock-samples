@@ -1,4 +1,0 @@
-.venv/lib/python3.10/site-packages/typing_extensions.py
-.venv/*
-cdk.out/*
-*.pyc

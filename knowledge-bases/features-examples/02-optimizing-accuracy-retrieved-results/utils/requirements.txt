@@ -1,8 +1,0 @@
-boto3
-opensearch-py
-botocore
-awscli
-retrying
-ragas==0.1.9
-ipywidgets
-iprogress

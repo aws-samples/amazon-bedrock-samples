@@ -1,6 +1,0 @@
-pandas
-boto3
-IPython
-matplotlib
-argparse
-openpyxl
