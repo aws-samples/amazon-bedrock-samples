@@ -10,7 +10,7 @@ Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'observability-${AWS::AccountId}-s3-bucket-${DateString}'
+      BucketName: !Sub 'observability-${AWS::AccountId}-${DateString}-s3-bucket'
 
   # IAM Roles
   LambdaRole:
@@ -169,7 +169,7 @@ Resources:
   GlueRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub 'observability-${AWS::AccountId}-glue-role-${DateString}'
+      RoleName: !Sub 'kb-observability-${AWS::AccountId}-glue-role-${DateString}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -178,8 +178,21 @@ Resources:
               Service: glue.amazonaws.com
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
         - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
+      Policies:
+        - PolicyName: S3BucketAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetBucketLocation'
+                  - 's3:ListBucket'
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                Resource:
+                  - !GetAtt S3Bucket.Arn
+                  - !Sub '${S3Bucket.Arn}/*'
 
   # Lambda Function
   LambdaFunction:
