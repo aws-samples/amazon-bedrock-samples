@@ -1,0 +1,11 @@
+# Agents for Amazon Bedrock - Features examples
+
+In this folder we provide you example implementations for the main Agents for Amazon Bedrock functionality:
+
+1. [Create Agent with Function Definition](01-create-agent-with-function-definition): Example of how to create an HR assistant agent defining the Action Group function and parameters as JSON object that is associated with the Action Group invocation. It connects with an [AWS Lambda](https://aws.amazon.com/lambda/) function to execute the actions
+1. [Create Agent with API Schema](02-create-agent-with-api-schema): Example of how to create an Insurance Claim's handler agent using an API schema for the functions and parameters definition. The API schema follows the [OpenAPI Specificiation](https://swagger.io/specification/) format and connects with an AWS Lambda function for the actions exection.
+1. [Create Agent with Return of Control](03-create-agent-with-return-of-control): Example of how to create an HR assistant agent defining the Action Group function and parameters as JSON object that is associated with the Action Group invocation. It skips the AWS Lambda function definition to return the control to the user's application.
+1. [Create Agent with a Single Knowledge](04-create-agent-with-single-knowledge-base): Example of how to create a restaurant assistant agent that connects with a single [Knowledge Base for Amazon Bedrock](https://aws.amazon.com/bedrock/knowledge-bases/) to find informations on the menus for adults and children.
+1. [Create Agent with Knowledge Base and Action Group](05-create-agent-with-knowledge-base-and-action-group): Example of how to create extend the Insurance Claim's handler to connect to a Knowledge Base and get the requirements for missing documents. 
+1. [Using Agent's Prompt and Session Parameters](06-prompt-and-session-parameters): Example of how to pass prompt and session parameters to an agent invocation in order to extend the agent's knowledge.
+1. [Changing Agent's Advanced Prompts and creating custom Lambda Parsers](07-advanced-prompts-and-custom-parsers): Example of how to change an Agent's advanced prompt and how to create a custom lambda parser for advanced agents use cases

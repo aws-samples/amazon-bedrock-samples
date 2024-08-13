@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: end-to-end RAG deployment template using Knowledge Bases for Amazon Bedrock
+Parameters:
+  Q01pInputBucketName:
+    Type: String
+    Description: S3 bucket name - where data is stored
+  Q02pInputDocumentUploadFolderPrefix:
+    Type: String
+    Description: Prefix in S3 bucket where input documents files will be uploaded
+  Q03pEmbedModel:
+    Type: String
+    Description: Choose Embedding model
+  Q04pChunkingStrategy:
+    Type: String
+    Description: Selected Chunking strategy
+  Q05pMaxTokens:
+    Type: String
+    Description: Maximum number of tokens in a chunk
+  Q06pOverlapPercentage:
+    Type: String
+    Description: Percent overlap in each chunk
+  Q08pCollectionName:
+    Type: String
+    Description: Name of the Collection
+  Q09pIndexName:
+    Type: String
+    Description: Index name to be created in vector store
+  Q10pVectorFieldName:
+    Type: String
+    Description: Vector field name
+    Default: bedrock-knowledge-base-default-vector
+  Q11pMetaDataFieldName:
+    Type: String
+    Description: Metadata field name
+    Default: AMAZON_BEDROCK_METADATA
+  Q12pTextFieldName:
+    Type: String
+    Description: Text field name
+    Default: AMAZON_BEDROCK_TEXT_CHUNK
+  pCollectionArn:
+    Type: String
+    Description: Name of the Collection Arn
+  pKbRole:
+    Type: String
+    Description: KB role for e2e RAG
+  pKbRoleArn:
+    Type: String
+    Description: KB role Arn for e2e RAG
+Conditions:
+  HasInputDocumentUploadFolderPrefix:
+    Fn::Not:
+    - Fn::Equals:
+      - ''
+      - Ref: Q02pInputDocumentUploadFolderPrefix
+  IsChunkingStartegyFixed:
+    Fn::Equals:
+      - Ref: Q04pChunkingStrategy
+      - Fixed-size chunking
+  IsChunkingStartegyDefault:
+    Fn::Equals:
+      - Ref: Q04pChunkingStrategy
+      - Default chunking
+  IsChunkingStartegyNoChunking:
+    Fn::Equals:
+      - Ref: Q04pChunkingStrategy
+      - No chunking
+  IsChunkingStartegyFixedOrDefault:
+    Fn::Or:
+      - Condition: IsChunkingStartegyFixed
+      - Condition: IsChunkingStartegyDefault
+Resources:
+  KnowledgeBase:
+    Type: AWS::Bedrock::KnowledgeBase
+    Properties:
+      Description: Test KB Deployment
+      KnowledgeBaseConfiguration:
+        Type: VECTOR
+        VectorKnowledgeBaseConfiguration:
+          EmbeddingModelArn:
+            Fn::Sub: arn:aws:bedrock:${AWS::Region}::foundation-model/${Q03pEmbedModel}
+      Name: e2e-rag-knowledgebase
+      RoleArn:
+        Ref: pKbRoleArn
+      StorageConfiguration:
+        OpensearchServerlessConfiguration:
+          CollectionArn:
+            Ref: pCollectionArn
+          FieldMapping:
+            MetadataField:
+              Ref: Q11pMetaDataFieldName
+            TextField:
+              Ref: Q12pTextFieldName
+            VectorField:
+              Ref: Q10pVectorFieldName
+          VectorIndexName:
+            Ref: Q09pIndexName
+        Type: OPENSEARCH_SERVERLESS
+
+  KnowledgeBaseDataSource:
+    Type: AWS::Bedrock::DataSource
+    DependsOn:
+    - KnowledgeBase
+    Properties:
+      DataSourceConfiguration:
+        Type: S3
+        S3Configuration:
+          BucketArn:
+            Fn::Sub: arn:aws:s3:::${Q01pInputBucketName}
+          InclusionPrefixes:
+            Fn::If:
+              - HasInputDocumentUploadFolderPrefix
+              - Ref: Q02pInputDocumentUploadFolderPrefix
+              - Ref: AWS::NoValue
+      Description: Knowldebase Data Source
+      KnowledgeBaseId:
+        Ref: KnowledgeBase
+      Name: e2e-rag-knowledgebase-ds
+      VectorIngestionConfiguration:
+        ChunkingConfiguration:
+          Fn::If:
+            - IsChunkingStartegyFixed
+            - ChunkingStrategy: FIXED_SIZE
+              FixedSizeChunkingConfiguration:
+                MaxTokens: !Ref Q05pMaxTokens
+                OverlapPercentage: !Ref Q06pOverlapPercentage
+            - Fn::If:
+                - IsChunkingStartegyDefault
+                - ChunkingStrategy: FIXED_SIZE
+                  FixedSizeChunkingConfiguration:
+                    MaxTokens: 300
+                    OverlapPercentage: 20
+                - Fn::If:
+                    - IsChunkingStartegyNoChunking
+                    - ChunkingStrategy: NONE
+                    - !Ref AWS::NoValue
+Outputs:
+  KBID:
+    Value:
+      Ref: KnowledgeBase
+    Description: KnowledgeBase ID
+  DS:
+    Value:
+      Ref: KnowledgeBaseDataSource
+    Description: KnowledgeBase Datasource

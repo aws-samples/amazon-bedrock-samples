@@ -1,0 +1,5 @@
+boto3==1.34.93
+cognitojwt==1.4.1
+cryptography>=3.3
+python-jose[cryptography]>=3.1.0
+requests>=2.22.0

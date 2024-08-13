@@ -1,0 +1,246 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: end-to-end RAG deployment template using Knowledge Bases for Amazon Bedrock
+
+Parameters:
+  Q03pEmbedModel:
+    Type: String
+    Description: Choose Embedding model
+  Q08pCollectionName:
+    Type: String
+    Description: Name of the Collection
+  Q09pIndexName:
+    Type: String
+    Description: Index name to be created in vector store
+  pKbRole:
+    Type: String
+    Description: KB role for e2e RAG
+  pKbRoleArn:
+    Type: String
+    Description: KB role Arn for e2e RAG
+Resources:
+  EncryptionPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    Properties:
+      Name:
+        Fn::Sub: ${Q08pCollectionName}-enc
+      Policy:
+        Fn::Sub: '{"Rules": [{"ResourceType": "collection", "Resource": ["collection/${Q08pCollectionName}"]}],
+          "AWSOwnedKey": true}'
+      Type: encryption
+  NetworkPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    DependsOn:
+    - EncryptionPolicy
+    Properties:
+      Name:
+        Fn::Sub: ${Q08pCollectionName}-net
+      Policy:
+        Fn::Sub: '[{"Description": "Public access for ct-kb-aoss-collection collection",
+          "Rules": [{"ResourceType": "dashboard", "Resource": ["collection/${Q08pCollectionName}"]},
+          {"ResourceType": "collection", "Resource": ["collection/${Q08pCollectionName}"]}],
+          "AllowFromPublic": true}]'
+      Type: network
+  DataAccessPolicy:
+    Type: AWS::OpenSearchServerless::AccessPolicy
+    DependsOn:
+    - NetworkPolicy
+    Properties:
+      Name:
+        Fn::Sub: ${Q08pCollectionName}-access
+      Policy:
+        Fn::Sub: '[{"Rules": [{"Resource": ["collection/${Q08pCollectionName}"], "Permission":
+          ["aoss:CreateCollectionItems", "aoss:UpdateCollectionItems", "aoss:DescribeCollectionItems"],
+          "ResourceType": "collection"}, {"ResourceType": "index", "Resource": ["index/${Q08pCollectionName}/*"],
+          "Permission": ["aoss:CreateIndex", "aoss:DescribeIndex", "aoss:ReadDocument",
+          "aoss:WriteDocument", "aoss:UpdateIndex", "aoss:DeleteIndex"]}], "Principal":
+          ["arn:aws:iam::${AWS::AccountId}:role/${pKbRole}"]}]'
+      Type: data
+  Collection:
+    Type: AWS::OpenSearchServerless::Collection
+    DependsOn:
+    - EncryptionPolicy
+    Properties:
+      Description: test bedrock KB cdk
+      Name:
+        Fn::Sub: ${Q08pCollectionName}
+      Type: VECTORSEARCH
+  OpenSearchpyLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleRuntimes:
+      - python3.8
+      - python3.9
+      - python3.10
+      Content:
+        S3Bucket: pDeploymentBucket
+        S3Key: artifacts/opensearchpy-layer.zip
+      Description: opensearchpy layer including requests, requests-aws4auth, and boto3-1.34.82
+      LicenseInfo: Apache-2.0
+  OpenSearchLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    DependsOn:
+    - OpenSearchpyLayer
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: allowAoss
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - aoss:APIAccessAll
+            - aoss:List*
+            - aoss:Get*
+            - aoss:Create*
+            - aoss:Update*
+            - aoss:Delete*
+            Resource: '*'
+      - PolicyName: OSSLambdaRoleDefaultPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - xray:PutTelemetryRecords
+            - xray:PutTraceSegments
+            Resource: '*'
+      - PolicyName: allowLambdaLogs
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+      - PolicyName: allowS3
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:PutObject*
+            - s3:GetObject*
+            - s3:DeleteObject*
+            Resource:
+              Fn::Sub: arn:aws:s3:::*
+  BKBOSSInfraSetupLambda:
+    Type: AWS::Lambda::Function
+    DependsOn:
+    - OpenSearchLambdaExecutionRole
+    Properties:
+      Handler: oss_handler.lambda_handler
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - OpenSearchLambdaExecutionRole
+        - Arn
+      Runtime: python3.8
+      Timeout: 840
+      Code:
+        S3Bucket: pDeploymentBucket
+        S3Key: artifacts/custom-resource-lambda.zip
+      Layers:
+      - Ref: OpenSearchpyLayer
+      - arn:aws:lambda:us-east-1:017000801446:layer:AWSLambdaPowertoolsPythonV2:68
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: InfraSetupLambda
+          POWERTOOLS_METRICS_NAMESPACE: InfraSetupLambda-NameSpace
+          POWERTOOLS_LOG_LEVEL: INFO
+  OSSProviderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+      - PolicyName: OSSProviderRoleDefaultPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - lambda:InvokeFunction
+            Resource:
+            - Fn::GetAtt:
+              - BKBOSSInfraSetupLambda
+              - Arn
+            - Fn::Join:
+              - ''
+              - - Fn::GetAtt:
+                  - BKBOSSInfraSetupLambda
+                  - Arn
+                - :*
+  OSSIndexCreationProviderframeworkonEventLambda:
+    Type: AWS::Lambda::Function
+    DependsOn:
+    - OSSProviderRole
+    Properties:
+      Handler: framework.onEvent
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - OSSProviderRole
+        - Arn
+      Runtime: nodejs18.x
+      Timeout: 900
+      Code:
+        S3Bucket: pDeploymentBucket
+        S3Key: artifacts/provider-event-handler.zip
+      Environment:
+        Variables:
+          USER_ON_EVENT_FUNCTION_ARN:
+            Fn::GetAtt:
+            - BKBOSSInfraSetupLambda
+            - Arn
+  OSSIndexCreationCustomResource:
+    Type: AWS::CloudFormation::CustomResource
+    DependsOn:
+    - OSSIndexCreationProviderframeworkonEventLambda
+    Properties:
+      ServiceToken:
+        Fn::Join:
+        - ''
+        - - Fn::GetAtt:
+            - OSSIndexCreationProviderframeworkonEventLambda
+            - Arn
+      collection_endpoint:
+        Fn::GetAtt:
+        - Collection
+        - CollectionEndpoint
+      data_access_policy_name:
+        Fn::Sub: ${Q08pCollectionName}-access
+      index_name:
+        Ref: Q09pIndexName
+      embedding_model_id:
+        Ref: Q03pEmbedModel
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+Outputs:
+  EmbedModel:
+    Value:
+      Ref: Q03pEmbedModel
+    Description: Embedding Model
+  CollectionArn:
+    Value:
+      Fn::GetAtt:
+      - Collection
+      - Arn
+    Description: Collection Arn
