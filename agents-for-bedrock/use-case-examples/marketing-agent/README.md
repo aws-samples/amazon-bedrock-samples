@@ -12,19 +12,21 @@ Marketing effectiveness hinges heavily on creative content, with personalized ma
 
 Agents for Amazon Bedrock is a crucial tool in developing our marketing agent. This feature allows for the creation and configuration of autonomous agents within your application. These agents coordinate interactions between Foundation Models (FMs), various data sources, software applications, and user conversations. They can automatically invoke APIs to perform actions and access knowledge bases to enhance the information needed for these tasks. You have the flexibility to define custom actions for the agent and specify how to handle them by creating AWS Lambda functions in your preferred programming language. For comprehensive information, please consult the Agents for Amazon Bedrock documentation.
 
-To simplify the process, the CDK has prepared sample data within following folders is generate and download from [retail demo store](https://github.com/aws-samples/retail-demo-store/tree/master), we generate those file through [generator](https://github.com/aws-samples/retail-demo-store/tree/master/generators) and the you can download the image file to `data/image` from [images](https://code.retaildemostore.retail.aws.dev/images.tar.gz).
+To simplify the process, the CDK has prepared sample data within following folders is generate and download from [retail demo store](https://github.com/aws-samples/retail-demo-store/tree/master), we generate those file through [generator](https://github.com/aws-samples/retail-demo-store/tree/master/generators) and you can download the image file to `data/image` from [images](https://code.retaildemostore.retail.aws.dev/images.tar.gz).
 
+You can directly download the files we generated and processed from [data]() and uncompress it which includes:
 - `data/agent-schema`:
   - Contains the OpenAPI format for Bedrock Agent. Defines how to interact with the Lambda function.
 - `data/dynamodb`:
   - Contains user and item tables data for uploading to S3 and importing into DynamoDB.Used for querying user and product information.
 - `data/context`:
   - Provides marketing context for LLMs with information on 10 test products.
+- `data/personalize`:
+  - Includes Amazon Personalize batch inference results with user segmentation and sample output data incldues the same 10 products as in the context folders.
+
+And then you can download the image file to `data/image` from [images](https://code.retaildemostore.retail.aws.dev/images.tar.gz).
 - `data/image`:
   - Contains images of the products for easy reference by LLMs.
-- `data/personalize`:
-  - Includes Amazon Personalize batch inference results with user segmentation and the same 10 products as in the context and image folders.
-
 
 ## Prerequisites
 
