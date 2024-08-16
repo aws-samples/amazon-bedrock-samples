@@ -12,7 +12,7 @@ Marketing effectiveness hinges heavily on creative content, with personalized ma
 
 Agents for Amazon Bedrock is a crucial tool in developing our marketing agent. This feature allows for the creation and configuration of autonomous agents within your application. These agents coordinate interactions between Foundation Models (FMs), various data sources, software applications, and user conversations. They can automatically invoke APIs to perform actions and access knowledge bases to enhance the information needed for these tasks. You have the flexibility to define custom actions for the agent and specify how to handle them by creating AWS Lambda functions in your preferred programming language. For comprehensive information, please consult the Agents for Amazon Bedrock documentation.
 
-To simplify the process, the CDK has prepared sample data within following folders:
+To simplify the process, the CDK has prepared sample data within following folders is generate and download from [retail demo store](https://github.com/aws-samples/retail-demo-store/tree/master), we generate those file through [generator](https://github.com/aws-samples/retail-demo-store/tree/master/generators) and the you can download the image file to `data/image` from [images](https://code.retaildemostore.retail.aws.dev/images.tar.gz).
 
 - `data/agent-schema`:
   - Contains the OpenAPI format for Bedrock Agent. Defines how to interact with the Lambda function.
@@ -21,7 +21,7 @@ To simplify the process, the CDK has prepared sample data within following folde
 - `data/context`:
   - Provides marketing context for LLMs with information on 10 test products.
 - `data/image`:
-  - Contains images of the 10 products for easy reference by LLMs.
+  - Contains images of the products for easy reference by LLMs.
 - `data/personalize`:
   - Includes Amazon Personalize batch inference results with user segmentation and the same 10 products as in the context and image folders.
 
