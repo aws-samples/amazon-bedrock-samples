@@ -8,3 +8,9 @@ __pycache__
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# Zip file
+*.zip
+
+# vscode
+*vscode
