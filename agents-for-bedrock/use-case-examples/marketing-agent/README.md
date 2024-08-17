@@ -14,7 +14,7 @@ Agents for Amazon Bedrock is a crucial tool in developing our marketing agent. T
 
 To simplify the process, the CDK has prepared sample data within following folders is generate and download from [retail demo store](https://github.com/aws-samples/retail-demo-store/tree/master), we generate those file through [generator](https://github.com/aws-samples/retail-demo-store/tree/master/generators) and you can download the image file to `data/image` from [images](https://code.retaildemostore.retail.aws.dev/images.tar.gz).
 
-You can directly download the files we generated and processed from [data]() and uncompress it which includes:
+You can directly download the files we generated and processed from [data](https://aws-blogs-artifacts-public.s3.amazonaws.com/artifacts/ML-16145/data.zip) and uncompress it which includes:
 - `data/agent-schema`:
   - Contains the OpenAPI format for Bedrock Agent. Defines how to interact with the Lambda function.
 - `data/dynamodb`:
