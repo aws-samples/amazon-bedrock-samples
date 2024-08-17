@@ -8,6 +8,7 @@ from aws_cdk import (
     aws_iam as iam,
     aws_lambda as lambda_,
     CfnOutput,
+    Size,
 )
 
 from cdklabs.generative_ai_cdk_constructs import (
@@ -44,6 +45,8 @@ class MarketingAgentStack(Stack):
             sources=[s3_deployment.Source.asset("data/")],
             destination_bucket=_data_bucket,
             exclude=[".DS_Store"],
+            ephemeral_storage_size=Size.mebibytes(1024),
+            memory_limit=1024
         )
 
         # Create DynamoDB table for item data
