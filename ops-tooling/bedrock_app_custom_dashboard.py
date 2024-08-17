@@ -13,8 +13,8 @@ import json
 import boto3
 
 
-def knowledge_base_id_to_oss_collection(knowledge_base_id):
-    bedrock_agent_client = boto3.client("bedrock-agent")
+def knowledge_base_id_to_oss_collection(knowledge_base_id, region):
+    bedrock_agent_client = boto3.client("bedrock-agent", region_name=region)
     response = bedrock_agent_client.get_knowledge_base(
         knowledgeBaseId=knowledge_base_id
     )
@@ -24,8 +24,8 @@ def knowledge_base_id_to_oss_collection(knowledge_base_id):
     return collection_id
 
 
-def knowledge_base_name_to_id(knowledge_base_name):
-    bedrock_agent_client = boto3.client("bedrock-agent")
+def knowledge_base_name_to_id(knowledge_base_name, region):
+    bedrock_agent_client = boto3.client("bedrock-agent", region_name=region)
     response = bedrock_agent_client.list_knowledge_bases()
     for knowledge_base in response["knowledgeBaseSummaries"]:
         if knowledge_base["name"] == knowledge_base_name:
@@ -53,9 +53,9 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
     account_id = caller_identity["Account"]
 
     # Get OpenSearch Serverless info
-    knowledge_base_id = knowledge_base_name_to_id(knowledge_base_name)
-    collection_id = knowledge_base_id_to_oss_collection(knowledge_base_id)
-    oss_client = boto3.client("opensearchserverless")
+    knowledge_base_id = knowledge_base_name_to_id(knowledge_base_name, region)
+    collection_id = knowledge_base_id_to_oss_collection(knowledge_base_id, region)
+    oss_client = boto3.client("opensearchserverless", region_name=region)
     collection_name = oss_client.batch_get_collection(
         ids=[collection_id],
     )[
@@ -63,7 +63,7 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
     ][0]["name"]
 
     # Embedding model ID
-    bedrock_agent_client = boto3.client("bedrock-agent")
+    bedrock_agent_client = boto3.client("bedrock-agent", region_name=region)
     response = bedrock_agent_client.get_knowledge_base(
         knowledgeBaseId=knowledge_base_id
     )
@@ -86,12 +86,12 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
                             "AWS/Bedrock",
                             "Invocations",
                             "ModelId",
-                            f"arn:aws:bedrock:{region}::foundation-model/{invoke_model_id}",
+                            invoke_model_id,
                             {"region": region},
                         ],
                         [
                             "...",
-                            f"arn:aws:bedrock:{region}::foundation-model/{embed_model_id}",
+                            embed_model_id,
                             {"region": region},
                         ],
                     ],
@@ -170,12 +170,12 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
                         ],
                         [
                             "...",
-                            f"arn:aws:bedrock:{region}::foundation-model/{embed_model_id}",
+                            embed_model_id,
                             {"region": region, "period": 60},
                         ],
                         [
                             "...",
-                            f"arn:aws:bedrock:{region}::foundation-model/{invoke_model_id}",
+                            invoke_model_id,
                             {"region": region, "period": 60},
                         ],
                         [
@@ -523,28 +523,28 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
                             "AWS/Bedrock",
                             "OutputTokenCount",
                             "ModelId",
-                            f"arn:aws:bedrock:{region}::foundation-model/{embed_model_id}",
+                            embed_model_id,
                             {"region": region},
                         ],
                         [
                             "AWS/Bedrock",
                             "OutputTokenCount",
                             "ModelId",
-                            f"arn:aws:bedrock:{region}::foundation-model/{invoke_model_id}",
+                            invoke_model_id,
                             {"region": region},
                         ],
                         [
                             "AWS/Bedrock",
                             "InputTokenCount",
                             "ModelId",
-                            f"arn:aws:bedrock:{region}::foundation-model/{invoke_model_id}",
+                            invoke_model_id,
                             {"region": region},
                         ],
                         [
                             "AWS/Bedrock",
                             "InputTokenCount",
                             "ModelId",
-                            f"arn:aws:bedrock:{region}::foundation-model/{embed_model_id}",
+                            embed_model_id,
                             {"region": region},
                         ],
                     ],
@@ -561,17 +561,17 @@ def generate_dashboard_json(region, knowledge_base_name, invoke_model_id):
     return json.dumps(dashboard_def)
 
 
-def create_dashboard(dashboard_name, dashboard_json):
+def create_dashboard(dashboard_name, dashboard_json, region):
     # Create log group
     try:
-        logs_client = boto3.client("logs")
+        logs_client = boto3.client("logs", region_name=region)
         logs_client.create_log_group(logGroupName="textGeneration/Bedrock")
     except Exception as e:
         # Log group already exists
         pass
 
     # Create custom dashboard
-    cw_client = boto3.client("cloudwatch")
+    cw_client = boto3.client("cloudwatch", region_name=region)
     cw_client.put_dashboard(
         DashboardName=dashboard_name,
         DashboardBody=dashboard_json,
@@ -587,4 +587,5 @@ dashboard_name = "Contextual-Chatbot-Dashboard"
 
 # Create custom dashboard for your Bedrock app
 dashboard_json = generate_dashboard_json(region, knowledge_base_name, invoke_model_id)
-create_dashboard(dashboard_name, dashboard_json)
+
+create_dashboard(dashboard_name, dashboard_json, region)
