@@ -111,7 +111,10 @@ deploy_stack() {
   read -p "Verify the stack in cdk.out. Are you sure you want to deploy the $stack stack? (y/n) " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Deploying $stack stack..."
+    echo "Bootstrapping account $accountId in region $region."
+    cdk bootstrap aws://$accountId/$region
+
+    echo "Deploying $stack stack."
     cdk deploy
   else
     echo "Deployment canceled."
@@ -134,11 +137,11 @@ case "$1" in
     deploy_stack "$2"
     ;;
   *)
-    echo "Usage: $0 <command>"
+    echo "Usage: $0 <command> [parameters]"
     echo "Commands:"
     echo "  init      Install project dependencies"
     echo "  ls        List available stacks"
-    echo "  deploy    Deploy a stack"
+    echo "  deploy <value>   Deploy a blueprint stack"
     exit 1
     ;;
 esac
