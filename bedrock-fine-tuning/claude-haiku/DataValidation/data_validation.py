@@ -12,6 +12,7 @@ MAX_TOKENS = 32000
 CHARS_PER_TOKEN = 3 
 MAX_TRAINING_SIZE_GB = 10
 MAX_VALIDATION_SIZE_GB = 1
+RESERVED_KEYWORDS = ["\nHuman:", "\nAssistant:"]
 
 class Message(BaseModel):
     role: str = Field(..., pattern="^(user|assistant)$")
@@ -33,6 +34,13 @@ class DataEntry(BaseModel):
         for i in range(len(messages) - 1):
             if messages[i].role == messages[i+1].role:
                 raise ValueError("Messages must alternate between user and assistant")
+                
+        for keyword in RESERVED_KEYWORDS:
+            if self.system and keyword in self.system:
+                raise ValueError(f"Reserved keyword '{keyword}' found in system prompt")
+            for message in messages:
+                if keyword in message.content:
+                    raise ValueError(f"Reserved keyword '{keyword}' found in message content")
                 
         return self
 
