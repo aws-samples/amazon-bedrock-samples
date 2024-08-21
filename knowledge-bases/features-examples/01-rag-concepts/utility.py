@@ -1,4 +1,3 @@
-import json
 import boto3
 import random
 import time
@@ -233,8 +232,6 @@ def interactive_sleep(seconds: int):
         dots += '.'
         print(dots, end='\r')
         time.sleep(1)
-    print('Done!')
-
 
 def create_bedrock_execution_role_multi_ds(bucket_names = None, secrets_arns = None):
     
