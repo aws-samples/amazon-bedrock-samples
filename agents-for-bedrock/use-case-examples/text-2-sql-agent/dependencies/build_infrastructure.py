@@ -342,28 +342,7 @@ response = bedrock_agent_client.create_agent(
     description="Agent for performing sql queries.",
     idleSessionTTLInSeconds=idleSessionTTLInSeconds,
     foundationModel=foundation_Model,
-    instruction=agent_instruction,
-    promptOverrideConfiguration={
-    #Disable preprocessing prompt
-        'promptConfigurations': [
-            {
-                'promptType': 'PRE_PROCESSING',
-                'promptCreationMode': 'OVERRIDDEN',
-                'promptState': 'DISABLED',
-                'basePromptTemplate':' ',
-                 'inferenceConfiguration': {
-                    'temperature': 0,
-                    'topP': 1,
-                    'topK': 123,
-                    'maximumLength': 2048,
-                    'stopSequences': [
-                        'Human',
-                    ]
-                },
-                
-            }
-        ]
-    }
+    instruction=agent_instruction
 )
     
 
