@@ -192,24 +192,6 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
-  StreamlitCloudTrailBucketPolicy:
-    Type: 'AWS::S3::BucketPolicy'
-    Properties:
-      Bucket: !Ref StreamlitCloudTrailBucket
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Action:
-              - 's3:*'
-            Effect: Deny
-            Resource: 
-              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}/*
-              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}
-            Principal: "*"
-            Condition:
-              Bool:
-                'aws:SecureTransport': 'false'
-
   ###########################
   ##### CustomResource #####
   #########################
@@ -1231,7 +1213,18 @@ Resources:
             Condition: 
               StringEquals:
                 s3:x-amz-acl: bucket-owner-full-control
-  
+          - 
+            Action:
+              - 's3:*'
+            Effect: Deny
+            Resource: 
+              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}/*
+              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}
+            Principal: "*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
   StreamlitCloudTrail:
     DependsOn:
       - StreamlitCloudTrailBucketPolicy
@@ -1269,7 +1262,7 @@ Resources:
               - 'sts:AssumeRole'
       Path: "/"
       ManagedPolicyArns:
-        - !GetAtt LogsPolicy.PolicyArn  
+        - !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy]
       Policies:
         - PolicyName: IAMPolicy
           PolicyDocument:
