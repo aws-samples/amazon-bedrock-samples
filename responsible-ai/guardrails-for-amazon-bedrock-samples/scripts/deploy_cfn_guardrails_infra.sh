@@ -64,7 +64,7 @@ deploy_cloudformation() {
 }
 
 # Path to the CloudFormation template file
-template_file="../infra/guardrails.yaml"
+template_file="../infra/cfn/guardrails.yaml"
 
 # Deploy CloudFormation stack and get the guardrail identifier
 guardrail_identifier=$(deploy_cloudformation "$template_file")

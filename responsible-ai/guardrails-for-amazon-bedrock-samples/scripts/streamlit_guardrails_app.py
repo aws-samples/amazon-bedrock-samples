@@ -13,12 +13,12 @@ bedrock_client = boto3.client("bedrock-runtime")
 
 # Set the page config including the title and favicon
 bedrock_logo_path = "../images/bedrock_logo.png"  # Update this path to where you save the Bedrock logo
-st.set_page_config(page_title="Customer Support Chatbot with Guardrails", page_icon=bedrock_logo_path)
+st.set_page_config(page_title="Customer Support Chatbot with Amazon Bedrock Guardrails", page_icon=bedrock_logo_path)
 
 # Display Bedrock logo
 st.image(bedrock_logo_path, width=100)
 
-st.title("Customer Support Chatbot with Guardrails")
+st.title("Customer Support Chatbot with Amazon Bedrock Guardrails")
 st.write(
     """
 This app allows you to interact with a customer support chatbot. The chatbot is equipped with guardrails to filter out harmful content and ensure safe interactions.
@@ -26,7 +26,7 @@ This app allows you to interact with a customer support chatbot. The chatbot is 
 )
 
 # Update the URLs below with your actual blog URL and AWS Guardrails documentation URL
-blog_url = "https://medium.com/@mccartni"
+blog_url = "https://medium.com/@mccartni/building-responsible-ai-implementing-bedrock-guardrails-in-your-customer-support-chatbot-f8867088beeb"
 aws_guardrails_url = "https://aws.amazon.com/bedrock/guardrails/"
 
 st.markdown(

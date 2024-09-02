@@ -65,12 +65,13 @@ If you are using Amazon Linux, CentOS, or Red Hat, you can install `jq` using `y
 sudo yum install -y jq
 ```
 
-### 4. Deploy the CloudFormation Stack
+### 4. Option A) Deploy the CloudFormation Stack
 
-Run the `deploy_guardrails_infra.sh` script to deploy the CloudFormation stack and get the unique identifier of the guardrail.
+Run the `deploy_cfn_guardrails_infra.sh` script to deploy the CloudFormation stack and get the unique identifier of the guardrail.
 
 ```sh
-./deploy_guardrails_app.sh
+chmod +x deploy_cfn_guardrails_infra.sh
+./deploy_cfn_guardrails_infra.sh
 ```
 
 This script will:
@@ -78,6 +79,17 @@ This script will:
 - Create the CloudFormation stack.
 - Wait for the stack creation to complete.
 - Retrieve the outputs, including the unique identifier of the guardrail.
+
+
+### 4. Option B) Deploy the CDK Application as a CFN stack
+
+Run the `deploy_cfn_guardrails_infra.sh` script to deploy the CloudFormation stack and get the unique identifier of the guardrail.
+
+```sh
+chmod +x deploy_cdk_guardrails_infra.sh
+./deploy_cdk_guardrails_infra.sh
+```
+
 
 ### 5. Run the Streamlit App with the Guardrail Identifier
 
