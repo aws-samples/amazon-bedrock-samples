@@ -15,7 +15,7 @@ Parameters:
     Type: String
     Description: Select Embedding model
     AllowedValues:
-    - amazon.titan-embed-text-v1
+      - amazon.titan-embed-text-v1
     Default: amazon.titan-embed-text-v1
   Q04pChunkingStrategy:
     Type: String
@@ -53,23 +53,23 @@ Parameters:
     Default: e2e-rag-index
     AllowedPattern: ^[a-z0-9](-*[a-z0-9])*
     ConstraintDescription: Must be lowercase or numbers with a length of 1-63 characters
-  Q10pVectorFieldName:
-    Type: String
-    Description: Vector field name
-    Default: bedrock-knowledge-base-default-vector
-  Q11pMetaDataFieldName:
-    Type: String
-    Description: Metadata field name
-    Default: AMAZON_BEDROCK_METADATA
-  Q12pTextFieldName:
-    Type: String
-    Description: Text field name
-    Default: AMAZON_BEDROCK_TEXT_CHUNK
+  # Q10pVectorFieldName:
+  #   Type: String
+  #   Description: Vector field name
+  #   Default: bedrock-knowledge-base-default-vector
+  # Q11pMetaDataFieldName:
+  #   Type: String
+  #   Description: Metadata field name
+  #   Default: AMAZON_BEDROCK_METADATA
+  # Q12pTextFieldName:
+  #   Type: String
+  #   Description: Text field name
+  #   Default: AMAZON_BEDROCK_TEXT_CHUNK
 Resources:
   KbRoleStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://e2e-rag-deployment-017444429555-us-east-1.s3.amazonaws.com/templates/kb-role-template.template
+      TemplateURL: https://e2e-rag-deployment-525407566630-us-east-1.s3.amazonaws.com/templates/kb-role-template.template
       TimeoutInMinutes: 15
       Parameters:
         Q01pInputBucketName:
@@ -78,7 +78,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: KbRoleStack
     Properties:
-      TemplateURL: https://e2e-rag-deployment-017444429555-us-east-1.s3.amazonaws.com/templates/oss-infra-template.template
+      TemplateURL: https://e2e-rag-deployment-525407566630-us-east-1.s3.amazonaws.com/templates/oss-infra-template.template
       TimeoutInMinutes: 15
       Parameters:
         Q03pEmbedModel:
@@ -99,7 +99,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: OSSInfraStack
     Properties:
-      TemplateURL: https://e2e-rag-deployment-017444429555-us-east-1.s3.amazonaws.com/templates/kb-infra-template.template
+      TemplateURL: https://e2e-rag-deployment-525407566630-us-east-1.s3.amazonaws.com/templates/kb-infra-template.template
       TimeoutInMinutes: 15
       Parameters:
         Q01pInputBucketName:
@@ -118,12 +118,12 @@ Resources:
           Ref: Q08pCollectionName
         Q09pIndexName:
           Ref: Q09pIndexName
-        Q10pVectorFieldName:
-          Ref: Q10pVectorFieldName
-        Q11pMetaDataFieldName:
-          Ref: Q11pMetaDataFieldName
-        Q12pTextFieldName:
-          Ref: Q12pTextFieldName
+        # Q10pVectorFieldName:
+        #   Ref: Q10pVectorFieldName
+        # Q11pMetaDataFieldName:
+        #   Ref: Q11pMetaDataFieldName
+        # Q12pTextFieldName:
+        #   Ref: Q12pTextFieldName
         pCollectionArn:
           Fn::GetAtt:
           - OSSInfraStack
