@@ -22,7 +22,7 @@ This repository contains examples to get you started with the core Amazon Bedroc
 - [Using models from Stability](bedrock_stability.py) - Syntax for using models from Stability - Stable Diffusion 
 - [Using models from AI21 Labs](bedrock_ai21.py) - Syntax for using models from AI21 Labs - Jurassic
 - [Using models from Cohere](bedrock_cohere.py) - Syntax for using models from Cohere - Command
-- [Anthropic Multi-Model Models](bedrock_anthropic_claude3.py) - Syntax Multi-Modal models from Anthropic Claude v3 Models
+- [Anthropic Multi-Modal Models](bedrock_anthropic_claude3.py) - Syntax Multi-Modal models from Anthropic Claude v3 Models
 - [Single and Mult-turn text generation with Messages API](./Claude-MessagesAPI-Examples.ipynb) - Examples to illustrate the new Claude Messages API
 
 ## Contributing
