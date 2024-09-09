@@ -104,18 +104,16 @@ class MarketingAgentStack(Stack):
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name(
                     "service-role/AWSLambdaBasicExecutionRole"
-                )
+                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "policy/AmazonBedrockFullAccess"
+                ),
             ]
         )
         _data_bucket.grant_read(bedrock_agent_lambda_role)
         _item_table.grant_read_data(bedrock_agent_lambda_role)
         _user_table.grant_read_data(bedrock_agent_lambda_role)
-        bedrock_agent_lambda_role.add_to_policy(
-            iam.PolicyStatement(
-                actions=["bedrock:*"],
-                resources=["*"]
-            )
-        )
+
 
         # Pandas Lambda layer
         pandas_layer_arn = lambda_.LayerVersion.from_layer_version_arn(
