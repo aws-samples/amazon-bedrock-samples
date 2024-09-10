@@ -106,7 +106,7 @@ class MarketingAgentStack(Stack):
                     "service-role/AWSLambdaBasicExecutionRole"
                 ),
                 iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "policy/AmazonBedrockFullAccess"
+                    "AmazonBedrockFullAccess"
                 ),
             ]
         )
