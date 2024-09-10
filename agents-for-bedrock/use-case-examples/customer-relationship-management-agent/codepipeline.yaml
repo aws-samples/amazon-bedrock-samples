@@ -192,24 +192,6 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
-  StreamlitCloudTrailBucketPolicy:
-    Type: 'AWS::S3::BucketPolicy'
-    Properties:
-      Bucket: !Ref StreamlitCloudTrailBucket
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Action:
-              - 's3:*'
-            Effect: Deny
-            Resource: 
-              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}/*
-              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}
-            Principal: "*"
-            Condition:
-              Bool:
-                'aws:SecureTransport': 'false'
-
   ###########################
   ##### CustomResource #####
   #########################
@@ -1231,7 +1213,18 @@ Resources:
             Condition: 
               StringEquals:
                 s3:x-amz-acl: bucket-owner-full-control
-  
+          - 
+            Action:
+              - 's3:*'
+            Effect: Deny
+            Resource: 
+              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}/*
+              - !Sub arn:aws:s3:::${StreamlitCloudTrailBucket}
+            Principal: "*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
   StreamlitCloudTrail:
     DependsOn:
       - StreamlitCloudTrailBucketPolicy
@@ -1252,6 +1245,102 @@ Resources:
       IncludeGlobalServiceEvents: true
       IsLogging: true
       IsMultiRegionTrail: true
+  
+  # Custom ECS resource
+  StreamlitECSRoleCustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ['ECSCustomRole', !Sub '${AWS::StackName}']]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: "/"
+      ManagedPolicyArns:
+        - !If [IsDeployVPCInfrastructure, !GetAtt Infrastructure.Outputs.LogsPolicy, !ImportValue Basic-LogsPolicy]
+      Policies:
+        - PolicyName: IAMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:ListRoles
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:CreateServiceLinkedRole
+                  - iam:AttachRolePolicy
+                Resource:
+                  - "*"
+
+  StreamlitECSRoleCustomResourceFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: !Join ['-', ['ECSCustomF', !Sub '${AWS::StackName}']]
+      Handler: index.handler
+      Role: !GetAtt StreamlitECSRoleCustomResourceRole.Arn
+      Timeout: 300
+      Runtime: python3.12
+      Code:
+        ZipFile: !Sub |
+              import boto3
+              from botocore.exceptions import ClientError
+              import cfnresponse
+              iam_client = boto3.client('iam')
+
+              def handler(event, context):
+                  
+                  try:
+                    request_type = event['RequestType']
+                    print(request_type)
+
+                    if request_type == 'Create':
+                      desired_ecs_role_name = "AWSServiceRoleForECS"
+                      desired_ecs_scaling_role_name = "AWSServiceRoleForApplicationAutoScaling_ECSService"
+
+                      try:
+                        iam_client.get_role(RoleName=desired_ecs_role_name)
+                        ecs_role_exists = True
+                      except ClientError as e:
+                        if e.response['Error']['Code'] == 'NoSuchEntity':
+                          ecs_role_exists = False
+                        else:
+                          ecs_role_exists = True
+                      
+                      try:
+                        iam_client.get_role(RoleName=desired_ecs_scaling_role_name)
+                        ecs_scaling_role_exists = True
+                      except ClientError as e:
+                        if e.response['Error']['Code'] == 'NoSuchEntity':
+                          ecs_scaling_role_exists = False
+                        else:
+                          ecs_scaling_role_exists = True
+                      
+                      print(f"ECS service role exist? {ecs_role_exists}")
+                      if not ecs_role_exists:
+                        iam_client.create_service_linked_role(AWSServiceName="ecs.amazonaws.com")
+                      
+                      print(f"ECS scaling service role exist? {ecs_scaling_role_exists}")
+                      if not ecs_scaling_role_exists:
+                        iam_client.create_service_linked_role(AWSServiceName="ecs.application-autoscaling.amazonaws.com")
+                  except Exception as ex:
+                    print(ex)
+                    cfnresponse.send(event, context, cfnresponse.FAILED, {})
+                  else:
+                    cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+  
+  StreamlitECSRoleCustomResource:
+    Type: Custom::ECSRole
+    Properties:
+      ServiceToken: !GetAtt StreamlitECSRoleCustomResourceFunction.Arn 
 
   ###################
   ##### Agents #####
