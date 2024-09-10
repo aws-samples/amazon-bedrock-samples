@@ -26,3 +26,7 @@ This tool provides a simple and efficient way to validate JSONL format data for 
 5. Validates data structure and content for each entry
 
 6. Estimates and checks token counts per entry: Max 32,000 tokens
+
+7. Checks for Anthropic's reserved keywords in prompts:
+   - Ensures "\nHuman:" and "\nAssistant:" do not appear in prompts
+   - Note: Variations without colons (e.g., "\nHuman" or "\nAssistant") are allowed
