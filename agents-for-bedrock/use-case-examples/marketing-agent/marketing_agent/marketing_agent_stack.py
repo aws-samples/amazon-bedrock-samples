@@ -98,7 +98,6 @@ class MarketingAgentStack(Stack):
         _kb_s3_datasource.node.add_dependency(_deploy_data)
 
         # Lambda Agent IAM role
-        # TODO least privage
         bedrock_agent_lambda_role = iam.Role(self, "BerockAgentLambdaRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
