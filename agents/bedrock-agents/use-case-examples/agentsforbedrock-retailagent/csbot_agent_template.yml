@@ -1,0 +1,344 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'AWS Template to create lambda with resource based policy'
+Resources:
+  cleanupBucketOnDelete:
+    Type: Custom::cleanupbucket
+    Properties:
+      ServiceToken: !GetAtt 'DeleteS3Bucket.Arn'
+      BucketName: !Ref S3Bucket
+    DependsOn: S3Bucket
+
+  DeleteS3Bucket:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      FunctionName: 'csbot_deletes3_contents'
+      Description: "Delete all objects in S3 bucket"
+      Timeout: 30
+      Role: !GetAtt 'LambdaBasicExecutionRole.Arn'
+      Runtime: python3.9
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3Bucket
+      Code:
+        ZipFile: |
+          import json, boto3, logging
+          import cfnresponse
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def lambda_handler(event, context):
+              logger.info("event: {}".format(event))
+              try:
+                  bucket = event['ResourceProperties']['BucketName']
+                  logger.info("bucket: {}, event['RequestType']: {}".format(bucket,event['RequestType']))
+                  if event['RequestType'] == 'Delete':
+                      s3 = boto3.resource('s3')
+                      bucket = s3.Bucket(bucket)
+                      for obj in bucket.objects.filter():
+                          logger.info("delete obj: {}".format(obj))
+                          s3.Object(bucket.name, obj.key).delete()
+
+                  sendResponseCfn(event, context, cfnresponse.SUCCESS)
+              except Exception as e:
+                  logger.info("Exception: {}".format(e))
+                  sendResponseCfn(event, context, cfnresponse.FAILED)
+
+          def sendResponseCfn(event, context, responseStatus):
+              responseData = {}
+              responseData['Data'] = {}
+              cfnresponse.send(event, context, responseStatus, responseData, "CustomResourcePhysicalID")            
+        
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Description: Creating Amazon S3 bucket to hold source data for agent
+    Properties:
+      BucketName: !Sub agentb8-x-${AWS::AccountId}
+
+  CustomFunctionCopyContentsToS3Bucket:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      FunctionName: 'csbot_copy_s3contents'
+      Description: "Copies files from the Blog bucket to bucket in this account"
+      Timeout: 30
+      Role: !GetAtt 'LambdaBasicExecutionRole.Arn'
+      Runtime: python3.9
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3Bucket
+      Code:
+        ZipFile: |
+          import os
+          import json
+          import boto3
+          import logging
+          import cfnresponse
+
+          #copy these two files from s3 to new bucket created by the CloudFormation template
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          DATA_BUCKET = "aws-blogs-artifacts-public" 
+          s3_key1 = "artifacts/ML-15539/demo_csbot_db" 
+          s3_key2 = "artifacts/ML-15539/customerservicebot.json" 
+
+          def lambda_handler(event, context):
+            logger.info('got event {}'.format(event))
+            try:
+              s3 = boto3.client('s3')
+              bucket = boto3.resource('s3').Bucket(f"{os.environ.get('BUCKET_NAME')}")
+              logger.info(f"bucket working with is {bucket}")
+              New_bucket_name=bucket.name
+              logger.info(f"new bucket name is {New_bucket_name}")
+              #copying over key1
+              copy_source = { 'Bucket': DATA_BUCKET, 'Key': s3_key1 }
+              logger.info(f"going to copy {copy_source} -> s3://{New_bucket_name}")
+              bucket.copy(copy_source, 'demo_csbot_db')
+              logger.info(f"going to read {s3_key1} from bucket={bucket}")
+              #copying over key2
+              copy_source = { 'Bucket': DATA_BUCKET, 'Key': s3_key2 }
+              logger.info(f"going to copy {copy_source} -> s3://{New_bucket_name}")
+              bucket.copy(copy_source, 'customerservicebot.json')
+              logger.info(f"going to read {s3_key2} from bucket={bucket}")
+              response = dict(files_copied=2, error=None)
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
+            except Exception as e:
+              logger.error(e)
+              response = dict(files_copied=0, error=str(e))
+              cfnresponse.send(event, context, cfnresponse.FAILED, response)
+
+            return 
+
+  Primerinvoke:
+    Type: AWS::CloudFormation::CustomResource
+    DependsOn: CustomFunctionCopyContentsToS3Bucket
+    Version: "1.0"
+    Properties:
+      ServiceToken: !GetAtt CustomFunctionCopyContentsToS3Bucket.Arn
+
+  BedrockPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Effect: Allow
+          Action: bedrock:*
+          Resource: '*'
+
+  AmazonBedrockExecutionRoleForAgents:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: bedrock.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+        - !Ref BedrockPolicy
+      RoleName: 'AmazonBedrockExecutionRoleForAgents_csbot'
+
+  LambdaBasicExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource: '*'
+        - PolicyName: AWSLambdaBasicExecutionRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  ResourcePolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'csbotBedrockAgent.Arn'
+      Principal: bedrock.amazonaws.com
+      SourceAccount: !Sub ${AWS::AccountId}
+      SourceArn: !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:agent/*
+
+  csbotBedrockAgent:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      FunctionName: 'csbot_lambda_function'
+      Description: "Contains API calls for customer service bot"
+      Timeout: 30
+      Role: !GetAtt 'LambdaBasicExecutionRole.Arn'
+      Runtime: python3.9
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3Bucket
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import sqlite3
+          from datetime import datetime
+          import random
+          import logging
+          import os
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          s3 = boto3.client('s3')
+          bucket = os.environ.get('BUCKET_NAME')  #Name of bucket with data file and OpenAPI file
+          db_name = 'demo_csbot_db' #Location of data file in S3
+          local_db = '/tmp/csbot.db' #Location in Lambda /tmp folder where data file will be copied
+
+          #Download data file from S3
+          s3.download_file(bucket, db_name, local_db)
+
+          cursor = None
+          conn = None
+
+          #Initial data load and SQLite3 cursor creation 
+          def load_data():
+              #load SQL Lite database from S3
+              # create the db
+              global conn
+              conn = sqlite3.connect(local_db)
+              cursor = conn.cursor()
+              logger.info('Completed initial data load ')
+
+              return cursor
+              
+          #Function returns all customer info for a particular customerId
+          def return_customer_info(custName):
+              query = 'SELECT customerId, customerName, Addr1, Addr2, City, State, Zipcode, PreferredActivity, ShoeSize, OtherInfo from CustomerInfo where customerName like "%' +  custName +'%"'
+              cursor.execute(query)
+              resp = cursor.fetchall()
+              #adding column names to response values
+              names = [description[0] for description in cursor.description]
+              valDict = {}
+              index = 0
+              for name in names:
+                  valDict[name]=resp[0][index]
+                  index = index + 1
+              logger.info('Customer Info retrieved')
+              return valDict
+            
+              
+          #Function returns shoe inventory for a particular shoeid 
+          def return_shoe_inventory():
+              query = 'SELECT ShoeID, BestFitActivity, StyleDesc, ShoeColors, Price, InvCount from ShoeInventory' 
+              cursor.execute(query)
+              resp = cursor.fetchall()
+              
+              #adding column names to response values
+              names = [description[0] for description in cursor.description]
+              valDict = []
+              interimDict = {}
+              index = 0
+              for item in resp:
+                  for name in names:
+                      interimDict[name]=item[index]
+                      index = index + 1
+                  index = 0
+                  valDict.append(interimDict)
+                  interimDict={}
+              logger.info('Shoe info retrieved')
+              return valDict
+
+              
+          #function places order -- reduces shoe inventory, updates order_details table --> all actions resulting from a shoe purchase  
+          def place_shoe_order(ssId, custId):
+              global cursor
+              global conn
+              query = 'Update ShoeInventory set InvCount = InvCount - 1 where ShoeID = ' + str(ssId)
+              ret = cursor.execute(query)
+              
+              today = datetime.today().strftime('%Y-%m-%d')
+              query = 'INSERT INTO OrderDetails (orderdate, shoeId, CustomerId) VALUES ("'+today+'",'+str(ssId)+','+ str(custId)+')'
+              ret = cursor.execute(query)
+              conn.commit()
+
+              #Writing updated db file to S3 and setting cursor to None to force reload of data
+              s3.upload_file(local_db, bucket, db_name)
+              cursor = None
+              logger.info('Shoe order placed')
+              return 1;
+              
+
+          def lambda_handler(event, context):
+              responses = []
+              global cursor
+              if cursor == None:
+                  cursor = load_data()
+              id = ''
+              api_path = event['apiPath']
+              logger.info('API Path')
+              logger.info(api_path)
+              
+              if api_path == '/customer/{CustomerName}':
+                  parameters = event['parameters']
+                  for parameter in parameters:
+                      if parameter["name"] == "CustomerName":
+                          cName = parameter["value"]
+                  body = return_customer_info(cName)
+              elif api_path == '/place_order':
+                  parameters = event['parameters']
+                  for parameter in parameters:
+                      if parameter["name"] == "ShoeID":
+                          id = parameter["value"]
+                      if parameter["name"] == "CustomerID":
+                          cid = parameter["value"]
+                  body = place_shoe_order(id, cid)
+              elif api_path == '/check_inventory':
+                  body = return_shoe_inventory()
+              else:
+                  body = {"{} is not a valid api, try another one.".format(api_path)}
+
+              response_body = {
+                  'application/json': {
+                      'body': json.dumps(body)
+                  }
+              }
+                  
+              action_response = {
+                  'actionGroup': event['actionGroup'],
+                  'apiPath': event['apiPath'],
+                  'httpMethod': event['httpMethod'],
+                  'httpStatusCode': 200,
+                  'responseBody': response_body
+              }
+
+              responses.append(action_response)
+              
+              api_response = {
+                  'messageVersion': '1.0', 
+                  'response': action_response}
+                  
+              return api_response
+            
+Outputs:
+  S3Bucket:
+    Value: !GetAtt S3Bucket.Arn
+  Region:
+    Description: Deployed Region
+    Value: !Ref AWS::Region
