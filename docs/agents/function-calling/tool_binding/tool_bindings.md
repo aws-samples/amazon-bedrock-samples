@@ -1,6 +1,7 @@
 # How to work with tools bindings
 
 <h2>Overview</h2>
+
 - **Tool binding with Langchain** We define a list of tools and apply the `.bind_tools` function.
 - **Tool binding with LlamaIndex** We translate the setup to leverage LlamaIndex.
 

@@ -1,6 +1,7 @@
 # How to work with Return of Control (ROC)
 
 <h2>Overview</h2>
+
 - **Basic setup with one external function** We define an external function requiring multiple parameters and returning simple outputs. We allow the model to call this API through its ability to do [function calling](https://github.com/aws-samples/amazon-bedrock-samples/blob/release/v2/agents/function-calling/function_calling_with_converse/function_calling_with_converse.ipynb).
 - **Modifying the solution to enable Return of Control** Starting from the initial solution, we implement changes to allow the model to ask for additional information when it is unable to assign a value to every function parameter.
 - **Increasing flexibility with Amazon Bedrock Agents** We simplify the solution by leveraging Bedrock native functionality.

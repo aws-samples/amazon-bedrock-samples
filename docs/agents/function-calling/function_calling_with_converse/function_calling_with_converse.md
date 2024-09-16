@@ -1,6 +1,7 @@
 # How to do function calling with the Converse API
 
 <h2>Overview</h2>
+
 - **Basic tool definition and function calling** We define a single tool for simulating a weather forecast lookup tool (`get_weather`) and allow the model to call this tool.
 - **Supplying the model with multiple tools to choose from** Starting from the previous example, we add a tool to search the web (`web_search`) and give the the model the liberty to decide the tool that is best fit for a given request.
 - **Letting the model call multiple tools in a single turn** We modify the conversation flow to support parallel function calling. Then, we present an example where the model needs to call multiple tools in succession.
