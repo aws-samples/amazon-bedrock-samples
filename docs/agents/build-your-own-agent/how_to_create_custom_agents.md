@@ -40,16 +40,20 @@ The custom agent code takes care of configuring the LLM calls such that LLM know
 
 <h2>Prerequisites</h2>
 
-Apart from the libraries that we will be installing, this notebook will be utilizing the execution role attached with the Sagemaker Studio JupiterLab environment.
+Apart from the libraries that we will be installing, this notebook requires permissions to:
 
-If you need help for creating execution role, for creating SageMaker Studio and JupiterLab environment, please refer to the following guides.
-
-<ul>    
-    <li><a href="https://www.w3schools.com">SageMaker Studio</a></li>
-    <li><a href="https://www.w3schools.com">SageMaker Role</a></li>
-    <li><a href="https://www.w3schools.com">SageMaker Jupiterlab</a></li>
-    <li><a href="https://www.w3schools.com">Quick Start</a></li>
+<ul>
+<li>access Amazon Bedrock</li>
 </ul>
+
+If running on SageMaker Studio, you should add the following managed policies to your role:
+<ul>
+<li>AmazonBedrockFullAccess</li>
+</ul>
+
+<div class="alert alert-block alert-info">
+<b>Note:</b> Please make sure to enable `Anthropic Claude 3 Sonnet` model access in Amazon Bedrock Console, as the notebook will use Anthropic Claude 3 Sonnet model.
+</div>
 
 
 ```python
@@ -574,8 +578,3 @@ You can append to the class to add the functionality to plan ahead and use multi
 <h2>Cleanup</h2>
 
 You can choose to delete the execution role, if you do not plan to use it again.
-
-
-```python
-
-```
