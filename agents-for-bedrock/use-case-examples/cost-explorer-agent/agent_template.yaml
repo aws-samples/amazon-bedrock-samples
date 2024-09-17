@@ -219,7 +219,7 @@ Resources:
       Layers:
         - !Sub "arn:aws:lambda:${AWS::Region}:336392948345:layer:AWSSDKPandas-Python312:13"
       Role: !GetAtt SavingsPlanAgentLambdaRole.Arn
-      Handler: "savingsplanagent.lambda_handler"
+      Handler: "SavingsPlan.lambda_handler"
       Code:
         S3Bucket: !Ref SourceBucket
         S3Key: savingsplanagent.zip
