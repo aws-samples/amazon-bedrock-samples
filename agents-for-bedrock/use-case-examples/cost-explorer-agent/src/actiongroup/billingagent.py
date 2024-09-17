@@ -201,7 +201,6 @@ def generate_cost_report(params: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     if filter_criteria:
-        print(f'filter_criteria: {filter_criteria}')
         common_params['Filter'] = filter_criteria
 
     grouped_costs = {}
@@ -276,7 +275,7 @@ def generate_cost_report(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def lambda_handler(event, context):
     """Handle the Lambda function invocation."""
-    print(f'Event received from Bedrock Agent: {event}')
+    print(f'Processing Event received from Bedrock Agent')
     response_code = 200
     action = event['actionGroup']
     api_path = event['apiPath']
@@ -321,7 +320,7 @@ def lambda_handler(event, context):
         print(f"The response is larger than the agent can support. Please update the filter or billing period and try again.")
 
     response_body = {'application/json': {'body': json.dumps(body)}}
-    print(f'Response sent to Bedrock Agent: {response_body}')
+    print(f'Response sent to Bedrock Agent')
 
     action_response = {
         "messageVersion": "1.0",

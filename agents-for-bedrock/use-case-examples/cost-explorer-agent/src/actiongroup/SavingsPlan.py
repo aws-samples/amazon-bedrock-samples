@@ -84,7 +84,7 @@ def get_savings_plans_coverage(billing_period_start: str, billing_period_end: st
 
 
 def lambda_handler(event, context):
-    print(f'Event received: {event}')
+    print(f'Processing Event received from Bedrock Agent')
     response_code = 200
     action = event.get('actionGroup')
     api_path = event.get('apiPath')
@@ -140,7 +140,7 @@ def lambda_handler(event, context):
         response_code = 500
 
     response_body = {'application/json': {'body': json.dumps(body)}}
-    print(f'Response sent to Bedrock Agent: {response_body}')
+    print(f'Response sent to Bedrock Agent')
     action_response = {
         "messageVersion": "1.0",
         "response": {
