@@ -1,10 +1,19 @@
-<h2> How to work with Guardrails for Amazon Bedrock </h2>
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
 
-*Note: This notebook has been adapted from the [Guardrails for Amazon Bedrock - Examples using the Python SDK](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/responsible-ai/guardrails-for-amazon-bedrock-samples/guardrails-api.ipynb)*
+<h2> How to work with Amazon Bedrock Guardrails</h2>
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/02_guardrails_api.ipynb){:target="_blank"}"
+
+*Note: This notebook has been adapted from the [Guardrails for Amazon Bedrock - Examples using the Python SDK](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/responsible-ai/guardrails-for-amazon-bedrock-samples/guardrails-api.ipynb)*
 
 <h2> Overview </h2>
 
-This notebook demonstrates using Guardrails for Amazon Bedrock by creating, updating and testing the Guardrail Policy config using Amazon Bedrock APIs. Guardrail evaluates user inputs and FM responses based on use case specific policies, and provides an additional layer of safeguards regardless of the underlying FM. Guardrails can be applied across all large language models (LLMs) on Amazon Bedrock, including fine-tuned models. Customers can create multiple guardrails, each configured with a different combination of controls, and use these guardrails across different applications and use cases. 
+This notebook demonstrates using Amazon Bedrock Guardrails by creating, updating and testing the Guardrail Policy config using Amazon Bedrock APIs. Guardrail evaluates user inputs and FM responses based on use case specific policies, and provides an additional layer of safeguards regardless of the underlying FM. Guardrails can be applied across all large language models (LLMs) on Amazon Bedrock, including fine-tuned models. Customers can create multiple guardrails, each configured with a different combination of controls, and use these guardrails across different applications and use cases. 
 
 <h2> Context </h2>
 
@@ -29,7 +38,7 @@ For more information on publicly available capabilities:
 
 <h2> Prerequisites </h2>
 
-- Amazon Bedrock basic setup has been completed, see `Prerequisites` section under [Amazon Bedrock APIs - Getting Started](01_invoke_api.ipynb)
+- Amazon Bedrock basic setup has been completed, see `Prerequisites` section under [Amazon Bedrock APIs - Getting Started](01_invoke_api.md)
 - Amazon Bedrock access to below given Foundation Model used in this notebook.
 
 | Provider Name | Foundation Model Name | Model Id |
@@ -407,10 +416,10 @@ print(json.dumps(json.loads(response_body), indent=2))
 
 <h2> Next steps </h2>
 
-Now that we have seen how to use Guardrails for Amazon Bedrock, you can learn
-- How to use [Knowledge Bases for Amazon Bedrock](03_knowledgebases_api.ipynb)
-- How to use [Agents for Amazon Bedrock](04_agents_api.ipynb)
-- To further explore the capabilities of Guardrails for Amazon Bedrock, refer [Responsible AI and Guardrails](../../responsible_ai/).
+Now that we have seen how to use Amazon Bedrock Guardrails, you can learn
+- How to use [Amazon Bedrock Knowledge Bases](03_knowledgebases_api.md)
+- How to use [Amazon Bedrock Agents](04_agents_api.md)
+- To further explore the capabilities of Amazon Bedrock Guardrails, refer [Responsible AI and Guardrails](../../responsible_ai/).
 
 <h2> Clean up (optional) </h2>
 

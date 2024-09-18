@@ -1,6 +1,17 @@
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
+
 <h2> How to work with Amazon Bedrock APIs - Getting Started </h2>
 
-*Note: This notebook has been adapted from the [Getting Started with Amazon Bedrock](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/introduction-to-bedrock/create_your_first_bedrock_application/GettingStartedWithAmazonBedrock.ipynb)*
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/01_invoke_api.ipynb){:target="_blank"}"
+
+
+*Note: This notebook has been adapted from the [Getting Started with Amazon Bedrock](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/create_your_first_bedrock_application/GettingStartedWithAmazonBedrock.ipynb)*
 
 <h2>Overview</h2>
 
@@ -473,9 +484,9 @@ print(response_body["result"])
 print(f'{response_body.get("artifacts")[0].get("base64")[0:80]}...')
 ```
 
-!!! note
+⚠️ Note ⚠️
     
-    The output is a [base64 encoded](https://docs.python.org/3/library/base64.html) string of the image data. You can use any image processing library (such as [Pillow](https://pillow.readthedocs.io/en/stable/)) to decode the image as in the example below:
+The output is a [base64 encoded](https://docs.python.org/3/library/base64.html) string of the image data. You can use any image processing library (such as [Pillow](https://pillow.readthedocs.io/en/stable/)) to decode the image as in the example below:
 
 
 ```python
@@ -597,7 +608,7 @@ print(response_body.get("completion"))
 
 Now that we have seen how to use Amazon Bedrock APIs, you can learn
 
-- How to use [Guardrails for Amazon Bedrock](02_guardrails_api.ipynb)
-- How to use [Knowledge Bases for Amazon Bedrock](03_knowledgebases_api.ipynb)
-- How to use [Agents for Amazon Bedrock](04_agents_api.ipynb)
+- How to use [Amazon Bedrock Guardrails](02_guardrails_api.md)
+- How to use [Amazon Bedrock Knowledge Bases](03_knowledgebases_api.md)
+- How to use [Amazon Bedrock Agents](04_agents_api.md)
 

@@ -1,4 +1,13 @@
-<h1> How to work with Converse API in Amazon Bedrock - Getting Started. </h1>
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
+
+<h2> How to work with Converse API in Amazon Bedrock - Getting Started. </h2>
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/01_converse_api.ipynb){:target="_blank"}"
 
 *Note: This notebook has been adapted from the [Getting started with the Converse API in Amazon Bedrock](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/introduction-to-bedrock/Getting_started_with_Converse_API.ipynb)*
 
@@ -72,7 +81,7 @@ MODEL_IDS = [
 
 ```
 
-<h2>Code with comments</h2>
+<h2>Notebook/Code with comments</h2>
 
 We're now ready to setup our Converse API action in Bedrock. Note that we use the same syntax for any model, including the messages-formatted prompts, and the inference parameters. Also note that we read the output in the same way independently of the model used.
 
@@ -482,7 +491,7 @@ else:
 Now that we have seen the Converse API allow us to easily run the invocations with the same syntax across all the models, you can learn
 
 
-- How to do [function calling with the Converse API](../../agents/function-calling/function_calling_with_converse/function_calling_with_converse.ipynb)
-- How to work with [Converse API and Guardrails for Amazon Bedrock](../../responsible_ai/)
+- How to do [function calling with the Converse API](../../agents/function-calling/function_calling_with_converse/function_calling_with_converse.md)
+- How to work with [Converse API and Amazon Bedrock Guardrails](../../responsible_ai/)
 
 

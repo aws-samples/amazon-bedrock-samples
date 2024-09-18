@@ -1,20 +1,29 @@
-<h1> How to work with Knowledge Bases for Amazon Bedrock </h1>
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
 
-*Note: This notebook has been adapted from the [Chat with your document using Knowledge Bases for Amazon Bedrock - RetrieveAndGenerate API](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/knowledge-bases/features-examples/00-zero-setup-chat-with-your-document/chat_with_document_kb.ipynb)*
+<h2> How to work with Amazon Bedrock Knowledge Bases</h2>
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/03_knowledgebases_api.ipynb){:target="_blank"}"
+
+*Note: This notebook has been adapted from the [Chat with your document using Knowledge Bases for Amazon Bedrock - RetrieveAndGenerate API](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/00-zero-setup-chat-with-your-document/chat_with_document_kb.ipynb)*
 
 <h2> Overview </h2>
 
-This notebook demonstrates using Knowledge Bases for Amazon Bedrock. It takes a use case of `chat with your document` capability, where you can securely ask questions on a single document, without the overhead of setting up a vector database or ingesting data, making it effortless for businesses to use their enterprise data. You only need to provide a relevant data file as input and choose your FM to get started.
+This notebook demonstrates using Amazon Bedrock Knowledge Bases. It takes a use case of `chat with your document` capability, where you can securely ask questions on a single document, without the overhead of setting up a vector database or ingesting data, making it effortless for businesses to use their enterprise data. You only need to provide a relevant data file as input and choose your FM to get started.
 
 For details around use cases and benefits, please refer to this [blogpost](#https://aws.amazon.com/blogs/machine-learning/knowledge-bases-in-amazon-bedrock-now-simplifies-asking-questions-on-a-single-document/).
 
 <h2> Context </h2>
 
-[Knowledge Bases for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) allows you to integrate proprietary information into your generative-AI applications. Using the Retrieval Augment Generation (RAG) technique, a knowledge base searches your data to find the most useful information and then uses it to answer natural language questions. Once set up, you can take advantage of a knowledge base in the following ways:
+[Amazon Bedrock Knowledge Bases](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) allows you to integrate proprietary information into your generative-AI applications. Using the Retrieval Augment Generation (RAG) technique, a knowledge base searches your data to find the most useful information and then uses it to answer natural language questions. Once set up, you can take advantage of a knowledge base in the following ways:
 
 - Configure your RAG application to use the [RetrieveAndGenerate](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent-runtime_RetrieveAndGenerate.html
 ) API to query your knowledge base and generate responses from the information it retrieves. You can also call the [Retrieve API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent-runtime_Retrieve.html) to query your knowledge base with information retrieved directly from the knowledge base.
-- Associate your knowledge base with an agent (for more information, see [Agents for Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html)) to add RAG capability to the agent by helping it reason through the steps it can take to help end users.
+- Associate your knowledge base with an agent (for more information, see [Amazon Bedrock Agents](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html)) to add RAG capability to the agent by helping it reason through the steps it can take to help end users.
 - A knowledge base can be used not only to answer user queries, and analyze documents, but also to augment prompts provided to foundation models by providing context to the prompt. When answering user queries, the knowledge base retains conversation context. The knowledge base also grounds answers in citations so that users can find further information by looking up the exact text that a response is based on and also check that the response makes sense and is factually correct.
 
 <h3> Architecture </h3>
@@ -23,7 +32,7 @@ For details around use cases and benefits, please refer to this [blogpost](#http
 
 <h2> Prerequisites </h2>
 
-- Amazon Bedrock basic setup has been completed, see `Prerequisites` section under [Amazon Bedrock APIs - Getting Started](01_invoke_api.ipynb)
+- Amazon Bedrock basic setup has been completed, see `Prerequisites` section under [Amazon Bedrock APIs - Getting Started](01_invoke_api.md)
 - Amazon Bedrock access to below given Foundation Model used in this notebook.
 
 | Provider Name | Foundation Model Name | Model Id |
@@ -80,7 +89,7 @@ model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
 
 For data, you can either upload the document you want to chat with or point to the Amazon Simple Storage Service (Amazon S3) bucket location that contains your file. We provide you with both options in the notebook. However in both cases, the supported file formats are PDF, MD (Markdown), TXT, DOCX, HTML, CSV, XLS, and XLSX. Make that the file size does not exceed 10 MB and contains no more than 20K tokens. A token is considered to be a unit of text, such as a word, sub-word, number, or symbol, that is processed as a single entity. Due to the preset ingestion token limit, it is recommended to use a file under 10MB. However, a text-heavy file, that is much smaller than 10MB, can potentially breach the token limit.
 
-<h2>Code with comments</h2>
+<h2>Notebook/Code with comments</h2>
 
 <h3> Option 1 - Upload the document (default) </h3>
 
@@ -201,8 +210,8 @@ pp.pprint(contexts)
 
 <h2> Next steps </h2>
 
-Now that we have seen how to use Knowledge Bases for Amazon Bedrock, you can learn
+Now that we have seen how to use Amazon Bedrock Knowledge Bases, you can learn
 
-- How to use [Agents for Amazon Bedrock](04_agents_api.ipynb)
-- How to use [Guardrails for Amazon Bedrock](02_guardrails_api.ipynb)
-- To further explore the capabilities of Knowledge Bases for Amazon Bedrock refer [RAG and Knowledge Bases](../../rag/knowledge-bases/)
+- How to use [Amazon Bedrock Agents](04_agents_api.md)
+- How to use [Amazon Bedrock Guardrails](02_guardrails_api.md)
+- To further explore the capabilities of Amazon Bedrock Knowledge Bases, refer [RAG and Knowledge Bases](../../rag/knowledge-bases/)
