@@ -14,15 +14,14 @@ Cost Explorer Agent powered by Amazon Bedrock Agent help users understand and op
 
 ## Prerequisites
 
-Before you deploy this sample, make sure you have the following:
+Before deployment, ensure you have:
 
-### Required
-- An [AWS account](https://aws.amazon.com/free/)
-- [AWS CLI](https://aws.amazon.com/cli/) installed and configured
-- Access to [Amazon Bedrock](https://aws.amazon.com/bedrock/)
-- [Requested access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html) to the desired Claude model
-- [Python 3.12](https://www.python.org/downloads/) installed
-- [pip](https://pip.pypa.io/en/stable/installation/) package manager
+1. An AWS account with:
+   - [AWS CLI](https://aws.amazon.com/cli/) installed and configured
+   - [Access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html) to Amazon Bedrock (with approved access to the desired Claude model)
+   - API Gateway CloudWatch Logging Role set up (if not already configured - [AWS documentation](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html))
+
+2. [Python 3.12](https://www.python.org/downloads/) with pip package manager installed
 
 ### Optional (for Slack integration)
 - A [Slack workspace](https://slack.com/) where you can create a new app
