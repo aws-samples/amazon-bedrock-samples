@@ -1,4 +1,11 @@
-# How to work with Return of Control (ROC)
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
+
+<h2>How to work with Return of Control (ROC)</h2>
 
 <h2>Overview</h2>
 
@@ -27,7 +34,7 @@ Ensure you enable access to Amazon Bedrock models through the Model Access secti
 !pip install langchain-aws --upgrade --quiet
 ```
 
-### Generating the dataset
+<h3> Generating the dataset</h3>
 
 We generate the dataset that will be used throughout this notebook. The data structured under the `employees`, `vacations` and `planned_vacations` tables. Our functions will interact with this data. We store it locally.
 
@@ -87,7 +94,7 @@ conn.commit()
 conn.close()
 ```
 
-### Function calling with the Converse API 
+<h3> Function calling with the Converse API </h3>
 Although this example leverages Claude 3 Sonnet, Bedrock supports many other models. The full list of models and supported features can be found [here](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html). The models are invoked via `bedrock-runtime`.
 
 
@@ -112,7 +119,7 @@ bedrock = boto3.client(
 
 <h2>Notebook/Code with comments</h2>
 
-### Tool as Pydantic definition
+<h3> Tool as Pydantic definition</h3>
 
 We rely on a Pydantic-based helper function to translate the tool configuration in a way that ensures we avoid potential mistakes when defining our tool config schema in a JSON dictionary.
 
@@ -329,65 +336,6 @@ print(f"Output:\n{output['output']}\n")
 print(f"Messages:\n{json.dumps(messages, indent=2, ensure_ascii=False)}\n")
 ```
 
-    Invoking model...
-    {'ResponseMetadata': {'RequestId': '930822da-fb2c-4e29-a318-b58abfe22ea9', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:28 GMT', 'content-type': 'application/json', 'content-length': '439', 'connection': 'keep-alive', 'x-amzn-requestid': '930822da-fb2c-4e29-a318-b58abfe22ea9'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'Here is how to reserve a vacation for employee ID 1 from June 3, 2024 to June 4, 2024:'}, {'toolUse': {'toolUseId': 'tooluse_utPMaGljQ8ev6BVSwC1JNg', 'name': 'reserve_vacation_time', 'input': {'employee_id': '1', 'start_date': '2024-06-03', 'end_date': '2024-06-04'}}}]}}, 'stopReason': 'tool_use', 'usage': {'inputTokens': 506, 'outputTokens': 137, 'totalTokens': 643}, 'metrics': {'latencyMs': 3426}}
-    Got output from model...
-    Function calling - Calling tool...
-    Vacation booked successfully for employee with ID 1 from 2024-06-03 00:00:00 to 2024-06-04 00:00:00.
-    Function calling - Got tool response...
-    Function calling - Calling model with result...
-    {'ResponseMetadata': {'RequestId': '23104b78-0225-4bac-a330-890915a57326', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:29 GMT', 'content-type': 'application/json', 'content-length': '221', 'connection': 'keep-alive', 'x-amzn-requestid': '23104b78-0225-4bac-a330-890915a57326'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'Let me know if you need anything else!'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 696, 'outputTokens': 13, 'totalTokens': 709}, 'metrics': {'latencyMs': 637}}
-    Output:
-    {'message': {'role': 'assistant', 'content': [{'text': 'Let me know if you need anything else!'}]}}
-    
-    Messages:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "reserve a vacation with employee ID 1 from the 3rd of June 2024 to the 4th of June 2024."
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "Here is how to reserve a vacation for employee ID 1 from June 3, 2024 to June 4, 2024:"
-          },
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_utPMaGljQ8ev6BVSwC1JNg",
-              "name": "reserve_vacation_time",
-              "input": {
-                "employee_id": "1",
-                "start_date": "2024-06-03",
-                "end_date": "2024-06-04"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "toolResult": {
-              "toolUseId": "tooluse_utPMaGljQ8ev6BVSwC1JNg",
-              "content": [
-                {
-                  "text": "\"Vacation booked successfully for employee with ID 1 from 2024-06-03 00:00:00 to 2024-06-04 00:00:00.\""
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-    
-
-
 However, given the previous system prompt, the model quickly defaults to random `start_date` and `end_date` when those parameters are not supplied. This may not be expected behaviour for many use cases.
 
 
@@ -400,66 +348,7 @@ print(f"Output:\n{output['output']}\n")
 print(f"Messages:\n{json.dumps(messages, indent=2, ensure_ascii=False)}\n")
 ```
 
-    Invoking model...
-    {'ResponseMetadata': {'RequestId': '76fb7203-958d-4717-8e57-1ee66cba80ba', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:36 GMT', 'content-type': 'application/json', 'content-length': '476', 'connection': 'keep-alive', 'x-amzn-requestid': '76fb7203-958d-4717-8e57-1ee66cba80ba'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'To reserve a vacation for the employee with ID 1, we can use the `reserve_vacation_time` tool with the required parameters:'}, {'toolUse': {'toolUseId': 'tooluse_G_s3OV7US1qU6vHm5guAeQ', 'name': 'reserve_vacation_time', 'input': {'employee_id': '1', 'start_date': '2023-06-01', 'end_date': '2023-06-14'}}}]}}, 'stopReason': 'tool_use', 'usage': {'inputTokens': 483, 'outputTokens': 135, 'totalTokens': 618}, 'metrics': {'latencyMs': 7032}}
-    Got output from model...
-    Function calling - Calling tool...
-    Employee with ID 1 does not have enough vacation days available for the requested period.
-    Function calling - Got tool response...
-    Function calling - Calling model with result...
-    {'ResponseMetadata': {'RequestId': '46bb0754-2daf-47f3-a4a7-c45099028d0e', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:37 GMT', 'content-type': 'application/json', 'content-length': '378', 'connection': 'keep-alive', 'x-amzn-requestid': '46bb0754-2daf-47f3-a4a7-c45099028d0e'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'Let me check how many vacation days the employee has available first:'}, {'toolUse': {'toolUseId': 'tooluse_2hT2J7qDTXGNcU4t-sXrlw', 'name': 'get_available_vacations_days', 'input': {'employee_id': '1'}}}]}}, 'stopReason': 'tool_use', 'usage': {'inputTokens': 647, 'outputTokens': 75, 'totalTokens': 722}, 'metrics': {'latencyMs': 1647}}
-    Output:
-    {'message': {'role': 'assistant', 'content': [{'text': 'Let me check how many vacation days the employee has available first:'}, {'toolUse': {'toolUseId': 'tooluse_2hT2J7qDTXGNcU4t-sXrlw', 'name': 'get_available_vacations_days', 'input': {'employee_id': '1'}}}]}}
-    
-    Messages:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "reserve a vacation with employee ID 1"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "To reserve a vacation for the employee with ID 1, we can use the `reserve_vacation_time` tool with the required parameters:"
-          },
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_G_s3OV7US1qU6vHm5guAeQ",
-              "name": "reserve_vacation_time",
-              "input": {
-                "employee_id": "1",
-                "start_date": "2023-06-01",
-                "end_date": "2023-06-14"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "toolResult": {
-              "toolUseId": "tooluse_G_s3OV7US1qU6vHm5guAeQ",
-              "content": [
-                {
-                  "text": "\"Employee with ID 1 does not have enough vacation days available for the requested period.\""
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-    
-
-
-### Modifying the solution to allow the model to ask for more information
+<h3> Modifying the solution to allow the model to ask for more information</h3>
 
 Return of Control is primairly implemented in the model's system prompt. As we will see later in this notebook, both Amazon Bedrock and popular prompt orchestration libraries like Langchain offer abstractions to make this task easier. The target model behaviour in our case can be described by the following diagram:
 
@@ -492,35 +381,6 @@ print(f"Output:\n{output['output']}\n")
 print(f"Messages:\n{json.dumps(messages, indent=2, ensure_ascii=False)}\n")
 ```
 
-    Invoking model...
-    {'ResponseMetadata': {'RequestId': '6eec9cfa-3f09-4c20-bf22-28989628a276', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:40 GMT', 'content-type': 'application/json', 'content-length': '528', 'connection': 'keep-alive', 'x-amzn-requestid': '6eec9cfa-3f09-4c20-bf22-28989628a276'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'To reserve a vacation for an employee, I need the following information:\n\n- Employee ID (you provided this as 1)\n- Start date for the vacation\n- End date for the vacation\n\nPlease provide the start date and end date for the vacation you want to reserve, and I can then invoke the `reserve_vacation_time` tool with the complete information.'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 505, 'outputTokens': 79, 'totalTokens': 584}, 'metrics': {'latencyMs': 2415}}
-    Got output from model...
-    {'ResponseMetadata': {'RequestId': '6eec9cfa-3f09-4c20-bf22-28989628a276', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:40 GMT', 'content-type': 'application/json', 'content-length': '528', 'connection': 'keep-alive', 'x-amzn-requestid': '6eec9cfa-3f09-4c20-bf22-28989628a276'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'To reserve a vacation for an employee, I need the following information:\n\n- Employee ID (you provided this as 1)\n- Start date for the vacation\n- End date for the vacation\n\nPlease provide the start date and end date for the vacation you want to reserve, and I can then invoke the `reserve_vacation_time` tool with the complete information.'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 505, 'outputTokens': 79, 'totalTokens': 584}, 'metrics': {'latencyMs': 2415}}
-    Output:
-    {'message': {'role': 'assistant', 'content': [{'text': 'To reserve a vacation for an employee, I need the following information:\n\n- Employee ID (you provided this as 1)\n- Start date for the vacation\n- End date for the vacation\n\nPlease provide the start date and end date for the vacation you want to reserve, and I can then invoke the `reserve_vacation_time` tool with the complete information.'}]}}
-    
-    Messages:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "reserve a vacation with employee ID 1"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "To reserve a vacation for an employee, I need the following information:\n\n- Employee ID (you provided this as 1)\n- Start date for the vacation\n- End date for the vacation\n\nPlease provide the start date and end date for the vacation you want to reserve, and I can then invoke the `reserve_vacation_time` tool with the complete information."
-          }
-        ]
-      }
-    ]
-    
-
-
 If we supply the additional parameters, the model is now able to call the tool and fulfill the intent.
 
 
@@ -534,66 +394,7 @@ print(f"Output:\n{output['output']}\n")
 print(f"Messages:\n{json.dumps(messages, indent=2, ensure_ascii=False)}\n")
 ```
 
-    Invoking model...
-    {'ResponseMetadata': {'RequestId': 'c59ed7c7-8e37-48e5-b5c9-ba17d414e2d5', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:43 GMT', 'content-type': 'application/json', 'content-length': '414', 'connection': 'keep-alive', 'x-amzn-requestid': 'c59ed7c7-8e37-48e5-b5c9-ba17d414e2d5'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'Okay, let me reserve your vacation with the provided details:'}, {'toolUse': {'toolUseId': 'tooluse_Pp6ThIoESaq3WS3hgE_N9Q', 'name': 'reserve_vacation_time', 'input': {'employee_id': '1', 'start_date': '2024-06-03', 'end_date': '2024-06-04'}}}]}}, 'stopReason': 'tool_use', 'usage': {'inputTokens': 528, 'outputTokens': 119, 'totalTokens': 647}, 'metrics': {'latencyMs': 2817}}
-    Got output from model...
-    Function calling - Calling tool...
-    Vacation booked successfully for employee with ID 1 from 2024-06-03 00:00:00 to 2024-06-04 00:00:00.
-    Function calling - Got tool response...
-    Function calling - Calling model with result...
-    {'ResponseMetadata': {'RequestId': '95dd5213-8b90-4ec8-b162-481c9df619dc', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:43 GMT', 'content-type': 'application/json', 'content-length': '171', 'connection': 'keep-alive', 'x-amzn-requestid': '95dd5213-8b90-4ec8-b162-481c9df619dc'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': []}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 700, 'outputTokens': 3, 'totalTokens': 703}, 'metrics': {'latencyMs': 590}}
-    Output:
-    {'message': {'role': 'assistant', 'content': []}}
-    
-    Messages:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "reserve a vacation with employee ID 1 from the 3rd of June 2024 to the 4th of June 2024."
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "Okay, let me reserve your vacation with the provided details:"
-          },
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_Pp6ThIoESaq3WS3hgE_N9Q",
-              "name": "reserve_vacation_time",
-              "input": {
-                "employee_id": "1",
-                "start_date": "2024-06-03",
-                "end_date": "2024-06-04"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "toolResult": {
-              "toolUseId": "tooluse_Pp6ThIoESaq3WS3hgE_N9Q",
-              "content": [
-                {
-                  "text": "\"Vacation booked successfully for employee with ID 1 from 2024-06-03 00:00:00 to 2024-06-04 00:00:00.\""
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-    
-
-
-### Increasing flexibility with Amazon Bedrock Agents
+<h3>Increasing flexibility with Amazon Bedrock Agents</h3>
 
 Similar to the simple function calling model we built above, an agent helps end-users complete actions based on requester input. Agents orchestrate interactions between the model, data sources, software applications, and user conversations. Bedrock Agent can have access to **Action Groups** or **Knowledge Bases**. The later is differentiated from the former by managing the query over a large set of documents rather than calling an API more generally.
 
@@ -623,7 +424,7 @@ agent_bedrock_allow_policy_name = f"{agent_name}-ba-{suffix}"
 agent_role_name = f'AmazonBedrockExecutionRoleForAgents_{agent_name}'
 ```
 
-#### Granting service role access 
+<h4> Granting service role access </h4>
 
 Next, we attach a resource-based policy to allow Bedrock to take actions on our behalf. The following policy allows access to Bedrock's `InvokeModel` API.
 
@@ -685,20 +486,7 @@ iam_client.attach_role_policy(
 )
 ```
 
-
-
-
-    {'ResponseMetadata': {'RequestId': '3d77c301-93fc-44d2-a5b7-193c7709d5aa',
-      'HTTPStatusCode': 200,
-      'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:16:53 GMT',
-       'x-amzn-requestid': '3d77c301-93fc-44d2-a5b7-193c7709d5aa',
-       'content-type': 'text/xml',
-       'content-length': '212'},
-      'RetryAttempts': 0}}
-
-
-
-#### Creating the agent
+<h4>Creating the agent</h4>
 Once the IAM role is created, we create a new agent. To do so we use Bedrock's `create_agent`. It requires an agent name, the underlying foundation model's identifier and an instruction. You can also provide an agent description. 
 
 The `instruction` provides natural language describing what the agent should do and how it should interact with users. We tailor it to reflect expected behaviour and role. The `description` is an optional parameter used to further describe what the agent does. It does not impact behaviour. It is also not exposed to the end-user prompting the agent.
@@ -735,7 +523,7 @@ We store the agent id in a local variable to use it on the next steps
 agent_id = response['agent']['agentId']
 ```
 
-#### Creating the agent Action Group with ROC
+<h4>Creating the agent Action Group with ROC</h4>
 We now create an action group, so the agent can call external functions, using [`create_agent_action_group`](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-agent/client/create_agent_action_group.html). We use `DRAFT` as the agent version since we have not created an agent version or alias. To inform the agent about the action group's intended purpose, we provide an action group description.
 
 In this example, we provide the Action Group functionality using a `functionSchema`. Alternatively, you can provide an `APISchema` containing the details about the OpenAPI schema.
@@ -829,7 +617,7 @@ response = bedrock_agent_client.prepare_agent(
 )
 ```
 
-#### Invoke Agent
+<h4>Invoke Agent</h4>
 
 Now that we have created the agent, we use the `bedrock-agent-runtime` client to invoke it and perform some tasks with `invoke_agent`. We ask for the amount of vacation time available for a given employee, which triggers a call to the `get_available_vacations_days` tool. With ROC, the agent does not forward the request to a Lambda function for fulfillment, but instead returns the result to the requester.
 
@@ -877,11 +665,6 @@ for event in event_stream:
 
 ```
 
-    (2,)
-    Available vacation days for employed_id 1: 2
-    Tool Result: 2
-
-
 ROC handles input text that cannot be resolved with available functions and prompts the requester for more information
 
 
@@ -924,23 +707,13 @@ When requesting information that has nothing to do with the agent and its availa
 simple_agent_roc_invoke("who is the president of the United States?", agent_id, agent_alias_id, session_id)
 ```
 
-    Final answer ->
-    Sorry, I cannot answer questions about who the president is or provide information outside of managing vacation time and HR policies for employees. My role is to assist with understanding HR policies and managing vacation time using the available functions.
-
-
-When requesting information within the bounds of its role that should be fulfilled with the `reserve_vacation_time` tool, the model correctly identifies it should use the tool. However, the model is not supplied values for `startDate` and `endDate`, which are required by the tool. Hence, it continues by prompting the requester for a start date. Given the nature of the request, this will let it infer the end date.
-
 
 ```python
 # prompt to reserve a vacation for a given employee. Incomplete request to be refused.
 simple_agent_roc_invoke("reserve 2 days off for employee 2", agent_id, agent_alias_id, session_id)
 ```
 
-    Final answer ->
-    Okay, to reserve 2 days off for employee 2, I need you to provide the start and end dates for the vacation time. What are the start and end dates you want me to reserve for employee 2's 2 day vacation?
-
-
-#### Replicating the results in Langchain
+<h4>Replicating the results in Langchain</h4>
 
 We now replicate the results described above using Langchain.
 
@@ -1084,16 +857,6 @@ ai_msg = llm_with_tools.invoke(messages)
 ai_msg
 ```
 
-    bedrock_messages: [{'role': 'user', 'content': [{'text': 'who is the president of the United States?'}]}]
-
-
-
-
-
-    AIMessage(content='I do not have any tools related to identifying the president of the United States. As an AI assistant without direct access to updated information about political offices, I cannot definitively answer who the current president is.', response_metadata={'ResponseMetadata': {'RequestId': '7d29bf0d-f3a8-42cc-a973-13a8c1530b82', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:18:25 GMT', 'content-type': 'application/json', 'content-length': '414', 'connection': 'keep-alive', 'x-amzn-requestid': '7d29bf0d-f3a8-42cc-a973-13a8c1530b82'}, 'RetryAttempts': 0}, 'stopReason': 'end_turn', 'metrics': {'latencyMs': 2022}}, id='run-4d318696-0e37-4968-8c4e-f0b831c9ba71-0', usage_metadata={'input_tokens': 429, 'output_tokens': 44, 'total_tokens': 473})
-
-
-
 When prompting the model with a relevant question where the model has all the necessary information, it returns an `AIMessage` with `stopReason` set to `tool_use` and valid values for the required parameters. In this case, `employee_id` is set to 2 for the `get_available_vacations_days` tool.
 
 
@@ -1108,16 +871,6 @@ ai_msg = llm_with_tools.invoke(messages)
 ai_msg
 ```
 
-    bedrock_messages: [{'role': 'user', 'content': [{'text': 'how many vacation days left for employee 2'}]}]
-
-
-
-
-
-    AIMessage(content=[{'type': 'text', 'text': 'Okay, let me check your available vacation days:'}, {'type': 'tool_use', 'name': 'get_available_vacations_days', 'input': {'employee_id': '2'}, 'id': 'tooluse_jHiq7yf6Tm6JJioaWTXqfg'}], response_metadata={'ResponseMetadata': {'RequestId': 'ed03d27b-007d-479f-9fc0-0f4c7639c533', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 21:55:01 GMT', 'content-type': 'application/json', 'content-length': '357', 'connection': 'keep-alive', 'x-amzn-requestid': 'ed03d27b-007d-479f-9fc0-0f4c7639c533'}, 'RetryAttempts': 1}, 'stopReason': 'tool_use', 'metrics': {'latencyMs': 1123}}, id='run-36fe475b-ceb6-46a9-9188-e329697ca228-0', tool_calls=[{'name': 'get_available_vacations_days', 'args': {'employee_id': '2'}, 'id': 'tooluse_jHiq7yf6Tm6JJioaWTXqfg', 'type': 'tool_call'}], usage_metadata={'input_tokens': 425, 'output_tokens': 72, 'total_tokens': 497})
-
-
-
 When prompting the model with a request that does not have all the relevant parameters required to properly call the tool, the model correctly refuses to answer and instead asks for more information. The model also sets the missing values to `MISSING` as indicated in the system prompt.
 
 
@@ -1131,16 +884,6 @@ messages = [
 ai_msg = llm_with_tools.invoke(messages)
 ai_msg
 ```
-
-    bedrock_messages: [{'role': 'user', 'content': [{'text': 'reserve 2 days off for employee 2'}]}]
-
-
-
-
-
-    AIMessage(content=[{'type': 'text', 'text': 'Okay, to reserve vacation time for an employee I will need the following parameters:'}, {'type': 'tool_use', 'name': 'reserve_vacation_time', 'input': {'employee_id': '2', 'start_date': 'MISSING', 'end_date': 'MISSING'}, 'id': 'tooluse_uao4k_r3TYWzYFcrwtK2UA'}], response_metadata={'ResponseMetadata': {'RequestId': '059f540f-49a6-4065-bfee-d49b2aa5d37c', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 14 Aug 2024 17:18:29 GMT', 'content-type': 'application/json', 'content-length': '431', 'connection': 'keep-alive', 'x-amzn-requestid': '059f540f-49a6-4065-bfee-d49b2aa5d37c'}, 'RetryAttempts': 0}, 'stopReason': 'tool_use', 'metrics': {'latencyMs': 2230}}, id='run-c2336a51-1b50-4d3a-9d21-10d21fc886af-0', tool_calls=[{'name': 'reserve_vacation_time', 'args': {'employee_id': '2', 'start_date': 'MISSING', 'end_date': 'MISSING'}, 'id': 'tooluse_uao4k_r3TYWzYFcrwtK2UA', 'type': 'tool_call'}], usage_metadata={'input_tokens': 430, 'output_tokens': 115, 'total_tokens': 545})
-
-
 
 In this notebook, we covered the basics of return of control (ROC) with Claude Sonnet using Bedrock models, Agents on Bedrock and the `ChatBedrock` on Langchain.
 

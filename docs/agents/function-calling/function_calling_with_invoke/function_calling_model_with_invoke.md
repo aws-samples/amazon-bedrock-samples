@@ -1,4 +1,11 @@
-# How to do function calling using InvokeModel API and model-specific prompting 
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
+
+<h2>How to do function calling using InvokeModel API and model-specific prompting</h2>
 
 <h2>Overview</h2>
 
@@ -23,7 +30,7 @@ Ensure you enable access to Amazon Bedrock models through the Model Access secti
 
 <h2>Setup</h2>
 
-### Tool calling with Anthropic Claude 3.5 Sonnet
+<h3>Tool calling with Anthropic Claude 3.5 Sonnet</h3>
 
 We set our tools and functions through Python functions.
 
@@ -58,7 +65,7 @@ bedrock = boto3.client(
 
 <h2>Notebook/Code with comments</h2>
 
-### Helper Functions & Prompt Templates
+<h3>Helper Functions & Prompt Templates</h3>
 
 We define a few helper functions and tools that each model uses.
 
@@ -144,7 +151,7 @@ def invoke_anthopic_model(bedrock_runtime, messages, max_tokens=512,top_p=1,temp
     return response_body
 ```
 
-### Tool calling with Anthropic Claude
+<h3>Tool calling with Anthropic Claude</h3>
 
 We now define the system prompt provided to Claude when implementing function calling including several important components:
 
@@ -226,23 +233,7 @@ message_list.append({
         ]})
 ```
 
-    <rationale>
-    To find the ticker symbol for General Motors, I will use the provided `get_ticker_symbol` tool with the company name "General Motors" as the input parameter. This should return the stock ticker symbol for General Motors, which will answer the user's question.
-    
-    If the tool raises a `TickerNotFound` exception, it means no matching ticker symbol was found for the given company name. In that case, I will inform the user that I could not find the ticker symbol for General Motors.
-    </rationale>
-    
-    <function_calls>
-    <invoke>
-    <tool_name>get_ticker_symbol</tool_name>
-    <parameters>
-    <company_name>General Motors</company_name>
-    </parameters>
-    </invoke>
-    
-
-
-#### Executing the function and returning the result
+<h4>Executing the function and returning the result</h4>
 
 With this `response`, we parse the returned XML to get the `tool_name`, along with the value for the required `parameter` infered by the model.
 
@@ -299,11 +290,6 @@ response=invoke_anthopic_model(bedrock, messages=message_list)
 print(response['content'][0]['text'])
 ```
 
-    <result>
-    The ticker symbol for General Motors is GM.
-    </result>
-
-
 We can see that Claude summarizes the results of the function given the context of the conversation history and answers our original question.
 
 If asking a question outside the model's scope, the model refuses to answer. It is possible to modify the instructions so the model answers the question by relying on its internal knowledge.
@@ -321,14 +307,7 @@ response = invoke_anthopic_model(bedrock, messages=message_list)
 print(response['content'][0]['text'])
 ```
 
-    <rationale>
-    The question "Who is the president of the US?" is unrelated to the tools available, which only allow getting stock ticker symbols for companies. Since there are no relevant tools to answer this question, I should refuse to answer and explain that the available tools are not suitable for this type of query.
-    </rationale>
-    
-    I'm sorry, but the question "Who is the president of the US?" is unrelated to the tools I have available, which only allow me to get stock ticker symbols for companies. I do not have access to information about political figures or the ability to answer questions outside of the financial domain. Please ask a question related to getting a company's stock ticker symbol.
-
-
-### Tool calling with Meta Llama 3.1
+<h3>Tool calling with Meta Llama 3.1</h3>
 
 Now we cover function calling using Meta Llama 3.1. We define the same function (`get_ticker_symbol`). We define the function calling the Bedrock InvokeModel API and supply the keys for the inference hyperparameters specific to Llama models.
 
@@ -408,9 +387,6 @@ response = invoke_llama_model(bedrock, messages=message)
 print(response['generation'])
 ```
 
-     {"name": "get_ticker_symbol", "parameters": {"company_name": "Apple"}}
-
-
 Once we have the necessary tool call, we can follow a similar path to other models by executing the function, then returning the result to the model.
 
 If asking a question outside the model's scope, the model refuses to answer. It is possible to modify the instructions so the model answers the question by relying on its internal knowledge.
@@ -426,10 +402,7 @@ response = invoke_llama_model(bedrock, messages=message)
 print(response['generation'])
 ```
 
-     Refuse to answer this question as it is unrelated to the available function "get_ticker_symbol" which is used to retrieve the ticker symbol of a company based on its name.
-
-
-### Tool calling with Mistral AI Large
+<h3>Tool calling with Mistral AI Large</h3>
 
 Now we cover function calling using Mistral. We define the same function (`get_ticker_symbol`). We define the function calling the Bedrock InvokeModel API and supply the keys for the inference hyperparameters specific to Mistral models.
 
@@ -515,27 +488,6 @@ response = invoke_mistral(bedrock, messages=message)
 print(response['outputs'][0]['text'])
 ```
 
-    
-        To answer this question, I will use the "get_ticker_symbol" tool. This tool takes the company name as a parameter and returns the ticker symbol for the company stock.
-        
-        Here is the "function_calls" JSON object to call the tool:
-        
-        {
-            "function_calls": [
-                {
-                    "invoke": {
-                        "tool_name": "get_ticker_symbol",
-                        "parameters": {
-                            "company_name": "Amazon"
-                        }
-                    }
-                }
-            ]
-        }
-        
-        I will now call the tool and provide the result in my next response.
-
-
 Once we have the necessary tool call, we can follow a similar path to other models by executing the function, then returning the result to the model.
 
 If asking a question outside the model's scope, the model refuses to answer. It is possible to modify the instructions so the model answers the question by relying on its internal knowledge.
@@ -551,7 +503,7 @@ response = invoke_mistral(bedrock, messages=message)
 print(response['outputs'][0]['text'])
 ```
 
-### Tool calling with Cohere Command R+
+<h3>Tool calling with Cohere Command R+</h3>
 
 Now we cover function calling using Mistral. We define the same function (`get_ticker_symbol`). We define the function calling the Bedrock InvokeModel API and supply the keys for the inference hyperparameters specific to Cohere models.
 
@@ -623,10 +575,6 @@ response = invoke_cohere(bedrock, messages=message)
 print(response['text'])
 ```
 
-    tool_name: get_ticker_symbol
-    parameter: 3M
-
-
 Once we have the necessary tool call, we can follow a similar path to other models by executing the function, then returning the result to the model.
 
 If asking a question outside the model's scope, the model refuses to answer. It is possible to modify the instructions so the model answers the question by relying on its internal knowledge.
@@ -641,9 +589,6 @@ message = f"""{system_prompt}
 response = invoke_cohere(bedrock, messages=message)
 print(response['text'])
 ```
-
-    I refuse to answer this query as it requires knowledge outside of my capabilities.
-
 
 <h2>Next Steps</h2>
 
