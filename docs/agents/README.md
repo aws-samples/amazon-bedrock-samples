@@ -1,12 +1,19 @@
-# Amazon Bedrock Samples 
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
+
+<h2>Amazon Bedrock Samples</h2>
 
 This repository contains pre-built examples to help customers get started with the Amazon Bedrock service.
 
-## Contents
+<h2>Contents</h2>
 
-- [Introduction to Agents](introduction-to-agents) - Learn the basics of a Generative AI agent.
-- [Function Calling](function-calling) - Getting Started with Funtion Calling for Generative AI Models hosted on Amazon Bedrock. 
-- [Bedrock Agents](agents-for-bedrock) - Getting started with Amazon Bedrock Agents.
+- [Introduction to Agents](https://github.com/aws-samples/amazon-bedrock-samples/agents/introduction-to-agents) - Learn the basics of a Generative AI agent.
+- [Function Calling](https://github.com/aws-samples/amazon-bedrock-samples/agents/function-calling) - Getting Started with Funtion Calling for Generative AI Models hosted on Amazon Bedrock. 
+- [Bedrock Agents](https://github.com/aws-samples/amazon-bedrock-samples/agents/agents-for-bedrock) - Getting started with Amazon Bedrock Agents.
 <!-- - 
 - [Bedrock Fine-tuning](bedrock-fine-tuning) - Fine-tune Bedrock models for your specific use case
 - [Custom Model Import](custom-models) - Import custom models into Bedrock
@@ -19,11 +26,11 @@ This repository contains pre-built examples to help customers get started with t
 - [Operational Tooling](ops-tooling) - Helpful samples to help operationalize your useage of Amazon Bedrock
 - [Multimodal](multimodal) - Working with multimodal data using Amazon Bedrock -->
 
-## Getting Started
+<h2>Getting Started</h2>
 
 To get started with the code examples, ensure you have access to [Amazon Bedrock](https://aws.amazon.com/bedrock/). Then clone this repo and navigate to one of the folders above. Detailed instructions are provided in each folder's README.
 
-### Enable AWS IAM permissions for Bedrock
+<h3>Enable AWS IAM permissions for Bedrock</h3>
 
 The AWS identity you assume from your environment (which is the [*Studio/notebook Execution Role*](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html) from SageMaker, or could be a role or IAM User for self-managed notebooks or other use-cases), must have sufficient [AWS IAM permissions](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html) to call the Amazon Bedrock service.
 
@@ -51,14 +58,14 @@ To grant Bedrock access to your identity, you can:
 
 For more information on the fine-grained action and resource permissions in Bedrock, check out the Bedrock Developer Guide.
 
-## Contributing
+<h2>Contributing</h2>
 
 We welcome community contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## Security
+<h2>Security</h2>
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
 
-## License
+<h2>License</h2>
 
 This library is licensed under the MIT-0 License. See the [LICENSE](LICENSE) file.

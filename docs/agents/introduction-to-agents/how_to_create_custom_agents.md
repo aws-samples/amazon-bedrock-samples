@@ -5,9 +5,12 @@
   }
 </style>
 
+
 <h2>How to create your own Custom Agents</h2>
 
-<a href="https://github.com/aws-samples/amazon-bedrock-samples/agents/build-your-own-agent/how_to_create_custom_agents.ipynb">Open in github</a>
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/agents/introduction-to-agents/how_to_create_custom_agents.ipynb){:target="_blank"}"
+
 
 <h2>Overview</h2>
 
@@ -21,17 +24,17 @@ Agents have access to different tools or functions that allow the LLM to interac
 
 In this tutorial, we will build a simple agent from scratch that can access a web search engine and a Python code executor. We will be able to ask questions, watch the agent call the search tool and the Python code executor tool, and have a conversation with it.
 
-<div class="alert alert-block alert-info">
-<b>Note:</b> This notebook has been tested in <strong>Mumbai (ap-south-1)</strong> in <strong>Python 3.10.14</strong>
-</div>
+
+!!! info "Note"
+
+    This notebook has been tested in 
+    **Mumbai (ap-south-1)** in **Python 3.10.14**
 
 <h2>Architecture</h2>
 
 Following is the Architecture Daigram,
 
-<img src="./assets/custom_agent.drawio.png" alt="Custom Agent Architecture" style="margin:auto">
-<!-- ![Custom Agent Architecture](./assets/custom_agent.drawio.png){align=center} -->
-<!-- **Custom Agent Architecture**: Architecture explainging how an agent works. -->
+![Custom Agent Architecture](./assets/custom_agent.drawio.png){align=center}
 
 When the user makes the query, the custom agent code receives it and then it orchestrates the interaction between the Foundational Model/LLM and its tools. These tools can be any custom code, Lambda Function, Database or even any Rest API hosted in the internet.
 
@@ -51,9 +54,11 @@ If running on SageMaker Studio, you should add the following managed policies to
 <li>AmazonBedrockFullAccess</li>
 </ul>
 
-<div class="alert alert-block alert-info">
-<b>Note:</b> Please make sure to enable `Anthropic Claude 3 Sonnet` model access in Amazon Bedrock Console, as the notebook will use Anthropic Claude 3 Sonnet model.
-</div>
+
+!!! info "Note"
+
+    Please make sure to enable `Anthropic Claude 3 Sonnet` model access in Amazon Bedrock Console, 
+    as the notebook will use Anthropic Claude 3 Sonnet model.
 
 
 ```python
@@ -169,15 +174,6 @@ data = call_function('web_search', {'query': query})
 
 print(f"Following is the output of web search: {data}")
 ```
-
-    Query for Web search: 
-    What is the capital of India
-    Following is the output of web search: {"title": "New Delhi | History, Population, Map, & Facts | Britannica", "href": "https://www.britannica.com/place/New-Delhi", "body": "New Delhi, national capital of India.It is situated in the north-central part of the country on the west bank of the Yamuna River, adjacent to and just south of Delhi city (Old Delhi) and within the Delhi national capital territory.. In December 1911 King George V of Britain decreed that the capital of British India would be moved from Calcutta (now Kolkata) to Delhi.Construction began in 1912 at a site about 3 miles (5 km) south of the Delhi city centre, and the new capital was formally ..."}
-    {"title": "New Delhi - Wikipedia", "href": "https://en.wikipedia.org/wiki/New_Delhi", "body": "New Delhi (/ \u02c8 nj u\u02d0 \u02c8 d \u025b. l i / \u24d8, [6] Hindi: [\u02c8n\u0259i\u02d0 \u02c8d\u026al\u02d0i\u02d0], ISO: Na\u012b Dill\u012b), is the capital of India and a part of the National Capital Territory of Delhi (NCT). New Delhi is the seat of all three branches of the Government of India, hosting the Rashtrapati Bhavan, Sansad Bhavan, and the Supreme Court.New Delhi is a municipality within the NCT, administered by the NDMC, which covers mostly Lutyens' Delhi and a few adjacent areas. The municipal area is part of a larger ..."}
-    {"title": "Delhi | History, Population, Map, & Facts | Britannica", "href": "https://www.britannica.com/place/Delhi", "body": "Delhi, city and national capital territory in north-central India. The city of Delhi actually consists of two components: Old Delhi, in the north, the historic city; and New Delhi, in the south, since 1947 the capital of India, built in the first part of the 20th century as the capital of British India."}
-    {"title": "What is the Capital of India? - WorldAtlas", "href": "https://www.worldatlas.com/articles/what-is-the-capital-of-india.html", "body": "The capital city or the National Capital Territory (NCT) of India is New Delhi. Delhi is divided into two parts; the Old Delhi and New Delhi. The Old Delhi was founded in 1639 while the New Delhi was established on December 15, 1911. New Delhi is located in the north-central part of India and is adjacent south of Delhi city."}
-    {"title": "What is the Capital of India? | Mappr", "href": "https://www.mappr.co/capital-cities/india/", "body": "As the capital city of India, the economy of New Delhi is heavily focused on service and government sector activities. The large, skilled English-speaking workforce in New Delhi has also attracted a number of multinational companies in the sectors of information technology, telecommunications, banking, hotels, tourism, and media."}
-
 
 Now that we have functions defined that are to be used as tools, we will next define the `toolConfig` in the format required by the Bedrock Converse API to let Agent know about the tools available to it.
 
@@ -397,37 +393,6 @@ output = researcher_agent.invoke("What is the GDP of India from 2009 to 2020")
 print(output)
 ```
 
-    Trial 1
-    Invoking LLM
-    Received message from the LLM
-    Function Calling - List of function calls : [{'toolUseId': 'tooluse_35IP2n6lS2GJaTg-7PDQkw', 'name': 'web_search', 'input': {'query': 'India GDP 2009 to 2020'}}]
-    Function calling - Calling Tool :web_search(**{'query': 'India GDP 2009 to 2020'})
-    Function calling - Got Tool Response: {"title": "India GDP 1960-2024 | MacroTrends", "href": "https://www.macrotrends.net/global-metrics/countries/IND/india/gdp-gross-domestic-product", "body": "India gdp for 2020 was $2,671.60B, a 5.78% decline from 2019. India gdp for 2019 was $2,835.61B, a 4.91% increase from 2018. GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products."}
-    {"title": "GDP growth (annual %) - India | Data", "href": "https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?locations=IN", "body": "GDP growth (annual %) - India. World Bank national accounts data, and OECD National Accounts data files. License : CC BY-4.0. Line Bar Map. Label."}
-    {"title": "GDP of India 1987-2029 | Statista", "href": "https://www.statista.com/statistics/263771/gross-domestic-product-gdp-in-india/", "body": "The statistic shows GDP in India from 1987 to 2023, with projections up until 2029. In 2023, GDP in India was at around 3.57 trillion U.S. dollars, and it is expected to reach six trillion by the ..."}
-    {"title": "India GDP Growth Rate 1960-2024 | Macrotrends", "href": "https://www.macrotrends.net/global-metrics/countries/IND/india/gdp-growth-rate", "body": "India gdp growth rate for 2021 was 9.05%, a 14.88% increase from 2020. India gdp growth rate for 2020 was -5.83%, a 9.7% decline from 2019. India gdp growth rate for 2019 was 3.87%, a 2.58% decline from 2018. Annual percentage growth rate of GDP at market prices based on constant local currency. Aggregates are based on constant 2010 U.S. dollars."}
-    {"title": "Handbook of Statistics on Indian Economy | Reserve Bank of India", "href": "https://rbi.org.in/scripts/AnnualPublications.aspx?head=Handbook+of+Statistics+on+Indian+Economy&fromdate=09/14/2021&todate=09/19/2021", "body": "Handbook of Statistics on the Indian Economy, 2020-21. (Note: To obtain the tables in Excel file format, please access the Real Time Handbook of Statistics on the Indian Economy) 6621 kb. Foreword. 179 kb. Contents."}
-    Function calling - Calling LLM with Tool Result
-    Function calling - Received message from the LLM
-    --------------------
-    The search results provide data on India's GDP from various sources for the years 2009 to 2020. Here are the key GDP figures I could find:
-    
-    2009: $1.364 trillion 
-    2010: $1.675 trillion
-    2011: $1.823 trillion
-    2012: $1.829 trillion 
-    2013: $1.857 trillion
-    2014: $2.039 trillion
-    2015: $2.104 trillion
-    2016: $2.263 trillion 
-    2017: $2.625 trillion
-    2018: $2.719 trillion
-    2019: $2.836 trillion
-    2020: $2.672 trillion (a 5.78% decline from 2019 due to COVID-19 pandemic)
-    
-    FINAL ANSWER: Based on the data from multiple sources, India's GDP increased from around $1.364 trillion in 2009 to $2.836 trillion in 2019, showing steady economic growth over the decade. However, in 2020 India's GDP declined by 5.78% to $2.672 trillion likely due to the impact of the COVID-19 pandemic.
-
-
 It is evident that the Agent was capable of invoking the `web_search` tool, gathering the required information, and summarizing it to provide an answer to our query.
 
 <h3>Testing Custom Agent with multiple tools</h3>
@@ -496,73 +461,11 @@ output = researcher_agent.invoke("What is the GDP of USA from 2009 to 2021")
 print(output)
 ```
 
-    Trial 1
-    Invoking LLM
-    Received message from the LLM
-    Function Calling - List of function calls : [{'toolUseId': 'tooluse_nR3d-dqeT2GGm9oKT7nFQA', 'name': 'web_search', 'input': {'query': 'US GDP from 2009 to 2021'}}]
-    Function calling - Calling Tool :web_search(**{'query': 'US GDP from 2009 to 2021'})
-    Function calling - Got Tool Response: {"title": "U.S. GDP 1960-2024 | MacroTrends", "href": "https://www.macrotrends.net/global-metrics/countries/USA/united-states/gdp-gross-domestic-product", "body": "U.S. gdp for 2021 was $23,315.08B, a 10.71% increase from 2020. U.S. gdp for 2020 was $21,060.47B, a 1.5% decline from 2019. U.S. gdp for 2019 was $21,380.98B, a 4.13% increase from 2018. GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included ..."}
-    {"title": "United States GDP 1990-2023 | Statista", "href": "https://www.statista.com/statistics/188105/annual-gdp-of-the-united-states-since-1990/", "body": "U.S. annual GDP 1990-2023. Published by Statista Research Department , Jul 5, 2024. In 2023, the U.S. GDP increased from the previous year to about 27.36 trillion U.S. dollars. This increase in ..."}
-    {"title": "US GDP over time - USAFacts", "href": "https://usafacts.org/data/topics/economy/economic-indicators/gdp/gross-domestic-product/", "body": "There was a $22.996 trillion GDP in the US in 2021, an increase of 10% or $2.1 trillion from 2020. Gross domestic product (GDP) is the value of all goods and services produced in the US. This number is used to measure the health of the economy by observing when GDP is growing or shrinking. The Bureau of Economic Analysis (BEA) reports GDP both ..."}
-    {"title": "U.S. GDP by Year, Compared to Recessions and Events - The Balance", "href": "https://www.thebalancemoney.com/us-gdp-by-year-3305543", "body": "U.S. gross domestic product (GDP) by year is a good overview of economic growth in the United States. The table below presents the nation's GDP for each year since 1929, compared to major economic events. The table begins with the stock market crash of 1929 and goes through the subsequent Great Depression."}
-    {"title": "U.S. GDP Growth Rate 1960-2024 | MacroTrends", "href": "https://www.macrotrends.net/global-metrics/countries/USA/united-states/gdp-growth-rate", "body": "U.S. gdp growth rate for 2021 was 5.95%, a 8.71% increase from 2020. U.S. gdp growth rate for 2020 was -2.77%, a 5.06% decline from 2019. U.S. gdp growth rate for 2019 was 2.29%, a 0.65% decline from 2018. Annual percentage growth rate of GDP at market prices based on constant local currency. Aggregates are based on constant 2010 U.S. dollars."}
-    Function calling - Calling LLM with Tool Result
-    Function calling - Received message from the LLM
-    --------------------
-    FINAL ANSWER: Based on the search results, here are the GDP figures for the USA from 2009 to 2021:
-    
-    2009: $14.628 trillion 
-    2010: $14.992 trillion
-    2011: $15.542 trillion
-    2012: $16.197 trillion 
-    2013: $16.785 trillion
-    2014: $17.527 trillion
-    2015: $18.224 trillion
-    2016: $18.715 trillion
-    2017: $19.519 trillion
-    2018: $20.611 trillion
-    2019: $21.428 trillion
-    2020: $20.937 trillion (decline due to COVID-19 pandemic)
-    2021: $23.000 trillion
-    
-    The GDP shows steady growth from 2009 to 2019, with a dip in 2020 likely caused by the economic impacts of the COVID-19 pandemic. In 2021, the GDP rebounded strongly to reach $23 trillion.
-
-
 
 ```python
 output = researcher_agent.invoke("Plot it on a line chart!!")
 print(output)
 ```
-
-    Trial 1
-    Invoking LLM
-
-
-    Python REPL can execute arbitrary code. Use with caution.
-
-
-    Received message from the LLM
-    Function Calling - List of function calls : [{'toolUseId': 'tooluse_4OjysD6sSqqWiDzJ0FPD1g', 'name': 'chat_generator_from_python_code', 'input': {'code': "import matplotlib.pyplot as plt\n\nyears = [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]\ngdp = [14628, 14992, 15542, 16197, 16785, 17527, 18224, 18715, 19519, 20611, 21428, 20937, 23000]\n\nplt.figure(figsize=(10, 6))\nplt.plot(years, gdp, marker='o')\nplt.xlabel('Year', fontsize=14)\nplt.ylabel('GDP (Billion USD)', fontsize=14)\nplt.title('US GDP from 2009 to 2021', fontsize=16)\nplt.xticks(years[::2])\nplt.grid(True)\nplt.show()"}}]
-    Function calling - Calling Tool :chat_generator_from_python_code(**{'code': "import matplotlib.pyplot as plt\n\nyears = [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]\ngdp = [14628, 14992, 15542, 16197, 16785, 17527, 18224, 18715, 19519, 20611, 21428, 20937, 23000]\n\nplt.figure(figsize=(10, 6))\nplt.plot(years, gdp, marker='o')\nplt.xlabel('Year', fontsize=14)\nplt.ylabel('GDP (Billion USD)', fontsize=14)\nplt.title('US GDP from 2009 to 2021', fontsize=16)\nplt.xticks(years[::2])\nplt.grid(True)\nplt.show()"})
-
-
-
-    
-![png](how_to_create_custom_agents_files/how_to_create_custom_agents_19_3.png)
-    
-
-
-    Function calling - Got Tool Response: Code has generated the chart successfully.
-    
-    Function calling - Calling LLM with Tool Result
-    Function calling - Received message from the LLM
-    --------------------
-    FINAL ANSWER: The line chart plotting the US GDP from 2009 to 2021 is shown below:
-    
-    [Chart Displaying Line Plot of US GDP from 2009 to 2021]
-    
-    The chart clearly shows the steady increase in US GDP year-over-year from 2009 to 2019, followed by a dip in 2020 likely due to the COVID-19 pandemic impacts. The GDP then rebounds strongly in 2021 crossing the $23 trillion mark.
-
 
 <h2>Summary</h2>
 
@@ -571,7 +474,7 @@ In this notebook we saw how custom python functions can be defined as tools. We 
 
 <h2>Next Steps</h2>
 
-You can append to the class to add the functionality to plan ahead and use multiple tools to achieve complex tasks. As an example you can checkout the next notebook <a href="https://github.com/aws-samples/amazon-bedrock-samples/agents/build-your-own-agent/how_to_create_multi_agents_from_custom_agents.ipynb">how_to_create_multi_agents_from_custom_agents.ipynb</a> which talks about how by modifying our base class slightly we can do the the multi agent orchestration with it.
+You can append to the class to add the functionality to plan ahead and use multiple tools to achieve complex tasks. As an example you can checkout the next notebook [how_to_create_multi_agents_from_custom_agents.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/agents/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.ipynb) which talks about how by modifying our base class slightly we can do the the multi agent orchestration with it.
 
 
 

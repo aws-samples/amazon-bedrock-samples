@@ -5,9 +5,12 @@
   }
 </style>
 
+
 <h2>How to create your Multi Agent System with Custom Agents</h2>
 
-<a href="https://github.com/aws-samples/amazon-bedrock-samples/agents/build-your-own-agent/how_to_create_multi_agents_from_custom_agents.ipynb">Open in GitHub</a>
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/agents/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.ipynb){:target="_blank"}"
+
 
 <h2>Overview</h2>
 
@@ -23,15 +26,18 @@ Agents have access to different tools or functions that allow the LLM to interac
 
 In this tutorial, we will build a simple agent from scratch. We shall use to build two different agents, one which specializes in collecting information from the web and another that can write and execute code. Then we will use these two agents together to achieve the multi agent orchestration.
 
-<div class="alert alert-block alert-info">
-<b>Note:</b> This notebook has been tested in <strong>Mumbai (ap-south-1)</strong> in <strong>Python 3.10.14</strong>
-</div>
+
+!!! info "Note"
+
+    This notebook has been tested in 
+    **Mumbai (ap-south-1)** in **Python 3.10.14**
+
 
 <h2>Architecture</h2>
 
 Following is the Architecture Daigram,
 
-<img src="./assets/multi_agent.drawio.png" alt="Multi Agent Architecture" style="margin:auto">
+![Multi Agent Architecture](./assets/multi_agent.drawio.png){align=center}
 
 
 <h2>Prerequisites</h2>
@@ -47,9 +53,11 @@ If running on SageMaker Studio, you should add the following managed policies to
 <li>AmazonBedrockFullAccess</li>
 </ul>
 
-<div class="alert alert-block alert-info">
-<b>Note:</b> Please make sure to enable `Anthropic Claude 3 Sonnet` model access in Amazon Bedrock Console, as the notebook will use Anthropic Claude 3 Sonnet model.
-</div>
+
+!!! info "Note"
+
+    Please make sure to enable `Anthropic Claude 3 Sonnet` model access in Amazon Bedrock Console, 
+    as the notebook will use Anthropic Claude 3 Sonnet model.
 
 
 ```python
@@ -164,15 +172,6 @@ data = call_function('web_search', {'query': query})
 
 print(f"Following is the output of web search: {data}")
 ```
-
-    Query for Web search: 
-    What is the capital of India
-    Following is the output of web search: {"title": "New Delhi | History, Population, Map, & Facts | Britannica", "href": "https://www.britannica.com/place/New-Delhi", "body": "New Delhi, national capital of India.It is situated in the north-central part of the country on the west bank of the Yamuna River, adjacent to and just south of Delhi city (Old Delhi) and within the Delhi national capital territory.. In December 1911 King George V of Britain decreed that the capital of British India would be moved from Calcutta (now Kolkata) to Delhi.Construction began in 1912 at a site about 3 miles (5 km) south of the Delhi city centre, and the new capital was formally ..."}
-    {"title": "New Delhi - Wikipedia", "href": "https://en.wikipedia.org/wiki/New_Delhi", "body": "New Delhi (/ \u02c8 nj u\u02d0 \u02c8 d \u025b. l i / \u24d8, [6] Hindi: [\u02c8n\u0259i\u02d0 \u02c8d\u026al\u02d0i\u02d0], ISO: Na\u012b Dill\u012b) is the capital of India and a part of the National Capital Territory of Delhi (NCT). New Delhi is the seat of all three branches of the Government of India, hosting the Rashtrapati Bhavan, Sansad Bhavan, and the Supreme Court.New Delhi is a municipality within the NCT, administered by the NDMC, which covers mostly Lutyens' Delhi and a few adjacent areas. The municipal area is part of a larger ..."}
-    {"title": "Delhi | History, Population, Map, & Facts | Britannica", "href": "https://www.britannica.com/place/Delhi", "body": "Delhi, city and national capital territory in north-central India. The city of Delhi actually consists of two components: Old Delhi, in the north, the historic city; and New Delhi, in the south, since 1947 the capital of India, built in the first part of the 20th century as the capital of British India."}
-    {"title": "How did New Delhi become the capital of India? | UPSC - BYJU'S", "href": "https://byjus.com/free-ias-prep/how-did-new-delhi-become-the-capital-of-india/", "body": "Delhi is located in northern India and shares borders with the States of Uttar Pradesh and Haryana. The modern city of New Delhi was developed only after 1911 when Delhi became the capital of British India. New Delhi, the capital of India, represents a palimpsest of over 3,500 years of history and splendour witnessed in the remains of many ..."}
-    {"title": "What is the Capital of India? - WorldAtlas", "href": "https://www.worldatlas.com/articles/what-is-the-capital-of-india.html", "body": "The capital city or the National Capital Territory (NCT) of India is New Delhi. Delhi is divided into two parts; the Old Delhi and New Delhi. The Old Delhi was founded in 1639 while the New Delhi was established on December 15, 1911. New Delhi is located in the north-central part of India and is adjacent south of Delhi city. Initially, the capital city was in Kolkata when King George V of Britain ordered that the capital be moved to Delhi in 1911."}
-
 
 Now that we have functions defined that are to be used as tools, we will next define the `toolConfig` (i.e. `toolConfig_websearch` & `toolConfig_pythonrepl`) for our two worker agents in the format required by the Bedrock Converse API to let the corresponding Agents know about the tools available to them.
 
@@ -443,36 +442,6 @@ output_researcher = researcher_agent.invoke("List the GDP United States from 200
 print(output_researcher)
 ```
 
-    [36mTrial 1
-    [36mInvoking LLM
-    [36mReceived message from the LLM
-    [36mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_2JUpbNRSSuyXaMblnLa1LA', 'name': 'web_search', 'input': {'query': 'United States GDP 2009 to 2015'}}]
-    [36mFunction calling - Calling Tool
-    [36mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [36mFunction calling - Received message from the LLM
-    --------------------
-    The search results provide data on the GDP of the United States for various years, including the period from 2009 to 2015. Let me extract and list out those specific values:
-    
-    2009: $16,785.4 billion
-    2010: $17,130.1 billion 
-    2011: $17,455.7 billion
-    2012: $17,715.6 billion
-    2013: $18,007.6 billion
-    2014: $18,417.1 billion
-    2015: $18,787.7 billion
-    
-    FINAL ANSWER: The GDP of the United States from 2009 to 2015 was:
-    
-    2009: $16,785.4 billion
-    2010: $17,130.1 billion
-    2011: $17,455.7 billion  
-    2012: $17,715.6 billion
-    2013: $18,007.6 billion
-    2014: $18,417.1 billion
-    2015: $18,787.7 billion
-
-
 <h3>Testing Code Generation and Execution Agent with one tool</h3>
 
 We will next test out code generator and executor agent using the agent class by providing it with previously defined `toolConfig_pythonrepl` and a sample system prompt.
@@ -496,33 +465,6 @@ output_chart_generator = code_generate_and_executor_agent.invoke(f"User's Requir
 
 print(output_chart_generator)
 ```
-
-    [32mTrial 1
-    [32mInvoking LLM
-
-
-    Python REPL can execute arbitrary code. Use with caution.
-
-
-    [32mReceived message from the LLM
-    [32mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_FtM5umVrTDui1BGlXN6jzw', 'name': 'chat_generator_from_python_code', 'input': {'code': "import matplotlib.pyplot as plt\n\nyears = [2009, 2010, 2011, 2012, 2013, 2014, 2015]\ngdp = [16785.4, 17130.1, 17455.7, 17715.6, 18007.6, 18417.1, 18787.7]\n\nplt.figure(figsize=(8, 6))\nplt.plot(years, gdp, marker='o')\nplt.xlabel('Year', fontsize=14)\nplt.ylabel('GDP (Billion USD)', fontsize=14)\nplt.title('GDP of United States (2009-2015)', fontsize=16)\nplt.xticks(years)\nplt.show()"}}]
-    [32mFunction calling - Calling Tool
-
-
-
-    
-![png](how_to_create_multi_agents_from_custom_agents_files/how_to_create_multi_agents_from_custom_agents_15_3.png)
-    
-
-
-    [32mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [32mFunction calling - Received message from the LLM
-    --------------------
-    FINAL ANSWER: The line graph above shows the GDP of the United States from 2009 to 2015. The x-axis represents the years, and the y-axis represents the GDP value in billions of US dollars. The data points are marked with circles, and the line connects them to visualize the trend over time. The GDP increased year-over-year during this period, growing from around $16.8 trillion in 2009 to over $18.7 trillion in 2015.
-    CPU times: user 793 ms, sys: 176 ms, total: 970 ms
-    Wall time: 17.1 s
-
 
 <h3>Setting up Multi Agent System</h3>
 
@@ -628,57 +570,6 @@ output_multi_agent = multi_agent.invoke(f"Plot the GDP in USD of India from 2009
 print(output_multi_agent)
 ```
 
-    [35mTrial 1
-    [35mInvoking LLM
-    [35mReceived message from the LLM
-    [35mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_jMe8G6VGSCq5aWMgDh-UkQ', 'name': 'researcher_agent_tool', 'input': {'query': 'India GDP in USD from 2009 to 2015'}}]
-    [35mFunction calling - Calling Tool
-    [36mTrial 1
-    [36mInvoking LLM
-    [36mReceived message from the LLM
-    [36mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_QuXpdIsAQvW842tTl3kkEA', 'name': 'web_search', 'input': {'query': 'India GDP in USD 2009 to 2015'}}]
-    [36mFunction calling - Calling Tool
-    [36mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [36mFunction calling - Received message from the LLM
-    --------------------
-    [35mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [35mFunction calling - Received message from the LLM
-    [35mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_SeYtiyJEQJGM3Is3mCMN2Q', 'name': 'code_generate_and_executor_agent_tool', 'input': {'task': "Generate a line chart to plot India's GDP in USD from 2009 to 2015 using the data provided", 'related_information': 'The GDP data for India from 2009 to 2015 (in constant 2015 USD) is:\n\n2009: $1.75 trillion \n2010: $1.87 trillion\n2011: $2.03 trillion\n2012: $2.17 trillion  \n2013: $2.29 trillion\n2014: $2.44 trillion\n2015: $2.59 trillion'}}]
-    [35mFunction calling - Calling Tool
-    [32mTrial 1
-    [32mInvoking LLM
-    [32mReceived message from the LLM
-    [32mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_Z68ZNB0yRZ2j20z7cTyt5A', 'name': 'chat_generator_from_python_code', 'input': {'code': "import matplotlib.pyplot as plt\n\nyears = [2009, 2010, 2011, 2012, 2013, 2014, 2015]\ngdp = [1.75, 1.87, 2.03, 2.17, 2.29, 2.44, 2.59]\n\nplt.figure(figsize=(8, 6))\nplt.plot(years, gdp, marker='o')\nplt.xlabel('Year', fontsize=14)\nplt.ylabel('GDP (Trillion USD)', fontsize=14)\nplt.title('India GDP (2009-2015)', fontsize=16)\nplt.xticks(years)\nplt.grid(True)\nplt.show()"}}]
-    [32mFunction calling - Calling Tool
-
-
-
-    
-![png](how_to_create_multi_agents_from_custom_agents_files/how_to_create_multi_agents_from_custom_agents_19_1.png)
-    
-
-
-    [32mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [32mFunction calling - Received message from the LLM
-    --------------------
-    [35mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [35mFunction calling - Received message from the LLM
-    [35mLLM Parser Invoked
-    [35mLLM Parser Output: Here is the line chart plotting India's GDP in USD from 2009 to 2015 based on the provided data:
-    
-    [A line chart is displayed showing India's GDP in USD (in trillions) on the y-axis and the years from 2009 to 2015 on the x-axis. The line shows a steady increase in GDP from $1.75 trillion in 2009 to $2.59 trillion in 2015.]
-    --------------------
-    Here is the line chart plotting India's GDP in USD from 2009 to 2015 based on the provided data:
-    
-    [A line chart is displayed showing India's GDP in USD (in trillions) on the y-axis and the years from 2009 to 2015 on the x-axis. The line shows a steady increase in GDP from $1.75 trillion in 2009 to $2.59 trillion in 2015.]
-    CPU times: user 236 ms, sys: 72.1 ms, total: 308 ms
-    Wall time: 37.8 s
-
-
 We will next re-intiatilize our multi agent system and ask it to compare the `Compare the GDP in USD of India and China from 2009 to 2015 on a graph.`.
 
 
@@ -689,56 +580,6 @@ output_multi_agent = multi_agent.invoke(f"Compare the GDP in USD of India and Ch
 
 print(output_multi_agent)
 ```
-
-    [35mTrial 1
-    [35mInvoking LLM
-    [35mReceived message from the LLM
-    [35mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_aWXQp6qCSfySJq6bB6Gx2w', 'name': 'researcher_agent_tool', 'input': {'query': 'GDP in USD of India and China from 2009 to 2015'}}]
-    [35mFunction calling - Calling Tool
-    [36mTrial 1
-    [36mInvoking LLM
-    [36mReceived message from the LLM
-    [36mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_hvFn8PK4RtWocc5yYBrMCQ', 'name': 'web_search', 'input': {'query': 'GDP of India and China in USD from 2009 to 2015'}}]
-    [36mFunction calling - Calling Tool
-    [36mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [36mFunction calling - Received message from the LLM
-    [36mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_MsbicByRSliDsTEnYSKtwg', 'name': 'web_search', 'input': {'query': 'India and China GDP in USD from 2009 to 2015'}}]
-    [36mFunction calling - Calling Tool
-    [36mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [36mFunction calling - Received message from the LLM
-    --------------------
-    [35mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [35mFunction calling - Received message from the LLM
-    [35mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_5IioMBtgTaeEUACQ4A7fKA', 'name': 'code_generate_and_executor_agent_tool', 'input': {'related_information': 'The information collected provides the GDP values in USD for India and China from 2009 to 2015.', 'task': 'Generate a line chart comparing the GDP in USD of India and China from 2009 to 2015.'}}]
-    [35mFunction calling - Calling Tool
-    [32mTrial 1
-    [32mInvoking LLM
-    [32mReceived message from the LLM
-    [32mFunction Calling - List of function calls : [{'toolUseId': 'tooluse_UvYHTkrhRt65qk2k_IJEzA', 'name': 'chat_generator_from_python_code', 'input': {'code': "import matplotlib.pyplot as plt\n\n# GDP data for India and China from 2009 to 2015 (in billion USD)\nyears = [2009, 2010, 2011, 2012, 2013, 2014, 2015]\nindia_gdp = [1237.37, 1708.46, 1823.05, 1827.64, 1856.72, 2042.63, 2102.39]\nchina_gdp = [5109.96, 6087.16, 7551.49, 8532.21, 9607.22, 10482.39, 11064.67]\n\n# Create a line plot\nplt.figure(figsize=(8, 6))\nplt.plot(years, india_gdp, marker='o', label='India')\nplt.plot(years, china_gdp, marker='o', label='China')\n\n# Add labels and title\nplt.xlabel('Year')\nplt.ylabel('GDP (billion USD)')\nplt.title('GDP Comparison: India vs China (2009-2015)')\n\n# Add legend\nplt.legend()\n\n# Display the chart\nplt.show()"}}]
-    [32mFunction calling - Calling Tool
-
-
-
-    
-![png](how_to_create_multi_agents_from_custom_agents_files/how_to_create_multi_agents_from_custom_agents_21_1.png)
-    
-
-
-    [32mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [32mFunction calling - Received message from the LLM
-    --------------------
-    [35mFunction calling - Received Tool Response
-    Function calling - Calling LLM with Tool Result
-    [35mFunction calling - Received message from the LLM
-    [35mLLM Parser Invoked
-    [35mLLM Parser Output: The provided code generates a line chart comparing the GDP in USD of India and China from 2009 to 2015. The chart clearly shows that China had a significantly higher GDP than India during this period, with China's GDP values being approximately 3-5 times higher than India's GDP values across the years. The lines highlight the increasing trend in GDP for both countries over time, with China's GDP growing at a faster rate compared to India.
-    --------------------
-    The provided code generates a line chart comparing the GDP in USD of India and China from 2009 to 2015. The chart clearly shows that China had a significantly higher GDP than India during this period, with China's GDP values being approximately 3-5 times higher than India's GDP values across the years. The lines highlight the increasing trend in GDP for both countries over time, with China's GDP growing at a faster rate compared to India.
-
 
 <h2>Summary</h2>
 
@@ -756,3 +597,4 @@ You can choose to change the base agent class behaviour or extend the functional
 <h2>Cleanup</h2>
 
 You can choose to delete the execution role, if you do not plan to use it again.
+

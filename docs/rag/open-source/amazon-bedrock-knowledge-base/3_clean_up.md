@@ -1,3 +1,11 @@
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
+
+
 <h2>Clean up</h2>
 
 Please make sure to comment the below section if you are planning to use the Knowledge Base that you created above for building your RAG application.
@@ -71,22 +79,7 @@ aoss_client.delete_security_policy(type="network", name=network_policy['security
 aoss_client.delete_security_policy(type="encryption", name=encryption_policy['securityPolicyDetail']['name'])
 ```
 
-
-
-
-    {'ResponseMetadata': {'RequestId': 'e9ea9efd-4eee-4c34-8f33-9923c9540fba',
-      'HTTPStatusCode': 200,
-      'HTTPHeaders': {'x-amzn-requestid': 'e9ea9efd-4eee-4c34-8f33-9923c9540fba',
-       'date': 'Thu, 05 Sep 2024 16:58:48 GMT',
-       'content-type': 'application/x-amz-json-1.0',
-       'content-length': '2',
-       'connection': 'keep-alive'},
-      'RetryAttempts': 0}}
-
-
-
 <h2>Delete role and policies</h2>
-
 
 
 ```python
@@ -101,19 +94,6 @@ for policy in kb_attached_role_policies:
 ```python
 iam_client.delete_role(RoleName=kb_role_name)
 ```
-
-
-
-
-    {'ResponseMetadata': {'RequestId': 'f8e6d4e4-8d4b-4e2d-b51e-5890b002ad61',
-      'HTTPStatusCode': 200,
-      'HTTPHeaders': {'date': 'Thu, 05 Sep 2024 16:58:49 GMT',
-       'x-amzn-requestid': 'f8e6d4e4-8d4b-4e2d-b51e-5890b002ad61',
-       'content-type': 'text/xml',
-       'content-length': '200'},
-      'RetryAttempts': 0}}
-
-
 
 
 ```python
@@ -131,17 +111,3 @@ if 'Contents' in objects:
         s3_client.delete_object(Bucket=bucket_name, Key=obj['Key'])
 s3_client.delete_bucket(Bucket=bucket_name)
 ```
-
-
-
-
-    {'ResponseMetadata': {'RequestId': 'XGJ1P803AQ36E4YM',
-      'HostId': 'rU4KFmXzK6jvwxd1aWCqK6bwHGzRYO/FW/K2FpG/khlAuqebqWn0q9wxZUlhyhD6eSHilB46qklUbcn/8hFmFw==',
-      'HTTPStatusCode': 204,
-      'HTTPHeaders': {'x-amz-id-2': 'rU4KFmXzK6jvwxd1aWCqK6bwHGzRYO/FW/K2FpG/khlAuqebqWn0q9wxZUlhyhD6eSHilB46qklUbcn/8hFmFw==',
-       'x-amz-request-id': 'XGJ1P803AQ36E4YM',
-       'date': 'Thu, 05 Sep 2024 16:58:52 GMT',
-       'server': 'AmazonS3'},
-      'RetryAttempts': 0}}
-
-
