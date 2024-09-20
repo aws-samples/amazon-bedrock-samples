@@ -1,16 +1,25 @@
-<h2> How to work with Agents for Amazon Bedrock </h2>
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
+
+<h2> How to work with Amazon Bedrock Agents</h2>
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/04_agents_api.ipynb){:target="_blank"}"
 
 *Note: This notebook has been adapted from the [Create Agent with Function Definition](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/features-examples/01-create-agent-with-function-definition)*
 
 <h2> Overview </h2>
 
-In this notebook, we will create an Agent for Amazon Bedrock using the function definition. We will use an HR agent as example. With this agent, you can check your available vacation days and request a new vacation leave. We will use an AWS Lambda function to define the logic that checks for the number of available vacation days and confirm new time off. 
+In this notebook, we will create an  Amazon Bedrock Agent using the function definition. We will use an HR agent as example. With this agent, you can check your available vacation days and request a new vacation leave. We will use an AWS Lambda function to define the logic that checks for the number of available vacation days and confirm new time off. 
 
 For this example, we will manage employee data in an in-memory [SQLite](https://www.sqlite.org/) database and generate synthetic data for demonstrating the agent.
 
 <h2> Context </h2>
 
-[Agents for Amazon Bedrock](https://aws.amazon.com/bedrock/agents/) helps you accelerate the development of GenAI applications by orchestrating multistep tasks. Agents uses the reasoning capability of foundation models (FMs) to break down user-requested tasks into steps. Agents for Amazon Bedrock can perform the following tasks:
+[Amazon Bedrock Agents](https://aws.amazon.com/bedrock/agents/) helps you accelerate the development of GenAI applications by orchestrating multistep tasks. Agents uses the reasoning capability of foundation models (FMs) to break down user-requested tasks into steps. Amazon Bedrock Agents can perform the following tasks:
 - Breakdown user requests into multiple smaller steps
 - Collect additional information from a user through natural conversation
 - Decide which APIs to call and provide the necessary parameters for calling the APIs
@@ -46,7 +55,7 @@ Where the vacation database has the following schema:
 
 <h2> Prerequisites </h2>
 
-- Amazon Bedrock basic setup has been completed, see `Prerequisites` section under [Amazon Bedrock APIs - Getting Started](01_invoke_api.ipynb)
+- Amazon Bedrock basic setup has been completed, see `Prerequisites` section under [Amazon Bedrock APIs - Getting Started](01_invoke_api.md)
 - Amazon Bedrock access to below given Foundation Model used in this notebook.
 
 | Provider Name | Foundation Model Name | Model Id |
@@ -788,12 +797,11 @@ simple_agent_invoke("how many days does employee 9 have?", agent_id, agent_alias
 
 <h2>Next Steps</h2>
 
-Now that we have seen how to use Agents for Amazon Bedrock, you can learn
+Now that we have seen how to use Amazon Bedrock Agents, you can learn
 
-- How to use [Knowledge Bases for Amazon Bedrock](03_knowledgebases_api.ipynb)
-- How to use [Guardrails for Amazon Bedrock](02_guardrails_api.ipynb)
-- To further explore the capabilities of Agents for Amazon Bedrock refer [Agents](../../agents/)
-
+- How to use [Amazon Bedrock Knowledge Bases](03_knowledgebases_api.md)
+- How to use [Amazon Bedrock Guardrails](02_guardrails_api.md)
+- To further explore the capabilities of Amazon Bedrock Agents, refer [Agents](../../agents/)
 
 <h2>Clean up (optional)</h2>
 

@@ -1,4 +1,11 @@
-# How to do function calling with the Converse API
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
+
+<h2>How to do function calling with the Converse API</h2>
 
 <h2>Overview</h2>
 
@@ -128,7 +135,7 @@ def converse_with_tools(messages, system='', toolConfig=toolConfig):
 
 <h3>Defining the conversation flow</h3>
 
-Next, we define a function to manage the conversation flow. For this simple case, the function starts by invoking the model. Should the model choose to execute the tool we have defined, it returns it in `toolUse`. With this, the function runs the selected tool. Lastly, the tool's output is returned in `toolResults` to the model who can be given instructions to format it in a more conversational tone for the user. 
+Next, we define a function to manage the conversation flow. For this simple case, the function starts by invoking the model. Should the model choose to execute the tool we have defined, it returns it in `toolUse`. With this, the function runs the selected tool. Lastly, the tool's output is returned in `toolResults` to the model who can be given instructions to format it in a more conversational tone for the user.
 
 <h4>Prompt flow</h4>
 ![basic tool call](./assets/basic_tool_call.png)
@@ -215,51 +222,6 @@ converse(
     prompt = prompt)
 ```
 
-    Initial prompt:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "What is the weather like in Queens, NY?"
-          }
-        ]
-      }
-    ]
-    Output so far:
-    {
-      "message": {
-        "role": "assistant",
-        "content": [
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_3s96E3unSFe1RET9RcTPVA",
-              "name": "get_weather",
-              "input": {
-                "city": "Queens",
-                "state": "NY"
-              }
-            }
-          }
-        ]
-      }
-    }
-    Running (get_weather) tool...
-    Tool result: Weather in Queens, NY is 70F and clear skies.
-    Final output:
-    {
-      "message": {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "The weather in Queens, NY is currently 70°F (21°C) with clear skies and sunshine."
-          }
-        ]
-      }
-    }
-    
-
-
 If we ask a question about another topic, the model will answer the question directly without making a tool call. Notice the absence of `toolUse` in the output.
 
 
@@ -271,30 +233,6 @@ converse(
         only use the tool if required. Don't make reference to the tools in your final answer."}],
     prompt = prompt)
 ```
-
-    Initial prompt:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "What is the capital of France?"
-          }
-        ]
-      }
-    ]
-    Output so far:
-    {
-      "message": {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "The capital of France is Paris."
-          }
-        ]
-      }
-    }
-
 
 As we can see, the LLM decides whether or not to call the `get_weather` tool depending on the question. You can further improve this example by playing with the system prompts.
 
@@ -409,53 +347,6 @@ converse(
 )
 ```
 
-    Initial prompt:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "What is the weather like in Queens, NY?"
-          }
-        ]
-      }
-    ]
-    Output so far:
-    {
-      "message": {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "Here is the weather information for Queens, NY:"
-          },
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_lCr9CokVQ_6gm1IQnWGyEg",
-              "name": "get_weather",
-              "input": {
-                "city": "Queens",
-                "state": "NY"
-              }
-            }
-          }
-        ]
-      }
-    }
-    Running (get_weather) tool...
-    Final output:
-    {
-      "message": {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "The weather in Queens, New York today is pleasant with a temperature of around 70F and clear, sunny skies. It's a nice day to spend some time outdoors in Queens."
-          }
-        ]
-      }
-    }
-    
-
-
 If we prompt our model with another topic, it will respond a result from the web by using the `web_search` tool.
 
 
@@ -468,49 +359,6 @@ converse(
     prompt = prompt
 )
 ```
-
-    Initial prompt:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "In which team is Caitlin Clark playing in the WNBA in 2024?"
-          }
-        ]
-      }
-    ]
-    Output so far:
-    {
-      "message": {
-        "role": "assistant",
-        "content": [
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_uf1keB-YSQyiCGPrlImPgQ",
-              "name": "web_search",
-              "input": {
-                "query": "Caitlin Clark WNBA draft 2024"
-              }
-            }
-          }
-        ]
-      }
-    }
-    Running (web_search) tool...
-    Final output:
-    {
-      "message": {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "Based on the article, Caitlin Clark was selected as the No. 1 overall pick in the 2024 WNBA Draft by the Indiana Fever. So she will be playing for the Indiana Fever in the 2024 WNBA season."
-          }
-        ]
-      }
-    }
-    
-
 
 As we can see, the LLM decides whether to call the `get_weather` tool, provide an answer without any tool, or searching in the public Internet with the `web_search` tool.
 
@@ -654,61 +502,6 @@ print(f"Output:\n{output['output']}\n")
 print(f"Messages:\n{json.dumps(messages, indent=2, ensure_ascii=False)}\n")
 ```
 
-    Invoking model...
-    Got output from model...
-    Function calling - Calling tool...
-    Function calling - Got tool response...
-    Function calling - Calling model with result...
-    {'ResponseMetadata': {'RequestId': '672bb1ec-b156-44c4-960e-f995d540c919', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 07 Aug 2024 11:59:47 GMT', 'content-type': 'application/json', 'content-length': '280', 'connection': 'keep-alive', 'x-amzn-requestid': '672bb1ec-b156-44c4-960e-f995d540c919'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'toolUse': {'toolUseId': 'tooluse_C3ie0cSZR82bOMkKbxXCiw', 'name': 'get_lat_long', 'input': {'place': 'Berlin'}}}]}}, 'stopReason': 'tool_use', 'usage': {'inputTokens': 431, 'outputTokens': 56, 'totalTokens': 487}, 'metrics': {'latencyMs': 1283}}
-    Output:
-    {'message': {'role': 'assistant', 'content': [{'toolUse': {'toolUseId': 'tooluse_C3ie0cSZR82bOMkKbxXCiw', 'name': 'get_lat_long', 'input': {'place': 'Berlin'}}}]}}
-    
-    Messages:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "What are the coordinates for both Paris and in Berlin??"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "Here are the coordinates for Paris and Berlin obtained using the `get_lat_long` tool:"
-          },
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_77EBAFMeS92g3zHisyE2UA",
-              "name": "get_lat_long",
-              "input": {
-                "place": "Paris"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "toolResult": {
-              "toolUseId": "tooluse_77EBAFMeS92g3zHisyE2UA",
-              "content": [
-                {
-                  "text": "{\"latitude\": \"48.8534951\", \"longitude\": \"2.3483915\"}"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-    
-
-
 <h3>Chaining tool calls</h3>
 
 Tool chaining refers to the ability of the model to reach its goal by calling more than one tool where the output of one tool serves as the input to the next. This more complex workflow requires the model to breakdown the query into subproblems that can individually be met with a call to an external function or the model's own body of knowledge.
@@ -845,94 +638,6 @@ print(f"Output:\n{output['output']}\n")
 print(f"Messages:\n{json.dumps(messages, indent=2, ensure_ascii=False)}\n")
 ```
 
-    Invoking model...
-    Got output from model...
-    Function calling - Calling tool...
-    Function calling - Got tool response...
-    Function calling - Calling model with result...
-    Got output from model...
-    Function calling - Calling tool...
-    Function calling - Got tool response...
-    {'ResponseMetadata': {'RequestId': 'e5cc2e1a-ca74-4485-b8f9-fad5c9675374', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 07 Aug 2024 13:42:52 GMT', 'content-type': 'application/json', 'content-length': '525', 'connection': 'keep-alive', 'x-amzn-requestid': 'e5cc2e1a-ca74-4485-b8f9-fad5c9675374'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'Based on the weather information retrieved, the current weather in Montreal is:\n\nTemperature: 19°C\nWind Speed: 8.3 km/h \nWind Direction: 358 degrees (from the north)\nWeather Condition Code 0 indicates clear sky\n\nSo in Montreal right now, it is a clear sunny day with a comfortable temperature of 19°C and light winds from the north.'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 845, 'outputTokens': 91, 'totalTokens': 936}, 'metrics': {'latencyMs': 2897}}
-    Output:
-    {'message': {'role': 'assistant', 'content': [{'text': 'Based on the weather information retrieved, the current weather in Montreal is:\n\nTemperature: 19°C\nWind Speed: 8.3 km/h \nWind Direction: 358 degrees (from the north)\nWeather Condition Code 0 indicates clear sky\n\nSo in Montreal right now, it is a clear sunny day with a comfortable temperature of 19°C and light winds from the north.'}]}}
-    
-    Messages:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "What is the weather in Montreal??"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "text": "Here are the steps to get the weather for Montreal:"
-          },
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_8ioEjLQZSnuijNJ0Xx_e_w",
-              "name": "get_lat_long",
-              "input": {
-                "place": "Montreal"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "toolResult": {
-              "toolUseId": "tooluse_8ioEjLQZSnuijNJ0Xx_e_w",
-              "content": [
-                {
-                  "text": "{\"latitude\": \"45.5031824\", \"longitude\": \"-73.5698065\"}"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_FmtT9M4URLmUjuKwOjA3Vg",
-              "name": "get_weather",
-              "input": {
-                "latitude": "45.5031824",
-                "longitude": "-73.5698065"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "toolResult": {
-              "toolUseId": "tooluse_FmtT9M4URLmUjuKwOjA3Vg",
-              "content": [
-                {
-                  "text": "{\"latitude\": 45.49215, \"longitude\": -73.56103, \"generationtime_ms\": 0.07903575897216797, \"utc_offset_seconds\": 0, \"timezone\": \"GMT\", \"timezone_abbreviation\": \"GMT\", \"elevation\": 51.0, \"current_weather_units\": {\"time\": \"iso8601\", \"interval\": \"seconds\", \"temperature\": \"\\u00b0C\", \"windspeed\": \"km/h\", \"winddirection\": \"\\u00b0\", \"is_day\": \"\", \"weathercode\": \"wmo code\"}, \"current_weather\": {\"time\": \"2024-08-07T13:30\", \"interval\": 900, \"temperature\": 19.0, \"windspeed\": 8.3, \"winddirection\": 358, \"is_day\": 1, \"weathercode\": 0}}"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-    
-
-
 If we ask for the coordinates of a given city, the model calls `get_lat_long`.
 
 
@@ -946,59 +651,6 @@ print(f"Output:\n{output['output']}\n")
 print(f"Messages:\n{json.dumps(messages, indent=2, ensure_ascii=False)}\n")
 ```
 
-    Invoking model...
-    Got output from model...
-    Function calling - Calling tool...
-    Function calling - Got tool response...
-    Function calling - Calling model with result...
-    Got output from model...
-    {'ResponseMetadata': {'RequestId': '43fabc20-fc41-4f1c-8308-c3002b1a4a47', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 07 Aug 2024 13:42:56 GMT', 'content-type': 'application/json', 'content-length': '262', 'connection': 'keep-alive', 'x-amzn-requestid': '43fabc20-fc41-4f1c-8308-c3002b1a4a47'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'The coordinates of Montreal are latitude 45.5031824 and longitude -73.5698065.'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 539, 'outputTokens': 26, 'totalTokens': 565}, 'metrics': {'latencyMs': 1611}}
-    Output:
-    {'message': {'role': 'assistant', 'content': [{'text': 'The coordinates of Montreal are latitude 45.5031824 and longitude -73.5698065.'}]}}
-    
-    Messages:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "What are the coordinates in Montreal??"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "toolUse": {
-              "toolUseId": "tooluse_6R4XxuhbRGOL1cVxCnhxXg",
-              "name": "get_lat_long",
-              "input": {
-                "place": "Montreal"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "toolResult": {
-              "toolUseId": "tooluse_6R4XxuhbRGOL1cVxCnhxXg",
-              "content": [
-                {
-                  "text": "{\"latitude\": \"45.5031824\", \"longitude\": \"-73.5698065\"}"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-    
-
-
 If we ask an unrelated question to our tools, the model will not call the tools.
 
 
@@ -1011,26 +663,6 @@ print(output)
 print(f"Output:\n{output['output']}\n")
 print(f"Messages:\n{json.dumps(messages, indent=2, ensure_ascii=False)}\n")
 ```
-
-    Invoking model...
-    Got output from model...
-    Function calling - Calling model with result...
-    Got output from model...
-    {'ResponseMetadata': {'RequestId': '11ed997f-4b5e-45a0-b4c8-8100a9622832', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Wed, 07 Aug 2024 13:43:24 GMT', 'content-type': 'application/json', 'content-length': '1455', 'connection': 'keep-alive', 'x-amzn-requestid': '11ed997f-4b5e-45a0-b4c8-8100a9622832'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'SageMaker is a fully-managed machine learning service provided by Amazon Web Services (AWS). It allows developers and data scientists to build, train, and deploy machine learning models quickly and easily.\n\nSome key features and capabilities of SageMaker include:\n\n1. Jupyter Notebook Instances: Provides managed Jupyter notebook instances for data exploration, model building, and deployment.\n\n2. Automatic Model Tuning: Automatically tuning machine learning models to get the best version of the model based on data.\n\n3. Built-in Algorithms: Provides built-in machine learning algorithms like XGBoost, Linear Learner, etc. to quickly build models.\n\n4. Training and Hosting: Allows training machine learning models on GPU or CPU and then deploying/hosting the model for inference.\n\n5. Model Monitoring: Monitors the performance of deployed models to detect drift and manage issues.\n\n6. Batch Transform: Allows running inferences on an entire dataset in batch mode.\n\nSageMaker integrates with many AWS services like S3, Lambda, IoT and simplifies the process of building, training, and deploying machine learning models at scale in the cloud or on-premises environments. It abstracts away a lot of the heavy lifting involved in machine learning projects.'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 452, 'outputTokens': 279, 'totalTokens': 731}, 'metrics': {'latencyMs': 8817}}
-    Output:
-    {'message': {'role': 'assistant', 'content': [{'text': 'SageMaker is a fully-managed machine learning service provided by Amazon Web Services (AWS). It allows developers and data scientists to build, train, and deploy machine learning models quickly and easily.\n\nSome key features and capabilities of SageMaker include:\n\n1. Jupyter Notebook Instances: Provides managed Jupyter notebook instances for data exploration, model building, and deployment.\n\n2. Automatic Model Tuning: Automatically tuning machine learning models to get the best version of the model based on data.\n\n3. Built-in Algorithms: Provides built-in machine learning algorithms like XGBoost, Linear Learner, etc. to quickly build models.\n\n4. Training and Hosting: Allows training machine learning models on GPU or CPU and then deploying/hosting the model for inference.\n\n5. Model Monitoring: Monitors the performance of deployed models to detect drift and manage issues.\n\n6. Batch Transform: Allows running inferences on an entire dataset in batch mode.\n\nSageMaker integrates with many AWS services like S3, Lambda, IoT and simplifies the process of building, training, and deploying machine learning models at scale in the cloud or on-premises environments. It abstracts away a lot of the heavy lifting involved in machine learning projects.'}]}}
-    
-    Messages:
-    [
-      {
-        "role": "user",
-        "content": [
-          {
-            "text": "What is SageMaker??"
-          }
-        ]
-      }
-    ]
     
 <h2>Next Steps</h2>
 
