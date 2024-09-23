@@ -3,6 +3,7 @@ site_name: Amazon Bedrock Cookbook
 copyright: Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 site_author: Bedrock-GTM
 site_description: Amazon Bedrock cookbook website
+site_url: https://github.amazon-bedrock-samples.com
 # Repository
 repo_name: "Github: Amazon-Bedrock-Samples"
 repo_url: "https://github.com/aws-samples/amazon-bedrock-samples/tree/main"
@@ -38,6 +39,25 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/aws-samples/amazon-bedrock-samples/tree/main
+  analytics: 
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/thumb-up-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/thumb-down-outline
+          name: This page could be improved
+          data: 0
+          note: >- 
+            Thanks for your feedback! Help us improve this page by
+            <a href="https://github.com/aws-samples/amazon-bedrock-samples/issues/new?title=[Online Feedback]: Short-Summary-of-Issue&body=Page URL: {url}" target="_blank" rel="noopener">creating an issue</a>.
+
+extra_javascript:
+  - javascript/feedback.js
+
 # Theme
 theme:
   name: material
