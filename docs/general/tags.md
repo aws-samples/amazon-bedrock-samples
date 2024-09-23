@@ -1,5 +1,3 @@
-# Tags
-
-Following is a list of relevant tags:
+# Search all content using the tags
 
 <!-- material/tags -->
