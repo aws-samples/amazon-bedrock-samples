@@ -1,15 +1,7 @@
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
 
 <h2> How to work with Converse API in Amazon Bedrock - Getting Started. </h2>
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/01_converse_api.ipynb){:target="_blank"}"
-
-*Note: This notebook has been adapted from the [Getting started with the Converse API in Amazon Bedrock](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/introduction-to-bedrock/Getting_started_with_Converse_API.ipynb)*
 
 <h2> Overview </h2>
 
@@ -21,8 +13,8 @@ To use the Converse API, you call the `Converse` or `ConverseStream` operations 
 
 Before you can use Amazon Bedrock, you must carry out the following steps:
 
-- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws).
-- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access). 
+- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
+- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
     
     We have used below Foundation Models in our examples in this Notebook in `us-west-2` (Oregon) region.
     
@@ -41,6 +33,9 @@ Before you can use Amazon Bedrock, you must carry out the following steps:
 
 
 <h2> Setup </h2>
+
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
 
 Run the cells in this section to install the packages needed by this notebook.
 
@@ -301,6 +296,10 @@ else:
 
 In this example we will send an image as part of a message and requests that the model describe the image. The example uses Converse operation and the Anthropic Claude 3.5 Sonnet model.
 
+Sample image used in this example.
+
+![Sample Image](assets/sample_image.jpg)
+
 
 ```python
 def image_conversation(bedrock_client,
@@ -490,8 +489,10 @@ else:
 
 Now that we have seen the Converse API allow us to easily run the invocations with the same syntax across all the models, you can learn
 
-
 - How to do [function calling with the Converse API](../../agents/function-calling/function_calling_with_converse/function_calling_with_converse.md)
-- How to work with [Converse API and Amazon Bedrock Guardrails](../../responsible_ai/)
+- How to work with [Converse API and Amazon Bedrock Guardrails](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/responsible_ai/){:target="_blank"}
 
 
+<h2>Clean up</h2>
+
+This notebook does not require any cleanup or additional deletion of resources.

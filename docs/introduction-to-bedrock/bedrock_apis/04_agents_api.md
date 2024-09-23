@@ -1,25 +1,21 @@
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
+---
+tags:
+    - Agents
+---
 
 <h2> How to work with Amazon Bedrock Agents</h2>
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/04_agents_api.ipynb){:target="_blank"}"
 
-*Note: This notebook has been adapted from the [Create Agent with Function Definition](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/features-examples/01-create-agent-with-function-definition)*
-
 <h2> Overview </h2>
 
 In this notebook, we will create an  Amazon Bedrock Agent using the function definition. We will use an HR agent as example. With this agent, you can check your available vacation days and request a new vacation leave. We will use an AWS Lambda function to define the logic that checks for the number of available vacation days and confirm new time off. 
 
-For this example, we will manage employee data in an in-memory [SQLite](https://www.sqlite.org/) database and generate synthetic data for demonstrating the agent.
+For this example, we will manage employee data in an in-memory [SQLite](https://www.sqlite.org/){:target="_blank"} database and generate synthetic data for demonstrating the agent.
 
 <h2> Context </h2>
 
-[Amazon Bedrock Agents](https://aws.amazon.com/bedrock/agents/) helps you accelerate the development of GenAI applications by orchestrating multistep tasks. Agents uses the reasoning capability of foundation models (FMs) to break down user-requested tasks into steps. Amazon Bedrock Agents can perform the following tasks:
+[Amazon Bedrock Agents](https://aws.amazon.com/bedrock/agents/){:target="_blank"} helps you accelerate the development of GenAI applications by orchestrating multistep tasks. Agents uses the reasoning capability of foundation models (FMs) to break down user-requested tasks into steps. Amazon Bedrock Agents can perform the following tasks:
 - Breakdown user requests into multiple smaller steps
 - Collect additional information from a user through natural conversation
 - Decide which APIs to call and provide the necessary parameters for calling the APIs
@@ -56,7 +52,7 @@ Where the vacation database has the following schema:
 <h2> Prerequisites </h2>
 
 - Amazon Bedrock basic setup has been completed, see `Prerequisites` section under [Amazon Bedrock APIs - Getting Started](01_invoke_api.md)
-- Amazon Bedrock access to below given Foundation Model used in this notebook.
+- Amazon Bedrock access to below given Foundation Model used in this notebook in `us-east-1` (N. Virginia) region.
 
 | Provider Name | Foundation Model Name | Model Id |
 | ------- | ------------- | ------------- |
@@ -64,6 +60,9 @@ Where the vacation database has the following schema:
 
 
 <h2> Setup </h2>
+
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
 
 Before starting, let's update the botocore and boto3 packages to ensure we have the latest version
 
@@ -100,20 +99,20 @@ Let's now create the boto3 clients for the required AWS services
 
 
 ```python
+region = "us-east-1"
+
 # getting boto3 clients for required AWS services
-sts_client = boto3.client('sts')
-iam_client = boto3.client('iam')
-lambda_client = boto3.client('lambda')
-bedrock_agent_client = boto3.client('bedrock-agent')
-bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime')
+sts_client = boto3.client('sts', region_name = region)
+iam_client = boto3.client('iam', region_name = region)
+lambda_client = boto3.client('lambda', region_name = region)
+bedrock_agent_client = boto3.client('bedrock-agent', region_name = region)
+bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime', region_name = region)
 ```
 
 Next we can set some configuration variables for the agent and for the lambda function being created
 
 
 ```python
-session = boto3.session.Session()
-region = session.region_name
 account_id = sts_client.get_caller_identity()["Account"]
 region, account_id
 ```
@@ -519,9 +518,9 @@ agent_id
 
 <h3> Create Agent Action Group </h3>
 
-We will now create an agent action group that uses the lambda function created earlier. The [`create_agent_action_group`](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-agent/client/create_agent_action_group.html) function provides this functionality. We will use `DRAFT` as the agent version since we haven't yet created an agent version or alias. To inform the agent about the action group capabilities, we provide an action group description.
+We will now create an agent action group that uses the lambda function created earlier. The [`create_agent_action_group`](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-agent/client/create_agent_action_group.html){:target="_blank"} function provides this functionality. We will use `DRAFT` as the agent version since we haven't yet created an agent version or alias. To inform the agent about the action group capabilities, we provide an action group description.
 
-In this example, we provide the Action Group functionality using a `functionSchema`. You can alternatively provide an `APISchema`. The notebook [02-create-agent-with-api-schema.ipynb](02-create-agent-with-api-schema/02-create-agent-with-api-schema.ipynb) provides an example of that approach.
+In this example, we provide the Action Group functionality using a `functionSchema`. You can alternatively provide an `APISchema`. The notebook [02-create-agent-with-api-schema.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-for-bedrock/features-examples/02-create-agent-with-api-schema/02-create-agent-with-api-schema.ipynb){:target="_blank"} provides an example of that approach.
 
 To define the functions using a function schema, you need to provide the `name`, `description` and `parameters` for each function.
 
@@ -801,9 +800,9 @@ Now that we have seen how to use Amazon Bedrock Agents, you can learn
 
 - How to use [Amazon Bedrock Knowledge Bases](03_knowledgebases_api.md)
 - How to use [Amazon Bedrock Guardrails](02_guardrails_api.md)
-- To further explore the capabilities of Amazon Bedrock Agents, refer [Agents](../../agents/)
+- To further explore the capabilities of Amazon Bedrock Agents, refer [Agents](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents/){:target="_blank"}
 
-<h2>Clean up (optional)</h2>
+<h2>Clean up</h2>
 
 The next steps are optional and demonstrate how to delete our agent. To delete the agent we need to:
 
