@@ -1,23 +1,17 @@
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
+---
+tags:
+    - Prompt-Engineering
+---
 
 <h2> How to work with Amazon Bedrock APIs - Getting Started </h2>
 
-
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/01_invoke_api.ipynb){:target="_blank"}"
-
-
-*Note: This notebook has been adapted from the [Getting Started with Amazon Bedrock](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/create_your_first_bedrock_application/GettingStartedWithAmazonBedrock.ipynb)*
 
 <h2>Overview</h2>
 
 This notebook demonstrates how to get started with Amazon Bedrock. We will show you how to query different models from the Bedrock API call and how prompt engineering can help improving the results of your use case.
 
-*The code presented here has been adapted from the [Amazon Bedrock Workshop Content](https://github.com/aws-samples/amazon-bedrock-workshop/tree/main)*
+*The code presented here has been adapted from the [Amazon Bedrock Workshop Content](https://github.com/aws-samples/amazon-bedrock-workshop/tree/main){:target="_blank"}*
 
 <h2>Context</h2>
 
@@ -26,9 +20,9 @@ Amazon Bedrock simplifies the process of building and scaling generative AI appl
 ![Amazon Bedrock](assets/how-to-bedrock-api.png)
 
 
-Amazon Bedrock supports foundation models (FMs) from the following providers. For the updated list of FMs and respective documentation, see [Supported foundation models in Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html)
+Amazon Bedrock supports foundation models (FMs) from the following providers. For the updated list of FMs and respective documentation, see [Supported foundation models in Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html){:target="_blank"}
 
-To use a foundation model with the Amazon Bedrock API, you'll need its model ID. For a list for model IDs, see [Amazon Bedrock model IDs](https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html).
+To use a foundation model with the Amazon Bedrock API, you'll need its model ID. For a list for model IDs, see [Amazon Bedrock model IDs](https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html){:target="_blank"}.
 
 ![Amazon Bedrock - Choice of FMs](assets/how-to-bedrock-fms.png)
 
@@ -36,17 +30,18 @@ To use a foundation model with the Amazon Bedrock API, you'll need its model ID.
 
 Before you can use Amazon Bedrock, you must carry out the following steps:
 
-- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws).
-- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access). 
+- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
+- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
     
-    We have used below Foundation Models in our examples in this Notebook in `us-west-2` (Oregon) region.
+    We have used below Foundation Models in our examples in this Notebook in `us-east-1` (N. Virginia) region.
     
 | Provider Name | Foundation Model Name | Model Id |
 | ------- | ------------- | ------------- |
-| Amazon | Titan Text G1 - Lite | amazon.titan-text-lite-v1 |
-| Anthropic | Claude 3 Haiku  | anthropic.claude-3-haiku-20240307-v1:0 |
 | AI21 Labs | Jurassic-2 Mid | ai21.j2-mid-v1 |
-| Meta | Llama 3.1 8B Instruct | meta.llama3-1-8b-instruct-v1:0 |
+| Amazon | Titan Text G1 - Lite | amazon.titan-text-lite-v1 |
+| Anthropic | Claude Instant  | anthropic.claude-instant-v1 |
+| Cohere | Command | cohere.command-text-v14 |
+| Meta | Llama 3 8B Instruct | meta.llama3-8b-instruct-v1:0 |
 | Mistral AI | Mixtral 8X7B Instruct | mistral.mixtral-8x7b-instruct-v0:1 |
 | Stability AI | Stable Diffusion XL | stability.stable-diffusion-xl-v1 |
 
@@ -54,12 +49,10 @@ Before you can use Amazon Bedrock, you must carry out the following steps:
 
 <h2>Setup</h2>
 
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
+
 Run the cells in this section to install the packages needed by this notebook. 
-
-⚠️ You will see pip dependency errors, you can safely ignore these errors. ⚠️
-
-IGNORE ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
-
 
 ```python
 %pip install --no-build-isolation --force-reinstall \
@@ -72,23 +65,23 @@ IGNORE ERROR: pip's dependency resolver does not currently take into account all
 
 <h3>Create the boto3 client</h3>
 
-Interaction with the Bedrock API is done via the AWS SDK. We will be using AWS SDK for Python: [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) for this notebook.
+Interaction with the Bedrock API is done via the AWS SDK. We will be using AWS SDK for Python: [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html){:target="_blank"} for this notebook.
 
-You can refer [Amazon Bedrock API references](https://docs.aws.amazon.com/bedrock/latest/APIReference/welcome.html#sdk) for each SDK.
+You can refer [Amazon Bedrock API references](https://docs.aws.amazon.com/bedrock/latest/APIReference/welcome.html#sdk){:target="_blank"} for each SDK.
 
 <h4>Use different clients</h4>
 
-- `bedrock` – Contains control plane APIs for managing, training, and deploying models. For more information, see [Amazon Bedrock Actions](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_Operations_Amazon_Bedrock.html) and [Amazon Bedrock Data Types](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_Types_Amazon_Bedrock.html).
-- `bedrock-runtime` – Contains data plane APIs for making inference requests for models hosted in Amazon Bedrock. For more information, see [Amazon Bedrock Runtime Actions](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_Operations_Amazon_Bedrock_Runtime.html) and [Amazon Bedrock Runtime Data Types](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_Types_Amazon_Bedrock_Runtime.html).
+- `bedrock` – Contains control plane APIs for managing, training, and deploying models. For more information, see [Amazon Bedrock Actions](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_Operations_Amazon_Bedrock.html){:target="_blank"} and [Amazon Bedrock Data Types](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_Types_Amazon_Bedrock.html){:target="_blank"}.
+- `bedrock-runtime` – Contains data plane APIs for making inference requests for models hosted in Amazon Bedrock. For more information, see [Amazon Bedrock Runtime Actions](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_Operations_Amazon_Bedrock_Runtime.html){:target="_blank"} and [Amazon Bedrock Runtime Data Types](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_Types_Amazon_Bedrock_Runtime.html){:target="_blank"}.
 
 
-In case of boto3, Control pane APIs such as [ListFoundationModels](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_ListFoundationModels.html), are supported by Amazon Bedrock client and data plane APIs such as [`InvokeModel`](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html) and [`InvokeModelWithResponseStream`](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModelWithResponseStream.html) are supported by Amazon Bedrock Runtime client.
+In case of boto3, Control pane APIs such as [ListFoundationModels](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_ListFoundationModels.html){:target="_blank"}, are supported by Amazon Bedrock client and data plane APIs such as [`InvokeModel`](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html){:target="_blank"} and [`InvokeModelWithResponseStream`](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModelWithResponseStream.html){:target="_blank"} are supported by Amazon Bedrock Runtime client.
 
 The `get_bedrock_client()` method accepts `runtime` (default=True) parameter to return either `bedrock` or `bedrock-runtime` client.
 
 <h4>Use the default credential chain</h4>
 
-If you are running this notebook from [Amazon Sagemaker Studio](https://aws.amazon.com/sagemaker/studio/) and your Sagemaker Studio [execution role](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html) has permissions to access Bedrock, then you can just run the cells below as-is. This is also the case if you are running these notebooks from a computer whose default AWS credentials have access to Bedrock.
+If you are running this notebook from [Amazon Sagemaker Studio](https://aws.amazon.com/sagemaker/studio/){:target="_blank"} and your Sagemaker Studio [execution role](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html){:target="_blank"} has permissions to access Bedrock, then you can just run the cells below as-is. This is also the case if you are running these notebooks from a computer whose default AWS credentials have access to Bedrock.
 
 <h4>Use a different AWS Region</h4>
 
@@ -100,7 +93,7 @@ In case you're running this notebook from your own computer where you have setup
 
 <h4>Use a different role</h4>
 
-In case you or your company has setup a specific, separate [IAM Role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) to access Bedrock, you can specify it by un-commenting the `os.environ['BEDROCK_ASSUME_ROLE']` line below. Ensure that your current user or role have permissions to [assume](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) such role.
+In case you or your company has setup a specific, separate [IAM Role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html){:target="_blank"} to access Bedrock, you can specify it by un-commenting the `os.environ['BEDROCK_ASSUME_ROLE']` line below. Ensure that your current user or role have permissions to [assume](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html){:target="_blank"} such role.
 
 
 
@@ -194,7 +187,7 @@ sys.path.append(os.path.abspath(module_path))
 
 # ---- ⚠️ Un-comment and edit the below lines as needed for your AWS setup ⚠️ ----
 
-# os.environ["AWS_DEFAULT_REGION"] = "<REGION_NAME>"  # E.g. "us-east-2"
+os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 # os.environ["AWS_PROFILE"] = "<YOUR_PROFILE>"
 # os.environ["BEDROCK_ASSUME_ROLE"] = "<YOUR_ROLE_ARN>"  # E.g. "arn:aws:..."
 
@@ -219,7 +212,7 @@ boto3_bedrock.list_foundation_models()
 
 The `invoke_model()` method of the Amazon Bedrock runtime client (`InvokeModel` API) will be the primary method we use for most of our Text Generation and Processing tasks - whichever model we're using.
 
-Although the method is shared, the format of input and output varies depending on the foundation model used, see [Inference parameters for foundation models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters.html)
+Although the method is shared, the format of input and output varies depending on the foundation model used, see [Inference parameters for foundation models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters.html){:target="_blank"}
 
 <h3> Common inference parameter definitions </h3>
 
@@ -318,7 +311,30 @@ def invoke_model(body, model_id, accept, content_type):
     except Exception as e:
         print(f"Couldn't invoke {model_id}")
         raise e
+```
 
+<h4>AI21 Jurassic Grande </h4>
+
+
+```python
+# If you'd like to try your own prompt, edit this parameter!
+prompt_data = """Command: Write me a blog about making strong business decisions as a leader.
+
+Blog:
+"""
+
+body = {
+    "prompt": prompt_data, 
+    "maxTokens": 200
+}
+modelId = "ai21.j2-mid-v1"  # change this to use a different version from the model provider
+accept = "application/json"
+contentType = "application/json"
+
+response = invoke_model(body, modelId, accept, contentType)
+response_body = json.loads(response.get("body").read())
+
+print(response_body.get("completions")[0].get("data").get("text"))
 ```
 
 <h4> Amazon Titan Text </h4>
@@ -332,10 +348,6 @@ prompt_data = """Command: Write me a blog about making strong business decisions
 Blog:
 """
 
-```
-
-
-```python
 body = {
     "inputText": prompt_data
 }
@@ -359,15 +371,11 @@ prompt_data = """Human: Write me a blog about making strong business decisions a
 Assistant:
 """
 
-```
-
-
-```python
 body = {
     "prompt": prompt_data, 
     "max_tokens_to_sample": 500
 }
-modelId = "anthropic.claude-3-haiku-20240307-v1:0"  # change this to use a different version from the model provider
+modelId = "anthropic.claude-instant-v1"  # change this to use a different version from the model provider
 accept = "application/json"
 contentType = "application/json"
 
@@ -377,29 +385,44 @@ response_body = json.loads(response.get("body").read())
 print(response_body.get("completion"))
 ```
 
-<h4> AI21 Jurassic Grande </h4>
+<h4> Cohere </h4>
 
 
 ```python
+# If you'd like to try your own prompt, edit this parameter!
+prompt_data = """Command: Write me a blog about making strong business decisions as a leader.
+
+Blog:
+"""
+
 body = {
-    "prompt": prompt_data, 
-    "maxTokens": 200
+    "prompt": prompt_data,
+    "max_tokens": 200,
 }
-modelId = "ai21.j2-mid-v1"  # change this to use a different version from the model provider
+
+modelId = "cohere.command-text-v14" 
 accept = "application/json"
 contentType = "application/json"
 
 response = invoke_model(body, modelId, accept, contentType)
-response_body = json.loads(response.get("body").read())
 
-print(response_body.get("completions")[0].get("data").get("text"))
+response_body = json.loads(response.get('body').read())
 
+print(response_body.get("generations")[0].get("text"))
 ```
 
 <h4> Meta Llama </h4>
 
 
 ```python
+# If you'd like to try your own prompt, edit this parameter!
+prompt_data = """<s>[INST] <<SYS>>
+You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
+If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
+<</SYS>>
+
+Write me a blog about making strong business decisions as a leader. [/INST]"""
+
 body = {
     "prompt": prompt_data,
     "temperature": 0.5,
@@ -407,7 +430,7 @@ body = {
     "max_gen_len": 512,
 }
 
-modelId = "meta.llama3-1-8b-instruct-v1:0"  
+modelId = "meta.llama3-8b-instruct-v1:0"
 accept = "application/json"
 contentType = "application/json"
 
@@ -421,43 +444,28 @@ print(response_body["generation"])
 
 
 ```python
-import json
-import boto3
-prompt="""
-[INST] You are a helpful code assistant. Your task is to generate a valid JSON object based on the given information:
+# If you'd like to try your own prompt, edit this parameter!
+prompt_data = """<s>[INST] <<SYS>>
+You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
+If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
+<</SYS>>
 
-name: Person First Name
-lastname: Person Last Name
-address: #1 Samuel St.
+Write me a blog about making strong business decisions as a leader. [/INST]"""
 
-Just generate the JSON object without explanations:
-[/INST]"""
-body = json.dumps({ 
-	'prompt': prompt,
-    'max_tokens': 200,
+body = {
+    "prompt": prompt_data,
+    'max_tokens': 500,
 	'top_p': 0.9,
-	'temperature': 0.2,
-})
+	'temperature': 0.2
+}
 
-
-
-bedrock_runtime = get_bedrock_client(
-    assumed_role=os.environ.get("BEDROCK_ASSUME_ROLE", None),
-    region='us-west-2',
-    runtime=True
-)
 modelId = 'mistral.mixtral-8x7b-instruct-v0:1'
 accept = 'application/json'
 contentType = 'application/json'
 
-response = bedrock_runtime.invoke_model(body=body.encode('utf-8'), # Encode to bytes
-                                 modelId=modelId, 
-                                 accept=accept, 
-                                 contentType=contentType)
+response = invoke_model(body, modelId, accept, contentType)
 
-response_body = json.loads(response.get('body').read().decode('utf-8'))
-
-print(f"\nModel {modelId} Responded")
+response_body = json.loads(response.get("body").read())
 print(response_body.get('outputs')[0].get('text'))
 ```
 
@@ -465,7 +473,9 @@ print(response_body.get('outputs')[0].get('text'))
 
 
 ```python
+# If you'd like to try your own prompt, edit this parameter!
 prompt_data = "a landscape with trees"
+
 body = {
     "text_prompts": [{"text": prompt_data}],
     "cfg_scale": 10,
@@ -484,9 +494,8 @@ print(response_body["result"])
 print(f'{response_body.get("artifacts")[0].get("base64")[0:80]}...')
 ```
 
-⚠️ Note ⚠️
-    
-The output is a [base64 encoded](https://docs.python.org/3/library/base64.html) string of the image data. You can use any image processing library (such as [Pillow](https://pillow.readthedocs.io/en/stable/)) to decode the image as in the example below:
+!!! note
+    The output is a [base64 encoded](https://docs.python.org/3/library/base64.html){:target="_blank"} string of the image data. You can use any image processing library (such as [Pillow](https://pillow.readthedocs.io/en/stable/){:target="_blank"}) to decode the image as in the example below:
 
 
 ```python
@@ -508,6 +517,8 @@ Run the code below to see how you can achieve this with Bedrock's `invoke_model_
 
 ```python
 from IPython.display import clear_output, display, display_markdown, Markdown
+
+# If you'd like to try your own prompt, edit this parameter!
 prompt_data = """Command: Write me a blog about making strong business decisions as a leader.
 
 Blog:
@@ -565,7 +576,7 @@ body = {
     "prompt": prompt_data, 
     "max_tokens_to_sample": 500
 }
-modelId = "anthropic.claude-3-haiku-20240307-v1:0"  # change this to use a different version from the model provider
+modelId = "anthropic.claude-instant-v1"  
 accept = "application/json"
 contentType = "application/json"
 
@@ -594,7 +605,7 @@ body = {
     "prompt": prompt_data, 
     "max_tokens_to_sample": 500
 }
-modelId = "anthropic.claude-3-haiku-20240307-v1:0"  # change this to use a different version from the model provider
+modelId = "anthropic.claude-instant-v1"  
 accept = "application/json"
 contentType = "application/json"
 
@@ -611,4 +622,8 @@ Now that we have seen how to use Amazon Bedrock APIs, you can learn
 - How to use [Amazon Bedrock Guardrails](02_guardrails_api.md)
 - How to use [Amazon Bedrock Knowledge Bases](03_knowledgebases_api.md)
 - How to use [Amazon Bedrock Agents](04_agents_api.md)
+- Hot to use [Converse API in Amazon Bedrock - Getting Started](../converse_api/01_converse_api.md)
 
+<h2>Clean up</h2>
+
+This notebook does not require any cleanup or additional deletion of resources.

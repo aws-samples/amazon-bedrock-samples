@@ -1,3 +1,9 @@
+---
+tags:
+    - Agents
+    - Prompt-Engineering
+---
+
 <style>
   .md-typeset h1,
   .md-content__button {
@@ -5,7 +11,10 @@
   }
 </style>
 
+
 <h2>How to do function calling with the Converse API</h2>
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/function-calling/function_calling_with_converse/function_calling_with_converse.ipynb){:target="_blank"}"
 
 <h2>Overview</h2>
 
@@ -13,7 +22,7 @@
 - **Supplying the model with multiple tools to choose from** Starting from the previous example, we add a tool to search the web (`web_search`) and give the the model the liberty to decide the tool that is best fit for a given request.
 - **Letting the model call multiple tools in a single turn** We modify the conversation flow to support parallel function calling. Then, we present an example where the model needs to call multiple tools in succession.
 
-<h2>Context + Theory + Details about feature/use case</h2>
+<h2>Context</h2>
 
 This notebook demonstrates how we can improve model capability by using the Converse or ConverseStream API with external functions.
 
@@ -28,9 +37,18 @@ If you want to learn more details about the parameters supported in the Bedrock 
 
 <h2>Prerequisites</h2>
 
-Ensure you enable access to Amazon Bedrock models through the Model Access section within the Amazon Bedrock page of the AWS Console.
+Before you can use Amazon Bedrock, you must carry out the following steps:
+
+- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
+- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
+    
 
 <h2>Setup</h2>
+
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
+
+Run the cells in this section to install the packages needed by this notebook.
 
 ```python
 !pip3 install boto3 --quiet
@@ -59,9 +77,7 @@ bedrock = boto3.client(
     )
 ```
 
-<h2>Notebook/Code with comments</h2>
-
-<h3>Basic tool definition and function calling</h3>
+<h2>Basic tool definition and function calling</h3>
 
 We set our tools through Python functions and start by defining a tool for simulating a weather forecast lookup tool (`get_weather`). Note in our example we're just returning a constant weather forecast to illustrate the concept, but you could make it fully functional by connecting any weather service API. Later in the example, we call the Open-Meteo API.
 
@@ -133,11 +149,11 @@ def converse_with_tools(messages, system='', toolConfig=toolConfig):
     return response
 ```
 
-<h3>Defining the conversation flow</h3>
+<h2>Defining the conversation flow</h3>
 
 Next, we define a function to manage the conversation flow. For this simple case, the function starts by invoking the model. Should the model choose to execute the tool we have defined, it returns it in `toolUse`. With this, the function runs the selected tool. Lastly, the tool's output is returned in `toolResults` to the model who can be given instructions to format it in a more conversational tone for the user.
 
-<h4>Prompt flow</h4>
+<h3>Prompt flow</h4>
 ![basic tool call](./assets/basic_tool_call.png)
 
 
@@ -561,6 +577,8 @@ toolConfig = {
 
 To simplify the `converse` function, we create a helper function to wrap the call of the function.
 
+!!! info 
+    This is an example conversation flow that can be extended or simplified using common libraries such as Langchain and LlamaIndex.
 
 ```python
 def call_function_and_add_message(tool_class, messages, previous_output):

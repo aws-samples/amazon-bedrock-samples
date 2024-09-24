@@ -1,15 +1,12 @@
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
+---
+tags:
+    - Guardrails
+    - Responsible-AI    
+---
 
 <h2> How to work with Amazon Bedrock Guardrails</h2>
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/02_guardrails_api.ipynb){:target="_blank"}"
-
-*Note: This notebook has been adapted from the [Guardrails for Amazon Bedrock - Examples using the Python SDK](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/responsible-ai/guardrails-for-amazon-bedrock-samples/guardrails-api.ipynb)*
 
 <h2> Overview </h2>
 
@@ -27,10 +24,10 @@ Guardrails can be used to implement safeguards for your generative AI applicatio
 
 For more information on publicly available capabilities:
 
-- [Documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html)
-- [Guardrail Policies](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-components.html)
-- [Pricing](https://aws.amazon.com/bedrock/pricing/)
-- [WebPage](https://aws.amazon.com/bedrock/guardrails/)
+- [Documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html){:target="_blank"}
+- [Guardrail Policies](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-components.html){:target="_blank"}
+- [Pricing](https://aws.amazon.com/bedrock/pricing/){:target="_blank"}
+- [WebPage](https://aws.amazon.com/bedrock/guardrails/){:target="_blank"}
 
 <h3> Architecture </h3>
 
@@ -39,7 +36,7 @@ For more information on publicly available capabilities:
 <h2> Prerequisites </h2>
 
 - Amazon Bedrock basic setup has been completed, see `Prerequisites` section under [Amazon Bedrock APIs - Getting Started](01_invoke_api.md)
-- Amazon Bedrock access to below given Foundation Model used in this notebook.
+- Amazon Bedrock access to below given Foundation Model used in this notebook, in `us-east-1` (N. Virginia) region.
 
 | Provider Name | Foundation Model Name | Model Id |
 | ------- | ------------- | ------------- |
@@ -47,6 +44,9 @@ For more information on publicly available capabilities:
 
 
 <h2> Setup </h2>
+
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
 
 
 ```python
@@ -64,7 +64,14 @@ We will use `create_guardrail` API to create an example Guardrail `fiduciary-adv
 
 
 ```python
-client = boto3.client('bedrock')
+region = 'us-east-1'
+print('Using region: ', region)
+
+client = boto3.client(
+    service_name = 'bedrock',
+    region_name = region,
+    )
+
 create_response = client.create_guardrail(
     name='fiduciary-advice',
     description='Prevents the our model from providing fiduciary advice.',
@@ -367,7 +374,7 @@ We will test our Guardrails with Amazon Bedrock using `Anthropic Claude 3 Haiku`
 ```python
 #import the run-time client
 import json
-bedrock_runtime = boto3.client('bedrock-runtime')
+bedrock_runtime = boto3.client('bedrock-runtime', region_name = region)
 ```
 
 
@@ -417,13 +424,14 @@ print(json.dumps(json.loads(response_body), indent=2))
 <h2> Next steps </h2>
 
 Now that we have seen how to use Amazon Bedrock Guardrails, you can learn
+
 - How to use [Amazon Bedrock Knowledge Bases](03_knowledgebases_api.md)
 - How to use [Amazon Bedrock Agents](04_agents_api.md)
-- To further explore the capabilities of Amazon Bedrock Guardrails, refer [Responsible AI and Guardrails](../../responsible_ai/).
+- To further explore the capabilities of Amazon Bedrock Guardrails, refer [Responsible AI and Guardrails](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/responsible_ai/){:target="_blank"}
 
-<h2> Clean up (optional) </h2>
+<h2> Clean up </h2>
 
-The next step optional step is to delete Guardrail created in this notebook.
+The next optional step is to delete Guardrail created in this notebook.
 
 
 ```python

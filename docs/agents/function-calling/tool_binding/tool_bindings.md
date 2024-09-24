@@ -1,3 +1,11 @@
+---
+tags:
+    - Agents
+    - Prompt-Engineering
+    - Langchain
+    - LlamaIndex
+---
+
 <style>
   .md-typeset h1,
   .md-content__button {
@@ -7,12 +15,14 @@
 
 <h2>How to work with tools bindings</h2>
 
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/release/v2/agents/function-calling/tool_binding/tool_bindings.ipynb){:target="_blank"}"
+
 <h2>Overview</h2>
 
 - **Tool binding with Langchain** We define a list of tools and apply the `.bind_tools` function.
 - **Tool binding with LlamaIndex** We translate the setup to leverage LlamaIndex.
 
-<h2>Context + Theory + Details about feature/use case</h2>
+<h2>Context</h2>
 
 Most differentiated real-world applications require access to real-time data and the ability to interact with it. On their own, models cannot call external functions or APIs to bridge this gap. To solve this, function calling lets developers define a set of tools (external functions) the model has access to and defines instructions the model uses to return a structured output that can be used to call the function. A tool definition includes its name, description and input schema. The model can be give a certain level of freedom when choosing to answer user requests using a set of tools. 
 
@@ -20,9 +30,18 @@ In this notebook we cover tool binding where the frameworks we use convert our t
 
 <h2>Prerequisites</h2>
 
-Ensure you enable access to Amazon Bedrock models through the Model Access section within the Amazon Bedrock page of the AWS Console.
+Before you can use Amazon Bedrock, you must carry out the following steps:
+
+- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
+- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
+    
 
 <h2>Setup</h2>
+
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
+
+Run the cells in this section to install the packages needed by this notebook.
 
 ```python
 !pip install botocore --quiet
@@ -65,8 +84,6 @@ llm = ChatBedrock(
     beta_use_converse_api=True
 )
 ```
-
-<h2>Notebook/Code with comments</h2>
 
 <h3> Tool binding with Langchain</h3>
 
@@ -160,6 +177,10 @@ ai_msg
 <h4> Using the AgentExecutor</h4>
 
 We define the system prompt and template governing the model's behaviour. We use `ChatPromptTemplate` to create a reusable template with a components including the steps the model should use to go about solving the problem with the tools it has available and runtime variables. The `agent_scratchpad` contains intermediate steps used by the model to understand the current state of reasoning as it is completing the request. This parameter is necessary for the model to effectively solve the problem with a smaller number of cycles.
+
+
+!!! info
+    The prompt template can be modified for other intended flows. In all cases, `agent_scratchpad` must be included.
 
 
 ```python
