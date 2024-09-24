@@ -1,3 +1,10 @@
+---
+tags:
+    - Agents
+    - Prompt-Engineering
+    - Langchain
+---
+
 <style>
   .md-typeset h1,
   .md-content__button {
@@ -7,6 +14,8 @@
 
 <h2>How to work with Return of Control (ROC)</h2>
 
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/function-calling/return_of_control/return_of_control.ipynb){:target="_blank"}"
+
 <h2>Overview</h2>
 
 - **Basic setup with one external function** We define an external function requiring multiple parameters and returning simple outputs. We allow the model to call this API through its ability to do [function calling](https://github.com/aws-samples/amazon-bedrock-samples/blob/release/v2/agents/function-calling/function_calling_with_converse/function_calling_with_converse.ipynb).
@@ -14,7 +23,7 @@
 - **Increasing flexibility with Amazon Bedrock Agents** We simplify the solution by leveraging Bedrock native functionality.
 - **Replicating the result in Langchain** We translate the solution to leverage a simple Langchain implementation.
 
-<h2>Context + Theory + Details about feature/use case</h2>
+<h2>Context</h2>
 
 This notebook demonstrates how to work with Return of Control (ROC) and Amazon Bedrock. Return of control extends model capabilities by enabling it to ask clarifying questions in order to solicit necessary information from the requester and offloading the function execution to the application developer. This not only can increase robustness of the application, but also allows the developer to introduce additional business logic, if needed, between the model's choice to use a tool and the execution of that tool.
 
@@ -22,9 +31,17 @@ This is a core functionality in agentic applications, which often work by identi
 
 <h2>Prerequisites</h2>
 
-Ensure you enable access to Amazon Bedrock models through the Model Access section within the Amazon Bedrock page of the AWS Console.
+Before you can use Amazon Bedrock, you must carry out the following steps:
 
+- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
+- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
+    
 <h2>Setup</h2>
+
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
+
+Run the cells in this section to install the packages needed by this notebook.
 
 ```python
 !pip install botocore --quiet
@@ -116,8 +133,6 @@ bedrock = boto3.client(
     region_name = region,
     )
 ```
-
-<h2>Notebook/Code with comments</h2>
 
 <h3> Tool as Pydantic definition</h3>
 

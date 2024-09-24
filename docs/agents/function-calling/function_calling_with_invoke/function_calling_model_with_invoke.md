@@ -1,3 +1,9 @@
+---
+tags:
+    - Agents
+    - Prompt-Engineering
+---
+
 <style>
   .md-typeset h1,
   .md-content__button {
@@ -7,6 +13,8 @@
 
 <h2>How to do function calling using InvokeModel API and model-specific prompting</h2>
 
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/function-calling/function_calling_with_invoke/function_calling_model_specific.ipynb){:target="_blank"}"
+
 <h2>Overview</h2>
 
 - **Tool calling with Anthropic Claude 3.5 Sonnet** We demonstrate how to define a single tool. In our case, for simulating a stock ticker symbol lookup tool `get_ticker_symbol` and allow the model to call this tool to return a a ticker symbol.
@@ -14,7 +22,7 @@
 - **Tool calling with Mistral AI Large** We modify the prompts to fit Mistral's suggested prompt format.
 - **Tool calling with Cohere Command R+** We modify the prompts to fit Cohere's suggested prompt format.
 
-<h2>Context + Theory + Details about feature/use case</h2>
+<h2>Context</h2>
 
 This notebook demonstrates how we can use the `InvokeModel API` with external functions to support tool calling. 
 
@@ -26,16 +34,18 @@ We cover the prompting components required to enable a model to call the correct
 
 <h2>Prerequisites</h2>
 
-Ensure you enable access to Amazon Bedrock models through the Model Access section within the Amazon Bedrock page of the AWS Console.
+Before you can use Amazon Bedrock, you must carry out the following steps:
+
+- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
+- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
+    
 
 <h2>Setup</h2>
 
-<h3>Tool calling with Anthropic Claude 3.5 Sonnet</h3>
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
 
-We set our tools and functions through Python functions.
-
-We start by defining a tool for simulating a stock ticker symbol lookup tool (`get_ticker_symbol`). Note in our example we're just returning a constant ticker symbol for a select group of companies to illustrate the concept, but you could make it fully functional by connecting it to any stock or finance API.
-
+Run the cells in this section to install the packages needed by this notebook.
 
 ```python
 !pip install boto3 --quiet
@@ -43,6 +53,12 @@ We start by defining a tool for simulating a stock ticker symbol lookup tool (`g
 !pip install beautifulsoup4 --quiet
 !pip install lxml --quiet
 ```
+
+<h3>Tool calling with Anthropic Claude 3.5 Sonnet</h3>
+
+We set our tools and functions through Python functions.
+
+We start by defining a tool for simulating a stock ticker symbol lookup tool (`get_ticker_symbol`). Note in our example we're just returning a constant ticker symbol for a select group of companies to illustrate the concept, but you could make it fully functional by connecting it to any stock or finance API.
 
 This first example leverages Claude Sonnet 3.5 in the `us-west-2` region. Later, we continue with implementations using various other models available in Amazon Bedrock. The full list of models and supported regions can be found [here](https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html). Ensure you have access to the models discussed at the beginning of the notebook. The models are invoked via `bedrock-runtime`.
 
@@ -63,14 +79,14 @@ bedrock = boto3.client(
     )
 ```
 
-<h2>Notebook/Code with comments</h2>
-
 <h3>Helper Functions & Prompt Templates</h3>
 
 We define a few helper functions and tools that each model uses.
 
-First, we define `ToolsList` class with a member function, namely `get_ticker_symbol`, which returns the ticker symbol of a limited set of companies. Note that there is nothing specific to the model used or Amazon Bedrock in these definitions. You can add more functions in the `ToolsList` class for added capabilities (for ex. a function that calls a finance API to retrieve stock information).
+First, we define `ToolsList` class with a member function, namely `get_ticker_symbol`, which returns the ticker symbol of a limited set of companies. Note that there is nothing specific to the model used or Amazon Bedrock in these definitions.
 
+!!! info
+    You can add more functions in the `ToolsList` class for added capabilities. For instance, you can modify the function to call a finance API to retrieve stock information.
 
 ```python
 # Define your tools
