@@ -116,5 +116,11 @@ nav:
       - Function Calling with Invoke: './agents/function-calling/function_calling_with_invoke/function_calling_model_with_invoke.md'
       - Return of Control: './agents/function-calling/return_of_control/return_of_control.md'
       - Tool Binding: './agents/function-calling/tool_binding/tool_bindings.md'
+  - RAG:
+    - Open Source:
+      - Chatbots: './rag/open-source/chatbots/qa_chatbot_langchain_bedrock.md'
+      - Chunking: './rag/open-source/chunking/rag_chunking_strategies_langchain_bedrock.md'
+      - Vector Stores:
+        - Opensearch: './rag/open-source/vector_stores/rag_langchain_bedrock_opensearch.md'
   - Tags: 'general/tags.md'
   - License: 'general/license.md'

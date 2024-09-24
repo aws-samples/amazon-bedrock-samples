@@ -1,6 +1,19 @@
-<style> .md-typeset h1, .md-content__button { display: none; } </style> 
+---
+tags:
+    - RAG
+    - Langchain
+---
+
+<style>
+  .md-typeset h1,
+  .md-content__button {
+    display: none;
+  }
+</style>
 
 <h2>RAG chatbot using Amazon Bedrock and LangChain</h2>
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/open-sorce/chatbots/qa_chatbot_langchain_bedrock.ipynb){:target="_blank"}"
 
 <h2>Overview</h2>
 
@@ -32,17 +45,18 @@ We have three high level scenarios:
 
 <h3>Dependencies</h3>
 
+!!! info
+    This notebook should work well with the Data Science 3.0 kernel (Python 3.10 runtime) in SageMaker Studio
+
 We’ll use Anthropic's Claude 3 Sonnet model from Amazon Bedrock as generation model, Amazon Titan embedding as embeddings and a Chroma vector store in this walkthrough. We will use LangChain as an orchestrator to build this Q&A chatbot. 
 We will also use LangSmith for tracing and debugging. 
-
-
 
 
 ```python
 %pip install --upgrade --quiet  langchain langchain-community langchain_aws langchain-chroma langchainhub beautifulsoup4
 ```
-
-    Note: you may need to restart the kernel to use updated packages.
+!!! info
+    You may need to restart the kernel to use updated packages.
 
 
 <h2>Setup</h2>
