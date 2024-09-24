@@ -230,7 +230,7 @@ rec_text_splits[:2]
 
 
 
-<h2>1. Semantic Chunking</h2>
+<h2>2. Semantic Chunking</h2>
 
 Semantic chunking is a natural language processing technique that divides text into meaningful and complete chunks based on the semantic similarity calculated by the embedding model. By focusing on the text's meaning and context, semantic chunking significantly improves the quality of retrieval in most use cases, rather than blind, syntactic chunking.
 
@@ -281,7 +281,7 @@ There are a few ways to determine what that threshold is:
 - Gradient
 
 
-#### Percentile
+**Percentile**
 
 The default way to split is based on percentile. In this method, all differences between sentences are calculated, and then any difference greater than the X percentile is split.
 
@@ -383,7 +383,7 @@ semantic_text_splits[:2]
 
 
 
-<h2> Hierarchical chunking</h2>
+<h2> 3. Hierarchical chunking</h2>
 
 Hierarchical chunking goes a step further by organizing documents into parent and child chunks.
 
