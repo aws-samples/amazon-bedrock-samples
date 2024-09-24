@@ -10,6 +10,7 @@ repo_url: "https://github.com/aws-samples/amazon-bedrock-samples/tree/main"
 # Plugins
 plugins:
   - tags:
+      # tags_hierarchy: true
       tags_file: 'general/tags.md'
   - search:
       separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
@@ -36,6 +37,8 @@ plugins:
 # # extras and additional configuration
 extra:
   generator: false
+  tags:
+    Compatibility: compat
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/aws-samples/amazon-bedrock-samples/tree/main
@@ -101,6 +104,12 @@ markdown_extensions:
 nav:
   - Home: 'index.md'
   - Get Started: 'general/get-started.md'
+  - Intro to Amazon Bedrock:
+    - Bedrock APIs: 
+      - Invoke Model: './introduction-to-bedrock/bedrock_apis/01_invoke_api.md'
+      - Guardrail: './introduction-to-bedrock/bedrock_apis/02_guardrails_api.md'
+      - Knowledge Bases: './introduction-to-bedrock/bedrock_apis/03_knowledgebases_api.md'
+      - Agents: './introduction-to-bedrock/bedrock_apis/04_agent_api.md'
   - Agents:
     - Function Calling:
       - Function Calling with Converse: './agents/function-calling/function_calling_with_converse/function_calling_with_converse.md'
