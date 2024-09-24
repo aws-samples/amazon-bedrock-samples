@@ -92,7 +92,7 @@ Resources:
       Timeout: 300
       MemorySize: 1024
       Layers:
-        - !Sub "arn:aws:lambda:${AWS::Region}:336392948345:layer:AWSSDKPandas-Python312:13"
+        - !Sub '{{resolve:ssm:/aws/service/aws-sdk-pandas/3.9.1/py3.12/x86_64/layer-arn}}'
       Role: !GetAtt BillingAgentLambdaRole.Arn
       Handler: "billingagent.lambda_handler"
       Code:
@@ -217,7 +217,7 @@ Resources:
       Timeout: 300
       MemorySize: 1024
       Layers:
-        - !Sub "arn:aws:lambda:${AWS::Region}:336392948345:layer:AWSSDKPandas-Python312:13"
+        - !Sub '{{resolve:ssm:/aws/service/aws-sdk-pandas/3.9.1/py3.12/x86_64/layer-arn}}'
       Role: !GetAtt SavingsPlanAgentLambdaRole.Arn
       Handler: "SavingsPlan.lambda_handler"
       Code:
