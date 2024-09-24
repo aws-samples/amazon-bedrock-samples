@@ -9,12 +9,12 @@
 <h2>Building Q&A Application with Langchain and Amazon Bedrock Knowledge Base</h2>
 
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/amazon-bedrock-knowledge-base/1_how_to_use_knowledge_base_with_langchain.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/knowledge-base-with-opensource/1_how_to_use_knowledge_base_with_langchain.ipynb){:target="_blank"}"
 
 
 <h2>Overview</h2>
 
-In this notebook we will leverage Amazon Bedrock Knowledge Base that we created in [0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/amazon-bedrock-knowledge-base/0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb) and use it with LangChain to create a Q&A Application.
+In this notebook we will leverage Amazon Bedrock Knowledge Base that we created in [0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/knowledge-base-with-opensource/0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb) and use it with LangChain to create a Q&A Application.
 
 <h2>Context</h2>
 
@@ -32,7 +32,7 @@ Following is the Architecture Diagram of the orchestration done by Langchain by 
 
 <h2>Prerequisites</h2>
 
-Before being able to answer the questions, the documents must be processed and ingested in vector database as shown on [0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/amazon-bedrock-knowledge-base/0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb). We will making use of the Knowledge Base ID that we stored in this notebook.
+Before being able to answer the questions, the documents must be processed and ingested in vector database as shown on [0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/knowledge-base-with-opensource/0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb). We will making use of the Knowledge Base ID that we stored in this notebook.
 
 In case you are wanting to create the Knowledge Base from Console then you can follow the [official documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-create.html).
 
@@ -215,4 +215,4 @@ You can check out the next example to see how LlamaIndex can leverage Amazon Bed
 
 !!! warning "Deleting Resources to avoid incurring cost"
 
-    In case you are done with your labs and the sample codes then remember to Clean Up the resources at the end of your session by following [3_clean_up.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/amazon-bedrock-knowledge-base/3_clean_up.ipynb)
+    In case you are done with your labs and the sample codes then remember to Clean Up the resources at the end of your session by following [3_clean_up.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/knowledge-base-with-opensource/3_clean_up.ipynb)

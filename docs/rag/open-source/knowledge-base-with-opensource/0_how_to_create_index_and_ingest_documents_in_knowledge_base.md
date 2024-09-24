@@ -9,7 +9,7 @@
 <h2>How to create index and ingest documents in Amazon Bedrock Knowledge Base</h2>
 
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/amazon-bedrock-knowledge-base/0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/knowledge-base-with-opensource/0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb){:target="_blank"}"
 
 
 <h2>Overview</h2>
@@ -611,4 +611,4 @@ Proceed to the next labs to learn how to use Amazon Bedrock Knowledge Base with 
 
 !!! warning "Deleting Resources to avoid incurring cost"
 
-    In case you are done with your labs and the sample codes then remember to Clean Up the resources at the end of your session by following [3_clean_up.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/amazon-bedrock-knowledge-base/3_clean_up.ipynb)
+    In case you are done with your labs and the sample codes then remember to Clean Up the resources at the end of your session by following [3_clean_up.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/knowledge-base-with-opensource/3_clean_up.ipynb)
