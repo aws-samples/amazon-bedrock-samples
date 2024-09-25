@@ -3,7 +3,7 @@ tags:
     - generative AI use cases/ Entity Extraction
 ---
 <!-- <h2> Invoke Bedrock model for Entity Extraction.</h2> -->
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main//genai-use-cases/text-generation/how_to_work_with_entity_extraction_w_bedrock.ipynbb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main//genai-use-cases/text-generation/how_to_work_with_entity_extraction_w_bedrock.ipynb){:target="_blank"}"
 
 
 <h2>Overview</h2>
@@ -22,6 +22,13 @@ In addition, LLM entity extraction can be used to help you assemble a dataset to
 
 In this notebook we show you how to use a LLM to extract entities from the email to process the order. 
 
+
+<h2>Prerequisites</h2>
+
+Before you can use Amazon Bedrock, you must carry out the following steps:
+
+- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
+- Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
 
 
 <h2>Setup</h2>

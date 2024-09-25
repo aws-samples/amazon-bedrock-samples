@@ -4,7 +4,7 @@ tags:
 ---
 <!-- <h2> Invoke Bedrock model for text generation using zero-shot prompt</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main//genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.ipynbb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main//genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.ipynb){:target="_blank"}"
 
 <h2>Overview</h2>
 
