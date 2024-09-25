@@ -128,7 +128,8 @@ nav:
   - Gen AI Usecases:
     - Text Generation:
       - Text generation and output formatting: './genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.md'
- 
+      - Code generation: './genai-use-cases/text-generation/how_to_work_with_code_generation_w_bedrock.md'
+      - Entity Extraction: './genai-use-cases/text-generation/how_to_work_with_entity_extraction_w_bedrock.md'
     - Agents: 'general/license.md'
     - KB: 'general/license.md'
     - End-to-end examples: 'general/license.md'

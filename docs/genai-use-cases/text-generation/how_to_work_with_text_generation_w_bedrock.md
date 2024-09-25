@@ -22,7 +22,7 @@ The prompt used in this example is called a zero-shot prompt because we are not 
 
 We will simply provide the Amazon Bedrock API with an input consisting of a task, an instruction and an input for the model under the hood to generate an output without providing any additional example. The purpose here is to demonstrate how the powerful LLMs easily understand the task at hand and generate compelling outputs.
 
-![text-generation](./assets//bedrock.jpg)
+![text-generation](./assets/bedrock.jpg)
 
 <h3>Use case</h3>
 
