@@ -2,11 +2,9 @@
 tags:
     - generative AI use cases/ Text Generation
 ---
-    
 <!-- <h2> Invoke Bedrock model for text generation using zero-shot prompt</h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main//genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.ipynbb){:target="_blank"}"
-
 
 <h2>Overview</h2>
 
@@ -24,7 +22,7 @@ The prompt used in this example is called a zero-shot prompt because we are not 
 
 We will simply provide the Amazon Bedrock API with an input consisting of a task, an instruction and an input for the model under the hood to generate an output without providing any additional example. The purpose here is to demonstrate how the powerful LLMs easily understand the task at hand and generate compelling outputs.
 
-![](./assets//bedrock.jpg)
+![text-generation](./assets//bedrock.jpg)
 
 <h3>Use case</h3>
 
@@ -41,7 +39,6 @@ Before you can use Amazon Bedrock, you must carry out the following steps:
 - Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
 - Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
 
-
 <h2>Setup</h2>
 
 !!! info
@@ -51,11 +48,7 @@ Run the cells in this section to install the packages needed by this notebook.
 
 ```python
 !pip3 install boto3 --quiet
-
 ```
-
-
-
 
 ```python
 import json
@@ -79,8 +72,7 @@ boto3_bedrock = boto3.client(
 <h2>Generate text</h2>
 
 
-Following on the use case explained above, let's prepare an input for  the Amazon Bedrock service to generate an email. Note that this prompt would need to be modified with [Human:/Assistant: formatting for Claude.](https://docs.anthropic.com/claude/docs/human-and-assistant-formatting)
-
+Following on the use case explained above, let's prepare an input for the Amazon Bedrock service to generate an email.
 
 ```python
 # create the prompt
