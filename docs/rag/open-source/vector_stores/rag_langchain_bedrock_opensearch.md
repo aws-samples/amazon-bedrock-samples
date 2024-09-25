@@ -1,18 +1,18 @@
 ---
 tags:
-    - RAG
-    - Langchain
-    - OpenSearch
+    - RAG/ Knowledge-Bases
+    - Open Source/ Langchain
+    - Vector-DB/ OpenSearch
 ---
 
-<style>
+<!-- <style>
   .md-typeset h1,
   .md-content__button {
     display: none;
   }
 </style>
 
-<h2> Build RAG solution with LangChain and Amazon Bedrock using OpenSearch Serverless</h2>
+<h2> Build RAG solution with LangChain and Amazon Bedrock using OpenSearch Serverless</h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/open-sorce/vector_stores/rag_langchain_bedrock_opensearch.ipynb){:target="_blank"}"
 

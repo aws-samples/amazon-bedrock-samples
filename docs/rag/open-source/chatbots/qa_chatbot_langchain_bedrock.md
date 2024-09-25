@@ -1,17 +1,17 @@
 ---
 tags:
-    - RAG
-    - Langchain
+    - RAG/ Knowledge-Bases
+    - Open Source/ Langchain
 ---
 
-<style>
+<!-- <style>
   .md-typeset h1,
   .md-content__button {
     display: none;
   }
-</style>
+</style> -->
 
-<h2>RAG chatbot using Amazon Bedrock and LangChain</h2>
+<!-- <h2>RAG chatbot using Amazon Bedrock and LangChain</h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/open-sorce/chatbots/qa_chatbot_langchain_bedrock.ipynb){:target="_blank"}"
 

@@ -1,10 +1,10 @@
 ---
 tags:
-    - RAG
-    - Knowledge-Bases
+    - RAG/ Knowledge-Bases
+    - API-Usage-Example
 ---
 
-<h2> How to work with Amazon Bedrock Knowledge Bases</h2>
+<!-- <h2> How to work with Amazon Bedrock Knowledge Bases</h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/03_knowledgebases_api.ipynb){:target="_blank"}"
 

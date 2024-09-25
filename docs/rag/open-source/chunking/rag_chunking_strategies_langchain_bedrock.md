@@ -1,18 +1,19 @@
 ---
 tags:
-    - RAG
-    - Langchain
-    - LlamaIndex
+    - RAG/ Knowledge-Bases
+    - Open Source/ Langchain
+    - Open Source/ LlamaIndex
 ---
 
-<style>
+<!-- <style>
   .md-typeset h1,
   .md-content__button {
     display: none;
   }
-</style>
+</style> -->
 
-<h2>Chunking strategies for RAG applications</h2>
+<!-- <h2>Chunking strategies for RAG applications</h2> -->
+
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/open-sorce/chunking/qrag_chunking_strategies_langchain_bedrock.ipynb){:target="_blank"}"
 
 **A quick Recap of RAG**

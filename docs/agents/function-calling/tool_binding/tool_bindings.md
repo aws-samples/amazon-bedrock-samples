@@ -1,19 +1,11 @@
 ---
 tags:
-    - Agents
-    - Prompt-Engineering
-    - Langchain
-    - LlamaIndex
+    - Agents/ Tool Binding
+    - Open Source/ Langchain
+    - Open Source/ LlamaIndex
 ---
 
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
-
-<h2>How to work with tools bindings</h2>
+<!-- <h2>How to work with tools bindings</h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/release/v2/agents/function-calling/tool_binding/tool_bindings.ipynb){:target="_blank"}"
 

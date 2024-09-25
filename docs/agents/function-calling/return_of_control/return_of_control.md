@@ -1,18 +1,10 @@
 ---
 tags:
-    - Agents
-    - Prompt-Engineering
-    - Langchain
+    - Agents/ Return of Control
+    - Open Source/ Langchain
 ---
 
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
-
-<h2>How to work with Return of Control (ROC)</h2>
+<!-- <h2>How to work with Return of Control (ROC)</h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/function-calling/return_of_control/return_of_control.ipynb){:target="_blank"}"
 

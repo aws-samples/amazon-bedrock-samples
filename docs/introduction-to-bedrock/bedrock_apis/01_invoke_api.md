@@ -1,9 +1,9 @@
 ---
 tags:
-    - Prompt-Engineering
+    - API-Usage-Example
 ---
 
-<h2> How to work with Amazon Bedrock APIs - Getting Started </h2>
+<!-- <h2> How to work with Amazon Bedrock APIs - Getting Started </h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/01_invoke_api.ipynb){:target="_blank"}"
 

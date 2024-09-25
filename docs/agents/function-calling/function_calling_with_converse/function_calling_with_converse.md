@@ -1,18 +1,8 @@
 ---
 tags:
-    - Agents
-    - Prompt-Engineering
+    - Agents/ Function Calling
 ---
-
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
-
-
-<h2>How to do function calling with the Converse API</h2>
+<!-- <h2>How to do function calling with the Converse API</h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/function-calling/function_calling_with_converse/function_calling_with_converse.ipynb){:target="_blank"}"
 

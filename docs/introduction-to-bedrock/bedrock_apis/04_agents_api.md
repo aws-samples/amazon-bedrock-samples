@@ -1,9 +1,10 @@
 ---
 tags:
-    - Agents
+    - Agents/ Function Definition
+    - API-Usage-Example
 ---
 
-<h2> How to work with Amazon Bedrock Agents</h2>
+<!-- <h2> How to work with Amazon Bedrock Agents</h2> -->
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/04_agents_api.ipynb){:target="_blank"}"
 

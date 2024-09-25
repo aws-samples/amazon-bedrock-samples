@@ -7,7 +7,7 @@ hide:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amazon Bedrock Cookbook</title>
+    <title>Amazon Bedrock Samples</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         /* Reset and base styles */
@@ -46,7 +46,7 @@ hide:
             background-position: 0 0, 50px 50px;
             background-size: 100px 100px;
             opacity: 0.3;
-            animation: moveBackground 2s linear infinite;
+            animation: moveBackground 3s linear infinite;
             z-index: 1;
         }
         @keyframes moveBackground {
@@ -54,12 +54,12 @@ hide:
             100% { transform: translate(-50px, -50px); }
         }
         .hero-content img {
-            max-width: 200px;
+            max-width: 155px; /* Reduced from 200px */
             margin-right: 1rem;
             vertical-align: middle;
         }
         .hero-content h1 {
-            font-size: 3rem;
+            font-size: 3rem; /* Reduced from 3rem */
             font-weight: 700;
             color: #ffffff;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
@@ -68,15 +68,15 @@ hide:
             margin: 0;
         }
         .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            max-width: 600px;
+            font-size: 1.1rem; /* Reduced from 1.2rem */
+            margin-bottom: 1.5rem; /* Reduced from 2rem */
+            max-width: 500px; /* Reduced from 600px */
             margin-left: auto;
             margin-right: auto;
         }
         .btn {
             display: inline-block;
-            padding: 12px 24px;
+            padding: 10px 20px; /* Reduced from 12px 24px */
             background-color: #333333; /* Light Black */
             color: #ffffff; /* White */
             text-decoration: none;
@@ -105,24 +105,24 @@ hide:
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
+            gap: 1rem;
         }
         .card {
             background-color: #f7f7f7; /* Light Grey */
             border-radius: 8px;
-            padding: 20px;
-            transition: box-shadow 0.1s ease-in-out;
+            padding: 10px;
+            transition: box-shadow 0.2s ease-in-out;
         }
         .card:hover {
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
         }
         .card h3 {
-            font-size: 1.2rem;
+            font-size: 1rem;
             margin-bottom: 1rem;
             color: #333333; /* Light Black */
         }
         .card p {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             color: #555555; /* Light Black */
         }
         .button {
@@ -149,11 +149,11 @@ hide:
         .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
+        gap: 10px;
         }
         .grid-item {
             background: #f5f5f5;
-            padding: 20px;
+            padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
@@ -163,50 +163,97 @@ hide:
     <div class="hero">
         <div class="hero-content">
             <img src="bedrock_logo.png" alt="Amazon Bedrock Logo">
-            <h1>Amazon Bedrock Cookbook</h1>
+            <h1>Amazon Bedrock Samples</h1>
         </div>
         <p>A collection of resources to help builders use and learn about the features of Amazon Bedrock.</p>
-        <a href="#getting-started" class="btn">Get Started</a>
     </div>
 
     <main>
         <section id="getting-started" class="features">
             <h2>Getting Started</h2>
-            <div class="grid">
                 <div class="card">
-                    <h3>Clone Repository</h3>
-                    <p>Clone the Amazon Bedrock Samples repository to get started:</p>
-                    <pre><code>git clone git@github.com:aws-samples/amazon-bedrock-samples.git
+                    <pre><code># Step 1: install python sdk
+pip install boto3
+
+# Step 2: clone the repository and use available notebooks
+git clone https://github.com/aws-samples/amazon-bedrock-samples.git
 cd amazon-bedrock-samples</code></pre>
                 </div>
-            </div>
         </section>
 
         <section class="features">
             <h2>Features</h2>
             <div class="grid">
                 <div class="card">
+                    <h3>Agents</h3>
+                    <p>Amazon Bedrock Agents enable generative AI applications to execute multi-step tasks across company systems and data sources. This streamlines workflows, automates repetitive tasks, and increases productivity while reducing costs.</p>
+                    <a href="https://aws.amazon.com/bedrock/agents/" target="_blank">Learn More</a>
+                </div>
+                <div class="card">
                     <h3>Knowledge Bases</h3>
-                    <p>With Amazon Bedrock Knowledge Bases, you can give FMs and agents contextual information from your company's private data sources for RAG to deliver more relevant, accurate, and customized responses.</p>
+                    <p>Amazon Bedrock Knowledge Bases provide FMs and agents with contextual information from private data sources. This enables RAG to deliver more relevant, accurate, and customized responses tailored to your company's specific needs.</p>
+                    <a href="https://aws.amazon.com/bedrock/knowledge-bases/" target="_blank">Learn More</a>
+                </div>
+                <div class="card">
+                    <h3>Guardrails</h3>
+                    <p>Amazon Bedrock Guardrails offer control mechanisms to ensure AI outputs align with organizational policies and ethical standards. This feature helps maintain consistency and safety in AI-generated content across various applications.</p>
+                    <a href="https://aws.amazon.com/bedrock/guardrails/" target="_blank">Learn More</a>
+                </div>
+                <div class="card">
+                    <h3>Model Evaluation</h3>
+                    <p>Amazon Bedrock's Model Evaluation allows users to assess and compare different models' performance. This feature helps in selecting the most suitable model for specific tasks, ensuring optimal results for your AI applications.</p>
+                    <a href="https://aws.amazon.com/blogs/aws/amazon-bedrock-model-evaluation-is-now-generally-available/" target="_blank">Learn More</a>
+                </div>
+                <div class="card">
+                    <h3>Prompt Management</h3>
+                    <p>Amazon Bedrock Prompt Management simplifies the creation, evaluation, versioning, and sharing of prompts to help developers and prompt engineers get the best responses from foundation models (FMs) for their use cases.</p>
+                    <a href="https://aws.amazon.com/bedrock/prompt-management/" target="_blank">Learn More</a>
+                </div>
+                <div class="card">
+                    <h3>Prompt Flow</h3>
+                    <p>Amazon Bedrock Prompt Flows accelerates the creation, testing, and deployment of workflows through an intuitive visual builder. Prompt Flows allows you to seamlessly link foundation models (FMs), prompts, and many AWS services and tools together.</p>
+                    <a href="https://aws.amazon.com/bedrock/prompt-flows/" target="_blank">Learn More</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- <section class="features">
+            <h2>Inference Options</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>On-demand</h3>
+                    <p>On-demand Inference in Amazon Bedrock offers pay-as-you-go pricing for model usage. This flexible option allows users to access foundation models without long-term commitments, ideal for variable or unpredictable workloads.</p>
                     <a href="./general/about-knowledge-bases.md" target="_blank">Learn More</a>
                 </div>
                 <div class="card">
-                    <h3>Agents</h3>
-                    <p>With Amazon Bedrock Agents, you can enable generative AI applications to execute multistep tasks across your company's systems and data sources, streamlining workflows and automating repetitive tasks for increased productivity and cost reduction.</p>
-                    <a href="./general/about-agents.md" target="_blank">Learn More</a>
+                    <h3>Cross Region Inference</h3>
+                    <p>Cross Region Inference enables the use of compute resources across different AWS Regions. This feature provides higher throughput limits and enhanced resilience, helping manage traffic bursts effectively.</p>
+                    <a href="./general/about-knowledge-bases.md" target="_blank">Learn More</a>
                 </div>
                 <div class="card">
-                    <h3>Open Source Framework</h3>
-                    <p>Amazon Bedrock supports most commonly used open source frameworks like Langchain and Llama index</p>
-                    <a href="./general/about-open-source.md" target="_blank">Learn More</a>
+                    <h3>Batch Inference</h3>
+                    <p>Batch Inference allows processing of multiple prompts simultaneously, outputting responses to an S3 bucket. This mode offers a 50% lower price compared to on-demand pricing for select foundation models.</p>
+                    <a href="./general/about-knowledge-bases.md" target="_blank">Learn More</a>
                 </div>
                 <div class="card">
-                    <h3>Amazon Bedrock SDK</h3>
-                    <pre><code>#Install python SDK<br>pip install boto3</code></pre>
-                    <p><b>Learn about the Bedrock APIs</b></p>
-                    <a href="https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock.html" target="_blank">Bedrock SDK</a>
-                    <br>
-                    <a href="https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime.html" target="_blank">Bedrock Runtime SDK</a>
+                    <h3>Provisioned Throughput</h3>
+                    <p>Provisioned Throughput mode in Amazon Bedrock allows users to purchase model units for guaranteed performance. This option is ideal for large, consistent inference workloads requiring specific throughput levels.</p>
+                    <a href="./general/about-knowledge-bases.md" target="_blank">Learn More</a>
+                </div>
+            </div>
+        </section> -->
+
+        <section class="features">
+            <h2>Support for Open Source Frameworks</h2>
+            <div class="grid">
+                <div class="card">
+                    <!-- <h3>Open Source Integrations</h3> -->
+                    <ul>
+                        <li><a href="https://python.langchain.com/docs/integrations/llms/bedrock/" target="_blank">LangChain</a></li>
+                        <li><a href="https://www.langchain.com/langgraph" target="_blank">LangGraph</a></li>
+                        <li><a href="https://docs.llamaindex.ai/en/stable/examples/llm/bedrock/" target="_blank">LlamaIndex</a></li>
+                        <!-- <li><a href="https://www.crew.ai/" target="_blank">Crew.ai</a></li> -->
+                    </ul>
                 </div>
             </div>
         </section>
