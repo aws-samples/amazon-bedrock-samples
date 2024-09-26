@@ -1,6 +1,7 @@
 ---
 tags:
-    - generative AI use cases/ Text Translation
+    - Use cases
+    - API-Usage-Example
 ---
 <!-- <h2> Invoke Bedrock model for text translation</h2> -->
 

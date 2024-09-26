@@ -1,6 +1,7 @@
 ---
 tags:
-    - generative AI use cases/ Code Generation
+    - Use cases
+    - API-Usage-Example
 ---
 <!-- <h2> Invoke Bedrock model for code generation</h2> -->
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main//genai-use-cases/text-generation/how_to_work_with_code_generation_w_bedrock.ipynb){:target="_blank"}"

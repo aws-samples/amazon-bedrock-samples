@@ -1,6 +1,7 @@
 ---
 tags:
-    - generative AI use cases/ Batch Inference
+    - Use cases
+    - API-Usage-Example
 ---
 <!-- <h2> Batch Inference to write email for product recomendation</h2> -->
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main//genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.ipynb){:target="_blank"}"

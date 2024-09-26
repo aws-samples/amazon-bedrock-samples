@@ -1,7 +1,8 @@
----
+<!-- ---
 tags:
-    - generative AI use cases/ Entity Extraction
----
+    - Use cases
+    - API-Usage-Example
+--- -->
 <!-- <h2> Invoke Bedrock model for Entity Extraction.</h2> -->
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main//genai-use-cases/text-generation/how_to_work_with_entity_extraction_w_bedrock.ipynb){:target="_blank"}"
 

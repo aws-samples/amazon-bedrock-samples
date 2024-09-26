@@ -1,12 +1,11 @@
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
+---
+tags:
+    - Agents/ Multi-Agent-Orchestration
+    - Use cases
+---
 
 
-<h2>How to create your Multi Agent System with Custom Agents</h2>
+<!-- <h2>How to create your Multi Agent System with Custom Agents</h2> -->
 
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/agents/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.ipynb){:target="_blank"}"

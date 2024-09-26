@@ -113,6 +113,10 @@ nav:
         - Guardrail API Example: './introduction-to-bedrock/bedrock_apis/02_guardrails_api.md'
         - Converse API Example: './introduction-to-bedrock/converse_api/01_converse_api.md'
     - Agents:
+      - Create Agent Examples:
+        - How to create an Agent: './agents/introduction-to-agents/how_to_create_custom_agents.md'
+      - Multi Agent:
+        - Multi Agent Orchestration: './agents/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.md'
       - Function Calling:
         - Function Calling with Converse: './agents/function-calling/function_calling_with_converse/function_calling_with_converse.md'
         - Function Calling with Invoke: './agents/function-calling/function_calling_with_invoke/function_calling_model_with_invoke.md'
@@ -127,18 +131,18 @@ nav:
           - Langchain Chatbot with Opensearch: './rag/open-source/vector_stores/rag_langchain_bedrock_opensearch.md'
   - Gen AI Usecases:
     - Text Generation:
-      - Text generation and output formatting: './genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.md'
-      - Code generation: './genai-use-cases/text-generation/how_to_work_with_code_generation_w_bedrock.md'
-      - Entity Extraction: './genai-use-cases/text-generation/how_to_work_with_entity_extraction_w_bedrock.md'
-      - Text Translation:  './genai-use-cases/text-generation/how_to_work_with_text_translation_w_bedrock.md'
-      - Text summarization:  './genai-use-cases/text-generation/how_to_work_with_text-summarization-titan+claude.md'
-      - Batch Inference:  './genai-use-cases/text-generation/how_to_work_with_batch_example_for_multi_threaded_invocation.md'
-    - Agents: 'general/license.md'
-    - KB: 'general/license.md'
-    - End-to-end examples: 'general/license.md'
-    - Governance: 'general/license.md'
-    - Observability: 'general/license.md'
-    - Data access control: 'general/license.md'
-    - Applications examples: 'general/license.md'
+      - Streaming Response with Converse: './genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.md'
+      - Generate Python Code with Converse: './genai-use-cases/text-generation/how_to_work_with_code_generation_w_bedrock.md'
+      # - Entity Extraction: './genai-use-cases/text-generation/how_to_work_with_entity_extraction_w_bedrock.md'
+      - Text Translation with Converse:  './genai-use-cases/text-generation/how_to_work_with_text_translation_w_bedrock.md'
+      - Text summarization with Converse:  './genai-use-cases/text-generation/how_to_work_with_text-summarization-titan+claude.md'
+      - Generate Bulk Emails with Batch Inference:  './genai-use-cases/text-generation/how_to_work_with_batch_example_for_multi_threaded_invocation.md'
+    # - Agents: 'general/license.md'
+    # - KB: 'general/license.md'
+    # - End-to-end examples: 'general/license.md'
+    # - Governance: 'general/license.md'
+    # - Observability: 'general/license.md'
+    # - Data access control: 'general/license.md'
+    # - Applications examples: 'general/license.md'
   - Tags: 'general/tags.md'
   - License: 'general/license.md'

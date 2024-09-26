@@ -1,6 +1,7 @@
 ---
 tags:
-    - generative AI use cases/ Text Generation
+    - Use cases
+    - API-Usage-Example
 ---
 <!-- <h2> Invoke Bedrock model for text generation using zero-shot prompt</h2> -->
 

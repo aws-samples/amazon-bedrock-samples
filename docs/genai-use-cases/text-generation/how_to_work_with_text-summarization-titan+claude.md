@@ -1,6 +1,7 @@
 ---
 tags:
-    - generative AI use cases/ Text summarization
+    - Use cases
+    - API-Usage-Example
 ---
 <!-- <h2> Invoke Bedrock model for Text summarization</h2> -->
 

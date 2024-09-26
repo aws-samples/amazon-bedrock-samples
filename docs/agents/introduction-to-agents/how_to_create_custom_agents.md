@@ -1,12 +1,10 @@
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
+---
+tags:
+    - Agents/ Create
+    - API-Usage-Example
+---
 
-
-<h2>How to create your own Custom Agents</h2>
+<!-- <h2>How to create your own Custom Agents</h2> -->
 
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/agents/introduction-to-agents/how_to_create_custom_agents.ipynb){:target="_blank"}"
