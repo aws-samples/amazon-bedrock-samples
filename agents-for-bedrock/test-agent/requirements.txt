@@ -1,6 +1,3 @@
-pandas
+pydantic
 boto3
-IPython
-matplotlib
-argparse
-openpyxl
+pandas
