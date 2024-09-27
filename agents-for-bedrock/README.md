@@ -34,7 +34,8 @@ This repository contains examples and use-cases to get you started with Agents f
 1. [Text to SQL Agent](./use-case-examples/text-2-sql-agent/README.md) - Agent designed to generate and execute SQL queries using natural language
 1. [Text to SQL  Agent CDK Enhanced](./use-case-examples/text-2-sql-agent-cdk-enhanced/Readme.md) - Agent designed to generate and execute SQL queries using natural language. This repository enhances the original Text to SQL Bedrock Agent with improvment on: using CDK, works with any dataset, wroks with super large answers.
 1. [Customer Relationship Management Agent](./use-case-examples/customer-relationship-management-agent/README.md) - Agent designed to help sales employees work with their customers 
-1. [HR Vacation Agent] - Agent to manage employee vacation time
+1. [HR Vacation Agent](./use-case-examples/hr-assistant/README.md) - Agent to manage employee vacation time
+1. [Cost Explorer Agent](./use-case-examples/cost-explorer-agent/README.md) - Agent designed to help users understand and optimize their AWS costs
 
 - **Feature examples**: examples of how to use specific features of Agents for Bedrock
 1. [Create Agent with Function Definition](features-examples/01-create-agent-with-function-definition): Example of how to create an HR assistant agent defining the Action Group function and parameters as JSON object that is associated with the Action Group invocation. It connects with an [AWS Lambda](https://aws.amazon.com/lambda/) function to execute the actions
