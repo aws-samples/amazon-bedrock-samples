@@ -1,0 +1,27 @@
+{
+    "TravelAssistant_conversation_1": [
+        "Hi, my name is Anna. I would like to book a trip from Boston to NYC departuring on July 11th 2024 and returning on July 22nd 2024. Via AIR.",
+        "I need to stay an extra day. Can I return on the 23rd instead?",
+        "that is correct, thanks!",
+        "end",
+        "I need to cancel my trip from Boston to New York on the 11th. Is this possible?",
+        "Yes, please cancel"
+    ],
+    "TravelAssistant_conversation_2": [
+        "Hi, my name is Anna. I would like to book a trip from Boston to NYC departuring on July 11th 2024 and returning on July 22nd 2024. Via AIR.",
+        "I need to stay an extra day. Can I return on the 23rd instead?",
+        "that is correct, thanks!",
+        "end"
+    ],
+    "TravelAssistant_conversation_3": [
+        "tell me about my existing trips",
+        "end"
+    ],
+    "TravelAssistant_conversation_4": [
+        "Hi, my name is Anna. I would like to cancel all of my current trips",
+        "I would like to book a trip from Boston to NYC departuring on July 11th 2024 and returning on July 22nd 2024. Via LAND.",
+        "I need to stay an extra day. Can I return on the 23rd instead?",
+        "I need to move this to August 1st - August 2nd. Is this possible?",
+        "that is correct, thanks!"
+    ]
+}

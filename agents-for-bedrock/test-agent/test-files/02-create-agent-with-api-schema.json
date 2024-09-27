@@ -1,0 +1,13 @@
+{
+  "conversation_one": [
+    "What are the open claims?",
+  ],
+  "conversation_two": [
+    "What can you tell me about claim-857?",
+    "Does it have any open documents?",
+    "Send reminder to this claim"
+  ],
+  "conversation_three": [
+    "Send reminder to claims with open paperwork"
+  ]
+}
