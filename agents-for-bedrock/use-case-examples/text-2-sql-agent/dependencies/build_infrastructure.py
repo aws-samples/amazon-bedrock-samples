@@ -332,9 +332,6 @@ Here is an example to query the table <example>SELECT * FROM thehistoryofbasebal
 quotes for the table name. Your final answer should be in plain english."""
 
 
-##PLEASE Note
-###Disabling pre-processing can enhance the agent's response time, however, it may increase the risk of inaccuracies in SQL query generation or some sql ingestion. Careful consideration is advised when toggling this feature based on your use case requirements.
-
 
 response = bedrock_agent_client.create_agent(
     agentName=agent_name,
@@ -342,28 +339,7 @@ response = bedrock_agent_client.create_agent(
     description="Agent for performing sql queries.",
     idleSessionTTLInSeconds=idleSessionTTLInSeconds,
     foundationModel=foundation_Model,
-    instruction=agent_instruction,
-    promptOverrideConfiguration={
-    #Disable preprocessing prompt
-        'promptConfigurations': [
-            {
-                'promptType': 'PRE_PROCESSING',
-                'promptCreationMode': 'OVERRIDDEN',
-                'promptState': 'DISABLED',
-                'basePromptTemplate':' ',
-                 'inferenceConfiguration': {
-                    'temperature': 0,
-                    'topP': 1,
-                    'topK': 123,
-                    'maximumLength': 2048,
-                    'stopSequences': [
-                        'Human',
-                    ]
-                },
-                
-            }
-        ]
-    }
+    instruction=agent_instruction
 )
     
 
