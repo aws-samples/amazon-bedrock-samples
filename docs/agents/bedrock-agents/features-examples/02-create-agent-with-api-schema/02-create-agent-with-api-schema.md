@@ -1,3 +1,6 @@
+tags:
+- Agents
+
 <h2> Create and Invoke Agent via Boto3 SDK </h2>
 
 > This notebook should work well with the **Data Science 3.0** kernel in SageMaker Studio

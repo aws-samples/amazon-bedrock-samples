@@ -1,3 +1,9 @@
+tags:
+- Agents 
+- Knowledge-Bases 
+- RAG
+- Embedding
+
 <h2> Create an Agent with a single Knowledge Base only </h2>
 
 In this notebook you will learn how to create an Amazon Bedrock Agent that connects to a single Knowledge Bases for Amazon Bedrock to retrieve company data and complete tasks. 

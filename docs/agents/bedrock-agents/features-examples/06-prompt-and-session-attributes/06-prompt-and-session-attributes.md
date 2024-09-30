@@ -1,3 +1,7 @@
+tags:
+- Agents
+
+
 <h2> Prompt and session parameters </h2>
 
 Bedrock Agent provides two types of session attributes to maintain conversation context:

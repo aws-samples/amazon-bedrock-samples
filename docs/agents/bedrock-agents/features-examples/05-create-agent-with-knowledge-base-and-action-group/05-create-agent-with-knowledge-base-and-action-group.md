@@ -1,3 +1,9 @@
+tags:
+- Agents
+- Knowledge-Bases 
+- RAG
+- Embedding
+
 <h2> Create an Agent for Amazon Bedrock integrated with Knowledge Bases for Amazon Bedrock and attach Action Group </h2>
 
 In this notebook you will learn how to create an Amazon Bedrock Agent that makes use of Knowledge Bases for Amazon Bedrock to retrieve data about a restaurant's menu. The use case create a restaurant agent, it's tasks will be to give information to the clients about the adults or childrens menu and be in charge of the table booking system. Client's will be able to create, delete or get booking information. The architecture looks as following:

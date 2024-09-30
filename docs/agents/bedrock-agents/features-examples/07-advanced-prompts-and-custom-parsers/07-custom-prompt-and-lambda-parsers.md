@@ -1,3 +1,6 @@
+tags:
+- Agents
+
 <h2> Create Agent with Custom Prompt and Custom Lambda Parsers </h2>
 
 In this notebook we will create an Agent for Amazon Bedrock using the new capabilities for function definition together with Advanced Custom prompts and Lambda parsers that can give us fine-grained control of how our agent behaves at each step of the agent sequence: pre-processing, Orchestration, Knowledge base, and post-processing. To demonstrate these features, we will focus on the pre-processing step.

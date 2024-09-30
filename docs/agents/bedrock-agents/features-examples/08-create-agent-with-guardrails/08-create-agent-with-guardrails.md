@@ -1,3 +1,10 @@
+tags:
+- Agents
+- Multi-Agent-Collaboration
+- Knowledge-Bases
+- RAG
+- Responsible-AI Guardrails
+
 <h2> Creating Agent with Guardrails for Amazon Bedrock integration </h2>
 
 In this folder, we provide an example of creating an agent with Amazon Bedrock and integrating it with a [

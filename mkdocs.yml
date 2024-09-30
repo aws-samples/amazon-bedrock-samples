@@ -122,6 +122,18 @@ nav:
         - Function Calling with Invoke: './agents/function-calling/function_calling_with_invoke/function_calling_model_with_invoke.md'
         - Return of Control: './agents/function-calling/return_of_control/return_of_control.md'
         - Tool Binding: './agents/function-calling/tool_binding/tool_bindings.md'
+      - Bedrock Agents:
+          - Feature Examples:
+              - Create Agent with Function Definition: './docs/agents/bedrock-agents/features-examples/01-create-agent-with-function-definition/01-create-agent-with-function-definition.md'
+              - Create Agent with API Schema: './docs/agents/bedrock-agents/features-examples/02-create-agent-with-api-schema/02-create-agent-with-api-schema.md'
+              - Create Agent with Return of Control: './docs/agents/bedrock-agents/features-examples/03-create-agent-with-return-of-control/03-create-agent-with-return-of-control.md'
+              - Create Agent with Single Knowledge Base: './docs/agents/bedrock-agents/features-examples/04-create-agent-with-single-knowledge-base/04-create-agent-with-single-knowledge-base.md'
+              - Create Agent with Knowledge Base and Action Group: './docs/agents/bedrock-agents/features-examples/05-create-agent-with-knowledge-base-and-action-group/05-create-agent-with-knowledge-base-and-action-group.md'
+              - Prompt and Session Attributes: './docs/agents/bedrock-agents/features-examples/06-prompt-and-session-attributes/06-prompt-and-session-attributes.md'
+              - Advanced Prompt and Custom Parsers: './docs/agents/bedrock-agents/features-examples/07-advanced-prompts-and-custom-parsers/07-custom-prompt-and-lambda-parsers.md'
+              - Create Agents with Guardrails: './docs/agents/bedrock-agents/features-examples/08-create-agent-with-guardrails/08-create-agent-with-guardrails.md'
+              - Create Agents with Memory: './docs/agents/bedrock-agents/features-examples/10-create-agent-with-memory/10-create-agent-with-memory.md'
+              - Create Agents with Code Interpreter: './docs/agents/bedrock-agents/features-examples/11-create-agent-with-code-interpreter/11-create-agent-with-code-interpreter.md'
     - RAG:
       # - Knowledge Bases: './agents/function-calling/function_calling_with_converse/function_calling_with_converse.md'
       - Open Source:

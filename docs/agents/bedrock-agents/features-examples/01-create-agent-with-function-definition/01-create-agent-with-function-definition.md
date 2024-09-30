@@ -1,3 +1,6 @@
+tags:
+- Agents
+
 <h2> Create Agent with Function Definition </h2>
 
 In this notebook we will create an Agent for Amazon Bedrock using the new capabilities for function definition.

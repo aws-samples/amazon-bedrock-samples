@@ -1,3 +1,6 @@
+tags:
+- Agents
+
 <h2> Create Agent with Code Interpreter </h2>
 
 In this notebook we will create an Agent for Amazon Bedrock using the new capabilities for code interpreter to execute code. Code interpreter is a special pre-defined tool (action group) that provides the model with a sandbox environment in which it can execute code (currently Python), using a set of available pre-defined libraries.
@@ -730,7 +733,7 @@ We have now experimented with using boto3 SDK to create and invoke an agent with
 
 <h2> Next Steps </h2>
 
-As a next step, you should experiment further with the the agent's to explore how it can to pursue more complex requests using code evaluation.
+As a next step, you should experiment further with the agent's to explore how it can to pursue more complex requests using code evaluation.
 <br>
 
 <h2> Thank You </h2>
