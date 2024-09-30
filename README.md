@@ -5,17 +5,18 @@ This repository contains pre-built examples to help customers get started with t
 ## Contents
 
 - [Introduction to Bedrock](introduction-to-bedrock) - Learn the basics of the Bedrock service
-- [Prompt Engineering ](prompt-engineering) - Tips for crafting effective prompts 
-- [Bedrock Fine-tuning](bedrock-fine-tuning) - Fine-tune Bedrock models for your specific use case
+- [Prompt Engineering ](articles-guides) - Tips for crafting effective prompts 
+- [Agents](agents) - Ways to implement Generative AI Agents and its components.
 - [Custom Model Import](custom-models) - Import custom models into Bedrock
-- [Generative AI Solutions](generative-ai-solutions) - Example use cases for generative AI
-- [Knowledge Bases](knowledge-bases) - Build knowledge bases with Bedrock
-- [Retrival Augmented Generation (RAG)](rag-solutions) - Implementing RAG with Amazon Bedrock
-- [Agents](agents-for-bedrock) - Generative AI agents with Bedrock
-- [Security and Governance](security-and-governance) - Secure your Bedrock applications
-- [Responsible AI](responsible-ai) - Use Bedrock responsibly and ethically
-- [Operational Tooling](ops-tooling) - Helpful samples to help operationalize your useage of Amazon Bedrock
-- [Multimodal](multimodal) - Working with multimodal data using Amazon Bedrock
+- [Multimodal](multi-modal) - Working with multimodal data using Amazon Bedrock
+- [Generative AI Use cases](genai-use-cases) - Example use cases for generative AI
+- [Retrival Augmented Generation (RAG)](rag) - Implementing RAG
+- [Responsible AI](responsible_ai) - Use Bedrock responsibly and ethically
+- [Workshop](workshops) - Example for Amazon Bedrock Workshop
+- [POC to Prod](poc-to-prod) - Productionize workloads using Bedrock
+- [Embeddings](embeddings) - Learn how to use Embedding Models available on Amazon Bedrock 
+- [Observability & Evaluation](evaluation-observe) - Learn how Amazon Bedrock helps with improving observability and evalution of Models, Gen AI Applications.
+
 
 ## Getting Started
 

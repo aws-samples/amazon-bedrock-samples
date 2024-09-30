@@ -1,0 +1,49 @@
+{"openapi": "3.0.0",
+    "info": {
+        "title": "Create Insurance Claim Automation API",
+        "version": "1.0.0",
+        "description": "API for creating new insurance claim for a specific policy holder."
+    },
+    "paths": {
+        "/create-claim": {
+            "post": {
+                "summary": "Create a new personal automobile insurance claim",
+                "description": "Create a new a new personal automobile insurance claim, then update the database with the new claim. Return the newly created claim's claimId and list of pending documents in comma-separated plaintext.",
+                "operationId": "createClaim",
+                "responses": {
+                    "200": {
+                        "description": "Creates an insurance claim for policy holder",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "claimId": {
+                                            "type": "string",
+                                            "description": "Unique ID of the claim."
+                                        },
+                                        "policyId": {
+                                            "type": "string",
+                                            "description": "Unique ID of the policy holder who has filed the claim."
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "The status of the claim. Claim can be in Open or Closed state."
+                                        },
+                                        "pendingDocuments": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "description": "List of pending documents required for the claim."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

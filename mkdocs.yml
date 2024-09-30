@@ -1,0 +1,148 @@
+# Project
+site_name: Amazon Bedrock Recepies
+copyright: Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+site_author: Bedrock-GTM
+site_description: Amazon Bedrock cookbook website
+site_url: https://github.amazon-bedrock-samples.com
+# Repository
+repo_name: "Github: Amazon-Bedrock-Samples"
+repo_url: "https://github.com/aws-samples/amazon-bedrock-samples/tree/main"
+# Plugins
+plugins:
+  - tags:
+      # tags_hierarchy: true
+      tags_file: 'general/tags.md'
+  - search:
+      separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+  - tags:
+      tags: false
+      tags_allowed:
+        - Agents
+        - Multi-Agent-Collaboration 
+        - Knowledge-Bases
+        - RAG
+        - Prompt-Engineering
+        - Langchain
+        - LlamaIndex
+        - Evaluation
+        - Embedding
+        - Batch-Inference
+        - Fine-Tuning
+        - Custom-Model-Import
+        - LLM-as-Judge
+        - Responsible-AI
+        - Guardrails
+# # extras and additional configuration
+extra:
+  generator: false
+  tags:
+    Compatibility: compat
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/aws-samples/amazon-bedrock-samples/tree/main
+  analytics: 
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/thumb-up-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/thumb-down-outline
+          name: This page could be improved
+          data: 0
+          note: >- 
+            Thanks for your feedback! Help us improve this page by
+            <a href="https://github.com/aws-samples/amazon-bedrock-samples/issues/new?title=[Online Feedback]: Short-Summary-of-Issue&body=Page URL: {url}" target="_blank" rel="noopener">creating an issue</a>.
+
+extra_javascript:
+  - javascript/feedback.js
+
+# Theme
+theme:
+  name: material
+  logo: logo.png
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon: 
+    repo: fontawesome/brands/git-alt
+  features:
+    - tags
+    - toc.integrate
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+    - navigation.footer
+    # - navigation.sections
+    # - navigation.tabs
+    - search.highlight
+    - search.suggest
+  language: en
+  palette:
+    - scheme: default
+      primary: white
+      accent: purple 
+  favicon: assets/favicon.png
+  
+# Extensions 
+markdown_extensions:
+  - attr_list
+  - admonition
+  - pymdownx.superfences
+  - def_list
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.details
+  - pymdownx.mark
+
+# Website Page Tree
+nav:
+  - Home: 'index.md'
+  # - Get Started: 'general/get-started.md'
+  - Features:
+    - Intro to Amazon Bedrock:
+      - API Usage: 
+        - Invoke Model API Example : './introduction-to-bedrock/bedrock_apis/01_invoke_api.md'
+        - Agents API Example: './introduction-to-bedrock/bedrock_apis/04_agents_api.md'
+        - Knowledge Bases API Example: './introduction-to-bedrock/bedrock_apis/03_knowledgebases_api.md'
+        - Guardrail API Example: './introduction-to-bedrock/bedrock_apis/02_guardrails_api.md'
+        - Converse API Example: './introduction-to-bedrock/converse_api/01_converse_api.md'
+    - Agents:
+      - Create Agent Examples:
+        - How to create an Agent: './agents/introduction-to-agents/how_to_create_custom_agents.md'
+      - Multi Agent:
+        - Multi Agent Orchestration: './agents/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.md'
+      - Function Calling:
+        - Function Calling with Converse: './agents/function-calling/function_calling_with_converse/function_calling_with_converse.md'
+        - Function Calling with Invoke: './agents/function-calling/function_calling_with_invoke/function_calling_model_with_invoke.md'
+        - Return of Control: './agents/function-calling/return_of_control/return_of_control.md'
+        - Tool Binding: './agents/function-calling/tool_binding/tool_bindings.md'
+    - RAG:
+      # - Knowledge Bases: './agents/function-calling/function_calling_with_converse/function_calling_with_converse.md'
+      - Open Source:
+        - Chatbot using Langchain: './rag/open-source/chatbots/qa_chatbot_langchain_bedrock.md'
+        - Chunking strategies for RAG applications: './rag/open-source/chunking/rag_chunking_strategies_langchain_bedrock.md'
+        - Vector Stores:
+          - Langchain Chatbot with Opensearch: './rag/open-source/vector_stores/rag_langchain_bedrock_opensearch.md'
+  - Gen AI Usecases:
+    - Text Generation:
+      - Streaming Response with Converse: './genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.md'
+      - Generate Python Code with Converse: './genai-use-cases/text-generation/how_to_work_with_code_generation_w_bedrock.md'
+      # - Entity Extraction: './genai-use-cases/text-generation/how_to_work_with_entity_extraction_w_bedrock.md'
+      - Text Translation with Converse:  './genai-use-cases/text-generation/how_to_work_with_text_translation_w_bedrock.md'
+      - Text summarization with Converse:  './genai-use-cases/text-generation/how_to_work_with_text-summarization-titan+claude.md'
+      - Generate Bulk Emails with Batch Inference:  './genai-use-cases/text-generation/how_to_work_with_batch_example_for_multi_threaded_invocation.md'
+    # - Agents: 'general/license.md'
+    # - KB: 'general/license.md'
+    # - End-to-end examples: 'general/license.md'
+    # - Governance: 'general/license.md'
+    # - Observability: 'general/license.md'
+    # - Data access control: 'general/license.md'
+    # - Applications examples: 'general/license.md'
+  - Tags: 'general/tags.md'
+  - License: 'general/license.md'

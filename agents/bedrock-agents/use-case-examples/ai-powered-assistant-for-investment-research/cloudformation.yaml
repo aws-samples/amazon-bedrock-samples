@@ -1,0 +1,1221 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  TEXTEXTRACTOUTPUTPREFIX:
+    Type: String
+    Default: pdfoutputs
+    Description: Enter the TExtract Output Prefix
+  SourceCodeBucket:
+    Type: String
+    Default: fsi-multimodal-code
+    Description: Enter the name of the Main Bucket
+  SourceCodeprefix:
+    Type: String
+    Default: files/
+    Description: Enter the name of the Source File Prefix
+  AUDIOTRANSCRIPTSDESTBUCKETPREFIX:
+    Type: String
+    Default: audiooutputs/
+    Description: Enter the name of the Transcript Output Bucket
+Resources:
+  AthenaQueryResultBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref AthenaKMSKey
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: AthenaQueryResultBucket-logs
+      VersioningConfiguration:
+        Status: Enabled
+  LambdaZipsBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: LambdaZipsBucket-logs
+      VersioningConfiguration:
+        Status: Enabled
+  QueryStagingBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: QueryStagingBucket-logs
+      VersioningConfiguration:
+        Status: Enabled
+  MultimodalOutputBucketResource:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: MultimodalOutputBucketResource-logs
+      VersioningConfiguration:
+        Status: Enabled
+  TextractArchiveBucketResource:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: TextractArchiveBucketResource-logs
+      VersioningConfiguration:
+        Status: Enabled
+  TextractRawOutputBucketResource:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: TextractRawOutputBucketResource-logs
+      VersioningConfiguration:
+        Status: Enabled
+  TextractSourceBucketResource:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: TextractSourceBucketResource-logs
+      VersioningConfiguration:
+        Status: Enabled
+  AudioTranscriptsSourceBucketResource:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: AudioTranscriptsSourceBucketResource-logs
+      VersioningConfiguration:
+        Status: Enabled
+  StockDataSourceBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: StockDataSourceBucket-logs
+      VersioningConfiguration:
+        Status: Enabled
+  LoggingBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+  
+  StockDataSourceBucketS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref StockDataSourceBucket       
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt StockDataSourceBucket.Arn
+              - !Join ["", [!GetAtt StockDataSourceBucket.Arn, "/*"]]
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt StockDataSourceBucket.Arn
+              - !Join ["", [!GetAtt StockDataSourceBucket.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  AudioTranscriptsSourceBucketResourceS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref AudioTranscriptsSourceBucketResource
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt AudioTranscriptsSourceBucketResource.Arn
+              - !Join ["", [!GetAtt AudioTranscriptsSourceBucketResource.Arn, "/*"]]
+
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt AudioTranscriptsSourceBucketResource.Arn
+              - !Join ["", [!GetAtt AudioTranscriptsSourceBucketResource.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  TextractSourceBucketResourceS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref TextractSourceBucketResource
+
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt TextractSourceBucketResource.Arn
+              - !Join ["", [!GetAtt TextractSourceBucketResource.Arn, "/*"]]
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt TextractSourceBucketResource.Arn
+              - !Join ["", [!GetAtt TextractSourceBucketResource.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  TextractRawOutputBucketResourceS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref TextractRawOutputBucketResource
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt TextractRawOutputBucketResource.Arn
+              - !Join ["", [!GetAtt TextractRawOutputBucketResource.Arn, "/*"]]
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt TextractRawOutputBucketResource.Arn
+              - !Join ["", [!GetAtt TextractRawOutputBucketResource.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  TextractArchiveBucketResourceS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref TextractArchiveBucketResource 
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt TextractArchiveBucketResource.Arn
+              - !Join ["", [!GetAtt TextractArchiveBucketResource.Arn, "/*"]]
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt TextractArchiveBucketResource.Arn
+              - !Join ["", [!GetAtt TextractArchiveBucketResource.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  MultimodalOutputBucketResourceS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref MultimodalOutputBucketResource
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowPutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt MultimodalOutputBucketResource.Arn
+              - !Join ["", [!GetAtt MultimodalOutputBucketResource.Arn, "/*"]]
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt MultimodalOutputBucketResource.Arn
+              - !Join ["", [!GetAtt MultimodalOutputBucketResource.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  QueryStagingBucketS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref QueryStagingBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt QueryStagingBucket.Arn
+              - !Join ["", [!GetAtt QueryStagingBucket.Arn, "/*"]]
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt QueryStagingBucket.Arn
+              - !Join ["", [!GetAtt QueryStagingBucket.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  LambdaZipsBucketS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref LambdaZipsBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt LambdaZipsBucket.Arn
+              - !Join ["", [!GetAtt LambdaZipsBucket.Arn, "/*"]]
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt LambdaZipsBucket.Arn
+              - !Join ["", [!GetAtt LambdaZipsBucket.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  AthenaQueryResultBucketS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref AthenaQueryResultBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PutObject
+            Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: 
+              - !GetAtt AthenaQueryResultBucket.Arn
+              - !Join ["", [!GetAtt AthenaQueryResultBucket.Arn, "/*"]]
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: 
+              - !GetAtt AthenaQueryResultBucket.Arn
+              - !Join ["", [!GetAtt AthenaQueryResultBucket.Arn, "/*"]]
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+  AccessLogBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LoggingBucket
+      PolicyDocument:
+        Statement:
+          - Sid: AllowSSLRequestsOnly
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !GetAtt LoggingBucket.Arn
+              - !Join ["", [!GetAtt LoggingBucket.Arn, "/*"]]
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  AthenaWorkGroup:
+    Type: 'AWS::Athena::WorkGroup'
+    Properties:
+      Name: fsi-workgroup
+      WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: true
+        ResultConfiguration:
+          EncryptionConfiguration:
+            EncryptionOption: SSE_KMS
+            KmsKey: !Ref AthenaKMSKey
+          OutputLocation: !Sub 's3://${AthenaQueryResultBucket}/query-results/'
+  AthenaPermissionsPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: AthenaPermissionsPolicy
+      Description: Custom policy for Athena permissions
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: VisualEditor0
+            Effect: Allow
+            Action:
+              - 'athena:GetTableMetadata'
+            Resource:
+              - !Sub >-
+                arn:aws:athena:${AWS::Region}:${AWS::AccountId}:workgroup/primary
+  S3PermissionsPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: S3PermissionsPolicy
+      Description: Custom policy for S3 permissions
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: VisualEditor0
+            Effect: Allow
+            Action:
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:AbortMultipartUpload'
+              - 's3:GetBucketLocation'
+            Resource:
+              - 'Fn::Sub': 'arn:aws:s3:::${StockDataSourceBucket}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${QueryStagingBucket}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${StockDataSourceBucket}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${AudioTranscriptsSourceBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractSourceBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractArchiveBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${MultimodalOutputBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${StockDataSourceBucket}'
+              - 'Fn::Sub': 'arn:aws:s3:::${QueryStagingBucket}'
+              - 'Fn::Sub': 'arn:aws:s3:::${StockDataSourceBucket}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${AudioTranscriptsSourceBucketResource}'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractSourceBucketResource}'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractArchiveBucketResource}'
+              - 'Fn::Sub': 'arn:aws:s3:::${MultimodalOutputBucketResource}'
+  AthenaKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: KMS Key for encrypting Athena query results
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: !Sub "key-policy-${AWS::StackName}"
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: kms:*
+            Resource: "*" 
+  FSITextract:
+    DependsOn: [CopyZips,CopyPDFFiles]
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: FSI-TextractProcessingFunction
+      Runtime: python3.10
+      Timeout: 900
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt FSITextractRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}FSI-TextractProcessingFunction-b6054c5e-0286-4cfb-a2f3-55d408a9972c.zip
+      Environment:
+        Variables:
+          MULTIMODAL_OUTPUT_BUCKET: !Ref MultimodalOutputBucketResource
+          TEXTEXTRACT_ARCHIVE_BUCKET: !Ref TextractArchiveBucketResource
+          TEXTEXTRACT_OUTPUT_PREFIX: !Ref TEXTEXTRACTOUTPUTPREFIX
+          TEXTEXTRACT_RAW_OUTPUT_BUCKET: !Ref TextractRawOutputBucketResource
+          TEXTEXTRACT_ROLE_ARN: !GetAtt TextExractRole.Arn
+          TEXTEXTRACT_SOURCE_BUCKET: !Ref TextractSourceBucketResource
+  FSISentimentDetecttion:
+    DependsOn: CopyZips
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: FSI-SentimentDetecttion
+      Runtime: python3.10
+      Timeout: 600
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt FSISentimentDetecttionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}FSI-SentimentDetecttion-BedrockAgent-6aebee60-d2df-464c-b652-b93e2aef7b3a.zip
+  FSISentimentDetecttionLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - "FSISentimentDetecttion"
+        - "Arn"
+      Action: "lambda:InvokeFunction"
+      Principal: "bedrock.amazonaws.com"
+      SourceAccount: !Ref 'AWS::AccountId'
+  FSISentimentDetecttionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: FSI-SentimentDetecttion-Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/ComprehendReadOnly'
+  FSIKeyPhrasesDetection:
+    DependsOn: CopyZips
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: FSI-KeyPhrasesDetection
+      Runtime: python3.10
+      Timeout: 600
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt FSIKeyPhrasesDetectionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}FSI-KeyPhrasesDetection-BedrockAgent-21b0f3b8-f981-4db6-a0ce-606a13e9c35f.zip
+      Environment:
+        Variables:
+          AUDIOTRANSCRIPTS_SOURCE_BUCKET: !Ref MultimodalOutputBucketResource
+          AUDIOTRANSCRIPTS_SOURCE_KEY: q1-2023-earnings-call.mp3.txt
+  FSIKeyPhrasesDetectionLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - "FSIKeyPhrasesDetection"
+        - "Arn"
+      Action: "lambda:InvokeFunction"
+      Principal: "bedrock.amazonaws.com"
+      SourceAccount: !Ref 'AWS::AccountId'
+  FSIKeyPhrasesDetectionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: FSI-KeyPhrasesDetection-Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSLambdaExecute'
+        - 'arn:aws:iam::aws:policy/ComprehendReadOnly'
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+  FSIPortfolioOptimization:
+    DependsOn: CopyZips
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: FSI-PortfolioTool-BedrockAgent
+      Runtime: python3.10
+      Timeout: 600
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt FSIPortfolioOptimizationRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}FSI-PortfolioTool-BedrockAgent-9a4cdb9f-14b9-4658-9720-537735bf2b1c.zip
+      Layers:
+      - !Ref FSIPortfolioOptimizationLayer
+      Environment:
+        Variables:
+          QUERY_BUCKET: !Ref QueryStagingBucket
+  FSIPortfolioOptimizationLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - "FSIPortfolioOptimization"
+        - "Arn"
+      Action: "lambda:InvokeFunction"
+      Principal: "bedrock.amazonaws.com"
+      SourceAccount: !Ref 'AWS::AccountId'
+  FSIPortfolioOptimizationRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: FSI-PortfolioOptimization-Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSLambdaExecute'
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+        - !Ref AthenaQueryPolicy
+  AthenaQueryPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: AthenaQueryPolicy
+      Description: Custom policy for FSI Portfolio Optimization Role
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: BaseAthenaPermissions
+            Effect: Allow
+            Action:
+              - athena:GetQueryExecution
+              - athena:GetQueryResults
+              - athena:StartQueryExecution
+              - athena:GetTableMetadata
+              - athena:ListTableMetadata
+            Resource: "*"
+          - Sid: BaseGluePermissions
+            Effect: Allow
+            Action:
+              - glue:GetDatabase
+              - glue:GetTable
+              - glue:GetTables
+            Resource: "*"
+          - Sid: BaseQueryResultsPermissions
+            Effect: Allow
+            Action:
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:ListMultipartUploadParts
+              - s3:AbortMultipartUpload
+              - s3:CreateBucket
+              - s3:PutObject
+              - s3:PutBucketPublicAccessBlock
+            Resource:
+              - "arn:aws:s3:::aws-athena-query-results-*"
+          - Sid: BaseS3BucketPermissions
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+              - s3:ListAllMyBuckets
+            Resource: "*"
+  FSIPortfolioOptimizationLayer:
+    DependsOn: CopyZips
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleArchitectures:
+        - x86_64
+      CompatibleRuntimes:
+        - python3.10
+      Content:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}agents-layer-porfolio.zip
+      LayerName: agents-layer-portfolio-tool
+  FSIStockQuery:
+    DependsOn: CopyZips
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: FSI-StockQuery-BedrockAgent
+      Runtime: python3.10
+      Timeout: 600
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt FSIStockQueryRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}FSI-StockQuery-BedrockAgent-4bed2482-a84f-4d9b-b53c-37220fd4b9bb.zip
+      Layers:
+      - !Ref FSIStockQueryLayer
+      Environment:
+        Variables:
+          QUERY_BUCKET: !Ref QueryStagingBucket
+  FSIStockQueryLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - "FSIStockQuery"
+        - "Arn"
+      Action: "lambda:InvokeFunction"
+      Principal: "bedrock.amazonaws.com"
+      SourceAccount: !Ref 'AWS::AccountId'
+  FSIStockQueryRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: FSI-StockQuery-Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSLambdaExecute'
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+        - !Ref AthenaQueryPolicy
+        - !Ref BedrockInvokePolicy
+  BedrockInvokePolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: BedrockInvokePolicy
+      Description: Custom policy for invoking Bedrock
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: Bedrock
+            Effect: Allow
+            Action:
+              - 'bedrock:InvokeModel'
+            Resource: "*"
+  FSIStockQueryLayer:
+    DependsOn: CopyZips
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleArchitectures:
+        - x86_64
+      CompatibleRuntimes:
+        - python3.10
+      Content:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}agents-layer-stock-query.zip
+      LayerName: agents-layer-stock-query
+  FSITranscribe:
+    DependsOn: [CopyZips,CopyAudioFiles]
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: FSI-Transcribe
+      Runtime: python3.10
+      Timeout: 600
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt FSITranscribeRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}FSI-Transcribe-66a4860d-390a-4af5-aa1b-05fb469be7ac.zip
+      Environment:
+        Variables:
+          AUDIOTRANSCRIPTS_DEST_BUCKET_PREFIX: !Ref AUDIOTRANSCRIPTSDESTBUCKETPREFIX
+          MULTIMODAL_OUTPUT_BUCKET: !Ref MultimodalOutputBucketResource
+          AUDIOTRANSCRIPTS_SOURCE_BUCKET: !Ref AudioTranscriptsSourceBucketResource
+  FSITranscribeRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: FSI-Transcribe-Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSLambdaExecute'
+        - !Ref TranscribePolicy
+        - !Ref FSIS3AccessPolicy
+  TranscribePolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: TranscribePolicy
+      Description: Custom policy for FSI Transcribe Role
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: S3Permissions
+            Effect: Allow
+            Action:
+              - 'transcribe:StartTranscriptionJob'
+            Resource: "*"
+  FSIS3AccessPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: FSIS3AccessPolicy
+      Description: Custom policy for FSI Textract Role
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: S3Permissions
+            Effect: Allow
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:PutObject'
+              - 's3:DeleteObject'
+            Resource:
+              - 'Fn::Sub': 'arn:aws:s3:::${StockDataSourceBucket}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${QueryStagingBucket}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${StockDataSourceBucket}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${AudioTranscriptsSourceBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractSourceBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractArchiveBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractRawOutputBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${MultimodalOutputBucketResource}/*'
+              - 'Fn::Sub': 'arn:aws:s3:::${StockDataSourceBucket}'
+              - 'Fn::Sub': 'arn:aws:s3:::${QueryStagingBucket}'
+              - 'Fn::Sub': 'arn:aws:s3:::${StockDataSourceBucket}'
+              - 'Fn::Sub': 'arn:aws:s3:::${AudioTranscriptsSourceBucketResource}'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractSourceBucketResource}'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractArchiveBucketResource}'
+              - 'Fn::Sub': 'arn:aws:s3:::${TextractRawOutputBucketResource}'
+              - 'Fn::Sub': 'arn:aws:s3:::${MultimodalOutputBucketResource}'
+  FSITextractRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: FSI-Textract-Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - !Ref TextractPolicy
+        - !Ref FSIS3AccessPolicy
+  TextractPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: TextractPolicy
+      Description: Custom policy for FSI Textract Role
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: TextractPermissions
+            Effect: Allow
+            Action:
+              - 'textract:StartDocumentTextDetection'
+              - 'textract:StartDocumentAnalysis'
+              - 'textract:GetDocumentTextDetection'
+              - 'textract:GetDocumentAnalysis'
+            Resource: "*"
+          - Sid: SNSPermissions
+            Effect: Allow
+            Action:
+              - 'sns:CreateTopic'
+              - 'sns:DeleteTopic'
+              - 'sns:Subscribe'
+            Resource: "*"
+          - Sid: SQSPermissions
+            Effect: Allow
+            Action:
+              - 'sqs:CreateQueue'
+              - 'sqs:SetQueueAttributes'
+              - 'sqs:GetQueueAttributes'
+              - 'sqs:DeleteQueue'
+              - 'sqs:GetQueueUrl'
+              - 'sqs:ReceiveMessage'
+              - 'sqs:DeleteMessage'
+            Resource: "*"
+  FSITextractAsyncInvocationFunction:
+    DependsOn: CopyZips
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: FSI-TextractAsyncInvocationFunction
+      Runtime: python3.10
+      Timeout: 600
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt FSITextractAsyncInvocationFunctionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: !Sub >-
+          ${SourceCodeprefix}FSI-TextractAsyncInvocationFunction-759363ea-7b4b-411c-a96f-b137a595387b.zip
+  FSITextractAsyncInvocationFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: FSI-TextractAsyncInvocationFunction-Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
+  TextExractRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: TextExractRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: textract.amazonaws.com
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Ref 'AWS::AccountId'
+              ArnLike:
+                'aws:SourceArn': !Sub 'arn:aws:textract:*:${AWS::AccountId}:*'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonTextractFullAccess'
+        - 'arn:aws:iam::aws:policy/service-role/AmazonTextractServiceRole'
+        - !Ref FSIS3AccessPolicy
+  multiagentllmstockdata:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: multiagentllmstockdata-logs
+      VersioningConfiguration:
+        Status: Enabled
+  blogstockpricesdb:
+    Type: 'AWS::Glue::Database'
+    Properties:
+      DatabaseInput:
+        Name: blog-stock-prices-db
+        Description: Database for Stock information
+      CatalogId: !Ref 'AWS::AccountId'
+  gluetable:
+    Type: 'AWS::Glue::Table'
+    Properties:
+      DatabaseName: !Ref blogstockpricesdb
+      CatalogId: !Ref 'AWS::AccountId'
+      TableInput:
+        Name: stock_prices
+        Parameters:
+          classification: csv
+          skip.header.line.count: '1'
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Location: !Sub 's3://${multiagentllmstockdata}/'
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            Parameters:
+              separatorChar: ','
+              escapeChar: '\'
+              quoteChar: '"'
+            SerializationLibrary: org.apache.hadoop.hive.serde2.OpenCSVSerde
+          StoredAsSubDirectories: false
+          Columns:
+            - Name: date
+              Type: string
+            - Name: AAAA
+              Type: double
+            - Name: FF
+              Type: double
+            - Name: BBBB
+              Type: double
+            - Name: ZZZZ
+              Type: double
+            - Name: GG
+              Type: double
+            - Name: DDD
+              Type: double
+            - Name: WWW
+              Type: double
+            - Name: CCC
+              Type: double
+            - Name: GGMM
+              Type: double
+            - Name: TTT
+              Type: double
+            - Name: UUU
+              Type: double
+            - Name: SSSS
+              Type: double
+            - Name: XXX
+              Type: double
+            - Name: RRR
+              Type: double
+            - Name: YYY
+              Type: double
+            - Name: MM
+              Type: double
+            - Name: PPP
+              Type: double
+            - Name: JJJ
+              Type: double
+            - Name: SSXX
+              Type: double
+  CopyZips:
+    Type: 'Custom::CopyZips'
+    Properties:
+      ServiceToken: !GetAtt CopyZipsFunction.Arn
+      DestBucket: !Ref LambdaZipsBucket
+      SourceBucket: !Ref SourceCodeBucket
+      Prefix: !Ref SourceCodeprefix
+      Objects:
+        - >-
+          FSI-TextractProcessingFunction-b6054c5e-0286-4cfb-a2f3-55d408a9972c.zip
+        - FSI-KeyPhrasesDetection-BedrockAgent-21b0f3b8-f981-4db6-a0ce-606a13e9c35f.zip
+        - FSI-SentimentDetecttion-BedrockAgent-6aebee60-d2df-464c-b652-b93e2aef7b3a.zip
+        - agents-layer-porfolio.zip
+        - agents-layer-stock-query.zip
+        - FSI-PortfolioTool-BedrockAgent-9a4cdb9f-14b9-4658-9720-537735bf2b1c.zip
+        - FSI-StockQuery-BedrockAgent-4bed2482-a84f-4d9b-b53c-37220fd4b9bb.zip
+        - FSI-Transcribe-66a4860d-390a-4af5-aa1b-05fb469be7ac.zip
+        - openapi_keyphrases.json
+        - openapi_portfolio.json
+        - openapi_sentiment.json
+        - openapi_stock_query.json
+        - Amazon-10K-2022-EarningsReport.pdf
+        - Amazon-10Q-Q1-2023-QuaterlyEarningsReport.pdf
+        - Amazon-Quarterly-Earnings-Report-Q1-2023-Full-Call-v1.mp3
+        - stock_prices.csv
+        - >-
+          FSI-TextractAsyncInvocationFunction-759363ea-7b4b-411c-a96f-b137a595387b.zip
+  CopyPDFFiles:
+    Type: 'Custom::CopyZips'
+    Properties:
+      ServiceToken: !GetAtt CopyZipsFunction.Arn
+      DestBucket: !Ref TextractSourceBucketResource
+      SourceBucket: !Ref SourceCodeBucket
+      Prefix: !Ref SourceCodeprefix
+      Objects:
+        - Amazon-10K-2022-EarningsReport.pdf
+        - Amazon-10Q-Q1-2023-QuaterlyEarningsReport.pdf
+  CopyAudioFiles:
+    Type: 'Custom::CopyZips'
+    Properties:
+      ServiceToken: !GetAtt CopyZipsFunction.Arn
+      DestBucket: !Ref AudioTranscriptsSourceBucketResource
+      SourceBucket: !Ref SourceCodeBucket
+      Prefix: !Ref SourceCodeprefix
+      Objects:
+        - Amazon-Quarterly-Earnings-Report-Q1-2023-Full-Call-v1.mp3
+  CopyStockDataFiles:
+    Type: 'Custom::CopyZips'
+    Properties:
+      ServiceToken: !GetAtt CopyZipsFunction.Arn
+      DestBucket: !Ref multiagentllmstockdata
+      SourceBucket: !Ref SourceCodeBucket
+      Prefix: !Ref SourceCodeprefix
+      Objects:
+        - stock_prices.csv
+  CopyZipsRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - !Ref LambdaCopyPolicy
+      Path: /
+  LambdaCopyPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: LambdaCopyPolicy
+      Description: Custom policy for Lambda copy function
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:GetObject'
+            Resource:
+              - !Sub 'arn:aws:s3:::${SourceCodeBucket}/${SourceCodeprefix}*'
+          - Effect: Allow
+            Action:
+              - 's3:PutObject'
+              - 's3:DeleteObject'
+            Resource:
+              - !Sub 'arn:aws:s3:::${LambdaZipsBucket}/${SourceCodeprefix}*'
+              - !Sub 'arn:aws:s3:::${TextractSourceBucketResource}/${SourceCodeprefix}*'
+              - !Sub 'arn:aws:s3:::${AudioTranscriptsSourceBucketResource}/${SourceCodeprefix}*'
+              - !Sub 'arn:aws:s3:::${multiagentllmstockdata}/${SourceCodeprefix}*'
+  CopyZipsFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Description: Copies objects from a source S3 bucket to a destination
+      Handler: index.handler
+      Runtime: python3.10
+      Role: !GetAtt CopyZipsRole.Arn
+      Timeout: 240
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import threading
+          import boto3
+          import cfnresponse
+
+
+          def copy_objects(source_bucket, dest_bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              for o in objects:
+                  key = prefix + o
+                  copy_source = {
+                      'Bucket': source_bucket,
+                      'Key': key
+                  }
+                  print(('copy_source: %s' % copy_source))
+                  print(('dest_bucket = %s'%dest_bucket))
+                  print(('key = %s' %key))
+                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket,
+                        Key=key)
+
+
+          def delete_objects(bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              objects = {'Objects': [{'Key': prefix + o} for o in objects]}
+              s3.delete_objects(Bucket=bucket, Delete=objects)
+
+
+          def timeout(event, context):
+              logging.error('Execution is about to time out, sending failure response to CloudFormation')
+              cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+
+
+          def handler(event, context):
+              # make sure we send a failure to CloudFormation if the function
+              # is going to timeout
+              timer = threading.Timer((context.get_remaining_time_in_millis()
+                        / 1000.00) - 0.5, timeout, args=[event, context])
+              timer.start()
+
+              print(('Received event: %s' % json.dumps(event)))
+              status = cfnresponse.SUCCESS
+              try:
+                  source_bucket = event['ResourceProperties']['SourceBucket']
+                  dest_bucket = event['ResourceProperties']['DestBucket']
+                  prefix = event['ResourceProperties']['Prefix']
+                  objects = event['ResourceProperties']['Objects']
+                  if event['RequestType'] == 'Delete':
+                      delete_objects(dest_bucket, prefix, objects)
+                  else:
+                      copy_objects(source_bucket, dest_bucket, prefix, objects)
+              except Exception as e:
+                  logging.error('Exception: %s' % e, exc_info=True)
+                  status = cfnresponse.FAILED
+              finally:
+                  timer.cancel()
+                  cfnresponse.send(event, context, status, {}, None)
+Outputs:
+  MultimodalOutputBucket:
+    Value:
+      'Fn::Sub': 's3://${MultimodalOutputBucketResource}/'
+  PDFSourceBucket:
+    Value:
+      'Fn::Sub': 's3://${TextractSourceBucketResource}/'
+  AudioSourceBucket:
+    Value:
+      'Fn::Sub': 's3://${AudioTranscriptsSourceBucketResource}/'
+  FSITextractLambdaFunction:
+    Value: !GetAtt FSITextract.Arn
+  FSISentimentDetecttionLambdaFunction:
+    Value: !GetAtt FSISentimentDetecttion.Arn
+  FSIKeyPhrasesDetectionLambdaFunction:
+    Value: !GetAtt FSIKeyPhrasesDetection.Arn
+  FSITranscribeLambdaFunction:
+    Value: !GetAtt FSITranscribe.Arn
+  MultiAgentllmStockData:
+    Value:
+      'Fn::Sub': 's3://${multiagentllmstockdata}/'
+  stockpricesdb:
+    Value: !Ref blogstockpricesdb
+  QueryStagingBucket:
+    Value:
+      'Fn::Sub': 's3://${QueryStagingBucket}/'
+  StockDataSourceBucket:
+    Value:
+      'Fn::Sub': 's3://${StockDataSourceBucket}/'
+  AWSRegion:
+    Value: !Ref 'AWS::Region'
+    Description: The AWS region where the stack is being created
