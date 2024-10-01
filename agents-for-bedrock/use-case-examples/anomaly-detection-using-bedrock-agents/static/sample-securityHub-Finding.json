@@ -1,0 +1,129 @@
+{
+  "SchemaVersion": "2018-10-08",
+  "Id": "arn:aws:guardduty:us-west-2:999999999999:detector/f4c7c96d69aad25d47d055cabdd89c6b/finding/dec7ca1cdc2c45bf53c70dbd60f41824",
+  "ProductArn": "arn:aws:securityhub:us-west-2::product/aws/guardduty",
+  "ProductName": "GuardDuty",
+  "CompanyName": "Amazon",
+  "Region": "us-west-2",
+  "GeneratorId": "arn:aws:guardduty:us-west-2:999999999999:detector/f4c7c96d69aad25d47d055cabdd89c6b",
+  "AwsAccountId": "999999999999",
+  "Types": [
+    "TTPs/Execution/Execution:EC2-MaliciousFile"
+  ],
+  "FirstObservedAt": "2024-05-20T04:19:21.762Z",
+  "LastObservedAt": "2024-05-20T04:19:21.762Z",
+  "CreatedAt": "2024-05-20T04:19:21.762Z",
+  "UpdatedAt": "2024-05-20T04:19:21.762Z",
+  "Severity": {
+    "Product": 8,
+    "Label": "HIGH",
+    "Normalized": 75
+  },
+  "Title": "1 security risk(s) detected including EICAR-Test-File (not a virus) on EC2 instance i-ec2-instance-id.",
+  "Description": "1 security risk(s) detected including EICAR-Test-File (not a virus) on EC2 instance i-ec2-instance-id.",
+  "SourceUrl": "https://us-west-2.console.aws.amazon.com/guardduty/home?region=us-west-2#/findings?macros=current&fId=dec7ca1cdc2c45bf53c70dbd60f41824",
+  "ProductFields": {
+    "aws/guardduty/service/archived": "false",
+    "aws/guardduty/service/additionalInfo/value": "",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/threatDetectedByName/itemCount": "1",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanId": "cb4482ddd77842ab3c2fe7da002c12cd",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/threatDetectedByName/uniqueThreatNameCount": "1",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/threatsDetectedItemCount/files": "1",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/highestSeverityThreatDetails/severity": "HIGH",
+    "aws/guardduty/service/featureName": "EbsVolumeScan",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/highestSeverityThreatDetails/threatName": "EICAR-Test-File (not a virus)",
+    "aws/guardduty/service/count": "1",
+    "aws/guardduty/service/ebsVolumeScanDetails/sources.0_": "Bitdefender",
+    "aws/guardduty/service/additionalInfo/type": "default",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/scannedItemCount/volumes": "1",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/scannedItemCount/files": "44469",
+    "aws/guardduty/service/serviceName": "guardduty",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanType": "ON_DEMAND",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanCompletedAt": "1716178761",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanStartedAt": "1716178118",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/scannedItemCount/totalGb": "2",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/threatDetectedByName/shortened": "false",
+    "aws/guardduty/service/detectorId": "f4c7c96d69aad25d47d055cabdd89c6b",
+    "aws/guardduty/service/ebsVolumeScanDetails/scanDetections/highestSeverityThreatDetails/count": "1",
+    "aws/guardduty/service/eventFirstSeen": "2024-05-20T04:19:21.762Z",
+    "aws/guardduty/service/eventLastSeen": "2024-05-20T04:19:21.762Z",
+    "aws/securityhub/FindingId": "arn:aws:securityhub:us-west-2::product/aws/guardduty/arn:aws:guardduty:us-west-2:999999999999:detector/f4c7c96d69aad25d47d055cabdd89c6b/finding/dec7ca1cdc2c45bf53c70dbd60f41824",
+    "aws/securityhub/ProductName": "GuardDuty",
+    "aws/securityhub/CompanyName": "Amazon"
+  },
+  "Threats": [
+    {
+      "Name": "EICAR-Test-File (not a virus)",
+      "Severity": "HIGH",
+      "ItemCount": 1,
+      "FilePaths": [
+        {
+          "FilePath": "/home/ssm-user/eicar.com",
+          "FileName": "eicar.com",
+          "ResourceId": "arn:aws:ec2:us-west-2:999999999999:volume/vol-01c712f74a1a28fbd",
+          "Hash": "131f95c51cc819465fa1797f6ccacf9d494aaaff46fa3eac73ae63ffbdfd8267"
+        }
+      ]
+    }
+  ],
+  "Resources": [
+    {
+      "Type": "AwsEc2Instance",
+      "Id": "arn:aws:ec2:us-west-2:999999999999:instance/i-ec2-instance-id",
+      "Partition": "aws",
+      "Region": "us-west-2",
+      "Tags": {
+        "aws:cloudformation:stack-id": "arn:aws:cloudformation:us-west-2:999999999999:stack/anfw-bedrock-automation/811b6b30-162a-11ef-819e-0a3d1ad3a3bd",
+        "aws:cloudformation:stack-name": "anfw-bedrock-automation",
+        "Name": "anfw-bedrock-automation-test-instance",
+        "aws:cloudformation:logical-id": "EC2SubnetB"
+      },
+      "Details": {
+        "AwsEc2Instance": {
+          "Type": "t2.micro",
+          "ImageId": "ami-060aed23281407591",
+          "IpV4Addresses": [
+            "11:11:11:11",
+            "88:88:88:88"
+          ],
+          "IamInstanceProfileArn": "arn:aws:iam::999999999999:instance-profile/anfw-bedrock-automation-SubnetBInstanceProfile-O6Ny3lVyli0Q",
+          "VpcId": "vpc-01df5a86eaf6dd46d",
+          "SubnetId": "subnet-0e42f053a44994fba",
+          "LaunchedAt": "2024-05-19T21:57:27.000Z"
+        }
+      }
+    },
+    {
+      "Type": "AwsEc2Volume",
+      "Id": "arn:aws:ec2:us-west-2:999999999999:volume/vol-01c712f74a1a28fbd",
+      "Partition": "aws",
+      "Region": "us-west-2",
+      "Details": {
+        "AwsEc2Volume": {
+          "DeviceName": "/dev/xvda",
+          "Encrypted": false,
+          "Size": 8,
+          "SnapshotId": "snapshot/snap-0199185da6dcde633",
+          "VolumeId": "volume/vol-01c712f74a1a28fbd",
+          "VolumeType": "gp2",
+          "VolumeScanStatus": "scanned"
+        }
+      }
+    }
+  ],
+  "WorkflowState": "NEW",
+  "Workflow": {
+    "Status": "NEW"
+  },
+  "RecordState": "ACTIVE",
+  "FindingProviderFields": {
+    "Severity": {
+      "Label": "HIGH"
+    },
+    "Types": [
+      "TTPs/Execution/Execution:EC2-MaliciousFile"
+    ]
+  },
+  "Sample": false,
+  "ProcessedAt": "2024-05-20T04:20:44.290Z"
+}

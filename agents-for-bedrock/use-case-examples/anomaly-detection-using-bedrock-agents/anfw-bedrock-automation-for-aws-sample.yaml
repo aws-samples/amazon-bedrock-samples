@@ -1,0 +1,1285 @@
+#Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+#FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+#COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+#IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+#CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS Network Firewall Demo using distributed model.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: VPC Parameters
+        Parameters:
+          - AvailabilityZoneSelection
+      - Label:
+          default: EC2 Parameters
+        Parameters:
+          - LatestAmiId
+      - Label:
+          default: Email Parameters
+        Parameters:
+          - AdminEmail
+
+Parameters:
+  AvailabilityZoneSelection:
+    Description: Availability Zone
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-west-2a
+
+  LatestAmiId:
+    Description: Latest EC2 AMI from Systems Manager Parameter Store
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+  AdminEmail:
+    Description: Email address to receive notifications. Must be a valid email address.
+    Type: String
+    AllowedPattern: ^(?:[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$
+
+Resources:
+
+  VPCB:
+    Type: AWS::EC2::VPC
+    DeletionPolicy: Delete
+    Properties:
+      CidrBlock: 10.2.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-vpc
+
+  SubnetBWorkload:
+    Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    Properties:
+      VpcId: !Ref VPCB
+      CidrBlock: 10.2.1.0/24
+      AvailabilityZone: !Ref AvailabilityZoneSelection
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-public-subnet
+
+  SubnetBTGW:
+    Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    Properties:
+      VpcId: !Ref VPCB
+      CidrBlock: 10.2.0.0/28
+      AvailabilityZone: !Ref AvailabilityZoneSelection
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-private-subnet
+
+  SubnetBFirewall:
+    Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    Properties:
+      VpcId: !Ref VPCB
+      CidrBlock: 10.2.16.0/28
+      AvailabilityZone: !Ref AvailabilityZoneSelection
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-firewall-subnet
+
+  InternetGatewayVPCB:
+    Type: AWS::EC2::InternetGateway
+    DeletionPolicy: Delete
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub vpcb-igw-${AWS::StackName}
+
+  AttachGatewayVPCB:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DeletionPolicy: Delete
+    Properties:
+      VpcId: !Ref VPCB
+      InternetGatewayId: !Ref InternetGatewayVPCB
+
+  VPCBEndpointSecurityGroup:
+    # checkov:skip=CKV_AWS_23:Security group has a description
+    Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    Properties:
+      GroupDescription: Allow instances to get to SSM Systems Manager
+      VpcId: !Ref VPCB
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.2.0.0/16
+  VPCBSSMEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    DeletionPolicy: Delete
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref VPCBEndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      SubnetIds:
+        - !Ref SubnetBWorkload
+      VpcEndpointType: Interface
+      VpcId: !Ref VPCB
+
+  VPCBEC2MessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    DeletionPolicy: Delete
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref VPCBEndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      SubnetIds:
+        - !Ref SubnetBWorkload
+      VpcEndpointType: Interface
+      VpcId: !Ref VPCB
+
+  VPCBSSMMessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    DeletionPolicy: Delete
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref VPCBEndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      SubnetIds:
+        - !Ref SubnetBWorkload
+      VpcEndpointType: Interface
+      VpcId: !Ref VPCB
+
+  SubnetBRole:
+    Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    Properties:
+      RoleName: !Sub subnet-b-role-${AWS::StackName}
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  SubnetBInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    DeletionPolicy: Delete
+    Properties:
+      Path: /
+      Roles:
+        - !Ref SubnetBRole
+
+  SubnetBSecGroup:
+    # checkov:skip=CKV_AWS_23:Security group has a description
+    Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    Properties:
+      GroupDescription: ICMP acess from 10.0.0.0/8
+      GroupName: !Sub ${AWS::StackName}-test-instance-sec-group
+      VpcId: !Ref VPCB
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          CidrIp: 10.0.0.0/8
+          FromPort: '-1'
+          ToPort: '-1'
+
+  EC2SubnetB:
+    Type: AWS::EC2::Instance
+    DeletionPolicy: Delete
+    Properties:
+      ImageId: !Ref LatestAmiId
+      SubnetId: !Ref SubnetBWorkload
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref SubnetBSecGroup
+      IamInstanceProfile: !Ref SubnetBInstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-test-instance
+      UserData: !Base64 |
+        #!/bin/bash
+        echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' >> /home/ssm-user/eicar.com
+        for i in {1..4}
+        do
+          curl -m 5 https://www.google.com
+          sleep 10
+        done
+
+  VPCBFirewall:
+    Type: AWS::NetworkFirewall::Firewall
+    DeletionPolicy: Delete
+    Properties:
+      FirewallName: !Sub ${AWS::StackName}-firewall
+      FirewallPolicyArn: !Ref EgressFirewallPolicy
+      VpcId: !Ref VPCB
+      SubnetMappings:
+        - SubnetId: !Ref SubnetBFirewall
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-firewall
+
+  SuricataStatefulRuleGroup:
+    Type: AWS::NetworkFirewall::RuleGroup
+    DeletionPolicy: Delete
+    Properties:
+      RuleGroupName: !Sub suricata-ja3-rule-${AWS::StackName}
+      Type: STATEFUL
+      Capacity: 100
+      Description: Suricata rule to geneate ja3 hash
+      RuleGroup:
+        RulesSource:
+          RulesString: alert tls any any -> any any (ja3.hash;
+            content:!"00000000000000000000000000000000"; msg:"JA3";
+            sid:202404221;)
+      Tags:
+        - Key: Name
+          Value: !Sub suricata-ja3-rule-${AWS::StackName}
+
+  DomainAllowStatefulRuleGroup:
+    Type: AWS::NetworkFirewall::RuleGroup
+    DeletionPolicy: Delete
+    Properties:
+      RuleGroupName: !Sub domain-allow-${AWS::StackName}
+      Type: STATEFUL
+      Capacity: 100
+      RuleGroup:
+        RuleVariables:
+          IPSets:
+            HOME_NET:
+              Definition:
+                - 10.0.0.0/8
+        RulesSource:
+          RulesSourceList:
+            TargetTypes:
+              - HTTP_HOST
+              - TLS_SNI
+            Targets:
+              - .amazon.com
+              - .eicar.org
+            GeneratedRulesType: ALLOWLIST
+
+      Tags:
+        - Key: Name
+          Value: !Sub domain-allow-${AWS::StackName}
+
+  EgressFirewallPolicy:
+    Type: AWS::NetworkFirewall::FirewallPolicy
+    DeletionPolicy: Delete
+    Properties:
+      FirewallPolicyName: !Sub ${AWS::StackName}-firewall-policy
+      FirewallPolicy:
+        StatelessDefaultActions:
+          - aws:forward_to_sfe
+        StatelessFragmentDefaultActions:
+          - aws:forward_to_sfe
+
+        StatefulRuleGroupReferences:
+          - ResourceArn: !Ref DomainAllowStatefulRuleGroup
+          - ResourceArn: !Ref SuricataStatefulRuleGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-firewall-policy
+
+  VPCBFirewallLogFlowGroup:
+    # checkov:skip=CKV_AWS_66:Cloudwatch retention not required since it's AWS event only workshop
+    # checkov:skip=CKV_AWS_158:Cloudwatch log encryption not required for this workshop
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub /${AWS::StackName}/anfw/flow
+
+  VPCBFirewallLogAlertGroup:
+    # checkov:skip=CKV_AWS_66:Cloudwatch retention not required since it's AWS event only workshop
+    # checkov:skip=CKV_AWS_158:Cloudwatch log encryption not required for this workshop
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub /${AWS::StackName}/anfw/alert
+
+  VPCBFirewallLog:
+    # checkov:skip=CKV_AWS_66:Cloudwatch retention not required since it's AWS event only workshop
+    Type: AWS::NetworkFirewall::LoggingConfiguration
+    DeletionPolicy: Delete
+    Properties:
+      FirewallArn: !Ref VPCBFirewall
+      LoggingConfiguration:
+        LogDestinationConfigs:
+          - LogType: FLOW
+            LogDestinationType: CloudWatchLogs
+            LogDestination:
+              logGroup: !Sub /${AWS::StackName}/anfw/flow
+          - LogType: ALERT
+            LogDestinationType: CloudWatchLogs
+            LogDestination:
+              logGroup: !Sub /${AWS::StackName}/anfw/alert
+
+  SubnetBWorkloadRouteTable:
+    Type: AWS::EC2::RouteTable
+    DeletionPolicy: Delete
+    Properties:
+      VpcId: !Ref VPCB
+      Tags:
+        - Key: Name
+          Value: !Sub subnet-b-workload-route-table-${AWS::StackName}
+
+  SubnetBWorkloadRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DeletionPolicy: Delete
+    DependsOn: SubnetBWorkload
+    Properties:
+      RouteTableId: !Ref SubnetBWorkloadRouteTable
+      SubnetId: !Ref SubnetBWorkload
+
+  SubnetBWorkloadDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCBFirewall
+    DeletionPolicy: Delete
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      VpcEndpointId: !Select
+        - 1
+        - !Split
+          - ':'
+          - !Select
+            - 0
+            - !GetAtt VPCBFirewall.EndpointIds
+      RouteTableId: !Ref SubnetBWorkloadRouteTable
+
+  SubnetBFirewallRouteTable:
+    Type: AWS::EC2::RouteTable
+    DeletionPolicy: Delete
+    Properties:
+      VpcId: !Ref VPCB
+      Tags:
+        - Key: Name
+          Value: !Sub subnet-b-firewall-route-table-${AWS::StackName}
+
+  SubnetBFirewallRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: SubnetBFirewall
+    DeletionPolicy: Delete
+    Properties:
+      RouteTableId: !Ref SubnetBFirewallRouteTable
+      SubnetId: !Ref SubnetBFirewall
+
+  SubnetBFirewallDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayVPCB
+    DeletionPolicy: Delete
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayVPCB
+      RouteTableId: !Ref SubnetBFirewallRouteTable
+
+  SubnetBIngressRouteTable:
+    Type: AWS::EC2::RouteTable
+    DeletionPolicy: Delete
+    Properties:
+      VpcId: !Ref VPCB
+      Tags:
+        - Key: Name
+          Value: !Sub subnet-b-ingress-route-table-${AWS::StackName}
+  SubnetBIngressRouteTableAssociation:
+    Type: AWS::EC2::GatewayRouteTableAssociation
+    DependsOn: InternetGatewayVPCB
+    DeletionPolicy: Delete
+    Properties:
+      RouteTableId: !Ref SubnetBIngressRouteTable
+      GatewayId: !Ref InternetGatewayVPCB
+
+  SubnetBIngressRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCBFirewall
+    DeletionPolicy: Delete
+    Properties:
+      DestinationCidrBlock: 10.2.1.0/24
+      VpcEndpointId: !Select
+        - 1
+        - !Split
+          - ':'
+          - !Select
+            - 0
+            - !GetAtt VPCBFirewall.EndpointIds
+      RouteTableId: !Ref SubnetBIngressRouteTable
+
+  #security hub 
+  SecurityHub:
+    Type: AWS::SecurityHub::Hub
+    DeletionPolicy: Delete
+    Properties:
+      EnableDefaultStandards: true
+
+  #Guard Duty
+  #GuardDuty:
+  #  Type: AWS::GuardDuty::Detector
+  #  Properties:
+  #    Enable: True
+
+  #DynamoDB table for storing finding details
+  GuardDutytoFirewallDDBTable:
+    # checkov:skip=CKV_AWS_28:PITR is not required for this workshop. 
+    # checkov:skip=CKV_AWS_119:Encryption is not required for this workshop 
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+        - AttributeName: hostIP
+          AttributeType: S
+      KeySchema:
+        - AttributeName: hostIP
+          KeyType: HASH
+
+
+  #Bedrock Agent execution role
+  AmazonBedrockExecutionRoleForAgents:
+    Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    Properties:
+      RoleName: AmazonBedrockExecutionRoleForAgents_agentAccess
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AmazonBedrockAgentTrustPolicy
+            Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Sub ${AWS::AccountId}
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*
+      Policies:
+        - PolicyName: fm_access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: AmazonBedrockAgentPolicy
+                Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource:
+                  - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/*
+
+  #lambda function execution role to update Network Firewall, DynamoDB, and send confirmation email 
+  nfwupdatelambdaexecutionrole:
+    # checkov:skip=CKV_AWS_111:The write policy requuired since LLM will use it
+    # checkov:skip=CKV_AWS_109:The read policy requuired since LLM will use it
+    Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    Properties:
+      RoleName: nfwupdatelambdaexecutionrole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: nfwupdateddbexecutionpolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - network-firewall:*
+                  - logs:*
+                  - sns:*
+                  - cloudwatch:*
+                Resource: '*'
+
+  #Bedrock Agent Creation
+  nfwBedrockAgent:
+    Type: AWS::Bedrock::Agent
+    DeletionPolicy: Delete
+    Properties:
+      AgentName: nfwBedrockAgent
+      Instruction: |
+        Your task is to analyze the provided security finding and take the following steps:
+        1. Create a clear description of the issue.
+        2. Record the finding details in a table before processing it further.
+        3. Identify the JA3 hash tag corresponding to the finding from CloudWatch logs.
+        4. Create a Suricata rule using the identified JA3 hash to block the traffic. Use this sample rule as a reference:
+        <sample_suricata_rule>reject tls any any -> any any (msg:"match JA3 hash";ja3.hash;content:"e7eca2baf4458d095b7f45da28c16c34"; sid:100001;)</sample_suricata_rule>
+        5. Add the Suricata rule to the AWS Network Firewall to block the outgoing traffic.
+        In the <thinking> block, carefully consider each step and ensure you generate a valid Suricata rule that is compatible with AWS Network Firewall.
+        6. After adding the rule, send a notification to the provided SNS topic with the following details:
+        <detail>
+        <description>: A concise summary of the security finding and its potential impact.</description>
+        <suricata_rule>: The Suricata rule you created to block the identified JA3 hash. The rule should be in a format that can be directly added to the Network Firewall.</suricata_rule>
+        <action_taken>: Clearly state the action taken to remediate the issue.</action_taken>
+        <additional_info>: If there is any additional context or explanation needed, include it here.</additional_info>
+        </detail>
+      FoundationModel: anthropic.claude-3-sonnet-20240229-v1:0
+      IdleSessionTTLInSeconds: 1800
+      AutoPrepare: true
+      AgentResourceRoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/AmazonBedrockExecutionRoleForAgents_agentAccess
+      ActionGroups:
+        - ActionGroupName: record-finding
+          ActionGroupExecutor: 
+            Lambda: !GetAtt GuardDutytoDynamoDBRecordLambdaFunction.Arn
+          Description: >
+            Action group that has functions to record the finding related details in DynamoDB table before initiating the remediation actions.
+          FunctionSchema:  
+            Functions:
+              - Name: record-finding
+                Description:  >
+                  Record the finding related details in DynamoDB table before initiating the remediation actions. 
+                  Include summary of finding along with key attributes of the finding in the record.
+                Parameters:
+                  accountId:
+                    Description: Account ID from the security hub finding input xml
+                    Type: string
+                    Required: true
+                  findingId:
+                    Description: Finding ID from the security hub finding input xml
+                    Type: string
+                    Required: true
+                  findingSummary:
+                    Description: Summary of the finding from the security hub finding input xml. No longer than 3 sentences.
+                    Type: string
+                    Required: true
+                  hostIP:
+                    Description: Internal IP address from security hub finding xml
+                    Type: string
+                    Required: true
+                  region:
+                    Description: Region from the security hub finding input xml
+                    Type: string
+                    Required: true
+        - ActionGroupName: retrieveHashFromCW
+          ActionGroupExecutor:
+            Lambda: !GetAtt GetJa3LambdaFunction.Arn
+          Description: >
+            Action group that retrieves JA3 hash from CloudWatch logs.
+          FunctionSchema:
+            Functions:
+              - Name: retrieveHashFromCW
+                Description: >
+                  Retrieve JA3 hash from CloudWatch logs for the given host IP.
+                Parameters:
+                  hostIP:
+                    Description: Host IP to search for in CloudWatch logs
+                    Type: string
+                    Required: true
+        - ActionGroupName: updateNFWRuleGroup
+          ActionGroupExecutor:
+            Lambda: !GetAtt updateNetworkFirewallLambdaFunction.Arn
+          Description: >
+            Action group that updates Network Firewall rule group and sends notifications.
+          FunctionSchema:
+            Functions:
+              - Name: updateNFWRuleGroup
+                Description: >
+                  Update Network Firewall rule group with new Suricata rules.
+                Parameters:
+                  SuricataRules:
+                    Description: Suricata rules to be added to the Network Firewall
+                    Type: string
+                    Required: true
+              - Name: sendNotification
+                Description: >
+                  Send notification with findings summary and remediation steps.
+                Parameters:
+                  findingsDescription:
+                    Description: Summary of the security findings
+                    Type: string
+                    Required: true
+                  remediation:
+                    Description: Remediation steps taken
+                    Type: string
+                    Required: true
+
+  #Bedrock Agent Alias Creation
+  nfwBedrockAgentAlias:
+    Type: AWS::Bedrock::AgentAlias
+    DependsOn: nfwBedrockAgent
+    DeletionPolicy: Delete
+    Properties:
+      AgentAliasName: nfwBedrockAgentAlias
+      AgentId: !GetAtt nfwBedrockAgent.AgentId
+      Description: nfw bedrock alias
+
+  nfwBedrrockAgentSNSTopic:
+    # checkov:skip=CKV_AWS_26:Encryption is not required for this workshop
+    Type: AWS::SNS::Topic
+    DeletionPolicy: Delete
+    Properties:
+      Subscription:
+        - Endpoint: !Ref AdminEmail
+          Protocol: email
+
+  #role to invoke bedrock agent lambda function
+  InvokeBedrockAgentLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeBedrockAgentLambdaExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:*
+                  - logs:*
+                  - cloudwatch:*
+                  - sns:*
+                Resource:
+                  - !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:*
+
+  #DDB invoke lambda function role 
+  DDBLambdaRole:
+    # checkov:skip=CKV_AWS_111:The write policy requuired since LLM will use
+    Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: GuardDutytoFirewallRecordLambdaPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:DeleteItem
+                Resource: '*'
+
+  # role to give lambda permissions to access cloudwatch logs
+  retrieveJA3LambdaExecutionRole:
+    # checkov:skip=CKV_AWS_111:The write policy requuired since LLM will use it
+    Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: retrieveJA3LambdaExecutionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: '*'
+
+  # Lambda resource based policy for Bedrock agent to invoke Lambda functions
+  LambdaResourcePolicyInvoke:
+    Type: AWS::Lambda::Permission
+    DeletionPolicy: Delete
+    Properties:
+      FunctionName: !Ref InvokeBedrockAgent
+      Action: lambda:InvokeFunction
+      Principal: bedrock.amazonaws.com
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*
+
+  LambdaResourcePolicyDDB:
+    Type: AWS::Lambda::Permission
+    DeletionPolicy: Delete
+    Properties:
+      FunctionName: !Ref GuardDutytoDynamoDBRecordLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: bedrock.amazonaws.com
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*
+
+  LambdaResourcePolicyJA3:
+    Type: AWS::Lambda::Permission
+    DeletionPolicy: Delete
+    Properties:
+      FunctionName: !Ref GetJa3LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: bedrock.amazonaws.com
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*
+
+  LambdaResourcePolicynfw:
+    Type: AWS::Lambda::Permission
+    DeletionPolicy: Delete
+    Properties:
+      FunctionName: !Ref updateNetworkFirewallLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: bedrock.amazonaws.com
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*
+
+  # EventBridge Event Rule - For Security Hub event published to EventBridge:
+  GuardDutytoFirewallEvent:
+    Type: AWS::Events::Rule
+    DeletionPolicy: Delete
+    Properties:
+      Description: Security Hub - GuardDuty findings
+      EventPattern:
+        source:
+          - aws.securityhub
+        detail:
+          findings:
+            Types:
+              - TTPs/Execution/Execution:EC2-MaliciousFile
+            # ProductFields:
+            #   aws/guardduty/service/action/networkConnectionAction/remoteIpDetails/ipAddressV4:
+            #     - "exists": true
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt InvokeBedrockAgent.Arn
+          Id: GuardDutyEvent-Lambda-Trigger
+
+  GuardDutytoFirewallEventRole:
+    Type: AWS::Lambda::Permission
+    DeletionPolicy: Delete
+    Properties:
+      FunctionName: !Ref InvokeBedrockAgent
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt GuardDutytoFirewallEvent.Arn
+
+  #lambda function to invoke bedrock agent
+  InvokeBedrockAgent:
+    # checkov:skip=CKV_AWS_117:Lambda can be ourtside VPC in this workshop    
+    # checkov:skip=CKV_AWS_116:DLQ not needed for this workshop 
+    # checkov:skip=CKV_AWS_173:Encryption for Lambda variable not required for this workshop  
+    # checkov:skip=CKV_AWS_115:Lambda concurent execution not required for this workshop. 
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Delete
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt InvokeBedrockAgentLambdaExecutionRole.Arn
+      Runtime: python3.12
+      Environment:
+        Variables:
+          BEDROCK_AGENT_ID: !GetAtt nfwBedrockAgent.AgentId
+          BEDROCK_AGENT_ALIAS_ID: !GetAtt nfwBedrockAgentAlias.AgentAliasId
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          import re
+          import uuid
+          import botocore
+          config = botocore.config.Config(
+          read_timeout=900,
+          connect_timeout=900,
+          retries={"max_attempts": 0}
+          )
+          bedrock_agent_client = boto3.client("bedrock-agent-runtime",config=config)
+          agent_id = os.environ.get("BEDROCK_AGENT_ID")
+          agent_alias_id = os.environ.get("BEDROCK_AGENT_ALIAS_ID")
+          def handler(event, context):
+              session_id = str(uuid.uuid4()) #create a new session id for the current session
+              input_text = json.dumps(event)
+              try:
+                  response = bedrock_agent_client.invoke_agent(
+                      agentId=agent_id,
+                      agentAliasId=agent_alias_id,
+                      sessionId=session_id,
+                      endSession=False,
+                      inputText=input_text,
+                  )
+                  #print(f"Bedrock agent response: {json.dumps(response, indent=2)}")
+                  print(f"Bedrock agent response")
+                  print(response)
+                  chunks = []
+                  completion = ""
+                  for event in response["completion"]:
+                      chunks.append(event["chunk"]["bytes"].decode("utf-8"))
+                      completion = " ".join(chunks)
+                  if completion != "" :
+                      return {
+                          "status_code": 200,
+                          "body": json.dumps({"response": completion})
+                          }
+                  else:
+                      return {
+                          "status_code": 202,
+                          "body": json.dumps({"response": str(response)})
+                          }
+              except Exception as e:
+                  return {
+                      "status_code": 500,
+                      "body": json.dumps({"error": str(e)})
+                  }
+
+  #lambda function for DDB updates; records new entries in DynamoDB table, including IP addresses of suspicous hosts and timestamps
+  GuardDutytoDynamoDBRecordLambdaFunction:
+    # checkov:skip=CKV_AWS_173:Environmental variable encryption not required
+    # checkov:skip=CKV_AWS_115:Concurrent execution not needed for this workshop
+    # checkov:skip=CKV_AWS_117:Lambda can be outside VPC in this workshop   
+    # checkov:skip=CKV_AWS_116:DLQ not required   
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Delete
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt DDBLambdaRole.Arn
+      Runtime: python3.12
+      Environment:
+        Variables:
+          ACLMETATABLE: !Ref GuardDutytoFirewallDDBTable
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import datetime
+          import json, os, boto3, logging
+          import dateutil.parser
+          from boto3.dynamodb.conditions import Key, Attr
+          from botocore.exceptions import ClientError
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          ACLMETATABLE = os.environ['ACLMETATABLE']
+          ddb = boto3.resource('dynamodb')
+          table = ddb.Table(ACLMETATABLE)
+          def convert_to_epoch(Timestamp):
+              parsed_t = dateutil.parser.parse(Timestamp)
+              t_in_seconds = parsed_t.strftime('%s')
+              print (t_in_seconds)
+              return (t_in_seconds)
+          def create_ddb_rule(record):
+              ddb = boto3.resource('dynamodb')
+              table = ddb.Table(ACLMETATABLE)
+              response = table.put_item(
+                  Item=record,
+                  ReturnValues='ALL_OLD'
+                  )
+              if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                  if 'Attributes' in response:
+                      logger.info("updated existing record, no new IP")
+                      return False
+                  else:
+                      logger.info("log -- successfully added DDB state entry %s" % (record))
+                      return True
+              else:
+                    logger.error("log -- error adding DDB state entry for %s" % (record))
+                    logger.info(response)
+                    raise
+          def getAllIPs():
+              Return_JSON = {}
+              IPList = []
+              try:
+                  #scan the ddb table to find expired records
+                  response = table.scan()
+                  # if any records are found:
+                  if response['Items']:
+                      logger.info("log -- found records")
+                      # process each expired record, append to list
+                      for item in response['Items']:
+                          logger.info("hostIP %s" %item['hostIP'])
+                          IPList.append({"IP": item['hostIP']})
+                  else:
+                      logger.info("log -- no entries found.")
+              except Exception as e:
+                  logger.error('something went wrong')
+                  raise
+              # respond with a list of all IPs in DynamoDB table
+              return IPList
+          def handler(event, context):
+              agent = event['agent']
+              actionGroup = event['actionGroup']
+              function = event['function']
+              parameters = event.get('parameters', [])
+              logger.info("log -- Event: %s " % json.dumps(event))
+              # using epoch time (counted in seconds) to evaluate expiration
+              timestamp = datetime.datetime.now()
+              epoch_time = convert_to_epoch(str(timestamp))
+              # format a new record to be added to DynamoDB table
+              if actionGroup == 'record-finding' and function == 'record-finding':
+                  try:
+                      response = {
+                          "status": "unknown"
+                      }
+                      #Write the logic to record the finding in dynamo db table here
+                      logger.info("Inside Record Finding Function")
+                      # Create a dictionary to map parameter names to their values
+                      parameters_dict = {param['name']: param['value'] for param in parameters}
+                      # Now, you can access each parameter by its name
+                      hostIP = parameters_dict.get('hostIP')
+                      accountId = parameters_dict.get('accountId')
+                      findingId = parameters_dict.get('findingId')
+                      findingSummary = parameters_dict.get('findingSummary')
+                      region = parameters_dict.get('region')
+                      # Printing the variables to verify
+                      logger.info(f"Host IP: {hostIP}")
+                      logger.info(f"Account ID: {accountId}")
+                      logger.info(f"Finding ID: {findingId}")
+                      logger.info(f"Finding Summary: {findingSummary}")
+                      logger.info(f"Region: {region}")
+                      # Format a new record to be added to DynamoDB table
+                      record = {
+                          'hostIP': str(hostIP),
+                          'accountId': str(accountId),
+                          'findingId': str(findingId),
+                          'findingSummary': str(findingSummary),
+                          'region': str(region),
+                          'createdAt': int(epoch_time)
+                      }
+                      result = create_ddb_rule(record)
+                      #return record
+                      response = {
+                          "status": "success",
+                          "description": "record was successfully inserted in to the dynamodb table as intended"
+                      }
+                  except Exception as e:
+                      logger.error(f"An unexpected error occurred: {str(e)}")
+                      response = {
+                          "error": "An unexpected error occured {} action group {} or function {}".format(str(e),actionGroup, function)
+                      }
+              else:
+                  response = {
+                      "error": "Unknown action group {} or function {}".format(actionGroup, function)
+                  }
+              responseBody =  {
+                  "TEXT": {
+                      "body": json.dumps(response)
+                  }
+              }
+              action_response = {
+                  'actionGroup': actionGroup,
+                  'function': function,
+                  'functionResponse': {
+                      'responseBody': responseBody
+                  }
+              }
+              dummy_function_response = {'messageVersion': event['messageVersion'], 'response': action_response}
+              logger.info("Response: {}".format(dummy_function_response))
+              return dummy_function_response
+
+  #Lambda function to get ja3 details
+  GetJa3LambdaFunction:
+    # checkov:skip=CKV_AWS_117:Lambda function can be outside VPC for this workshop
+    # checkov:skip=CKV_AWS_116:DLQ not needed for this workshop  
+    # checkov:skip=CKV_AWS_173:Environmental variable encryption not required 
+    # checkov:skip=CKV_AWS_115:Concurrent execution not needed for this workshop
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Delete
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt retrieveJA3LambdaExecutionRole.Arn
+      Runtime: python3.12
+      Environment:
+        Variables:
+          CW_LOG_GROUP_NAME: !Sub /${AWS::StackName}/anfw/alert
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json, os, boto3, re, logging
+          from botocore.exceptions import ClientError
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          #======================================================================================================================
+          # Variables
+          #======================================================================================================================
+          CW_LOG_GROUP_NAME = os.environ['CW_LOG_GROUP_NAME']
+          def handler(event, context):
+              agent = event['agent']
+              actionGroup = event['actionGroup']
+              function = event['function']
+              parameters = event.get('parameters', [])
+              logger.info("log -- Event: %s " % json.dumps(event))
+              if actionGroup == 'retrieveHashFromCW' and function == 'retrieveHashFromCW':
+                  try:
+                      response = {
+                          "status": "unknown"
+                      }
+                      logger.info("Inside Retrieve Hash From CloudWatch Function")
+                      parameters_dict = {param['name']: param['value'] for param in parameters}
+                      hostIP = parameters_dict.get('hostIP')
+                      logs_client = boto3.client('logs')
+                      log_events = []
+                      next_token = None
+                      while True:
+                          if next_token:
+                              response = logs_client.filter_log_events(
+                                  logGroupName=CW_LOG_GROUP_NAME,
+                                  filterPattern='',
+                                  nextToken=next_token
+                              )
+                          else:
+                              response = logs_client.filter_log_events(
+                                  logGroupName=CW_LOG_GROUP_NAME,
+                                  filterPattern=''
+                              )
+                          log_events.extend(response['events'])
+                          next_token=response.get('nextToken')
+                          if not next_token:
+                              break
+                      # Parse the log events based on the updated query
+                      parsed_logs = []
+                      for log_event in log_events:
+                          message = log_event['message']
+                          # Extract the required fields using regular expressions
+                          src_ip_match = re.search(r'"src_ip":"(.*?)"', message)
+                          dest_ip_match = re.search(r'"dest_ip":"(.*?)"', message)
+                          proto_match = re.search(r'"proto":"(.*?)"', message)
+                          flow_id_match = re.search(r'"flow_id":(\d+),', message)
+                          ja3_hash_match = re.search(r'"ja3":\{"hash":"(.*?)"', message)
+                      # Check if the required fields are present and meet the filter conditions
+                          if (
+                              proto_match and proto_match.group(1) == "TCP" and
+                              ja3_hash_match and ja3_hash_match.group(1) and
+                              src_ip_match and src_ip_match.group(1) == hostIP
+                          ):
+                              parsed_log = {
+                                  'src_ip': src_ip_match.group(1) if src_ip_match else '',
+                                  'dest_ip': dest_ip_match.group(1) if dest_ip_match else '',
+                                  'proto': proto_match.group(1) if proto_match else '',
+                                  'flow_id': flow_id_match.group(1) if flow_id_match else '',
+                                  'ja3_hash': ja3_hash_match.group(1) if ja3_hash_match else ''
+                              }
+                              parsed_logs.append(parsed_log)
+                      # Get unique list of ja3_hashes from parsed logs
+                      ja3_hashes = set([log['ja3_hash'] for log in parsed_logs])
+                      ja3_hashes_text = json.dumps(list(ja3_hashes))
+                      response = {
+                          "status": "success",
+                          "ja3_hashes": ja3_hashes_text,
+                          "description": "retrieved ja3 hashes from CloudWatch logs as intended. Use this list of ja3_hashes_text for subsequent function calls"
+                      }
+                  except exception as e:
+                      logger.error(f"An unexpected error occurred: {str(e)}")
+                      response = {
+                          "error": "An unexpected error occured. Error: {} ****within****action group {} or function {}".format(str(e),actionGroup, function)
+                      }
+              else:
+                  response = {
+                      "error": "Unknown action group {} or function {}".format(actionGroup, function)
+                  }
+              responseBody =  {
+                  "TEXT": {
+                  "body": json.dumps(response)
+                }
+              }
+              action_response = {
+                  'actionGroup': actionGroup,
+                  'function': function,
+                  'functionResponse': {
+                      'responseBody': responseBody
+                  }
+              }
+              function_response = {'messageVersion': event['messageVersion'], 'response': action_response}
+              logger.info("Response: {}".format(function_response))
+              return function_response
+
+  #lambda function to update network firewall, DDB table, and send SNS notifications
+
+  updateNetworkFirewallLambdaFunction:
+    # checkov:skip=CKV_AWS_117:Lambda function can be outside VPC for this workshop
+    # checkov:skip=CKV_AWS_116:DLQ not needed for this workshop  
+    # checkov:skip=CKV_AWS_173:Environmental variable encryption not required 
+    # checkov:skip=CKV_AWS_115:Concurrent execution not needed for this workshop
+    # checkov:skip=CKV_SECRET_6:This is a generative AI token
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Delete
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt nfwupdatelambdaexecutionrole.Arn
+      Runtime: python3.12
+      Environment:
+        Variables:
+          ACLMETATABLE: !Ref GuardDutytoFirewallDDBTable
+          FIREWALL_RULEGROUP_ARN: !Ref SuricataStatefulRuleGroup
+          SNS_TOPIC_ARN: !Ref nfwBedrrockAgentSNSTopic
+
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import datetime
+          import json
+          import os
+          import boto3
+          import logging
+          import dateutil.parser
+          from boto3.dynamodb.conditions import Key, Attr
+          from botocore.exceptions import ClientError
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          ACLMETATABLE = os.environ['ACLMETATABLE']
+          ddb = boto3.resource('dynamodb')
+          table = ddb.Table(ACLMETATABLE)
+          client = boto3.client('sns')
+          network_firewall = boto3.client('network-firewall')
+          Topic_Arn = os.environ['SNS_TOPIC_ARN']
+          rule_group_arn = os.environ['FIREWALL_RULEGROUP_ARN']
+          # Converts from ISO 8601 to Unix Epoch time
+          def convert_to_epoch(Timestamp):
+              parsed_t = dateutil.parser.parse(Timestamp)
+              t_in_seconds = parsed_t.strftime('%s')
+              print(t_in_seconds)
+              return t_in_seconds
+          # Add new surricata rule to the nfw rule group
+          def update_rule_group(new_rule, rule_group_arn):
+              try:
+                  logger.info(f"Inside update_rule_group method")
+                  logger.info(f"new rule: {new_rule}")
+                  response = network_firewall.describe_rule_group(RuleGroupArn=rule_group_arn)
+                  # Retrieve the current rule group
+                  rule_group = response['RuleGroup']
+                  # checkov:skip=CKV_SECRET_6:This is a generative AI token  not a base64-encoded secret
+                  update_token = response['UpdateToken']
+                  # Get the existing rules
+                  existing_rules = rule_group['RulesSource']['RulesString']
+                  logger.info(f"existing rule: {existing_rules}")
+                  # Append the new rules to the existing rules
+                  updated_rules = existing_rules + '\n' + new_rule
+                  # Update the rule group configuration with the updated rules
+                  rule_group['RulesSource']['RulesString'] = updated_rules
+                  # Update the rule group
+                  response = network_firewall.update_rule_group(
+                      # checkov:skip=CKV_SECRET_6:This is a generative AI token  not a base64-encoded secret
+                      UpdateToken=update_token,
+                      RuleGroupArn=rule_group_arn,
+                      RuleGroup=rule_group
+                  )
+              except network_firewall.exceptions.ThrottlingException as e:
+                  logger.info('Error updating rule group: {}'.format(e))
+                  raise
+              except network_firewall.exceptions.ResourceNotFoundException as e:
+                  logger.info('Error updating rule group: {}'.format(e))
+                  raise
+              except network_firewall.exceptions.InvalidRequestException as e:
+                  # Handle the case where the rule already exists
+                  if 'Duplicate rule' in repr(e) or 'Duplicate signature' in repr(e):
+                      logger.info('The rule you are trying to add already exists in the rule group.')
+                  else:
+                      logger.info('Error updating rule group: {}'.format(e))
+                      raise
+          #Lambda Handler function
+          def handler(event, context):
+              agent = event['agent']
+              actionGroup = event['actionGroup']
+              function = event['function']
+              parameters = event.get('parameters', [])
+              logger.info("Event: %s " % json.dumps(event))
+              # using epoch time (counted in seconds) to evaluate expiration
+              timestamp = datetime.datetime.now()
+              epoch_time = convert_to_epoch(str(timestamp))
+              # Execute your business logic here.
+              # For more information, refer to: https://docs.aws.amazon.com/bedrock/latest/userguide/agents-lambda.html
+              response = {
+                  "status":  "unknown"
+              }
+              if actionGroup == 'updateNFWRuleGroup' and function == 'updateNFWRuleGroup':
+                  try:
+                      logger.info("Inside Update Network Firewall Function")
+                      # Create a dictionary to map parameter names to their values
+                      parameters_dict = {param['name']: param['value'] for param in parameters}
+                      # Get suricata rule(s) from the parameter passed by agent
+                      suricata_rules_str = parameters_dict.get('SuricataRules')  # Suricata rule created by LLM for one Ja3 hash
+                      if suricata_rules_str:
+                          suricata_rules = suricata_rules_str.strip().split("\n")
+                          if suricata_rules:
+                              for rule in suricata_rules:
+                                  logger.info("Processing Suricata Rule: " + rule)
+                                  # Update Rule Group with new suricata rule
+                                  update_rule_group(rule, rule_group_arn)
+                                  # Create response body content for agent to understand the response status
+                                  response = {
+                                    "status": "success",
+                                    "description": "New Suricata rule was added successfully in NFW as intended"
+                                }
+                          else:
+                              response = {
+                                  "status": "error",
+                                  "description": "No valid Suricata rules found."
+                              }
+                      else:
+                          response = {
+                              "status": "error",
+                              "description": "No Suricata rules provided."
+                          }
+                  except Exception as e:
+                      logger.error(f"An unexpected error occurred: {str(e)}")
+                      response = {
+                          "error": f"An unexpected error occurred: {str(e)}"
+                      }
+              elif actionGroup == 'updateNFWRuleGroup' and function == 'sendNotification':
+                  # Create a dictionary to map parameter names to their values
+                  parameters_dict = {param['name']: param['value'] for param in parameters}
+                  # Get individual parameters
+                  findingsDescription = parameters_dict.get('findingsDescription')
+                  remediation = parameters_dict.get('remediation')
+                  try:
+                      message = f"Findings Summary: {findingsDescription}\n\nRemediation Steps Taken: {remediation}"
+                      logger.info("SNS Message: " + message)
+                      response = client.publish(TopicArn=Topic_Arn, Message=message)
+                      # Create response body content for agent to understand the response status
+                      response = {
+                          "status": "success",
+                          "description": "SNS notification was sent successfully as intended"
+                      }
+                  except Exception as e:
+                      logger.error(f"An unexpected error occurred: {str(e)}")
+                      response = {
+                          "error": f"An unexpected error occurred: {str(e)}"
+                      }
+              else:
+                  response = {
+                      "error": f"Unknown action group {actionGroup} or function {function}"
+                  }
+              responseBody = {
+                  "TEXT": {
+                      "body": json.dumps(response)
+                  }
+              }
+              action_response = {
+                  'actionGroup': actionGroup,
+                  'function': function,
+                  'functionResponse': {
+                      'responseBody': responseBody
+                }
+              }
+              function_response = {'messageVersion': event['messageVersion'], 'response': action_response}
+              logger.info("Response: {}".format(function_response))
+              return function_response
