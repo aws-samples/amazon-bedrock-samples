@@ -1,6 +1,6 @@
 # Multi Modal
 
-Examples for workign with Multi model data using Amazon Bedrock
+Examples for working with Multi model data using Amazon Bedrock
 
 
 ## Contents
