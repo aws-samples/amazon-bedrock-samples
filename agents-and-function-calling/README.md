@@ -1,12 +1,16 @@
-# Agents
+# Agents and Function Calling
 
-Examples showcasing how agents and its components can be implemented by leveraging Amazon Bedrock.
+This folder highlights tool usage with Large Language Models (LLMs).
+We explore the lower level solutions with model's native function calling capabilities as well as higher lever solutions with LLM Agents.
+
+Additionally, we also provide an introductory example of how to create your own agent using the FMs function calling capabilities.
 
 ## Contents
 
-- [Introduction to Agents](introduction-to-agents) - Learn the basics of a Generative AI agent.
-- [Function Calling](function-calling) - Getting Started with Function Calling for Generative AI Models hosted on Amazon Bedrock. 
-- [Bedrock Agents](bedrock-agents) - Getting started with [Amazon Bedrock Agents](https://aws.amazon.com/bedrock/agents/).
+- [Introduction to Agents](introduction-to-agents/README.md) - Learn the basics of a Generative AI agent.
+- [Function Calling](function-calling/README.md) - Getting Started with Function Calling for Generative AI Models hosted on Amazon Bedrock. 
+- [Bedrock Agents](bedrock-agents/README.md) - Getting started with [Amazon Bedrock Agents](https://aws.amazon.com/bedrock/agents/).
+- [Open-source Agents](open-source-agents/README.md) - Examples of agents applications using Amazon Bedrock and open-source solutions such as LangChain, LangGraph, Crew.ai
 
 
 ## Contributing
