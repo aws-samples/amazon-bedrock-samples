@@ -1,0 +1,276 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AWS Savings Plan API",
+    "version": "1.0.0",
+    "description": "The AWS Savings Plan API provides a means to retrieve savings plan purchase recommendations, purchase recommendation details, utilization, and coverage details."
+  },
+  "paths": {
+    "/get_savings_plan_recommendations": {
+      "get": {
+        "summary": "Retrieve Savings Plan Purchase Recommendations",
+        "description": "This endpoint retrieves savings plan purchase recommendations based on specified parameters.",
+        "operationId": "getSavingsPlanRecommendations",
+        "parameters": [
+          {
+              "name": "savings_plan_type",
+              "in": "query",
+              "description": "The Savings Plan Type for recommendations. Valid values are COMPUTE_SP, EC2_INSTANCE_SP and SAGEMAKER_SP",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+          {
+            "name": "account_scope",
+            "in": "query",
+            "description": "The account scope for recommendations. Valid values are PAYER and LINKED.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "PAYER"
+            }
+          },
+          {
+            "name": "lookback_period",
+            "in": "query",
+            "description": "The lookback period for usage data. Valid values are SEVEN_DAYS, THIRTY_DAYS, and SIXTY_DAYS.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "THIRTY_DAYS"
+            }
+          },
+          {
+            "name": "term",
+            "in": "query",
+            "description": "The term of the savings plan. Valid values are ONE_YEAR and THREE_YEARS.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "ONE_YEAR"
+            }
+          },
+          {
+            "name": "payment_option",
+            "in": "query",
+            "description": "The payment option for the savings plan. Valid values are NO_UPFRONT, PARTIAL_UPFRONT, and ALL_UPFRONT.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "NO_UPFRONT"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns savings plan purchase recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "SavingsPlansPurchaseRecommendation": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "description": "The savings plan recommendation details"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_savings_plan_recommendation_details": {
+      "get": {
+        "summary": "Retrieve Savings Plan Purchase Recommendation Details",
+        "description": "This endpoint retrieves details of a specific savings plan purchase recommendation.",
+        "operationId": "getSavingsPlanRecommendationDetails",
+        "parameters": [
+          {
+            "name": "recommendation_arn",
+            "in": "query",
+            "description": "The ARN of the savings plan recommendation.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns details of the savings plan purchase recommendation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "RecommendationDetailData": {
+                      "type": "object",
+                      "description": "The detailed information of the savings plan recommendation"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_savings_plan_utilization": {
+      "get": {
+        "summary": "Retrieve Savings Plan Utilization",
+        "description": "This endpoint retrieves savings plan utilization data for a specified time period.",
+        "operationId": "getSavingsPlanUtilization",
+        "parameters": [
+          {
+            "name": "billing_period_start",
+            "in": "query",
+            "description": "The start date of the billing period in YYYY-MM-DD format.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "billing_period_end",
+            "in": "query",
+            "description": "The end date of the billing period in YYYY-MM-DD format.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns savings plan utilization data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "utilization": {
+                      "type": "object",
+                      "description": "The utilization details of the savings plan"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_savings_plan_utilization_details": {
+      "get": {
+        "summary": "Retrieve Savings Plan Utilization Details",
+        "description": "This endpoint retrieves detailed savings plan utilization data for a specified time period.",
+        "operationId": "getSavingsPlanUtilizationDetails",
+        "parameters": [
+          {
+            "name": "billing_period_start",
+            "in": "query",
+            "description": "The start date of the billing period in YYYY-MM-DD format.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "billing_period_end",
+            "in": "query",
+            "description": "The end date of the billing period in YYYY-MM-DD format.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns detailed savings plan utilization data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "utilization_details": {
+                      "type": "object",
+                      "description": "The detailed utilization information of the savings plan"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_savings_plans_coverage": {
+      "get": {
+        "summary": "Retrieve Savings Plans Coverage",
+        "description": "This endpoint retrieves savings plans coverage data for a specified time period.",
+        "operationId": "getSavingsPlansCoverage",
+        "parameters": [
+          {
+            "name": "billing_period_start",
+            "in": "query",
+            "description": "The start date of the billing period in YYYY-MM-DD format.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "billing_period_end",
+            "in": "query",
+            "description": "The end date of the billing period in YYYY-MM-DD format.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "granularity",
+            "in": "query",
+            "description": "The granularity of the coverage data. Valid values are DAILY and MONTHLY.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "MONTHLY"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns savings plans coverage data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "SavingsPlansCoverages": {
+                      "type": "object",
+                      "description": "The coverage details of the savings plans"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

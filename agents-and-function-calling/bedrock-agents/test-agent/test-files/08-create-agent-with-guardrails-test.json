@@ -1,0 +1,20 @@
+{
+  "conversation_one": [
+    "How can I activate my debit card?",
+    {
+      "query": "I want to create a banking appointment for 8pm tomorrow.",
+      "promptSessionAttributes": {
+          "CustomerName": "Anna",
+          "Today": "5th of May 2024"
+      }
+    }
+  ],
+  "conversation_two": [
+    {
+      "query": "Should I invest in bitcoins?",
+      "promptSessionAttributes": {
+          "CustomerName": "John"
+      }
+    }
+  ]
+}

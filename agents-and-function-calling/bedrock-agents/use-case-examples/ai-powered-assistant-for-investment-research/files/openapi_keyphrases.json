@@ -1,0 +1,52 @@
+{
+    "openapi": "3.0.0",
+        "info": {
+            "title": "Multimodal actions API",
+            "version": "1.0.0",
+            "description": "Multimodal action APIs for a financial analyst"
+        },
+        "paths": {
+            "/detect_phrases": {
+                "post": {
+                    "summary": "Detect Key Phrases Tool",
+                    "description": "Useful for when you need to detect key phrases in financial reports.",
+                    "operationId": "getKeyPhrases",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "text": {
+                                "type": "string",
+                                "description": "Text in which key phrases will be detected."
+                              }
+                            },
+                            "required": [
+                              "text"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Detect Phrases Tool",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "This is a key phrase"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }    
+    }

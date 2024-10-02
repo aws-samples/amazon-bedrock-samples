@@ -1,0 +1,162 @@
+[
+  {
+    "claimId": "9x87y-3z",
+    "policyId": "101604237",
+    "email": "example@amazon.com",
+    "claimDatetime": "2016-11-22 15:21:00",
+    "incident": {
+      "date": "06-08-2016",
+      "hour": 20,
+      "type": "Single Vehicle Collision",
+      "severity": "Trivial Damage"
+    },
+    "collision": {
+      "type": "Side Collision",
+      "numberVehiclesInvolved": 1
+    },
+    "driver": {
+      "age": 65.0,
+      "insuredRelationship": "primary",
+      "licenseIssueDate": "01-12-1975"
+    },
+    "claimAmount": {
+      "total": 62590,
+      "injury": 11380,
+      "property": 11380,
+      "vehicle": 39830
+    },
+    "numberWitnesses": 1,
+    "suspiciousActivity": false,
+    "monthsAsCustomer": 276,
+    "status": "Closed",
+    "pendingDocuments": []
+  },
+  {
+    "claimId": "5t16u-7v",
+    "policyId": "102078763",
+    "email": "example@amazon.com",
+    "claimDatetime": "2016-11-30 14:15:00",
+    "incident": {
+      "date": "17-11-2016",
+      "hour": 19,
+      "type": "Single Vehicle Collision",
+      "severity": "Major Damage"
+    },
+    "collision": {
+      "type": "Front Collision",
+      "numberVehiclesInvolved": 1
+    },
+    "driver": {
+      "age": 30.0,
+      "insuredRelationship": "wife",
+      "licenseIssueDate": "06-03-2007"
+    },
+    "claimAmount": {
+      "total": 2650,
+      "injury": 2000,
+      "property": 250,
+      "vehicle": 400
+    },
+    "numberWitnesses": 2,
+    "suspiciousActivity": false,
+    "monthsAsCustomer": 65,
+    "status": "Open",
+    "pendingDocuments": ["Drivers License", "Evidence"]
+  },
+  {
+    "claimId": "2s34w-8x",
+    "policyId": "102130320",
+    "email": "example@amazon.com",
+    "claimDatetime": "2016-11-27 11:07:00",
+    "incident": {
+      "date": "07-06-2016",
+      "hour": 1,
+      "type": "Multi-vehicle Collision",
+      "severity": "Trivial Damage"
+    },
+    "collision": {
+      "type": "Rear Collision",
+      "numberVehiclesInvolved": 4
+    },
+    "driver": {
+      "age": 44.0,
+      "insuredRelationship": "other-relative",
+      "licenseIssueDate": "03-15-1979"
+    },
+    "claimAmount": {
+      "total": 7700,
+      "injury": 770,
+      "property": 1540,
+      "vehicle": 5390
+    },
+    "numberWitnesses": 1,
+    "suspiciousActivity": false,
+    "monthsAsCustomer": 144,
+    "status": "Open",
+    "pendingDocuments": ["Drivers License", "Registration"]
+  },
+  {
+    "claimId": "6y78z-1a",
+    "policyId": "102095953",
+    "email": "example@amazon.com",
+    "claimDatetime": "2016-12-14 10:23:00",
+    "incident": {
+      "date": "13-12-2016",
+      "hour": 22,
+      "type": "Single Vehicle Collision",
+      "severity": "Minor Damage"
+    },
+    "collision": {
+      "type": null,
+      "numberVehiclesInvolved": 1
+    },
+    "driver": {
+      "age": 24.0,
+      "insuredRelationship": "other-relative",
+      "licenseIssueDate": "19-01-2015"
+    },
+    "claimAmount": {
+      "total": 49410,
+      "injury": 5490,
+      "property": 5490,
+      "vehicle": 38430
+    },
+    "numberWitnesses": 2,
+    "suspiciousActivity": true,
+    "monthsAsCustomer": 118,
+    "status": "Closed",
+    "pendingDocuments": []
+  },
+  {
+    "claimId": "3b45c-9d",
+    "policyId": "102080578",
+    "email": "example@amazon.com",
+    "claimDatetime": "2016-11-15 11:10:00",
+    "incident": {
+      "date": "15-11-2016",
+      "hour": 8,
+      "type": "Single Vehicle Collision",
+      "severity": "Trivial Damage"
+    },
+    "collision": {
+      "type": "Side Collision",
+      "numberVehiclesInvolved": 1
+    },
+    "driver": {
+      "age": 36.0,
+      "insuredRelationship": "not-in-family",
+      "licenseIssueDate": "13-10-2004"
+    },
+    "claimAmount": {
+      "total": 86130,
+      "injury": 15660,
+      "property": 7830,
+      "vehicle": 62640
+    },
+    "numberWitnesses": 0,
+    "suspiciousActivity": false,
+    "monthsAsCustomer": 257,
+    "status": "Open",
+    "pendingDocuments": ["Drivers License", "Registration", "Evidence"]
+  }
+]

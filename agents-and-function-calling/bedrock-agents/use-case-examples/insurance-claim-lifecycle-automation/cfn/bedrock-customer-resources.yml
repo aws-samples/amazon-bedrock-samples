@@ -1,0 +1,284 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Supporting resources for Insurance Agent powered by Agents and Knowledge base for Amazon Bedrock"
+Metadata:
+  LICENSE: >-
+    Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this
+    software and associated documentation files (the "Software"), to deal in the Software
+    without restriction, including without limitation the rights to use, copy, modify,
+    merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+    PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Code Asset S3 Bucket, Lambda Deployment Package Keys, and Lambda Layer ARNs
+        Parameters:
+          - ArtifactBucket
+          - DataLoaderKey
+          - CreateClaimKey
+          - GatherEvidenceKey
+          - SendReminderKey
+          - BedrockAgentsLayerArn
+          - CfnresponseLayerArn
+      - Label:
+          default: SNS Configuration Settings
+        Parameters:
+          - SNSEmail
+      - Label:
+          default: Customer Website Configuration
+        Parameters:
+          - EvidenceUploadUrl
+    ParameterLabels:
+      ArtifactBucket:
+        default: your-code-assets-bucket-name
+      DataLoaderKey:
+        default: /agent/lambda/data-loader/loader_deployment_package.zip
+      CreateClaimKey:
+        default: /agent/lambda/action-groups/create_claim.zip
+      GatherEvidenceKey:
+        default: /agent/lambda/action-groups/gather_evidence.zip
+      SendReminderKey:
+        default: /agent/lambda/action-groups/send_reminder.zip
+      BedrockAgentsLayerArn:
+        default: bedrock-layer-arn
+      CfnresponseLayerArn:
+        default: cfnresponse-layer-arn
+      SNSEmail:
+        default: your-sns-email
+      EvidenceUploadUrl:
+        default: your-evidence-upload-url
+
+Parameters:
+  ArtifactBucket:
+    Description: S3 Bucket Containing Code Assets for Data Loader and Agent Action Group Lambda Functions
+    Type: String
+    Default: your-code-assets-bucket-name
+  DataLoaderKey:
+    Description: S3 Key for Data Loader
+    Type: String
+    Default: agent/lambda/data-loader/loader_deployment_package.zip
+  CreateClaimKey:
+    Description: S3 Key for create claim function code
+    Type: String
+    Default: agent/lambda/action-groups/create_claim.zip
+  GatherEvidenceKey:
+    Description: S3 Key for gather evidence function code
+    Type: String
+    Default: agent/lambda/action-groups/gather_evidence.zip
+  SendReminderKey:
+    Description: S3 Key for send reminder function code
+    Type: String
+    Default: agent/lambda/action-groups/send_reminder.zip
+  BedrockAgentsLayerArn:
+    Description: Agents for Bedrock Lambda Layer
+    Type: String
+    Default: bedrock-layer-arn
+  CfnresponseLayerArn:
+    Description: Agents for Bedrock Lambda Layer
+    Type: String
+    Default: cfnresponse-layer-arn
+  SNSEmail:
+    Description: SNS Email.
+    Type: String
+    Default: your-sns-email
+  EvidenceUploadUrl:
+    Description: Customer Evidence Upload Website URL
+    Type: String
+    Default: your-evidence-upload-url
+
+Resources:
+  ExistingClaimsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-ExistingClaims
+      AttributeDefinitions:
+        - AttributeName: claimId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: claimId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: '3'
+        WriteCapacityUnits: '3'
+      SSESpecification:
+        SSEEnabled: True
+
+  AgentActionGroupLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-AgentActionGroupLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  AgentActionGroupLambdaRoleDefaultPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub ${AWS::StackName}-AgentActionGroupLambdaRoleDefaultPolicy
+      PolicyDocument:
+        Statement:
+          - Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:DeleteItem
+              - dynamodb:DescribeTable
+              - dynamodb:GetItem
+              - dynamodb:GetRecords
+              - dynamodb:GetShardIterator
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:UpdateItem
+              - lambda:Get*
+              - lambda:InvokeFunction
+              - bedrock:InvokeModel
+              - sns:Publish
+              - s3:GetObject
+              - s3:PutObject
+            Effect: Allow
+            Resource: '*'        
+        Version: 2012-10-17
+      Roles:
+        - !Ref AgentActionGroupLambdaRole
+
+  BedrockCreateClaimFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref CreateClaimFunction
+      Principal: 'bedrock.amazonaws.com'
+
+  BedrockSendReminderFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref SendReminderFunction
+      Principal: 'bedrock.amazonaws.com'
+
+  BedrockGatherEvidenceFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref GatherEvidenceFunction
+      Principal: 'bedrock.amazonaws.com'
+
+  DataLoaderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Lambda function to initially load the claims catalog.
+      FunctionName: !Sub ${AWS::StackName}-DDBDataLoader
+      Code: 
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref DataLoaderKey
+      Runtime: python3.11
+      MemorySize: 256
+      Timeout: 20
+      Handler: index.lambda_handler
+      Layers:
+        - !Ref CfnresponseLayerArn
+      Role: !GetAtt AgentActionGroupLambdaRole.Arn
+      Environment:
+        Variables:
+          EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
+
+  LoadPlanData:
+    Type: Custom::LoadDynamoDB
+    Properties:
+      ServiceToken: !GetAtt DataLoaderFunction.Arn
+
+  CreateClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Bedrock Insurance agent create claim function
+      FunctionName: !Sub ${AWS::StackName}-CreateClaimFunction
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref CreateClaimKey
+      Runtime: python3.11
+      MemorySize: 512
+      Timeout: 30
+      Handler: create_claim.lambda_handler
+      Layers:
+        - !Ref BedrockAgentsLayerArn
+      Role: !GetAtt AgentActionGroupLambdaRole.Arn
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          CUSTOMER_WEBSITE_URL: !Ref EvidenceUploadUrl
+          EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
+          SNS_TOPIC_ARN: !Ref SNSTopic
+
+  SendReminderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Bedrock Insurance agent send reminder function
+      FunctionName: !Sub ${AWS::StackName}-SendReminderFunction
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref SendReminderKey
+      Runtime: python3.11
+      MemorySize: 512
+      Timeout: 30
+      Handler: send_reminder.lambda_handler
+      Layers:
+        - !Ref BedrockAgentsLayerArn
+      Role: !GetAtt AgentActionGroupLambdaRole.Arn
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          EXISTING_CLAIMS_TABLE_NAME: !Ref ExistingClaimsTable
+          SNS_TOPIC_ARN: !Ref SNSTopic
+
+  GatherEvidenceFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Bedrock Insurance agent gather evidence function.
+      FunctionName: !Sub ${AWS::StackName}-GatherEvidenceFunction
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref GatherEvidenceKey
+      Runtime: python3.11
+      MemorySize: 512
+      Timeout: 30
+      Handler: gather_evidence.lambda_handler
+      Layers:
+        - !Ref BedrockAgentsLayerArn
+      Role: !GetAtt AgentActionGroupLambdaRole.Arn
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          CUSTOMER_WEBSITE_URL: !Ref EvidenceUploadUrl
+          SNS_TOPIC_ARN: !Ref SNSTopic
+
+  SNSTopic:
+    Type: AWS::SNS::Topic
+
+  SNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties: 
+      Endpoint: !Ref SNSEmail
+      Protocol: email
+      TopicArn: !Ref SNSTopic
+      

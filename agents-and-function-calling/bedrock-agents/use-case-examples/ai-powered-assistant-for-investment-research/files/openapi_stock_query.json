@@ -1,0 +1,54 @@
+{
+  "openapi": "3.0.0",
+      "info": {
+          "title": "Multimodal actions API",
+          "version": "1.0.0",
+          "description": "Multimodal action APIs for a financial analyst"
+      },
+      "paths": {
+          "/query_stock": {
+              "post": {
+                  "summary": "Stock Querying Tool",
+                  "description": "Useful for when you need to answer any question about stocks prices. It only has information about stocks.",
+                  "operationId": "getStockInfo",
+                  "requestBody": {
+                    "required": true,
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "text": {
+                              "type": "string",
+                              "description": "Request about stocks."
+                            }
+                          },
+                          "required": [
+                            "text"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "responses": {
+                      "200": {
+                          "description": "Stock Querying Tool",
+                          "content": {
+                              "application/json": {
+                                  "schema": {
+									  "type": "object",
+                                      "properties": {
+                                          "response": {
+                                              "type": "string",
+                                              "description": "Response to request info about stocks."
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }    
+  }

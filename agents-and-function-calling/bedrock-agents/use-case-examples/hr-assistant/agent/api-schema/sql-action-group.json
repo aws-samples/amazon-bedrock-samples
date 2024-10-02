@@ -1,0 +1,70 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Execute Query API",
+    "description": "API for executing statements on the database to get or update time off balance.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/execute_query": {
+      "post": {
+        "description": "API for executing SQL statements on employee time off database. When submitting a timeoff balance, send an update statement to this API to update the balance. You must only pass in constructed SQL statement in the Query. The time off balance is in hours, so you need to convert day or week to hour before updating the values. employee.employeetimeoff is the only available table, do not call the API with other tables. When calculating timeoff balance, get both vacation time and personal time and sum them up to get the total available balance.",
+        "operationId": "execute_query",
+        "requestBody": {
+          "description": "SQL query",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "SQL statement. Table schema with employeealias being the primary key: TABLE employee.employeetimeoff (employeename STRING, employeealias STRING, vacationbalanceinhours INT, personaltimeoffbalanceinhours INT). The table name must be employee.employeetimeoff. The updated balance should never be negative. Example of updating timeoff balance: UPDATE employee.employeetimeoff SET vacationbalanceinhours = vacationbalanceinhours-40, personaltimeoffbalanceinhours = personaltimeoffbalanceinhours-10 WHERE employeealias = 'hremployee'"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response with statement results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "description": "A single row of statement results"
+                      },
+                      "description": "Results returned by the statement"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

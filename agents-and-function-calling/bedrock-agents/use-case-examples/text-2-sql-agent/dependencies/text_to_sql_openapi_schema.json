@@ -1,0 +1,89 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Database schema look up and query APIs",
+        "version": "1.0.0",
+        "description": "APIs for looking up database table schemas and making queries to database tables."
+    },
+    "paths": {
+        "/getschema": {
+            "get": {
+                "summary": "Get a list of all tables and their schema in the database",
+                "description": "Get the list of all tables and their schema. Return all the table and schema information.",
+                "operationId": "getschema",
+                "responses": {
+                    "200": {
+                        "description": "Gets the list of table names and their schemas in the database",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "Table": {
+                                                "type": "string",
+                                                "description": "The name of the table in the database."
+                                            },
+                                            "Schema": {
+                                                "type": "string",
+                                                "description": "The schema of the table in the database. Contains all columns needed for making queries."
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/querydatabase": {
+            "post": {
+                "summary": "API to send query to the database table",
+                "description": "Send a query to the database table to retrieve information pertaining to the users question . The API takes in only one SQL query at a time, sends the SQL statement and returns the query results from the table. This API should be called for each SQL query to a database table.",
+                "operationId": "querydatabase",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {
+                                        "type": "string",
+                                        "description": "SQL statement to query database table."
+                                    }
+                                },
+                                "required": [
+                                    "query"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Query sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "responsebody": {
+                                            "type": "string",
+                                            "description": "The query response from the database."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One or more required fields are missing or invalid."
+                    }
+                }
+            }
+        }
+    }
+}

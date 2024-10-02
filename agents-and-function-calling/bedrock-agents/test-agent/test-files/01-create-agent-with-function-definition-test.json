@@ -1,0 +1,21 @@
+{
+  "conversation_one": [
+    "How many vacation days does employee 1 have?",
+    "great! Please book one day of time off for June 1st 2024",
+    "Thanks! Now book the last 3 months of the year off as vacation. From October 1st 2024 to December 31st 2024"
+  ],
+  "conversation_two": [
+    {
+        "promptSessionAttributes": {
+          "employee_id": "2"
+        },
+        "query": "How many days off do I still have?"
+    },
+    {
+        "promptSessionAttributes": {
+          "today": "July 29th 2024"
+        },
+        "query": "Book one day off for tomorrow"
+    }
+  ]
+}

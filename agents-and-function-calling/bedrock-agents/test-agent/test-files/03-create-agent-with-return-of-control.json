@@ -1,0 +1,26 @@
+{
+  "conversation_one": [
+    "How many holidays does employee 1 have?",
+    {
+      "returnControlInvocationResults": [
+        {
+          "functionResult": {
+            "actionGroup": "VacationsActionGroup",
+            "function": "get_available_vacations_days",
+            "responseBody": {
+                "TEXT": {
+                    "body": "Employee 1 has 9 vacation days available"
+                }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "query": "Great! book 2 days from tomorrow to Friday",
+      "promptSessionAttributes": {
+          "today": "Sep 25th 2024"
+      }
+    }
+  ]
+}

@@ -1,0 +1,195 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "AWS Cost And Usage API",
+        "version": "1.0.0",
+        "description": "The AWS Cost And Usage API provides a means to retrieve detailed cost and usage data for AWS services within a specified billing period."
+    },
+    "paths": {
+        "/get-date": {
+            "get": {
+                "summary": "Retrieve Date",
+                "description": "This endpoint retrieves current month date and today's date to compare the billing period requested by the user is not in the future.",
+                "operationId": "getDate",
+                "responses": {
+                    "200": {
+                        "description": "Returns current date",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "today_date": {
+                                            "type": "string",
+                                            "description": "Today's Date"
+                                        },
+                                        "current_month": {
+                                            "type": "string",
+                                            "description": "Current Month"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get_cost_and_usage": {
+            "get": {
+                "summary": "Retrieve AWS Cost and Usage Data",
+                "description": "This endpoint retrieves AWS cost and usage data for AWS services during a specified billing period, with optional filtering and grouping. Users can dynamically generate cost reports tailored to their needs by specifying parameters such as granularity, billing period start and end dates, and a filter criteria as a JSON string.",
+                "operationId": "GetCostAndUsage",
+                "parameters": [
+                    {
+                        "name": "granularity",
+                        "in": "query",
+                        "description": "The granularity at which cost data is aggregated. Valid values are DAILY, MONTHLY, and HOURLY. If the user doesn't provide a value, set it to MONTHLY",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "billing_period_start",
+                        "in": "query",
+                        "description": "The start date of the billing period in YYYY-MM-DD format. Defaults to last month, if not provided. You can get the current date using getDate function",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "billing_period_end",
+                        "in": "query",
+                        "description": "The end date of the billing period in YYYY-MM-DD format.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "group_by",
+                        "in": "query",
+                        "description": "A JSON string to group AWS costs using a single group, either dimensions, tag keys, cost categories. Valid values for the DIMENSION type are AZ, INSTANCE_TYPE, LEGAL_ENTITY_NAME, INVOICING_ENTITY, LINKED_ACCOUNT, OPERATION, PLATFORM, PURCHASE_TYPE, SERVICE, TENANCY, RECORD_TYPE, and USAGE_TYPE. When you group by the TAG type and include a valid tag key, you get all tag values, including empty strings. Example: {\"Type\": \"DIMENSION\", \"Key\": \"SERVICE\"}.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },                    
+                    {
+                        "name": "metric",
+                        "in": "query",
+                        "description": "The metric to return in the query. Valid values are AmortizedCost, BlendedCost, NetAmortizedCost, NetUnblendedCost, NormalizedUsageAmount, UnblendedCost, and UsageQuantity. Note: For UsageQuantity, the service aggregates usage numbers without considering units. To get meaningful UsageQuantity metrics, filter by UsageType or UsageTypeGroups. Only one metric can be specified per call.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter",
+                        "in": "query",
+                        "description": "The filter criteria as a JSON string. Filters AWS costs by different dimensions, such as SERVICE and LINKED_ACCOUNT, using nested Expression objects. Valid values for MatchOptions for Dimensions are EQUALS and CASE_SENSITIVE. Valid values for MatchOptions for CostCategories and Tags are EQUALS, ABSENT, and CASE_SENSITIVE. Example formats: Simple dimension values: { \"Dimensions\": { \"Key\": \"SERVICE\", \"Values\": [\"Amazon EC2\", \"Amazon S3\"], \"MatchOptions\": [\"EQUALS\"] } } Compound Expression types with logical operations: { \"And\": [ {\"Or\": [ {\"Dimensions\": {\"Key\": \"REGION\", \"Values\": [\"us-east-1\", \"us-west-1\"]}}, {\"Tags\": {\"Key\": \"TagName\", \"Values\": [\"Value1\"]}} ]}, {\"Not\": {\"Dimensions\": {\"Key\": \"USAGE_TYPE\", \"Values\": [\"DataTransfer\"]}}} ] } - Dimensions: Filter based on specific dimensions. The `Key` specifies the dimension (e.g., SERVICE, REGION), `Values` is an array of values to match, and `MatchOptions` specifies the matching criteria (e.g., EQUALS). - Tags: Filter based on specific tags. The `Key` specifies the tag key, `Values` is an array of tag values to match, and `MatchOptions` specifies the matching criteria (e.g., EQUALS).",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                         
+                        }
+                    }
+                    
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns AWS costs for the requested billing period",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "GroupedCosts": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "number",
+                                                "description": "The cost incurred for the group on the respective date or usage quantity with units."
+                                            }
+                                        },
+                                        "warning": {
+                                            "type": "string",
+                                            "description": "Warning message if the response is truncated due to size limitations."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get-dimension-values": {
+            "get": {
+                "summary": "Retrieve available dimension values",
+                "description": "This endpoint retrieves all available and valid values for a specified filter (e.g., SERVICE, REGION) over a period of time.",
+                "operationId": "getDimensionValues",
+                "parameters": [
+                    {
+                        "name": "billing_period_start",
+                        "in": "query",
+                        "description": "The start date of the billing period in YYYY-MM-DD format.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "billing_period_end",
+                        "in": "query",
+                        "description": "The end date of the billing period in YYYY-MM-DD format.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "dimension_key",
+                        "in": "query",
+                        "description": "The name of the dimension to retrieve values for. Valid values are AZ, INSTANCE_TYPE, LINKED_ACCOUNT, OPERATION, PURCHASE_TYPE, SERVICE, USAGE_TYPE, PLATFORM, TENANCY, RECORD_TYPE, LEGAL_ENTITY_NAME, INVOICING_ENTITY, DEPLOYMENT_OPTION, DATABASE_ENGINE, CACHE_ENGINE, INSTANCE_TYPE_FAMILY, REGION, BILLING_ENTITY, RESERVATION_ID, SAVINGS_PLANS_TYPE, SAVINGS_PLAN_ARN, OPERATING_SYSTEM.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns AWS Cost and Usage dimension values for the requested dimension in billing period",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dimension": {
+                                            "type": "string",
+                                            "description": "The name of the dimension for the requested billing period"
+                                        },
+                                        "values": {
+                                            "type": "array",
+                                            "description": "The list of values of the dimension for the requested billing period",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "The value of the dimension for the requested billing period"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

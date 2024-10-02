@@ -1,0 +1,8 @@
+boto3==1.34.125
+openpyxl
+pandas
+pdfplumber
+PyPDF2
+python-docx
+streamlit
+xlrd
