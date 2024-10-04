@@ -1,0 +1,7 @@
+{
+    "manifest": {
+        "s3Path": "s3://bedrockidpclaude3workflow-bedrockidpclaude3bucket0-pgrdbpkwtsfg/uploads/multi-page-paystub.pdf"
+    },
+    "numberOfPages": 1,
+    "mime": "application/pdf"
+}
