@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "securityhub:*",
+                "guardduty:*",
+                "events:*",
+                "lambda:*",
+                "network-firewall:*",
+                "dynamodb:*",
+                "sns:*",
+                "cloudwatch:*",
+                "bedrock:*",
+                "ec2:*",
+                "logs:*",
+                "ssm:*",
+                "iam:*",
+                "aws-marketplace:Subscribe",
+                "aws-marketplace:ViewSubscriptions"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
