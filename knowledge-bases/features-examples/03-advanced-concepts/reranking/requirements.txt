@@ -6,4 +6,4 @@ langchain-community
 langchain-core
 pydantic==1.10.13
 langchain-aws
-ragas
+ragas==0.1.10
