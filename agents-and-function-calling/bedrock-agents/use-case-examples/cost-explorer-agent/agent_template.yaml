@@ -1,0 +1,396 @@
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Provisions AWS Bedrock Agent for Billing and Savings Plan Analysis"
+
+Parameters:
+  AgentName:
+    Type: String
+    Default: "aws-billing-agentv3"
+    Description: "Name of the Bedrock agent"
+
+  AgentAliasName:
+    Type: String
+    Default: "beta"
+    Description: "Alias name of the Bedrock agent"
+
+  AgentDescription:
+    Type: String
+    Description: "Description of the Bedrock agent"
+    Default: "AWS Billing Agent"
+
+  AgentFoundationalModel:
+    Type: String
+    Description: "Foundational model of the Bedrock agent"
+    Default: "anthropic.claude-3-haiku-20240307-v1:0"
+    AllowedValues:
+      - "anthropic.claude-3-haiku-20240307-v1:0"
+      - "anthropic.claude-3-sonnet-20240229-v1:0"
+
+  AgentInstruction:
+    Type: String
+    Description: "Instruction for the Bedrock agent"
+    Default: |
+      You are an expert in AWS, particularly in AWS services, billing, FinOps (Financial Operations), and analyzing cost and usage data. Your primary role is to assist users in understanding their AWS cost and usage trends, simplifying complex information into easily understandable summaries. Provide answers to any questions users have regarding their AWS services and AWS costs and usage. Additionally, you'll examine the gathered data on AWS costs and usage to provide recommendations, emphasizing strategies for cost efficiency and optimal resource utilization. Moreover, provide clear explanations and definitions for terms like AWS usage type, operation, and other aspects related to AWS cost and billing.
+  EnableSlackIntegration:
+    Type: String
+    Description: "Enable Slack integration"
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+
+  SlackBotToken:
+    Type: String
+    Description: "Slack Bot Token for the Slack integration"
+    NoEcho: true
+
+  SlackSigningSecret:
+    Type: String
+    Description: "Slack Signing Secret for the Slack integration"
+    NoEcho: true
+
+  SourceBucket:
+    Type: String
+    Description: "Name of the S3 bucket containing source files"
+Conditions:
+  CreateSlackIntegration: !Equals 
+    - !Ref EnableSlackIntegration
+    - "true"
+Resources:
+  # IAM role for the Lambda function that handles AWS billing data
+  BillingAgentLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${AgentName}-lambda-role-${AWS::Region}"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "lambda.amazonaws.com"
+      Policies:
+        - PolicyName: LambdaCostExplorerPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ce:GetDimensionValues"
+                  - "ce:GetCostAndUsage"
+                  - "ce:GetTags"
+                Resource: "*"
+
+  # Lambda function that handles AWS billing data
+  BillingAgentLambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: !Sub "${AgentName}-${AWS::Region}"
+      Runtime: "python3.12"
+      Timeout: 300
+      MemorySize: 1024
+      Layers:
+        - !Sub '{{resolve:ssm:/aws/service/aws-sdk-pandas/3.9.1/py3.12/x86_64/layer-arn}}'
+      Role: !GetAtt BillingAgentLambdaRole.Arn
+      Handler: "billingagent.lambda_handler"
+      Code:
+        S3Bucket: !Ref SourceBucket
+        S3Key: billingagent.zip
+
+  # IAM role for the Bedrock agent
+  BillingAgentBedrockAgentRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "AmazonBedrockExecutionRoleForAgents_${AgentName}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "bedrock.amazonaws.com"
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Sub "${AWS::AccountId}"
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*"
+      Policies:
+        - PolicyName: S3SchemaAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                Resource:
+                  - !Sub "arn:aws:s3:::${SourceBucket}/BillingAgent_OpenAPI.json"
+                  - !Sub "arn:aws:s3:::${SourceBucket}/SavingsPlan_OpenAPI.json"
+                Sid: "AmazonBedrockAgentS3SchemaAccessPolicy"
+        - PolicyName: BedrockAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "bedrock:InvokeModel"
+                Resource: !Sub "arn:aws:bedrock:${AWS::Region}::foundation-model/${AgentFoundationalModel}"
+                Sid: "AmazonBedrockAgentBedrockFoundationModelPolicyProd"
+
+  # Bedrock agent for billing and savings plan analysis
+  BillingAgent:
+    Type: "AWS::Bedrock::Agent"
+    Properties:
+      AgentName: !Ref AgentName
+      AgentResourceRoleArn: !GetAtt BillingAgentBedrockAgentRole.Arn
+      Instruction: !Ref AgentInstruction
+      Description: !Ref AgentDescription
+      FoundationModel: !Ref AgentFoundationalModel
+      IdleSessionTTLInSeconds: 1800
+      SkipResourceInUseCheckOnDelete: False
+      AutoPrepare: True
+      ActionGroups:
+        - ParentActionGroupSignature: AMAZON.UserInput
+          ActionGroupName: UserInputAction
+        - ActionGroupExecutor:
+            Lambda: !GetAtt SavingsPlanAgentLambdaFunction.Arn
+          ActionGroupName: SavingsPlanAgent
+          ActionGroupState: ENABLED
+          ApiSchema:
+            S3:
+              S3BucketName: !Ref SourceBucket
+              S3ObjectKey: "SavingsPlan_OpenAPI.json"
+          Description: "Savings Plan Agent Action Group"
+        - ActionGroupExecutor:
+            Lambda: !GetAtt BillingAgentLambdaFunction.Arn
+          ActionGroupName: AWSBillingAgent
+          ActionGroupState: ENABLED
+          ApiSchema:
+            S3:
+              S3BucketName: !Ref SourceBucket
+              S3ObjectKey: "BillingAgent_OpenAPI.json"
+          Description: "AWS Billing Agent"
+
+  # Permission for the Bedrock agent to invoke the Lambda function
+  AgentLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !Ref BillingAgentLambdaFunction
+      Action: "lambda:InvokeFunction"
+      Principal: "bedrock.amazonaws.com"
+      SourceArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/${BillingAgent.AgentId}"
+
+  # IAM role for the Lambda function that handles Savings Plan data
+  SavingsPlanAgentLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${AgentName}-SPAgent-role-${AWS::Region}"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "lambda.amazonaws.com"
+      Policies:
+        - PolicyName: LambdaCostExplorerPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ce:GetSavingsPlan*"
+                  - "ce:GetReservation*"
+                  - "ce:ListReservation*"
+                  - "ce:ListSavingsPlan*"
+                Resource: "*"
+
+  # Lambda function that handles Savings Plan data
+  SavingsPlanAgentLambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: !Sub "${AgentName}-SPAgent-${AWS::Region}"
+      Runtime: "python3.12"
+      Timeout: 300
+      MemorySize: 1024
+      Layers:
+        - !Sub '{{resolve:ssm:/aws/service/aws-sdk-pandas/3.9.1/py3.12/x86_64/layer-arn}}'
+      Role: !GetAtt SavingsPlanAgentLambdaRole.Arn
+      Handler: "SavingsPlan.lambda_handler"
+      Code:
+        S3Bucket: !Ref SourceBucket
+        S3Key: savingsplanagent.zip
+
+  # Permission for the Bedrock agent to invoke the Savings Plan Lambda function
+  SavingsPlanAgentLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !Ref SavingsPlanAgentLambdaFunction
+      Action: "lambda:InvokeFunction"
+      Principal: "bedrock.amazonaws.com"
+      SourceArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/${BillingAgent.AgentId}"
+
+  # Alias for the Bedrock agent
+  BillingAgentAlias:
+    Type: AWS::Bedrock::AgentAlias
+    Properties:
+      AgentAliasName: beta
+      AgentId: !GetAtt BillingAgent.AgentId
+
+  # Secrets Manager secret for the Slack Bot Token and Signing Secret
+  SlackBotSecrets:
+    Type: AWS::SecretsManager::Secret
+    Condition: CreateSlackIntegration
+    Properties:
+      Name: !Sub "${AgentName}-slack-bot-secrets"
+      Description: "Slack Bot Token and Signing Secret"
+      SecretString: !Sub '{"SLACK_BOT_TOKEN":"${SlackBotToken}","SLACK_SIGNING_SECRET":"${SlackSigningSecret}"}'
+
+
+  # IAM role for the Lambda function that handles Slack integration
+  SlackIntegrationLambdaRole:
+    Type: "AWS::IAM::Role"
+    Condition: CreateSlackIntegration
+    Properties:
+      RoleName: !Sub "${AgentName}-slack-integration-role-${AWS::Region}"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "lambda.amazonaws.com"
+      Policies:
+        - PolicyName: BedrockAgentInvokePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "bedrock:InvokeAgent"
+                Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent-alias/${BillingAgent.AgentId}/*"
+        - PolicyName: LambdaSelfInvokePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                  - "lambda:GetFunction"
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AgentName}-slack-integration-${AWS::Region}"
+        - PolicyName: SecretsManagerAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource: !Ref SlackBotSecrets
+
+  # Lambda function that handles Slack integration
+  SlackIntegrationLambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Condition: CreateSlackIntegration
+    Properties:
+      FunctionName: !Sub "${AgentName}-slack-integration-${AWS::Region}"
+      Runtime: "python3.12"
+      Timeout: 600
+      MemorySize: 512
+      Layers:
+        - !Ref SlackBoltLayer
+      Role: !GetAtt SlackIntegrationLambdaRole.Arn
+      Handler: "slack_integration.lambda_handler"
+      Code:
+        S3Bucket: !Ref SourceBucket
+        S3Key: slack_integration.zip
+      Environment:
+        Variables:
+          SLACK_SECRETS: !Sub "${AgentName}-slack-bot-secrets"
+          BEDROCK_AGENT_ID: !GetAtt BillingAgent.AgentId
+          BEDROCK_AGENT_ALIAS_ID: !GetAtt BillingAgentAlias.AgentAliasId
+
+  # Lambda layer for Slack Bolt
+  SlackBoltLayer:
+    Type: AWS::Lambda::LayerVersion
+    Condition: CreateSlackIntegration
+    Properties:
+      LayerName: slack-bolt-layer
+      Description: Lambda layer for Slack Bolt
+      Content:
+        S3Bucket: !Ref SourceBucket
+        S3Key: slack_bolt_layer.zip
+      CompatibleRuntimes:
+        - python3.12
+
+  # API Gateway for Slack integration
+  SlackIntegrationApi:
+    Type: AWS::ApiGateway::RestApi
+    Condition: CreateSlackIntegration
+    Properties:
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Name: !Sub "${AgentName}-slack-integration-api"
+      Description: "API Gateway for Slack Integration"
+
+  # Resource for Slack integration
+  SlackIntegrationResource:
+    Type: AWS::ApiGateway::Resource
+    Condition: CreateSlackIntegration
+    Properties:
+      RestApiId: !Ref SlackIntegrationApi
+      ParentId: !GetAtt SlackIntegrationApi.RootResourceId
+      PathPart: "slack"
+
+  # Method for Slack integration
+  SlackIntegrationMethod:
+    Type: AWS::ApiGateway::Method
+    Condition: CreateSlackIntegration
+    Properties:
+      RestApiId: !Ref SlackIntegrationApi
+      ResourceId: !Ref SlackIntegrationResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SlackIntegrationLambdaFunction.Arn}/invocations"
+
+  # Deployment for Slack integration
+  SlackIntegrationDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Condition: CreateSlackIntegration
+    DependsOn: SlackIntegrationMethod
+    Properties:
+      RestApiId: !Ref SlackIntegrationApi
+      StageName: prod
+      Description: "Slack Integration Deployment"
+      StageDescription:
+        ThrottlingRateLimit: 20
+        ThrottlingBurstLimit: 40
+        LoggingLevel: ERROR
+  
+
+  # Permission for API Gateway to invoke the Slack integration Lambda function
+  SlackIntegrationLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Condition: CreateSlackIntegration
+    Properties:
+      FunctionName: !Ref SlackIntegrationLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SlackIntegrationApi}/*/*/*"
+
+Outputs:
+  AgentId:
+    Description: "Bedrock Agent ID"
+    Value: !GetAtt BillingAgent.AgentId
+  SlackIntegrationApiUrl:
+    Description: "URL of the Slack Integration API"
+    Condition: CreateSlackIntegration
+    Value: !Sub "https://${SlackIntegrationApi}.execute-api.${AWS::Region}.amazonaws.com/prod/slack"

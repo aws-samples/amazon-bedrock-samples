@@ -1,6 +1,9 @@
 # Ignore python notebook checkpoints
 .ipynb_checkpoints
 
+# Ignore python venv folder
+.venv
+
 # Ignore .DS_Store files
 .DS_Store
 
@@ -19,7 +22,9 @@ node_modules/
 
 # Ignore OS generated files
 .DS_Store
-.DS_Store?
+
+.idea
+
 ._*
 .Spotlight-V100
 .Trashes
