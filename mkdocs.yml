@@ -1,5 +1,5 @@
 # Project
-site_name: Amazon Bedrock Recepies
+site_name: Amazon Bedrock Recipes
 copyright: Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 site_author: Bedrock-GTM
 site_description: Amazon Bedrock cookbook website
@@ -114,22 +114,22 @@ nav:
         - Converse API Example: './introduction-to-bedrock/converse_api/01_converse_api.md'
     - Agents:
       - Create Agent Examples:
-        - How to create an Agent: './agents-and-function-calling/introduction-to-agents-and-function-calling/how_to_create_custom_agents.md'
+        - How to create an Agent: './agents/introduction-to-agents/how_to_create_custom_agents.md'
       - Multi Agent:
-        - Multi Agent Orchestration: './agents-and-function-calling/introduction-to-agents-and-function-calling/how_to_create_multi_agents_from_custom_agents.md'
+        - Multi Agent Orchestration: './agents/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.md'
       - Function Calling:
-        - Function Calling with Converse: './agents-and-function-calling/function-calling/function_calling_with_converse/function_calling_with_converse.md'
-        - Function Calling with Invoke: './agents-and-function-calling/function-calling/function_calling_with_invoke/function_calling_model_with_invoke.md'
-        - Return of Control: './agents-and-function-calling/function-calling/return_of_control/return_of_control.md'
-        - Tool Binding: './agents-and-function-calling/function-calling/tool_binding/tool_bindings.md'
+        - Function Calling with Converse: './agents/function-calling/function_calling_with_converse/function_calling_with_converse.md'
+        - Function Calling with Invoke: './agents/function-calling//function_calling_with_invoke/function_calling_model_with_invoke.md'
+        - Return of Control: './agents/function-calling/return_of_control/return_of_control.md'
+        - Tool Binding: './agents/function-calling/tool_binding/tool_bindings.md'
       - Open Source:
         - LangGraph:
           - Single agent: './agents/open-source/langgraph/langgraph-single-agent.md'
           - Multi agent: './agents/open-source/langgraph/langgraph-multi-agent-sql-tools.md'
           - Multi modal agent: './agents/open-source/langgraph/langgraph-agents-multimodal.md'
-
     - RAG:
-      # - Knowledge Bases: './agents-and-function-calling/function-calling/function_calling_with_converse/function_calling_with_converse.md'
+      # - Knowledge Bases:
+      #   - OpenSearch Data Ingestion: './rag/open-source/knowledge-base-with-opensource/0_how_to_create_index_and_ingest_documents_in_knowledge_base.md'
       - Open Source:
         - Chatbot using Langchain: './rag/open-source/chatbots/qa_chatbot_langchain_bedrock.md'
         - Chunking strategies for RAG applications: './rag/open-source/chunking/rag_chunking_strategies_langchain_bedrock.md'
@@ -143,12 +143,8 @@ nav:
       - Text Translation with Converse:  './genai-use-cases/text-generation/how_to_work_with_text_translation_w_bedrock.md'
       - Text summarization with Converse:  './genai-use-cases/text-generation/how_to_work_with_text-summarization-titan+claude.md'
       - Generate Bulk Emails with Batch Inference:  './genai-use-cases/text-generation/how_to_work_with_batch_example_for_multi_threaded_invocation.md'
-    # - Agents: 'general/license.md'
-    # - KB: 'general/license.md'
-    # - End-to-end examples: 'general/license.md'
     # - Governance: 'general/license.md'
     # - Observability: 'general/license.md'
     # - Data access control: 'general/license.md'
-    # - Applications examples: 'general/license.md'
   - Tags: 'general/tags.md'
   - License: 'general/license.md'
