@@ -94,7 +94,6 @@ class AgentsForAmazonBedrock:
                 "Statement": [
                     {
                         "Effect": "Allow",
-                        "Action": "bedrock:InvokeModel",
                         "Principal": {
                             "Service": "lambda.amazonaws.com"
                         },
