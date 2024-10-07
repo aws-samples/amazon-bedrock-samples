@@ -7,7 +7,7 @@ tags:
 <!-- <h2>How to create your own Custom Agents</h2> -->
 
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/agents/introduction-to-agents/how_to_create_custom_agents.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/introduction-to-agents/how_to_create_custom_agents.ipynb){:target="_blank"}"
 
 
 <h2>Overview</h2>

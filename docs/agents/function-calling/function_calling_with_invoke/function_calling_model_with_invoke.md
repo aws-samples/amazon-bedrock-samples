@@ -5,7 +5,7 @@ tags:
 
 <!-- <h2>How to do function calling using InvokeModel API and model-specific prompting</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/function-calling/function_calling_with_invoke/function_calling_model_specific.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/function-calling/function_calling_with_invoke/function_calling_model_specific.ipynb){:target="_blank"}"
 
 <h2>Overview</h2>
 

@@ -4,7 +4,7 @@ tags:
 ---
 <!-- <h2> How to work with Converse API in Amazon Bedrock - Getting Started. </h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/introduction-to-bedrock/bedrock_apis/01_converse_api.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/introduction-to-bedrock/converse_api/01_converse_api.ipynb){:target="_blank"}"
 
 <h2> Overview </h2>
 
