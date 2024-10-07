@@ -12,7 +12,7 @@ Your contribution should include both a Jupyter notebook and a corresponding mar
 
 1. Create your Jupyter notebook with the required content.
 2. Save the notebook in the appropriate folder, e.g., `repo/agent/function_calling/your_notebook.ipynb`.
-3. Create a markdown-only version of the notebook for the website. Make the necessary changes listed below.
+3. Create a markdown-only version of the notebook for the website. Make the necessary changes listed below. You can use the following command on terminal to export your notebook as a markdown `jupyter nbconvert --to markdown <YOUR-NOTEBOOK-NAME>.ipynb`.
 4. Save the markdown file in the docs folder, mirroring the notebook's location, e.g., `repo/docs/agent/function_calling/your_notebook.md`.
 
 Both the notebook and markdown should include the following sections:
