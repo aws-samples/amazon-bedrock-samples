@@ -7,7 +7,7 @@ hide:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amazon Bedrock Recepies</title>
+    <title>Amazon Bedrock Recipes</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         /* Reset and base styles */
@@ -163,7 +163,7 @@ hide:
     <div class="hero">
         <div class="hero-content">
             <img src="bedrock_logo.png" alt="Amazon Bedrock Logo">
-            <h1>Amazon Bedrock Recepies</h1>
+            <h1>Amazon Bedrock Recipes</h1>
         </div>
         <p>A collection of resources to help builders use and learn about the features of Amazon Bedrock.</p>
     </div>
