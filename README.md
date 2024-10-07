@@ -1,5 +1,7 @@
 # Amazon Bedrock Samples 
 
+To leverage this repository please use our website powered by this GitHub: [Website](https://aws-samples.github.io/amazon-bedrock-samples/)
+
 This repository contains pre-built examples to help customers get started with the Amazon Bedrock service.
 
 ## Contents
