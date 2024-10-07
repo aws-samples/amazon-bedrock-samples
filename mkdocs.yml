@@ -122,6 +122,11 @@ nav:
         - Function Calling with Invoke: './agents/function-calling//function_calling_with_invoke/function_calling_model_with_invoke.md'
         - Return of Control: './agents/function-calling/return_of_control/return_of_control.md'
         - Tool Binding: './agents/function-calling/tool_binding/tool_bindings.md'
+      - Open Source:
+        - LangGraph:
+          - Single agent: './agents/open-source/langgraph/langgraph-single-agent.md'
+          - Multi agent: './agents/open-source/langgraph/langgraph-multi-agent-sql-tools.md'
+          - Multi modal agent: './agents/open-source/langgraph/langgraph-agents-multimodal.md'
     - RAG:
       # - Knowledge Bases:
       #   - OpenSearch Data Ingestion: './rag/open-source/knowledge-base-with-opensource/0_how_to_create_index_and_ingest_documents_in_knowledge_base.md'
