@@ -14,7 +14,7 @@ tags:
 
 <h2> Build RAG solution with LangChain and Amazon Bedrock using OpenSearch Serverless</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/open-sorce/vector_stores/rag_langchain_bedrock_opensearch.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/open-source/vector_stores/rag_langchain_bedrock_opensearch.ipynb){:target="_blank"}"
 
 This notebook provides sample code for building a RAG solution using LangChain and Amazon Bedrock using OpenSearch Serverless.
 

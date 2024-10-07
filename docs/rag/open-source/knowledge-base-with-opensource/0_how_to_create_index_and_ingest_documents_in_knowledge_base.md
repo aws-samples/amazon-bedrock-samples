@@ -1,12 +1,9 @@
-<style>
-  .md-typeset h1,
-  .md-content__button {
-    display: none;
-  }
-</style>
+---
+tags:
+    - RAG/ Data-Ingestion
+---
 
-
-<h2>How to create index and ingest documents in Amazon Bedrock Knowledge Base</h2>
+<!-- <h2>How to create index and ingest documents in Amazon Bedrock Knowledge Base</h2> -->
 
 
 !!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/rag/open-source/knowledge-base-with-opensource/0_how_to_create_index_and_ingest_documents_in_knowledge_base.ipynb){:target="_blank"}"

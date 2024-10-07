@@ -1,11 +1,35 @@
 # Contributing Guidelines
 
-Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, or additional
+Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, website page, or additional
 documentation, we greatly value feedback and contributions from our community.
 
 Please read through this document before submitting any issues or pull requests to ensure we have all the necessary
 information to effectively respond to your bug report or contribution.
 
+## Expected Notebook & Website Page Structure
+
+Your contribution should include both a Jupyter notebook and a corresponding markdown file for the website. Here's what you need to do:
+
+1. Create your Jupyter notebook with the required content.
+2. Save the notebook in the appropriate folder, e.g., `repo/agent/function_calling/your_notebook.ipynb`.
+3. Create a markdown-only version of the notebook for the website. Make the necessary changes listed below. You can use the following command on terminal to export your notebook as a markdown `jupyter nbconvert --to markdown <YOUR-NOTEBOOK-NAME>.ipynb`.
+4. Save the markdown file in the docs folder, mirroring the notebook's location, e.g., `repo/docs/agent/function_calling/your_notebook.md`.
+
+Both the notebook and markdown should include the following sections:
+
+1. <h2>Overview</h2>
+2. <h2>Context or Details about feature/use case</h2>
+3. <h2>Prerequisites</h2>
+4. <h2>Setup</h2>
+5. <h2>Your code with comments starts here</h2>
+6. <h2>Other Considerations or Advanced section or Best Practices</h2>
+7. <h2>Next Steps</h2>
+8. <h2>Cleanup</h2>
+
+For the markdown file:
+- Include call-to-action links like "Open in GitHub"
+- Add necessary TAGS
+- Use HTML headers (e.g., <h2>) instead of markdown-style headers
 
 ## Reporting Bugs/Feature Requests
 

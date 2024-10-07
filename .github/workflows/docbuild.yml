@@ -1,0 +1,16 @@
+name: Publish Website
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-python@v4
+          with:
+            python-version: 3.11
+        - run: pip install mkdocs-material
+        - run: pip install mkdocs-minify-plugin
+        - run: mkdocs gh-deploy --force

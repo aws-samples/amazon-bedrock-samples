@@ -13,7 +13,7 @@ tags:
 
 <!-- <h2>RAG chatbot using Amazon Bedrock and LangChain</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/open-sorce/chatbots/qa_chatbot_langchain_bedrock.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/open-source/chatbots/qa_chatbot_langchain_bedrock.ipynb){:target="_blank"}"
 
 <h2>Overview</h2>
 
