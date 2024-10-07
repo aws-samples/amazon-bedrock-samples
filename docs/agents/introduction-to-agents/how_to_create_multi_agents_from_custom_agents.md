@@ -8,7 +8,7 @@ tags:
 <!-- <h2>How to create your Multi Agent System with Custom Agents</h2> -->
 
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/agents/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.ipynb){:target="_blank"}"
 
 
 <h2>Overview</h2>

@@ -7,7 +7,7 @@ tags:
 
 <!-- <h2>How to work with tools bindings</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/release/v2/agents/function-calling/tool_binding/tool_bindings.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/function-calling/tool_binding/tool_bindings.ipynb){:target="_blank"}"
 
 <h2>Overview</h2>
 
