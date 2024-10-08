@@ -66,7 +66,7 @@ mkdir -p data/image
 tar xf images.tar.gz -C data/image
 ```
 
-2. Deploymant
+2. Deployment
 
 ```bash
 cdk deploy
