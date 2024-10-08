@@ -4,7 +4,7 @@ tags:
     - LangGraph
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/open-source-agents/langchain-and-langgraph/langgraph-multi-agent-sql-tools.ipynb){:target="_blank"}"
 
 <!-- <h2>Multi agents using LangGraph</h2> -->
 
