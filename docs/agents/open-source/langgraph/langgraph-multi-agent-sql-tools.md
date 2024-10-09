@@ -1,10 +1,10 @@
 ---
 tags:
-    - Agents/ Multi Agents
-    - LangGraph
+    - Agents/ Multi-Agent-Orchestration
+    - Open Source/ LangGraph
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.ipynb){:target="_blank"}"
 
 <!-- <h2>Multi agents using LangGraph</h2> -->
 
