@@ -1,0 +1,373 @@
+Description: Creates resources for observability and tracking metadata for a production RAG Application.
+
+Parameters:
+  DateString:
+    Type: String
+    Default: ''
+
+Resources:
+  # S3 Bucket
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'observability-${AWS::AccountId}-${DateString}-s3-bucket'
+
+  # IAM Roles
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'observability-${AWS::AccountId}-lambda-role-${DateString}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Ref LambdaRolePolicy
+        - !Ref LambdaLogGroupPolicy
+
+  LambdaRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: 'arn:aws:logs:*:*:log-group:/aws/lambda/*'
+
+  LambdaLogGroupPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: 'arn:aws:logs:*:*:log-group:/aws/lambda/*:*'
+
+  FirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'observability-${AWS::AccountId}-firehose-role-${DateString}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Ref FirehoseRolePolicy
+        - !Ref FirehoseDeliveryStreamPolicy
+
+  FirehoseRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'glue:GetTable'
+              - 'glue:GetTableVersion'
+              - 'glue:GetTableVersions'
+            Resource:
+              - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog'
+              - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:database/${GlueDatabase}/*'
+              - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:table/${GlueDatabase}/*'
+          - Effect: Allow
+            Action:
+              - 'kafka:GetBootstrapBrokers'
+              - 'kafka:DescribeCluster'
+              - 'kafka:DescribeClusterV2'
+              - 'kafka-cluster:Connect'
+            Resource: !Sub 'arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:cluster/*/*'
+          - Effect: Allow
+            Action:
+              - 'kafka-cluster:DescribeTopic'
+              - 'kafka-cluster:DescribeTopicDynamicConfiguration'
+              - 'kafka-cluster:ReadData'
+            Resource: !Sub 'arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:topic/*/*/*'
+          - Effect: Allow
+            Action:
+              - 'kafka-cluster:DescribeGroup'
+            Resource: !Sub 'arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:group/*/*'
+          - Effect: Allow
+            Action:
+              - 's3:AbortMultipartUpload'
+              - 's3:GetBucketLocation'
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'
+            Resource:
+              - !GetAtt S3Bucket.Arn
+              - !Sub '${S3Bucket.Arn}/*'
+          - Effect: Allow
+            Action:
+              - 'lambda:InvokeFunction'
+              - 'lambda:GetFunctionConfiguration'
+            Resource: !GetAtt LambdaFunction.Arn
+          - Effect: Allow
+            Action:
+              - 'kms:GenerateDataKey'
+              - 'kms:Decrypt'
+            Resource: !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*'
+            Condition:
+              StringEquals:
+                'kms:ViaService': 's3.${AWS::Region}.amazonaws.com'
+              StringLike:
+                'kms:EncryptionContext:aws:s3:arn':
+                  - !Sub 'arn:aws:s3:::${S3Bucket}/*'
+                  - !Sub 'arn:aws:s3:::${S3Bucket}'
+          - Effect: Allow
+            Action:
+              - 'kinesis:DescribeStream'
+              - 'kinesis:GetShardIterator'
+              - 'kinesis:GetRecords'
+              - 'kinesis:ListShards'
+            Resource: !Sub 'arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/*'
+          - Effect: Allow
+            Action:
+              - 'kms:Decrypt'
+            Resource: !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*'
+            Condition:
+              StringEquals:
+                'kms:ViaService': 'kinesis.${AWS::Region}.amazonaws.com'
+              StringLike:
+                'kms:EncryptionContext:aws:kinesis:arn': !Sub 'arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/*'
+
+  FirehoseDeliveryStreamPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:PutObject'
+            Resource:
+              - !GetAtt S3Bucket.Arn
+              - !Sub '${S3Bucket.Arn}/*'
+          - Effect: Allow
+            Action:
+              - 'logs:PutLogEvents'
+            Resource:
+              - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/*:log-stream:*'
+              - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*:log-stream:*'
+
+  GlueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'kb-observability-${AWS::AccountId}-glue-role-${DateString}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole'
+      Policies:
+        - PolicyName: S3BucketAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetBucketLocation'
+                  - 's3:ListBucket'
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                Resource:
+                  - !GetAtt S3Bucket.Arn
+                  - !Sub '${S3Bucket.Arn}/*'
+
+  # Lambda Function
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'observability-${AWS::AccountId}-lambda-function-${DateString}'
+      Runtime: python3.9
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: 256
+      Timeout: 120
+      Handler: index.lambda_handler
+      Code:
+        ZipFile: !Sub |
+          import base64
+          import json
+          import datetime
+
+          def flatten_json(nested_json):
+              flat_json = {}
+
+              def flatten(x, name=''):
+                  if isinstance(x, dict):
+                      for key, value in x.items():
+                          key_with_underscores = key.replace('-', '_')  # Convert dashes to underscores
+                          if key == 'citations': # not normalizing citations
+                              flat_json[key] = value
+                          else:
+                              flatten(value, f"{name}_{key_with_underscores}" if name else key_with_underscores)
+                  elif isinstance(x, list):
+                      for i, item in enumerate(x):
+                          flatten(item, f"{name}[{i}]")
+                  else:
+                      flat_json[name] = x
+
+              flatten(nested_json)
+              return flat_json
+              
+          def deduplicate_json(data):
+              if isinstance(data, dict):
+                  result = {}
+                  for key, value in data.items():
+                      if isinstance(value, (dict, list)):
+                          value = deduplicate_json(value)
+                      if key not in result:
+                          result[key] = value
+                      else:
+                          if isinstance(value, list):
+                              result[key].extend(value)
+                          else:
+                              result[key] = [result[key], value]
+                  return result
+              elif isinstance(data, list):
+                  result = []
+                  for item in data:
+                      if isinstance(item, (dict, list)):
+                          item = deduplicate_json(item)
+                      if item not in result:
+                          result.append(item)
+                  return result
+              else:
+                  return data
+
+          def lambda_handler(event, context):
+              output = []
+
+              for record in event['records']:
+                  payload = base64.b64decode(record['data']).decode('utf-8')
+
+                  # Flatten the JSON payload
+                  try:
+                      data = json.loads(payload)
+                      flattened_data = flatten_json(data)
+                      flattened_data = deduplicate_json(flattened_data)
+                      flattened_payload = json.dumps(flattened_data)
+                  except (ValueError, TypeError):
+                      print(f"Error flattening JSON for record: {record['recordId']}")
+                      
+                  # Get the current system date and time
+                  now = datetime.datetime.now()
+                  year = now.year
+                  month = now.month
+                  day = now.day
+                  hour = now.hour
+                      
+                  partition_keys = {
+                      'dataset': flattened_data['call_type'],
+                      'year': year,
+                      'month': month,
+                      'day': day,
+                      'hour': hour
+                  }
+
+                  output_record = {
+                      'recordId': record['recordId'],
+                      'result': 'Ok',
+                      'data': base64.b64encode(flattened_payload.encode('utf-8')).decode('utf-8'),
+                      'metadata': {'partitionKeys': partition_keys}
+                  }
+                  output.append(output_record)
+
+              print('Successfully processed {} records.'.format(len(event['records'])))
+
+              return {'records': output}
+
+  # CloudWatch Log Group for Lambda
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${LambdaFunction}'
+      RetentionInDays: 7
+
+  # Kinesis Firehose Delivery Stream
+  FirehoseDeliveryStream:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: !Sub 'observability-${AWS::AccountId}-firehose-${DateString}'
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !GetAtt S3Bucket.Arn
+        BufferingHints:
+          IntervalInSeconds: 60
+          SizeInMBs: 64
+        CompressionFormat: UNCOMPRESSED
+        EncryptionConfiguration:
+          NoEncryptionConfig: NoEncryption
+        Prefix: !Sub 'firehose-data/!{partitionKeyFromLambda:dataset}/!{partitionKeyFromLambda:year}/!{partitionKeyFromLambda:month}/!{partitionKeyFromLambda:day}/!{partitionKeyFromLambda:hour}/'
+        ErrorOutputPrefix: !Sub 'firehose-errors/'
+        ProcessingConfiguration:
+          Enabled: true
+          Processors:
+            - Type: Lambda
+              Parameters:
+                - ParameterName: LambdaArn
+                  ParameterValue: !GetAtt LambdaFunction.Arn
+            - Type: AppendDelimiterToRecord
+              Parameters:
+                - ParameterName: Delimiter
+                  ParameterValue: "\\n"
+        RoleARN: !GetAtt FirehoseRole.Arn
+        DynamicPartitioningConfiguration:
+          Enabled: true
+
+  # Glue Database
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub 'observability-${AWS::AccountId}-glue-database-${DateString}'
+
+  # Glue Crawler
+  GlueCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Sub 'observability-${AWS::AccountId}-glue-crawler-${DateString}'
+      Role: !GetAtt GlueRole.Arn
+      DatabaseName: !Ref GlueDatabase
+      Description: Crawl Firehose S3 data to create a table in Athena
+      Targets:
+        S3Targets:
+          - Path: !Sub 's3://${S3Bucket}/firehose-data/'
+
+Outputs:
+  S3BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref S3Bucket
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function
+    Value: !GetAtt LambdaFunction.Arn
+  FirehoseDeliveryStreamName:
+    Description: Name of the Kinesis Firehose Delivery Stream
+    Value: !Ref FirehoseDeliveryStream
+  GlueDatabaseName:
+    Description: Name of the Glue database
+    Value: !Ref GlueDatabase
+  GlueCrawlerName:
+    Description: Name of the Glue crawler
+    Value: !Ref GlueCrawler
