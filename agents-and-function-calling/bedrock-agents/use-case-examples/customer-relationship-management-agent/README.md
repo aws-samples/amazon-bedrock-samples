@@ -84,8 +84,7 @@ The customer and interactions DynamoDB tables are filled with mock data.
 
 ### [Customer data](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/src/data/data.zip)
 
-![customer](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/src/data/customers.png)
-
+![customer](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/src/data/customers.png)
 
 ## [Interactions data](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/src/data/data.zip)
 
