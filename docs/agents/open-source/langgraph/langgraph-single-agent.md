@@ -1,12 +1,11 @@
 ---
 tags:
-    - Agents/ Multi Agents
-    - LangGraph
+    - Agents/ Function Calling
+    - Open Source/ LangGraph
 ---
+<!--<h2>Find a vacation destination with Agents - Single Agent</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/open-source-agents/langgraph/langgraph-single-agent.ipynb){:target="_blank"}"
-
-<!-- <h1>Find a vacation destination with Agents - Single Agent</h1> -->
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/open-source-agents/langgraph/langgraph-single-agent.ipynb){:target="_blank"}"
 
 <h2>Scenario</h2>
 
