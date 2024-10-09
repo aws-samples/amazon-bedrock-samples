@@ -48,7 +48,9 @@ To grant Bedrock access to your identity, you can:
 }
 ```
 
-> ⚠️ **Note:** With Amazon SageMaker, your notebook execution role will typically be *separate* from the user or role that you log in to the AWS Console with. If you'd like to explore the AWS Console for Amazon Bedrock, you'll need to grant permissions to your Console user/role too.
+> ⚠️ **Note 1:** With Amazon SageMaker, your notebook execution role will typically be *separate* from the user or role that you log in to the AWS Console with. If you'd like to explore the AWS Console for Amazon Bedrock, you'll need to grant permissions to your Console user/role too.
+
+> ⚠️ **Note 2:** For top level folder changes, please reach out to the GitHub mainterners.
 
 For more information on the fine-grained action and resource permissions in Bedrock, check out the Bedrock Developer Guide.
 
