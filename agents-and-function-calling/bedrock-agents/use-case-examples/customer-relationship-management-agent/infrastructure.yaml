@@ -59,7 +59,6 @@ Resources:
   # ECS Cluster
   StreamlitCluster:
     Type: AWS::ECS::Cluster
-    DependsOn: StreamlitECSRoleCustomResource
     Properties:
       ClusterName: !Join ['-', ['StreamlitCluster', !Ref EnvironmentName]]
       ClusterSettings:

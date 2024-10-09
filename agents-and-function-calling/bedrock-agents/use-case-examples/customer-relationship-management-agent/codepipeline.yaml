@@ -253,7 +253,8 @@ Resources:
               phases:
                 pre_build:
                   commands:
-                    - cd agents-for-bedrock
+                    - cd agents-and-function-calling
+                    - cd bedrock-agents
                     - cd use-case-examples
                     - cd customer-relationship-management-agent
                     - pip3 install awscli --upgrade --user

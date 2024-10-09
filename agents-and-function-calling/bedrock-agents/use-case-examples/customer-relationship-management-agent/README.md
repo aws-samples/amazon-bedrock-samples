@@ -15,7 +15,7 @@ Through natural language interaction, the agent provides access to customer info
 
 # Architecture
 
-![architecture](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/architecture.png)
+![architecture](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/architecture.png)
 
 ## Customer Use Case
 
@@ -36,7 +36,7 @@ The agent can integrate with Jira for task management. Provide the necessary Jir
 > [!NOTE]  
 > This repository provides base code for Streamlit application's and is not production ready. It is your responsibility as a developer to test and vet the application according to your security guidlines.
 
-Upload the [codepipleline.yaml](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/codepipeline.yaml) file to AWS CloudFormation. This template sets up a CodePipeline to build and deploy the Streamlit application to an ECS Fargate service. It also creates the necessary infrastructure (VPC, subnets, etc.) and integrates with Jira (optional).
+Upload the [codepipleline.yaml](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/codepipeline.yaml) file to AWS CloudFormation. This template sets up a CodePipeline to build and deploy the Streamlit application to an ECS Fargate service. It also creates the necessary infrastructure (VPC, subnets, etc.) and integrates with Jira (optional).
 
 |   Region   | codepipeline.yaml |
 | ---------- | ----------------- |
@@ -82,14 +82,13 @@ The agent supports the following API paths and actions:
 
 The customer and interactions DynamoDB tables are filled with mock data.
 
-### [Customer data](/agents-and-function-calling/customer-relationship-management-agent/src/data/customer.json)
+### [Customer data](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/src/data/data.zip)
 
-![customer](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/src/data/customers.png)
+![customer](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/src/data/customers.png)
 
+## [Interactions data](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/src/data/data.zip)
 
-## [Interactions data](/agents-and-function-calling/customer-relationship-management-agent/src/data/interactions.json)
-
-![interactions](/agents-for-bedrock/use-case-examples/customer-relationship-management-agent/src/data/interactions.png)
+![interactions](/agents-and-function-calling/bedrock-agents/use-case-examples/customer-relationship-management-agent/src/data/interactions.png)
 
 ## Supported Prompts
 
