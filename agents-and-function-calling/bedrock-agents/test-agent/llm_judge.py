@@ -120,7 +120,7 @@ def evaluate_response(system_prompts, df=None, trials=None, model_id='anthropic.
         df.to_excel(f'{parent}/{file}_eval.xlsx', index=False, sheet_name='Trials')
 
 
-def eval_all(path):
+def eval_all(path, eval_rationale=True):
     # Set up the judge prompt as the system prompt
     system_prompts = [{"text": judge_prompt}]
 
@@ -140,8 +140,8 @@ def eval_all(path):
         print(f"Scoring {file}")
         try:
             df, trials, num_turns = prepare_conversation(file_path)
-            evaluate_response(system_prompts, df, trials, eval_rationale=True, file_path=file_path, num_turns=num_turns,
-                              model_id=model_id)
+            evaluate_response(system_prompts, df, trials, eval_rationale=eval_rationale, file_path=file_path,
+                              num_turns=num_turns, model_id=model_id)
         except Exception as e:
             print(e)
 
@@ -151,5 +151,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Evaluate conversation turns using a Bedrock model.')
     parser.add_argument('path', type=str, help='The directory path containing the output files.')
+    parser.add_argument('--no_eval_rationale', action='store_false', dest='eval_rationale',
+                        help='Do not evaluate rationale for each trial')
     args = parser.parse_args()
-    eval_all(args.path)
+    eval_all(args.path, args.eval_rationale)
