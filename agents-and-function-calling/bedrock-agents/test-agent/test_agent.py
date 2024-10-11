@@ -344,7 +344,7 @@ if __name__ == "__main__":
             test_query(
                 args.show_code_use, queries, args.agent_id, args.agent_alias_id,
                 args.number_trials, args.memory_id, args.session_id, None,
-                key, 60
+                key, args.sleep_time
             )
         eval_all(Path(f"output"))
     else:
