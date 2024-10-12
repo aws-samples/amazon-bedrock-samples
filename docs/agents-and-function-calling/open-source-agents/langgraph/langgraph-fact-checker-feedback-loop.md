@@ -5,7 +5,7 @@ tags:
 ---
 <!-- <h2>Fact-checker Feedback Loop with LangGraph on Amazon Bedrock</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/open-source-agents/langgraph/01_langgraph_fact_checker_feedback_loop.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/open-source-agents/langgraph/langgraph-fact-checker-feedback-loop.ipynb){:target="_blank"}"
 
 
 <h2>1. Introduction to feedback loops</h2>
