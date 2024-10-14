@@ -128,8 +128,11 @@ nav:
           - LangGraph Multimodal Agent with Function Calling: './agents-and-function-calling/open-source-agents/langgraph/langgraph-agents-multimodal.md'
           - LangGraph Multi Agent Orchestration: './agents-and-function-calling/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.md'
     - RAG:
-      # - Knowledge Bases:
-      #   - OpenSearch Data Ingestion: './rag/open-source/knowledge-base-with-opensource/0_how_to_create_index_and_ingest_documents_in_knowledge_base.md'
+      - Knowledge Bases:
+        - Optimizing Retrieval Results:
+          - Advanced Chunking Strategies: './rag/knowledge-bases/feature-examples/02-optimizing-accuracy-retrieved-results/advanced_chunking_options.md'
+        - RAG Advanced Concepts:
+          - Dynamic Metadata Filtering: './rag/knowledge-bases/feature-examples/03/dynamic-metadata-filtering/dynamic-metadata-filtering-KB.md'
       - Open Source:
         - Chatbot using Langchain: './rag/open-source/chatbots/qa_chatbot_langchain_bedrock.md'
         - Chunking strategies for RAG applications: './rag/open-source/chunking/rag_chunking_strategies_langchain_bedrock.md'
