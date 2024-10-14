@@ -315,13 +315,6 @@ class BedrockagentStack(Stack):
                                                      effect=iam.Effect.ALLOW,
                                                      resources=[knowledge_base.attr_knowledge_base_arn],
                                                      actions=['bedrock:Retrieve']))
-        # provide agent_role access to execute lamba functions
-        # agent_role.add_to_policy(iam.PolicyStatement(sid='LambdaInvokeStatement',
-        #                                              effect=iam.Effect.ALLOW,
-        #                                              resources=['*'],
-        #                                              actions=['lambda:InvokeFunction']))
-       
-      
         # Create the lambda function for the Agent Action Group
         action_group_function = lambda_.Function(self, "BedrockAgentActionGroupExecutor",
                     runtime=lambda_.Runtime.PYTHON_3_12,
