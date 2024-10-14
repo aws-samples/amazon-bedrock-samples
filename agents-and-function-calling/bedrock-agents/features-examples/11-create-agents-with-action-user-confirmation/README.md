@@ -1,4 +1,4 @@
-# Get user confirmation before invoking action group function
+# Create Agents with Action user confirmation
 
 In this folder, we will provide three examples of how to use user confirmation when enabled. This configuration is disabled by default, but enabling user confirmation can safeguard your end user from malicious prompt injections. Below is a screenshot of how this configuration appears in the AWS Console
 
