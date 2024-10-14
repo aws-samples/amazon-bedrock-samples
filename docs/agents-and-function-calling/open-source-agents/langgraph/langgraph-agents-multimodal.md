@@ -1,12 +1,12 @@
 ---
 tags:
-    - Agents/ Multi modal
-    - LangGraph
+    - Agents/ Multi-Modal
+    - Open Source/ LangGraph
 ---
 <!-- 
-<h1>Find a vacation destination using multi modal Agent</h1> -->
+<h2>Find a vacation destination using multi modal Agent</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents/open-source-agents/langgraph/langgraph-agents-multimodal.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/open-source-agents/langgraph/langgraph-agents-multimodal.ipynb){:target="_blank"}"
 
 <h2>Multi modal Agents</h2>
 
