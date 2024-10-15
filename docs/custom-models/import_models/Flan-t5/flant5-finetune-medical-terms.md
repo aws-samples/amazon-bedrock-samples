@@ -49,7 +49,7 @@ Flan-T5 is the model we will be finetuning in this notebook. Flan-T5 is an effic
 
 Before you can use Amazon Bedrock, you must carry out the following steps:
 
-- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
+- Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws)
 
 Depending on where you want to run your compute you can set up the following: 
 
