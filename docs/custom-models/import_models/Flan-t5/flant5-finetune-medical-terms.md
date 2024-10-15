@@ -293,7 +293,7 @@ After your model imports you will then be able to test it via the playground or 
 
 ![Playground](./images/playground.gif "Playground")
 
-<h3> Clean Up <h3>
+<h3> Clean Up </h3>
 
 You can delete your Imported Model in the console as shown in the image below:
 
