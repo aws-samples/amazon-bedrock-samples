@@ -149,5 +149,9 @@ nav:
     # - Governance: 'general/license.md'
     # - Observability: 'general/license.md'
     # - Data access control: 'general/license.md'
+  - Workshops:
+    - Open-source L400:
+      - Introduction to the Use Case: './agents/open-source-l400/00_Lab_Intro to Use-Case.md'
+      - Find a Dream Destination using RAG: './agents/open-source-l400/02_Lab_Find a Dream Destination_RAG query.md'
   - Tags: 'general/tags.md'
   - License: 'general/license.md'
