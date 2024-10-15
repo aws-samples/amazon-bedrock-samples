@@ -6,7 +6,8 @@ import argparse
 from pathlib import Path
 import json
 import pandas as pd
-from llm_judge import eval_all  
+from llm_judge import eval_all
+import openpyxl
 
 global bedrock_agent_runtime_client
 
@@ -320,8 +321,8 @@ if __name__ == "__main__":
         prog='agent_tester',
         description='Test agents-and-function-calling for Amazon Bedrock for latency and store the traces'
     )
-    parser.add_argument('--test_file', type=str) # json input file containing test data
-    parser.add_argument('--agent_id', type=str) #ID for the agent
+    parser.add_argument('--test_file', type=str, required=True) # json input file containing test data
+    parser.add_argument('--agent_id', type=str, required=True) #ID for the agent
     parser.add_argument('--agent_alias_id', type=str, default="TSTALIASID") #ID for agent alias
     parser.add_argument('--region', type=str, default="us-east-1") #region
     parser.add_argument('--number_trials', type=int, default=5) # number of trials per query
@@ -343,7 +344,7 @@ if __name__ == "__main__":
             test_query(
                 args.show_code_use, queries, args.agent_id, args.agent_alias_id,
                 args.number_trials, args.memory_id, args.session_id, None,
-                key, 60
+                key, args.sleep_time
             )
         eval_all(Path(f"output"))
     else:
