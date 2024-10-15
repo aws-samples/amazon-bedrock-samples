@@ -59,10 +59,6 @@ Depending on where you want to run your compute you can set up the following:
 
 <h2> Notebook code with comments </h2>
 
-```python
-
-```
-
 <h3> Installs </h3>
 
 we will be utilizing HuggingFace Transformers library to pull a pretrained model from the Hub and fine tune it. The dataset we will be finetuning on will also be pulled from HuggingFace
@@ -90,3 +86,219 @@ from peft import LoraConfig
 from trl import SFTTrainer
 import torch
 ```
+
+<h3> Pull a pre-trained model from HuggingFace </h3>
+
+as mentioned at the beginning of the notebook, we will be fine tuning google's FLAN-t5-large from HuggingFace. This model is free to pull - no HuggingFace account needed.
+
+The model is loaded with the "bitsandbytes" library. This allows the model to be quantized in 4-bit, to set it up for fine tuning with QLoRA
+
+```python
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_storage=torch.bfloat16,
+)
+
+#Set Model Attributes
+
+model_name = "google/flan-t5-large"
+
+model = T5ForConditionalGeneration.from_pretrained(
+    model_name,
+    quantization_config=bnb_config,
+    torch_dtype=torch.bfloat16,
+)
+tokenizer = T5Tokenizer.from_pretrained(model_name)
+data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
+```
+
+<h3> Pull a dataset from HuggingFace </h3> 
+
+The dataset we are pulling can be looked at [here](https://huggingface.co/datasets/gamino/wiki_medical_terms). This is a dataset containing over 6000+ medical terms, and their wiki definitions. 
+
+Since the model is being trained to recognize & understand medical terminology, with the function below the dataset will be converted to a Q & A format. "What is" is added as a prefix to the medical terms column, and the other column stays as the definition.
+
+One important aspect here is ensuring the "padding=True" argument is passed. This is needed when training a FLAN-T5 model with QLoRA
+
+```python
+#Load data from huggingface
+ds = load_dataset("gamino/wiki_medical_terms")
+
+#Using 70% of the dataset to train
+ds = ds["train"].train_test_split(test_size=0.3)
+
+#Process data to fit a Q & A format 
+prefix = "What is "
+
+# Define the preprocessing function
+
+def preprocess_function(examples):
+   """Add prefix to the sentences, tokenize the text, and set the labels"""
+   # Transform page title into an answer:
+   inputs = [prefix + doc for doc in examples["page_title"]]
+   model_inputs = tokenizer(inputs, max_length=128, truncation=True, padding=True)
+  
+   # keep explanations as is:
+   labels = tokenizer(text_target=examples["page_text"], 
+                      max_length=512, truncation=True, padding=True)
+
+   model_inputs["labels"] = labels["input_ids"]
+   return model_inputs
+
+# Map the preprocessing function across our dataset
+ds = ds.map(preprocess_function, batched=True)
+#Take the training portion of the dataset
+ds = ds["train"]
+```
+
+<h3> Set up PEFT training parameters </h3>
+
+In the first cell below, the PEFT configurations are being set up. The term PEFT has been mentioned a couple of times in this notebook already, but what is it? PEFT stands for Parameter Efficient Fine Tuning. It allows the majority of the model parameters to be frozen, and only fine tune a small number of them. This technique decreases computation & storage costs, without performance suffering. Read more about HuggingFace's PEFT library [here](https://huggingface.co/docs/peft/en/index) 
+
+```python
+#Set up PEFT Configurations 
+peft_config = LoraConfig(
+    lora_alpha=16,
+    lora_dropout=0.1,
+    r=64,
+    bias="none",
+    task_type="SEQ_2_SEQ_LM",
+    target_modules="all-linear",
+)
+```
+
+<h3> Set up SFT trainer parameters </h3>
+
+In this cell all training parameters are being passed into the "SFTTrainer" class. This is HuggingFace's Supervised Finetuning Trainer. Since the dataset has been prepared as Q & A pairs this is the appropriate trainer class to use. More can be read about SFTTrainer [here](https://huggingface.co/docs/trl/en/sft_trainer) 
+
+Note: Training is set to 1 epoch. This is for a faster training time to showcase Bedrock Custom Model Import. If you require fine tuning with higher performance, consider increasing the epochs & optimizing hyperparameters passed
+
+```python
+#Pass all parameters to SFTTrainer
+trainer = SFTTrainer(
+    model=model,
+    train_dataset=ds,
+    peft_config=peft_config,
+    dataset_text_field="text",
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+    args= TrainingArguments(
+        output_dir="./results",
+        per_device_train_batch_size = 1,
+        num_train_epochs=1,
+        gradient_accumulation_steps=2,
+        eval_accumulation_steps=2
+    ),
+)
+```
+
+<h3> Start model training </h3>
+
+In the first cell we empty the pytorch cache to free as much memory on the device possible. In the next cell, "trainer.train()" actually stars the training job.
+
+In the training parameters passed, the line output_dir="./results" saves the model checkpoints into the "results" folder in the device directory (creates it if not already created). The final model is in this directory as "checkpoint-XXX" - XXX being the largest number. 
+
+This training job will take approx. 30 mins 
+
+```python
+#Empty pytorch cache
+torch.cuda.empty_cache()
+trainer.train()
+```
+
+<h3> Model Inference </h3>
+
+We will now take our latest checkpoint and generate text with it to ensure it is working properly
+
+```python
+#Model Inference 
+last_checkpoint = "./results/checkpoint-600" #Load checkpoint that you want to test 
+
+finetuned_model = T5ForConditionalGeneration.from_pretrained(last_checkpoint)
+tokenizer = T5Tokenizer.from_pretrained(last_checkpoint)
+
+med_term = "what is Dexamethasone suppression test" 
+
+query = tokenizer(med_term, return_tensors="pt")
+output = finetuned_model.generate(**query, max_length=512, no_repeat_ngram_size=True)
+answer = tokenizer.decode(output[0])
+
+print(answer)
+```
+<h3> Model Upload </h3> 
+
+with out model now generating text related to medical terminology we will now upload it to S3 to ensure readiness for Bedrock Custom Model Import. Depending on the environment you have chosen to run this notebook in, your AWS credentials will have to be initialized to upload the model files to your S3 bucket of choice. 
+
+```python
+#Upload model to S3 Bucket
+import boto3
+import os
+# Set up S3 client
+s3 = boto3.client('s3')
+
+# Specify your S3 bucket name and the prefix (folder) where you want to upload the files
+bucket_name = 'your-bucket-here'#YOU BUCKET HERE
+model_name = "results/checkpoint-#" #YOUR LATEST CHECKPOINT HERE (this will be in the "results" folder in your notebook directory replace the "#" with the latest checkpoint number)
+prefix = 'flan-t5-large-medical/' + model_name
+
+# Upload files to S3
+def upload_directory_to_s3(local_directory, bucket, s3_prefix):
+    for root, dirs, files in os.walk(local_directory):
+        for file in files:
+            local_path = os.path.join(root, file)
+            relative_path = os.path.relpath(local_path, local_directory)
+            s3_path = os.path.join(s3_prefix, relative_path)
+            
+            print(f'Uploading {local_path} to s3://{bucket}/{s3_path}')
+            s3.upload_file(local_path, bucket, s3_path)
+
+# Call the function to upload the downloaded model files to S3
+upload_directory_to_s3(model_name, bucket_name, prefix)
+```
+
+<h3> Importing Model to Amazon Bedrock </h3>
+
+Now that our model artifacts are uploaded into an S3 bucket, we can import it into Amazon Bedrock 
+
+in the AWS console, we can go to the Amazon Bedrock page. On the left side under "Foundation models" we will click on "Imported models"
+
+![Step 1](./images/step1.png "Step 1")
+
+
+You can now click on "Import model"
+
+![Step 2](./images/step2.png "Step 2")
+
+In this next step you will have to configure:
+
+1. Model Name 
+2. Import Job Name 
+3. Model Import Settings 
+    a. Select Amazon S3 bucket 
+    b. Select your bucket location (uploaded in the previous section)
+4. Create a IAM role, or use an existing one (not shown in image)
+5. Click Import (not shown in image)
+
+![Step 3](./images/step3.png "Step 3")
+
+
+You will now be taken to the page below. Your model may take up to an hour to import. 
+
+![Step 4](./images/step4.png "Step 4")
+
+After your model imports you will then be able to test it via the playground or API! 
+
+![Playground](./images/playground.gif "Playground")
+
+<h3> Clean Up <h3>
+
+You can delete your Imported Model in the console as shown in the image below:
+
+![Delete](./images/delete.png "Delete")
+
+Ensure to shut down your instance/compute that you have run this notebook on.
+
+**END OF NOTEBOOK**
