@@ -5,7 +5,7 @@ tags:
 
 <h1> Fine tuning & deploying Flan-T5-Large to Amazon Bedrock using Custom Model Import (Using PEFT & SFTTrainer) </h1>
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/custom-models/import_models/flan-t5/flant5-finetune-medical-terms.ipynb){:target="_blank"}"
+[Open notebook in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/custom-models/import_models/flan-t5/flant5-finetune-medical-terms.ipynb)
 
 <h2> Overview </h2>
 
@@ -21,8 +21,6 @@ The fine tuning data we will be using is based on medical terminology this data 
 The resulting model files are imported into Amazon Bedrock via [Custom Model Import (CMI)](https://docs.aws.amazon.com/bedrock/latest/userguide/model-customization-import-model.html). 
 
 Bedrock Custom Model Import allows for importing foundation models that have been customized in other environments outside of Amazon Bedrock, such as Amazon Sagemaker, EC2, etc. 
-
-WARNING: This method of Custom Model Import will only work with "FLAN-t5-large". "FLAN-t5-small" is incompatible with Bedrock Custom Model Import in its current state. This is due to the number of heads in the model needing to be a multiple of 4, due to the model needing to be sharded accordingly in the GPU. the number of heads for FLAN-t5-small is 6. this can be checked in the model's config.json file under the parameter "num_heads" 
 
 <h2> Use Case </h2>
 
@@ -61,3 +59,34 @@ Depending on where you want to run your compute you can set up the following:
 
 <h2> Notebook code with comments </h2>
 
+```python
+
+```
+
+<h3> Installs </h3>
+
+we will be utilizing HuggingFace Transformers library to pull a pretrained model from the Hub and fine tune it. The dataset we will be finetuning on will also be pulled from HuggingFace
+
+```python
+%pip install transformers --quiet
+%pip install torch
+%pip install -U bitsandbytes accelerate transformers peft trl
+%pip install datasets --quiet
+%pip install sentencepiece --quiet
+```
+
+<h3> Imports </h3>
+
+Import the libraries installed above
+
+```python
+import bitsandbytes
+import torch
+from transformers import BitsAndBytesConfig, T5ForConditionalGeneration, T5Tokenizer, TrainingArguments
+from transformers import DataCollatorForSeq2Seq
+import accelerate
+from datasets import load_dataset
+from peft import LoraConfig
+from trl import SFTTrainer
+import torch
+```
