@@ -127,6 +127,7 @@ nav:
           - LangGraph Agent with Function Calling: './agents-and-function-calling/open-source-agents/langgraph/langgraph-single-agent.md'
           - LangGraph Multimodal Agent with Function Calling: './agents-and-function-calling/open-source-agents/langgraph/langgraph-agents-multimodal.md'
           - LangGraph Multi Agent Orchestration: './agents-and-function-calling/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.md'
+          - Fact-checker Feedback Loop with LangGraph on Amazon Bedrock: './agents-and-function-calling/open-source-agents/langgraph/langgraph-fact-checker-feedback-loop.md'
     - RAG:
       - Knowledge Bases:
         - Optimizing Retrieval Results:
