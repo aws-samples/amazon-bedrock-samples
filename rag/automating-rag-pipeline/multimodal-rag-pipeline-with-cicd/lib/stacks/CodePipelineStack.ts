@@ -39,11 +39,14 @@ export class CodePipelineStack extends Stack {
           "rag-cicd",
         ),
         commands: [
+          "echo 'Current working directory:' $(pwd)",
           "cd amazon-bedrock-samples/rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd",
+          "echo 'New working directory:' $(pwd)",
+          "ls -ltr",
           "npm ci",   
           "npm run build", 
           "npx cdk synth"],
-        primaryOutputDirectory: 'amazon-bedrock-samples/rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/cdk.out'  // Since the root directory of the project is a sub-folder in the repo
+        primaryOutputDirectory: 'amazon-bedrock-samples/rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd'  // Since the root directory of the project is a sub-folder in the repo
       }),
       dockerEnabledForSynth: true,
     });
