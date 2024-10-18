@@ -161,6 +161,6 @@ nav:
       - Introduction to the Use Case: './workshop/open-source-l200/02_contextual_text_generation.md'
       - Retrieval Based Text Generation: './workshop/open-source-l200/03_retrieval_based_text_application.md'
       - Retrieval Based Chat Application: './workshop/open-source-l200/04_retrieval_based_chat_application.md'
-      - Agent Based Text Generation: './workshop/open-source-l200/05_agent_based_text_generation.md
+      - Agent Based Text Generation: './workshop/open-source-l200/05_agent_based_text_generation.md'
   - Tags: 'general/tags.md'
   - License: 'general/license.md'
