@@ -38,7 +38,7 @@ export class CodePipelineStack extends Stack {
           "manoj-selvakumar5/amazon-bedrock-samples",
           "rag-cicd"
         ),
-        commands: ["npm ci", "npm run build", "npx cdk synth"],
+        commands: ["npm install", "npm ci", "npm run build", "npx cdk synth"],
       }),
       dockerEnabledForSynth: true,
     });
