@@ -108,6 +108,8 @@ export class CodePipelineStack extends Stack {
           // Pre-deployment Step: Build Lambda Package using CodeBuild required for Custom Lambda parser used in Bedrock 
           new CodeBuildStep("BuildLambdaPackage", {
             commands: [
+              "echo 'Current working directory:' $(pwd)",
+              "ls -R",
               "chmod +x ./src/app/build_lambda.sh",  // Make the script executable
               "./src/app/build_lambda.sh"            // Run the script
             ],
