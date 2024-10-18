@@ -34,8 +34,9 @@ export class CodePipelineStack extends Stack {
       }),
       synth: new ShellStep("Synth", {
         input: CodePipelineSource.gitHub(
-          "manoj-selvakumar5/multimodal-rag-cicd-automation",
-          "cleanup"
+          // "manoj-selvakumar5/multimodal-rag-cicd-automation",
+          "manoj-selvakumar5/amazon-bedrock-samples",
+          "rag-cicd"
         ),
         commands: ["npm ci", "npm run build", "npx cdk synth"],
       }),
