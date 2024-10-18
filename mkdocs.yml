@@ -125,8 +125,12 @@ nav:
       - Open Source:
         - LangGraph:
           - LangGraph Agent with Function Calling: './agents-and-function-calling/open-source-agents/langgraph/langgraph-single-agent.md'
-          - LangGraph Multimodal Agent with Function Calling: './agents-and-function-calling/open-source-agents/langgraph/langgraph-agents-multimodal.md'
+          - LangGraph Multi-Modal Agent with Function Calling: './agents-and-function-calling/open-source-agents/langgraph/langgraph-agents-multimodal.md'
           - LangGraph Multi Agent Orchestration: './agents-and-function-calling/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.md'
+          - LangGraph Multi Agent For Medical Chatbot: './agents-and-function-calling/open-source-agents/langgraph/02_medibot_V3_agents.md'
+          - LangGraph Fact Checker with Multi Agent: './agents-and-function-calling/open-source-agents/langgraph/langgraph-fact-checker-feedback-loop.md'
+          - LangGraph Multi Agent With SQL tools: './agents-and-function-calling/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.md'
+          - LangGraph Multi Agent with tools: './agents-and-function-calling/open-source-agents/langgraph/03_langgraph_agents_of_agent.md'
     - RAG:
       - Knowledge Bases:
         - Optimizing Retrieval Results:
@@ -151,7 +155,12 @@ nav:
     # - Data access control: 'general/license.md'
   - Workshops:
     - Open-source L400:
-      - Introduction to the Use Case: './agents/open-source-l400/00_Lab_Intro to Use-Case.md'
-      - Find a Dream Destination using RAG: './agents/open-source-l400/02_Lab_Find a Dream Destination_RAG query.md'
+      - Introduction to the Use Case: './workshop/open-source-l400/00_Lab_Intro to Use-Case.md'
+      - Find a Dream Destination using RAG: './workshop/open-source-l400/02_Lab_Find a Dream Destination_RAG query.md'
+    - Open-source L200:
+      - Introduction to the Use Case: './workshop/open-source-l200/02_contextual_text_generation.md'
+      - Retrieval Based Text Generation: './workshop/open-source-l200/03_retrieval_based_text_application.md'
+      - Retrieval Based Chat Application: './workshop/open-source-l200/04_retrieval_based_chat_application.md'
+      - Agent Based Text Generation: './workshop/open-source-l200/05_agent_based_text_generation.md'
   - Tags: 'general/tags.md'
   - License: 'general/license.md'
