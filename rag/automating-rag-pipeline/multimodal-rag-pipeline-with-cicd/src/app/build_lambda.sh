@@ -24,13 +24,13 @@ if [ -z "$LAMBDA_PACKAGE_BUCKET" ]; then
 fi
 
 echo "Using S3 bucket: $LAMBDA_PACKAGE_BUCKET"
-echo "Current working directory: $(pwd)",
+echo "Current working directory: $(pwd)"
+echo "File contents:"
 ls -ltr
-echo "File contents: ls -ltr",
+
 
 # Variables
-SRC_DIR="./src/app/CustomChunker"
-# SRC_DIR="./rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/build_lambda.sh"
+SRC_DIR="./rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/CustomChunker"
 TMP_DIR="/tmp/my-lambda-package"  # Use /tmp for temporary storage
 ZIP_FILE="$TMP_DIR/lambda.zip"
 S3_KEY="custom_chunking_lambda_package.zip"
