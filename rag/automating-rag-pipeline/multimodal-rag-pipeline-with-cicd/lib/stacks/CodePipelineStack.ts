@@ -39,6 +39,7 @@ export class CodePipelineStack extends Stack {
         ),
         commands: [
           "echo 'Current working directory:' $(pwd)",
+          "ls -ltr",
           "cd rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd",
           "echo 'New working directory:' $(pwd)",
           "ls -ltr",
