@@ -1,0 +1,2380 @@
+{
+ "Resources": {
+  "RawDataSourceBucketAD670803": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketName": "raw-data-source-bucket-533267284022-qa",
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/RawDataSourceBucket/Resource"
+   }
+  },
+  "RawDataSourceBucketPolicy7824B891": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "RawDataSourceBucketAD670803"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "RawDataSourceBucketAD670803",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "RawDataSourceBucketAD670803",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/RawDataSourceBucket/Policy/Resource"
+   }
+  },
+  "RawDataSourceBucketAutoDeleteObjectsCustomResourceD1C766FE": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "RawDataSourceBucketAD670803"
+    }
+   },
+   "DependsOn": [
+    "RawDataSourceBucketPolicy7824B891"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/RawDataSourceBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "RawDataSourceBucketNotifications97A25C53": {
+   "Type": "Custom::S3BucketNotifications",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "RawDataSourceBucketAD670803"
+    },
+    "NotificationConfiguration": {
+     "EventBridgeConfiguration": {},
+     "LambdaFunctionConfigurations": [
+      {
+       "Events": [
+        "s3:ObjectCreated:*"
+       ],
+       "LambdaFunctionArn": {
+        "Fn::GetAtt": [
+         "MetadataTrackingLambda1F0AFB78",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Events": [
+        "s3:ObjectRemoved:*"
+       ],
+       "LambdaFunctionArn": {
+        "Fn::GetAtt": [
+         "MetadataTrackingLambda1F0AFB78",
+         "Arn"
+        ]
+       }
+      }
+     ]
+    },
+    "Managed": true,
+    "SkipDestinationValidation": false
+   },
+   "DependsOn": [
+    "RawDataSourceBucketAllowBucketNotificationsToCodePipelineStackQADataIngestionStackMetadataTrackingLambdaF73F9C7A81256583",
+    "RawDataSourceBucketPolicy7824B891"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/RawDataSourceBucket/Notifications/Resource"
+   }
+  },
+  "RawDataSourceBucketAllowBucketNotificationsToCodePipelineStackQADataIngestionStackMetadataTrackingLambdaF73F9C7A81256583": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "MetadataTrackingLambda1F0AFB78",
+      "Arn"
+     ]
+    },
+    "Principal": "s3.amazonaws.com",
+    "SourceAccount": "533267284022",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "RawDataSourceBucketAD670803",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/RawDataSourceBucket/AllowBucketNotificationsToCodePipelineStackQADataIngestionStackMetadataTrackingLambdaF73F9C7A"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "RawDataSourceBucketAD670803"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "../asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
+   }
+  },
+  "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource"
+   }
+  },
+  "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:PutBucketNotification",
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
+    "Roles": [
+     {
+      "Ref": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/DefaultPolicy/Resource"
+   }
+  },
+  "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Description": "AWS CloudFormation handler for \"Custom::S3BucketNotifications\" resources (@aws-cdk/aws-s3)",
+    "Code": {
+     "ZipFile": "import boto3  # type: ignore\nimport json\nimport logging\nimport urllib.request\n\ns3 = boto3.client(\"s3\")\n\nEVENTBRIDGE_CONFIGURATION = 'EventBridgeConfiguration'\nCONFIGURATION_TYPES = [\"TopicConfigurations\", \"QueueConfigurations\", \"LambdaFunctionConfigurations\"]\n\ndef handler(event: dict, context):\n  response_status = \"SUCCESS\"\n  error_message = \"\"\n  try:\n    props = event[\"ResourceProperties\"]\n    notification_configuration = props[\"NotificationConfiguration\"]\n    managed = props.get('Managed', 'true').lower() == 'true'\n    skipDestinationValidation = props.get('SkipDestinationValidation', 'false').lower() == 'true'\n    stack_id = event['StackId']\n    old = event.get(\"OldResourceProperties\", {}).get(\"NotificationConfiguration\", {})\n    if managed:\n      config = handle_managed(event[\"RequestType\"], notification_configuration)\n    else:\n      config = handle_unmanaged(props[\"BucketName\"], stack_id, event[\"RequestType\"], notification_configuration, old)\n    s3.put_bucket_notification_configuration(Bucket=props[\"BucketName\"], NotificationConfiguration=config, SkipDestinationValidation=skipDestinationValidation)\n  except Exception as e:\n    logging.exception(\"Failed to put bucket notification configuration\")\n    response_status = \"FAILED\"\n    error_message = f\"Error: {str(e)}. \"\n  finally:\n    submit_response(event, context, response_status, error_message)\n\ndef handle_managed(request_type, notification_configuration):\n  if request_type == 'Delete':\n    return {}\n  return notification_configuration\n\ndef handle_unmanaged(bucket, stack_id, request_type, notification_configuration, old):\n  def get_id(n):\n    n['Id'] = ''\n    strToHash=json.dumps(n, sort_keys=True).replace('\"Name\": \"prefix\"', '\"Name\": \"Prefix\"').replace('\"Name\": \"suffix\"', '\"Name\": \"Suffix\"')\n    return f\"{stack_id}-{hash(strToHash)}\"\n  def with_id(n):\n    n['Id'] = get_id(n)\n    return n\n\n  external_notifications = {}\n  existing_notifications = s3.get_bucket_notification_configuration(Bucket=bucket)\n  for t in CONFIGURATION_TYPES:\n    if request_type == 'Update':\n        old_incoming_ids = [get_id(n) for n in old.get(t, [])]\n        external_notifications[t] = [n for n in existing_notifications.get(t, []) if not get_id(n) in old_incoming_ids]      \n    elif request_type == 'Delete':\n        external_notifications[t] = [n for n in existing_notifications.get(t, []) if not n['Id'].startswith(f\"{stack_id}-\")]\n    elif request_type == 'Create':\n        external_notifications[t] = [n for n in existing_notifications.get(t, [])]\n  if EVENTBRIDGE_CONFIGURATION in existing_notifications:\n    external_notifications[EVENTBRIDGE_CONFIGURATION] = existing_notifications[EVENTBRIDGE_CONFIGURATION]\n\n  if request_type == 'Delete':\n    return external_notifications\n\n  notifications = {}\n  for t in CONFIGURATION_TYPES:\n    external = external_notifications.get(t, [])\n    incoming = [with_id(n) for n in notification_configuration.get(t, [])]\n    notifications[t] = external + incoming\n\n  if EVENTBRIDGE_CONFIGURATION in notification_configuration:\n    notifications[EVENTBRIDGE_CONFIGURATION] = notification_configuration[EVENTBRIDGE_CONFIGURATION]\n  elif EVENTBRIDGE_CONFIGURATION in external_notifications:\n    notifications[EVENTBRIDGE_CONFIGURATION] = external_notifications[EVENTBRIDGE_CONFIGURATION]\n\n  return notifications\n\ndef submit_response(event: dict, context, response_status: str, error_message: str):\n  response_body = json.dumps(\n    {\n      \"Status\": response_status,\n      \"Reason\": f\"{error_message}See the details in CloudWatch Log Stream: {context.log_stream_name}\",\n      \"PhysicalResourceId\": event.get(\"PhysicalResourceId\") or event[\"LogicalResourceId\"],\n      \"StackId\": event[\"StackId\"],\n      \"RequestId\": event[\"RequestId\"],\n      \"LogicalResourceId\": event[\"LogicalResourceId\"],\n      \"NoEcho\": False,\n    }\n  ).encode(\"utf-8\")\n  headers = {\"content-type\": \"\", \"content-length\": str(len(response_body))}\n  try:\n    req = urllib.request.Request(url=event[\"ResponseURL\"], headers=headers, data=response_body, method=\"PUT\")\n    with urllib.request.urlopen(req) as response:\n      print(response.read().decode(\"utf-8\"))\n    print(\"Status code: \" + response.reason)\n  except Exception as e:\n      print(\"send(..) failed executing request.urlopen(..): \" + str(e))"
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
+    "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Resource"
+   }
+  },
+  "rawS3DataSource3B75B26E": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Name": "/MultimodalRAG/QA/raw-s3-data-source",
+    "Type": "String",
+    "Value": {
+     "Ref": "RawDataSourceBucketAD670803"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/rawS3DataSource/Resource"
+   }
+  },
+  "ProcessedDataSourceBucket2480B712": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketName": "processed-data-source-bucket-533267284022-qa",
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ProcessedDataSourceBucket/Resource"
+   }
+  },
+  "ProcessedDataSourceBucketPolicy60CA1991": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "ProcessedDataSourceBucket2480B712"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProcessedDataSourceBucket2480B712",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProcessedDataSourceBucket2480B712",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ProcessedDataSourceBucket/Policy/Resource"
+   }
+  },
+  "ProcessedDataSourceBucketAutoDeleteObjectsCustomResource68D9167A": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "ProcessedDataSourceBucket2480B712"
+    }
+   },
+   "DependsOn": [
+    "ProcessedDataSourceBucketPolicy60CA1991"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ProcessedDataSourceBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "ProcessedDataSourceBucketNotificationsDFA6373D": {
+   "Type": "Custom::S3BucketNotifications",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "ProcessedDataSourceBucket2480B712"
+    },
+    "NotificationConfiguration": {
+     "EventBridgeConfiguration": {},
+     "LambdaFunctionConfigurations": [
+      {
+       "Events": [
+        "s3:ObjectCreated:*"
+       ],
+       "LambdaFunctionArn": {
+        "Fn::GetAtt": [
+         "MetadataTrackingLambda1F0AFB78",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Events": [
+        "s3:ObjectRemoved:*"
+       ],
+       "LambdaFunctionArn": {
+        "Fn::GetAtt": [
+         "MetadataTrackingLambda1F0AFB78",
+         "Arn"
+        ]
+       }
+      }
+     ]
+    },
+    "Managed": true,
+    "SkipDestinationValidation": false
+   },
+   "DependsOn": [
+    "ProcessedDataSourceBucketAllowBucketNotificationsToCodePipelineStackQADataIngestionStackMetadataTrackingLambdaF73F9C7AF90BF927",
+    "ProcessedDataSourceBucketPolicy60CA1991"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ProcessedDataSourceBucket/Notifications/Resource"
+   }
+  },
+  "ProcessedDataSourceBucketAllowBucketNotificationsToCodePipelineStackQADataIngestionStackMetadataTrackingLambdaF73F9C7AF90BF927": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "MetadataTrackingLambda1F0AFB78",
+      "Arn"
+     ]
+    },
+    "Principal": "s3.amazonaws.com",
+    "SourceAccount": "533267284022",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "ProcessedDataSourceBucket2480B712",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ProcessedDataSourceBucket/AllowBucketNotificationsToCodePipelineStackQADataIngestionStackMetadataTrackingLambdaF73F9C7A"
+   }
+  },
+  "processedS3DataSourceB9C6D4FF": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Name": "/MultimodalRAG/QA/processed-s3-data-source",
+    "Type": "String",
+    "Value": {
+     "Ref": "ProcessedDataSourceBucket2480B712"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/processedS3DataSource/Resource"
+   }
+  },
+  "FileMetadataTableE69EBE66": {
+   "Type": "AWS::DynamoDB::GlobalTable",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "fileId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "fileType",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "kbIngestionStatus",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "fileType-kbIngestionStatus-index",
+      "KeySchema": [
+       {
+        "AttributeName": "fileType",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "kbIngestionStatus",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "fileId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "fileType",
+      "KeyType": "RANGE"
+     }
+    ],
+    "Replicas": [
+     {
+      "GlobalSecondaryIndexes": [
+       {
+        "IndexName": "fileType-kbIngestionStatus-index"
+       }
+      ],
+      "Region": "us-east-1"
+     }
+    ],
+    "TableName": "file-metadata-for-MultimodalRAG-QA"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileMetadataTable/Resource"
+   }
+  },
+  "FileMetadataTableNameParameter2F6572C4": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Name": "/MultimodalRAG/QA/fileMetadataTableName",
+    "Type": "String",
+    "Value": {
+     "Ref": "FileMetadataTableE69EBE66"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileMetadataTableNameParameter/Resource"
+   }
+  },
+  "MetadataTrackingLambdaServiceRoleF3307E63": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/MetadataTrackingLambda/ServiceRole/Resource"
+   }
+  },
+  "MetadataTrackingLambdaServiceRoleDefaultPolicyA824E131": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileMetadataTableE69EBE66",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileMetadataTableE69EBE66",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "RawDataSourceBucketAD670803",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "RawDataSourceBucketAD670803",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProcessedDataSourceBucket2480B712",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProcessedDataSourceBucket2480B712",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MetadataTrackingLambdaServiceRoleDefaultPolicyA824E131",
+    "Roles": [
+     {
+      "Ref": "MetadataTrackingLambdaServiceRoleF3307E63"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/MetadataTrackingLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "MetadataTrackingLambda1F0AFB78": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "477a3a08b9900d720cdf88cffad05f7d360be3e97b3481a7a7c9b5675e21441c.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "FILE_METADATA_TABLE_NAME": {
+       "Ref": "FileMetadataTableE69EBE66"
+      }
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "MetadataTrackingLambdaServiceRoleF3307E63",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "MetadataTrackingLambdaServiceRoleDefaultPolicyA824E131",
+    "MetadataTrackingLambdaServiceRoleF3307E63"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/MetadataTrackingLambda/Resource",
+    "aws:asset:path": "../asset.477a3a08b9900d720cdf88cffad05f7d360be3e97b3481a7a7c9b5675e21441c",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "S3EventRuleD53D09BD": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "EventPattern": {
+     "source": [
+      "aws.s3"
+     ],
+     "detail-type": [
+      "Object Created",
+      "Object Deleted"
+     ],
+     "detail": {
+      "bucket": {
+       "name": [
+        {
+         "Ref": "RawDataSourceBucketAD670803"
+        }
+       ]
+      }
+     }
+    },
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Ref": "ETLStateMachine1A6784FC"
+      },
+      "Id": "Target0",
+      "RoleArn": {
+       "Fn::GetAtt": [
+        "ETLStateMachineEventsRole6EFF3975",
+        "Arn"
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/S3EventRule/Resource"
+   }
+  },
+  "S3EventProcessorLambdaServiceRoleDC435713": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/S3EventProcessorLambda/ServiceRole/Resource"
+   }
+  },
+  "S3EventProcessorLambda5FB06AE7": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "359dd32e952c9836aff26c3afc338a9d0ec2a7e7a50a032e12061f4f30baa72c.zip"
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "S3EventProcessorLambdaServiceRoleDC435713",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "S3EventProcessorLambdaServiceRoleDC435713"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/S3EventProcessorLambda/Resource",
+    "aws:asset:path": "../asset.359dd32e952c9836aff26c3afc338a9d0ec2a7e7a50a032e12061f4f30baa72c",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "FileUploadQueue47601A19": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "QueueName": "file-upload-queue-org-data-source",
+    "VisibilityTimeout": 300
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileUploadQueue/Resource"
+   }
+  },
+  "FileDeletionQueue4122EBBB": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "QueueName": "file-deletion-queue-org-data-source",
+    "VisibilityTimeout": 300
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileDeletionQueue/Resource"
+   }
+  },
+  "FileProcessorLambdaServiceRole14379E4E": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileProcessorLambda/ServiceRole/Resource"
+   }
+  },
+  "FileProcessorLambdaServiceRoleDefaultPolicy33FC44AD": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "RawDataSourceBucketAD670803",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "RawDataSourceBucketAD670803",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProcessedDataSourceBucket2480B712",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProcessedDataSourceBucket2480B712",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "FileUploadQueue47601A19",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "FileDeletionQueue4122EBBB",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "FileProcessorLambdaServiceRoleDefaultPolicy33FC44AD",
+    "Roles": [
+     {
+      "Ref": "FileProcessorLambdaServiceRole14379E4E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileProcessorLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "FileProcessorLambdaEC0E38A6": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "7c979ffdde678b25a05cab8b8fce9e2d650e284e4ded2e86dbca100aa83f9f13.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "RAW_S3": {
+       "Fn::GetAtt": [
+        "RawDataSourceBucketAD670803",
+        "Arn"
+       ]
+      },
+      "PROCESSED_S3": {
+       "Fn::GetAtt": [
+        "ProcessedDataSourceBucket2480B712",
+        "Arn"
+       ]
+      }
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "FileProcessorLambdaServiceRole14379E4E",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "FileProcessorLambdaServiceRoleDefaultPolicy33FC44AD",
+    "FileProcessorLambdaServiceRole14379E4E"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileProcessorLambda/Resource",
+    "aws:asset:path": "../asset.7c979ffdde678b25a05cab8b8fce9e2d650e284e4ded2e86dbca100aa83f9f13",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "FileProcessorLambdaSqsEventSourceCodePipelineStackQADataIngestionStackFileUploadQueue3096D16C9ED868E2": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "FileUploadQueue47601A19",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "FileProcessorLambdaEC0E38A6"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileProcessorLambda/SqsEventSource:CodePipelineStackQADataIngestionStackFileUploadQueue3096D16C/Resource"
+   }
+  },
+  "FileProcessorLambdaSqsEventSourceCodePipelineStackQADataIngestionStackFileDeletionQueue926ACB6AF603E4E4": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "FileDeletionQueue4122EBBB",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "FileProcessorLambdaEC0E38A6"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/FileProcessorLambda/SqsEventSource:CodePipelineStackQADataIngestionStackFileDeletionQueue926ACB6A/Resource"
+   }
+  },
+  "ETLStateMachineRoleD9D07443": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "states.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ETLStateMachine/Role/Resource"
+   }
+  },
+  "ETLStateMachineRoleDefaultPolicy952262A5": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "S3EventProcessorLambda5FB06AE7",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "S3EventProcessorLambda5FB06AE7",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "FileUploadQueue47601A19",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileProcessorLambdaEC0E38A6",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileProcessorLambdaEC0E38A6",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "FileDeletionQueue4122EBBB",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "ETLStateMachineRoleDefaultPolicy952262A5",
+    "Roles": [
+     {
+      "Ref": "ETLStateMachineRoleD9D07443"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ETLStateMachine/Role/DefaultPolicy/Resource"
+   }
+  },
+  "ETLStateMachine1A6784FC": {
+   "Type": "AWS::StepFunctions::StateMachine",
+   "Properties": {
+    "DefinitionString": {
+     "Fn::Join": [
+      "",
+      [
+       "{\"StartAt\":\"S3EventProcessorLambdaInvokeTask\",\"States\":{\"S3EventProcessorLambdaInvokeTask\":{\"Next\":\"S3EventType\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "S3EventProcessorLambda5FB06AE7",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"S3EventType\":{\"Type\":\"Choice\",\"Choices\":[{\"Variable\":\"$.eventType\",\"StringEquals\":\"Object Created\",\"Next\":\"ObjectCreated\"},{\"Variable\":\"$.eventType\",\"StringEquals\":\"Object Deleted\",\"Next\":\"ObjectDeleted\"}],\"Default\":\"UnknownEventType\"},\"UnknownEventType\":{\"Type\":\"Fail\",\"Error\":\"UnknownEventType\",\"Cause\":\"The event type is not recognized.\"},\"ObjectCreated\":{\"Type\":\"Pass\",\"Next\":\"AddFileUploadMessageToQueueTask\"},\"AddFileUploadMessageToQueueTask\":{\"Next\":\"FileProcessorLambdaInvokeTask\",\"Type\":\"Task\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::sqs:sendMessage\",\"Parameters\":{\"QueueUrl\":\"",
+       {
+        "Ref": "FileUploadQueue47601A19"
+       },
+       "\",\"MessageBody\":{\"fileName.$\":\"$.fileName\",\"eventType.$\":\"$.eventType\"}}},\"FileProcessorLambdaInvokeTask\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "FileProcessorLambdaEC0E38A6",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"AddFileDeletionMessageToQueueTask\":{\"Next\":\"FileProcessorLambdaInvokeTask\",\"Type\":\"Task\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::sqs:sendMessage\",\"Parameters\":{\"QueueUrl\":\"",
+       {
+        "Ref": "FileDeletionQueue4122EBBB"
+       },
+       "\",\"MessageBody\":{\"fileName.$\":\"$.fileName\",\"eventType.$\":\"$.eventType\"}}},\"ObjectDeleted\":{\"Type\":\"Pass\",\"Next\":\"AddFileDeletionMessageToQueueTask\"}},\"TimeoutSeconds\":300}"
+      ]
+     ]
+    },
+    "RoleArn": {
+     "Fn::GetAtt": [
+      "ETLStateMachineRoleD9D07443",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "ETLStateMachineRoleDefaultPolicy952262A5",
+    "ETLStateMachineRoleD9D07443"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ETLStateMachine/Resource"
+   }
+  },
+  "ETLStateMachineEventsRole6EFF3975": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "events.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ETLStateMachine/EventsRole/Resource"
+   }
+  },
+  "ETLStateMachineEventsRoleDefaultPolicy4F5D49EA": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "states:StartExecution",
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "ETLStateMachine1A6784FC"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "ETLStateMachineEventsRoleDefaultPolicy4F5D49EA",
+    "Roles": [
+     {
+      "Ref": "ETLStateMachineEventsRole6EFF3975"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/ETLStateMachine/EventsRole/DefaultPolicy/Resource"
+   }
+  },
+  "CheckForNewFileModificationsLambdaServiceRole95168B41": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/CheckForNewFileModificationsLambda/ServiceRole/Resource"
+   }
+  },
+  "CheckForNewFileModificationsLambdaServiceRoleDefaultPolicy4211B3DE": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileMetadataTableE69EBE66",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileMetadataTableE69EBE66",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CheckForNewFileModificationsLambdaServiceRoleDefaultPolicy4211B3DE",
+    "Roles": [
+     {
+      "Ref": "CheckForNewFileModificationsLambdaServiceRole95168B41"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/CheckForNewFileModificationsLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "CheckForNewFileModificationsLambda5D52FB42": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "67b210adb27d45260d6169966b9ab619558eb7c26dabb7edb9166d0bb3dc37fa.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "FILE_METADATA_TABLE": {
+       "Ref": "FileMetadataTableE69EBE66"
+      }
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CheckForNewFileModificationsLambdaServiceRole95168B41",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "CheckForNewFileModificationsLambdaServiceRoleDefaultPolicy4211B3DE",
+    "CheckForNewFileModificationsLambdaServiceRole95168B41"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/CheckForNewFileModificationsLambda/Resource",
+    "aws:asset:path": "../asset.67b210adb27d45260d6169966b9ab619558eb7c26dabb7edb9166d0bb3dc37fa",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StartKBIngestionLambdaServiceRole652ED8A8": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/StartKBIngestionLambda/ServiceRole/Resource"
+   }
+  },
+  "StartKBIngestionLambdaServiceRoleDefaultPolicyC4F2EBB5": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileMetadataTableE69EBE66",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileMetadataTableE69EBE66",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "bedrock:StartIngestionJob",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:aws:bedrock:us-east-1:533267284022:knowledge-base/",
+          {
+           "Fn::ImportValue": "QA-BedrockStack:ExportsOutputFnGetAttKnowledgeBaseMyCfnKnowledgeBaseB201D483KnowledgeBaseIdF3E87343"
+          }
+         ]
+        ]
+       },
+       "Sid": "AllowKnowledgeBaseDataIngestion"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StartKBIngestionLambdaServiceRoleDefaultPolicyC4F2EBB5",
+    "Roles": [
+     {
+      "Ref": "StartKBIngestionLambdaServiceRole652ED8A8"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/StartKBIngestionLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "StartKBIngestionLambdaCDF5D1BC": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "1af63ce07a339fcc4201b8503e9453f9cc451207e07da3f1a96be995d195c629.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "FILE_METADATA_TABLE": {
+       "Fn::GetAtt": [
+        "FileMetadataTableE69EBE66",
+        "Arn"
+       ]
+      },
+      "PROCESSED_S3": {
+       "Fn::GetAtt": [
+        "ProcessedDataSourceBucket2480B712",
+        "Arn"
+       ]
+      },
+      "KNOWLEDGE_BASE_ID": {
+       "Fn::ImportValue": "QA-BedrockStack:ExportsOutputFnGetAttKnowledgeBaseMyCfnKnowledgeBaseB201D483KnowledgeBaseIdF3E87343"
+      },
+      "DATA_SOURCE_ID": {
+       "Fn::ImportValue": "QA-BedrockStack:ExportsOutputFnGetAttKBS3DataSourceMyCfnDataSource7E352DBEDataSourceId4871A8B4"
+      }
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "StartKBIngestionLambdaServiceRole652ED8A8",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 600
+   },
+   "DependsOn": [
+    "StartKBIngestionLambdaServiceRoleDefaultPolicyC4F2EBB5",
+    "StartKBIngestionLambdaServiceRole652ED8A8"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/StartKBIngestionLambda/Resource",
+    "aws:asset:path": "../asset.1af63ce07a339fcc4201b8503e9453f9cc451207e07da3f1a96be995d195c629",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "GetIngestionJobStatusLambdaServiceRole7F462D3C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/GetIngestionJobStatusLambda/ServiceRole/Resource"
+   }
+  },
+  "GetIngestionJobStatusLambdaServiceRoleDefaultPolicyB5012651": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "bedrock:GetIngestionJob",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:aws:bedrock:us-east-1:533267284022:knowledge-base/",
+          {
+           "Fn::ImportValue": "QA-BedrockStack:ExportsOutputFnGetAttKnowledgeBaseMyCfnKnowledgeBaseB201D483KnowledgeBaseIdF3E87343"
+          }
+         ]
+        ]
+       },
+       "Sid": "AllowGetIngestionJobStatus"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "GetIngestionJobStatusLambdaServiceRoleDefaultPolicyB5012651",
+    "Roles": [
+     {
+      "Ref": "GetIngestionJobStatusLambdaServiceRole7F462D3C"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/GetIngestionJobStatusLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "GetIngestionJobStatusLambdaB38B453C": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "7b7a83d5fdd51af9a9e19678869bf786bf0530cf448f0f3e089ff56b6ca1f125.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "FILE_METADATA_TABLE": {
+       "Fn::GetAtt": [
+        "FileMetadataTableE69EBE66",
+        "Arn"
+       ]
+      }
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "GetIngestionJobStatusLambdaServiceRole7F462D3C",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "GetIngestionJobStatusLambdaServiceRoleDefaultPolicyB5012651",
+    "GetIngestionJobStatusLambdaServiceRole7F462D3C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/GetIngestionJobStatusLambda/Resource",
+    "aws:asset:path": "../asset.7b7a83d5fdd51af9a9e19678869bf786bf0530cf448f0f3e089ff56b6ca1f125",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "UpdateFileMetadataLambdaServiceRole759143E2": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/UpdateFileMetadataLambda/ServiceRole/Resource"
+   }
+  },
+  "UpdateFileMetadataLambdaServiceRoleDefaultPolicy9A5FADF3": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FileMetadataTableE69EBE66",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FileMetadataTableE69EBE66",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "UpdateFileMetadataLambdaServiceRoleDefaultPolicy9A5FADF3",
+    "Roles": [
+     {
+      "Ref": "UpdateFileMetadataLambdaServiceRole759143E2"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/UpdateFileMetadataLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "UpdateFileMetadataLambda5C60D899": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "996c03cce843a58761fa4fa44daf1c355ee46edc6f654864a8d535dbe68f6408.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "FILE_METADATA_TABLE": {
+       "Fn::GetAtt": [
+        "FileMetadataTableE69EBE66",
+        "Arn"
+       ]
+      }
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "UpdateFileMetadataLambdaServiceRole759143E2",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "UpdateFileMetadataLambdaServiceRoleDefaultPolicy9A5FADF3",
+    "UpdateFileMetadataLambdaServiceRole759143E2"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/UpdateFileMetadataLambda/Resource",
+    "aws:asset:path": "../asset.996c03cce843a58761fa4fa44daf1c355ee46edc6f654864a8d535dbe68f6408",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "TriggerRAGEvaluationLambdaServiceRole6C7449D4": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/TriggerRAGEvaluationLambda/ServiceRole/Resource"
+   }
+  },
+  "TriggerRAGEvaluationLambdaServiceRoleDefaultPolicy7D6A0537": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "states:StartExecution",
+        "ssm:GetParameter"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:states:us-east-1:533267284022:stateMachine:*",
+        "arn:aws:ssm:us-east-1:533267284022:parameter/MultimodalRAG/PostQAApproval/rag-evaluation-state-machine-arn"
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "TriggerRAGEvaluationLambdaServiceRoleDefaultPolicy7D6A0537",
+    "Roles": [
+     {
+      "Ref": "TriggerRAGEvaluationLambdaServiceRole6C7449D4"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/TriggerRAGEvaluationLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "TriggerRAGEvaluationLambda0BB4E8C0": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "135ca5d18f70aef476abbe6d5a340d62ab3ed674d35d08d16194c0d4d032f012.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "CODE_PIPELINE_NAME": "MultimodalRAG"
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "TriggerRAGEvaluationLambdaServiceRole6C7449D4",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "TriggerRAGEvaluationLambdaServiceRoleDefaultPolicy7D6A0537",
+    "TriggerRAGEvaluationLambdaServiceRole6C7449D4"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/TriggerRAGEvaluationLambda/Resource",
+    "aws:asset:path": "../asset.135ca5d18f70aef476abbe6d5a340d62ab3ed674d35d08d16194c0d4d032f012",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "KBDataIngestionLogGroup4A029EA0": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "RetentionInDays": 7
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/KBDataIngestionLogGroup/Resource"
+   }
+  },
+  "KBDataIngestionStateMachineRole977C8AB9": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "states.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/KBDataIngestionStateMachine/Role/Resource"
+   }
+  },
+  "KBDataIngestionStateMachineRoleDefaultPolicy655C0525": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "CheckForNewFileModificationsLambda5D52FB42",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "CheckForNewFileModificationsLambda5D52FB42",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "StartKBIngestionLambdaCDF5D1BC",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "StartKBIngestionLambdaCDF5D1BC",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "GetIngestionJobStatusLambdaB38B453C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "GetIngestionJobStatusLambdaB38B453C",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UpdateFileMetadataLambda5C60D899",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "UpdateFileMetadataLambda5C60D899",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "TriggerRAGEvaluationLambda0BB4E8C0",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "TriggerRAGEvaluationLambda0BB4E8C0",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "logs:CreateLogDelivery",
+        "logs:GetLogDelivery",
+        "logs:UpdateLogDelivery",
+        "logs:DeleteLogDelivery",
+        "logs:ListLogDeliveries",
+        "logs:PutResourcePolicy",
+        "logs:DescribeResourcePolicies",
+        "logs:DescribeLogGroups"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "KBDataIngestionStateMachineRoleDefaultPolicy655C0525",
+    "Roles": [
+     {
+      "Ref": "KBDataIngestionStateMachineRole977C8AB9"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/KBDataIngestionStateMachine/Role/DefaultPolicy/Resource"
+   }
+  },
+  "KBDataIngestionStateMachine8DD33B76": {
+   "Type": "AWS::StepFunctions::StateMachine",
+   "Properties": {
+    "DefinitionString": {
+     "Fn::Join": [
+      "",
+      [
+       "{\"StartAt\":\"checkForNewFileModificationsTask\",\"States\":{\"checkForNewFileModificationsTask\":{\"Next\":\"CheckForNewFileModifications\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "CheckForNewFileModificationsLambda5D52FB42",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"CheckForNewFileModifications\":{\"Type\":\"Choice\",\"Choices\":[{\"Variable\":\"$.fileModificationsExist\",\"BooleanEquals\":true,\"Next\":\"StartKBIngestionLambdaInvokeTask\"}],\"Default\":\"No new file modifications to sync\"},\"No new file modifications to sync\":{\"Type\":\"Pass\",\"End\":true},\"StartKBIngestionLambdaInvokeTask\":{\"Next\":\"GetIngestionJobStatusLambdaInvokeTask\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "StartKBIngestionLambdaCDF5D1BC",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"GetIngestionJobStatusLambdaInvokeTask\":{\"Next\":\"CheckIngestionJobStatus\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"ResultPath\":\"$.GetIngestionJobResult\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "GetIngestionJobStatusLambdaB38B453C",
+         "Arn"
+        ]
+       },
+       "\",\"Payload\":{\"KnowledgeBaseId.$\":\"$.KnowledgeBaseId\",\"DataSourceId.$\":\"$.DataSourceId\",\"IngestionJobId.$\":\"$.JobId\"}}},\"Wait\":{\"Type\":\"Wait\",\"Seconds\":10,\"Next\":\"GetIngestionJobStatusLambdaInvokeTask\"},\"CheckIngestionJobStatus\":{\"Type\":\"Choice\",\"Choices\":[{\"Or\":[{\"Variable\":\"$.GetIngestionJobResult.Payload.status\",\"StringEquals\":\"IN_PROGRESS\"},{\"Variable\":\"$.GetIngestionJobResult.Payload.status\",\"StringEquals\":\"STARTING\"}],\"Next\":\"Wait\"},{\"Variable\":\"$.GetIngestionJobResult.Payload.status\",\"StringEquals\":\"COMPLETE\",\"Next\":\"IngestionJobCompleted-QA\"},{\"Variable\":\"$.GetIngestionJobResult.Payload.status\",\"StringEquals\":\"FAILED\",\"Next\":\"IngestionJobFailed\"}],\"Default\":\"UnknownJobStatus\"},\"UnknownJobStatus\":{\"Type\":\"Fail\",\"Error\":\"UnknownJobStatus\",\"Cause\":\"The job status is not recognized.\"},\"IngestionJobCompleted-QA\":{\"Type\":\"Pass\",\"Result\":{\"message\":\"The ingestion job completed successfully in -QA stage.\"},\"Next\":\"UpdateFileMetadataLambdaInvokeTask\"},\"UpdateFileMetadataLambdaInvokeTask\":{\"Next\":\"InvokeTriggerRAGLambda\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "UpdateFileMetadataLambda5C60D899",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"InvokeTriggerRAGLambda\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "TriggerRAGEvaluationLambda0BB4E8C0",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"IngestionJobFailed\":{\"Type\":\"Pass\",\"Result\":{\"message\":\"The ingestion job failed.\"},\"End\":true}},\"TimeoutSeconds\":18000}"
+      ]
+     ]
+    },
+    "LoggingConfiguration": {
+     "Destinations": [
+      {
+       "CloudWatchLogsLogGroup": {
+        "LogGroupArn": {
+         "Fn::GetAtt": [
+          "KBDataIngestionLogGroup4A029EA0",
+          "Arn"
+         ]
+        }
+       }
+      }
+     ],
+     "IncludeExecutionData": true,
+     "Level": "ALL"
+    },
+    "RoleArn": {
+     "Fn::GetAtt": [
+      "KBDataIngestionStateMachineRole977C8AB9",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "KBDataIngestionStateMachineRoleDefaultPolicy655C0525",
+    "KBDataIngestionStateMachineRole977C8AB9"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/KBDataIngestionStateMachine/Resource"
+   }
+  },
+  "KBIngestionSchedulerRole8623CE66": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "scheduler.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/KBIngestionSchedulerRole/Resource"
+   }
+  },
+  "KBIngestionSchedulerRoleDefaultPolicyF8B58BCF": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "states:StartExecution",
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "KBDataIngestionStateMachine8DD33B76"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "KBIngestionSchedulerRoleDefaultPolicyF8B58BCF",
+    "Roles": [
+     {
+      "Ref": "KBIngestionSchedulerRole8623CE66"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/KBIngestionSchedulerRole/DefaultPolicy/Resource"
+   }
+  },
+  "KBDataIngestionSchedule": {
+   "Type": "AWS::Scheduler::Schedule",
+   "Properties": {
+    "Description": "Schedule to start the Knowledge Bases data ingestion process",
+    "FlexibleTimeWindow": {
+     "Mode": "OFF"
+    },
+    "Name": "KnowledgeBasesDataIngestionSchedule",
+    "ScheduleExpression": "cron(*/2 * * * ? *)",
+    "State": "ENABLED",
+    "Target": {
+     "Arn": {
+      "Ref": "KBDataIngestionStateMachine8DD33B76"
+     },
+     "Input": "{\"scheduleTime\":\"<aws.scheduler.scheduled-time>\"}",
+     "RoleArn": {
+      "Fn::GetAtt": [
+       "KBIngestionSchedulerRole8623CE66",
+       "Arn"
+      ]
+     }
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/KBDataIngestionSchedule"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2VRXU/DMAz8LbxnZh/wA9jEEBJDZUXwOLmp12VNkxEnQyjqf0fJOtDg6e5sn3t1pjC5vYHJFX7ySNbtSKsKYulRtgI/eRN5BnEeZEteLLZmYCcorFby67c86JOYI1MvNHZVjRAXW1OQ6xSzsiY5lsFIn/j9kYwvbXCSVng4KNOk9v9qLxR2ENdWUxrI+BvgxHrB3KX0TpmmQIcdeXK5fxa9qL8MdrauIL5ipeltmvoP2laoc+EcemNsTXuG5ww/eXm2QWbyDHcJBKWkDHEdhmAhrWBPh+1g4Y1HbhniU977aI62JVF+cEmmXhEzNsnxwRBfAoW8JZM/ayAudlZJEgUyiyUqLUqPnlYod8pk24V+R+V7oW2TPm2bB2fDIQ2deS9Y7qgOmhwk7yB6sQjsbbcmzvfPP/XDL1qFs0dVk0tvLfI5So9NesLzRC/SFWHP18fpGCYzGF/tWamRC8arjmB9wm+jvkiyhQIAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/QA/DataIngestionStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

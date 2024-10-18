@@ -1,0 +1,499 @@
+{
+ "Resources": {
+  "RAGEvaluationLambdaServiceRole5339F01C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/RAGEvaluationLambda/ServiceRole/Resource"
+   }
+  },
+  "RAGEvaluationLambda978EDAC3": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "07844a06ca3d03acbe8238962e83c773dbc0f13d157eb969e776331e1237a5cd.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "STAGE_NAME": "PostQAApproval"
+     }
+    },
+    "FunctionName": "RAGEvaluationLambda",
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "RAGEvaluationLambdaServiceRole5339F01C",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "RAGEvaluationLambdaServiceRole5339F01C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/RAGEvaluationLambda/Resource",
+    "aws:asset:path": "../asset.07844a06ca3d03acbe8238962e83c773dbc0f13d157eb969e776331e1237a5cd",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "TriggerApprovalLambdaServiceRole529F9B06": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/TriggerApprovalLambda/ServiceRole/Resource"
+   }
+  },
+  "TriggerApprovalLambdaServiceRoleDefaultPolicyDE4FFE18": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "codepipeline:GetPipelineState",
+        "codepipeline:PutApprovalResult",
+        "ssm:GetParameter"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:codepipeline:us-east-1:533267284022:MultimodalRAG",
+        "arn:aws:ssm:us-west-2:533267284022:parameter/MultimodalRAG/Prod/move-files-state-machine-arn",
+        "arn:aws:codepipeline:us-east-1:533267284022:MultimodalRAG/PostQAApproval/ManualApprovalForProduction"
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "TriggerApprovalLambdaServiceRoleDefaultPolicyDE4FFE18",
+    "Roles": [
+     {
+      "Ref": "TriggerApprovalLambdaServiceRole529F9B06"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/TriggerApprovalLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "TriggerApprovalLambda30D303B2": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "ce227b29cae74522866a89952d03e773e37299c2b542a37eac7d718f81ac60fc.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "STAGE_NAME": "PostQAApproval",
+      "PIPELINE_NAME": "MultimodalRAG"
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "TriggerApprovalLambdaServiceRole529F9B06",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "TriggerApprovalLambdaServiceRoleDefaultPolicyDE4FFE18",
+    "TriggerApprovalLambdaServiceRole529F9B06"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/TriggerApprovalLambda/Resource",
+    "aws:asset:path": "../asset.ce227b29cae74522866a89952d03e773e37299c2b542a37eac7d718f81ac60fc",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StartMoveFilesLambdaServiceRole73990B1C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/StartMoveFilesLambda/ServiceRole/Resource"
+   }
+  },
+  "StartMoveFilesLambdaServiceRoleDefaultPolicy6CAEF564": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "states:StartExecution",
+        "ssm:GetParameter"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:states:us-west-2:533267284022:stateMachine:*",
+        "arn:aws:ssm:us-west-2:533267284022:parameter/MultimodalRAG/Prod/move-files-state-machine-arn"
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StartMoveFilesLambdaServiceRoleDefaultPolicy6CAEF564",
+    "Roles": [
+     {
+      "Ref": "StartMoveFilesLambdaServiceRole73990B1C"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/StartMoveFilesLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "StartMoveFilesLambda5B1B4D94": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "4e4d886a0a6e329f7aaa7c8b266ab5eec20f81b2d65a71a9fc61ed9cbc2bd9f3.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "PIPELINE_NAME": "MultimodalRAG"
+     }
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "StartMoveFilesLambdaServiceRole73990B1C",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x"
+   },
+   "DependsOn": [
+    "StartMoveFilesLambdaServiceRoleDefaultPolicy6CAEF564",
+    "StartMoveFilesLambdaServiceRole73990B1C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/StartMoveFilesLambda/Resource",
+    "aws:asset:path": "../asset.4e4d886a0a6e329f7aaa7c8b266ab5eec20f81b2d65a71a9fc61ed9cbc2bd9f3",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "RAGEvaluationStateMachineRole927E47AE": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "states.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/RAGEvaluationStateMachine/Role/Resource"
+   }
+  },
+  "RAGEvaluationStateMachineRoleDefaultPolicyE88DBA5E": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "RAGEvaluationLambda978EDAC3",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "RAGEvaluationLambda978EDAC3",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "TriggerApprovalLambda30D303B2",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "TriggerApprovalLambda30D303B2",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "StartMoveFilesLambda5B1B4D94",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "StartMoveFilesLambda5B1B4D94",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "RAGEvaluationStateMachineRoleDefaultPolicyE88DBA5E",
+    "Roles": [
+     {
+      "Ref": "RAGEvaluationStateMachineRole927E47AE"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/RAGEvaluationStateMachine/Role/DefaultPolicy/Resource"
+   }
+  },
+  "RAGEvaluationStateMachine4EFBD671": {
+   "Type": "AWS::StepFunctions::StateMachine",
+   "Properties": {
+    "DefinitionString": {
+     "Fn::Join": [
+      "",
+      [
+       "{\"StartAt\":\"EvaluationLambdaInvokeTask\",\"States\":{\"EvaluationLambdaInvokeTask\":{\"Next\":\"InvokeQAToProdApprovalLambda\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "RAGEvaluationLambda978EDAC3",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}},\"InvokeQAToProdApprovalLambda\":{\"Next\":\"CheckApprovalStatus\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "TriggerApprovalLambda30D303B2",
+         "Arn"
+        ]
+       },
+       "\",\"Payload\":{\"success.$\":\"$.success\",\"message.$\":\"$.message\"}}},\"CheckApprovalStatus\":{\"Type\":\"Choice\",\"Choices\":[{\"Variable\":\"$.statusCode\",\"NumericEquals\":500,\"Next\":\"InvokeMoveFilesLambdaTask\"}],\"Default\":\"ProceedNormally\"},\"ProceedNormally\":{\"Type\":\"Pass\",\"End\":true},\"InvokeMoveFilesLambdaTask\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"OutputPath\":\"$.Payload\",\"Resource\":\"arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+       {
+        "Fn::GetAtt": [
+         "StartMoveFilesLambda5B1B4D94",
+         "Arn"
+        ]
+       },
+       "\",\"Payload.$\":\"$\"}}},\"TimeoutSeconds\":1200}"
+      ]
+     ]
+    },
+    "RoleArn": {
+     "Fn::GetAtt": [
+      "RAGEvaluationStateMachineRole927E47AE",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "RAGEvaluationStateMachineRoleDefaultPolicyE88DBA5E",
+    "RAGEvaluationStateMachineRole927E47AE"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/RAGEvaluationStateMachine/Resource"
+   }
+  },
+  "RAGEvaluationStateMachineArnParameter676C0A99": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Name": "/MultimodalRAG/PostQAApproval/rag-evaluation-state-machine-arn",
+    "Type": "String",
+    "Value": {
+     "Ref": "RAGEvaluationStateMachine4EFBD671"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/RAGEvaluationStateMachineArnParameter/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1WQ72qDUAzFn6XfY1Zr9wCrMBhsRfQBJL1Ge/1z7zCxZYjvPrx2Y/v0yyGHcE4OGD8fMd7RXSJTdVFvLzgXSqYDuks59zRcKiqdr7gVPAe8Ts6o9Q4sDTjnvmdIaxeY+d6ar1Vu0wKSlCTCKviyAiTB02Q61hMJw3Ye09r9HhXlz/ohpFSSTvA92N7czXf834BzevXWMGQkAoWS8geZq3Uh01+9gMiwdhutazIaaWDlMUT9EcsCOYufRsMQ0hZKjXVNqPdYLLD+Alt5uh32GCe437VibTROTu3AmG/8BvP/k3lYAQAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/PostQAApproval/RAGEvaluationStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

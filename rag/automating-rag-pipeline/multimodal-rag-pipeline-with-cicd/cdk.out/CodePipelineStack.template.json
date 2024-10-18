@@ -1,0 +1,4473 @@
+{
+ "Resources": {
+  "CodePipelineRoleB31C27BE": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codepipeline.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AdministratorAccess"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CodePipelineRole/Resource"
+   }
+  },
+  "CodePipelineRoleDefaultPolicy2731C56D": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelinePostQAApprovalManualApprovalForProductionCodePipelineActionRole0BF0EA5C",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":s3:::codepipelinestack-supporteplicationbucketecd69c0c8459ab6dfd24"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":s3:::codepipelinestack-supporteplicationbucketecd69c0c8459ab6dfd24/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CodePipelineRoleDefaultPolicy2731C56D",
+    "Roles": [
+     {
+      "Ref": "CodePipelineRoleB31C27BE"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CodePipelineRole/DefaultPolicy/Resource"
+   }
+  },
+  "MultimodalRAGPipelineArtifactsBucketFD70C2D4": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "aws:kms"
+       }
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/ArtifactsBucket/Resource"
+   }
+  },
+  "MultimodalRAGPipelineArtifactsBucketPolicy71FCFF61": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "MultimodalRAGPipelineArtifactsBucketFD70C2D4"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/ArtifactsBucket/Policy/Resource"
+   }
+  },
+  "MultimodalRAGPipeline68F9D816": {
+   "Type": "AWS::CodePipeline::Pipeline",
+   "Properties": {
+    "ArtifactStores": [
+     {
+      "ArtifactStore": {
+       "Location": "codepipelinestack-supporteplicationbucketecd69c0c8459ab6dfd24",
+       "Type": "S3"
+      },
+      "Region": "us-west-2"
+     },
+     {
+      "ArtifactStore": {
+       "Location": {
+        "Ref": "MultimodalRAGPipelineArtifactsBucketFD70C2D4"
+       },
+       "Type": "S3"
+      },
+      "Region": "us-east-1"
+     }
+    ],
+    "Name": "MultimodalRAG",
+    "PipelineType": "V1",
+    "RestartExecutionOnUpdate": true,
+    "RoleArn": {
+     "Fn::GetAtt": [
+      "CodePipelineRoleB31C27BE",
+      "Arn"
+     ]
+    },
+    "Stages": [
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Source",
+         "Owner": "ThirdParty",
+         "Provider": "GitHub",
+         "Version": "1"
+        },
+        "Configuration": {
+         "Owner": "manoj-selvakumar5",
+         "Repo": "multimodal-rag-cicd-automation",
+         "Branch": "cleanup",
+         "OAuthToken": "{{resolve:secretsmanager:github-token:SecretString:::}}",
+         "PollForSourceChanges": false
+        },
+        "Name": "manoj-selvakumar5_multimodal-rag-cicd-automation",
+        "OutputArtifacts": [
+         {
+          "Name": "manoj_selvakumar5_multimodal_rag_cicd_automation_Source"
+         }
+        ],
+        "RunOrder": 1
+       }
+      ],
+      "Name": "Source"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineBuildSynthCdkBuildProjectCD945509"
+         },
+         "EnvironmentVariables": "[{\"name\":\"_PROJECT_CONFIG_HASH\",\"type\":\"PLAINTEXT\",\"value\":\"b0e48a55ca8e38802dcb8ba8c5a9ed85cab28a47b1959a18af6f4f11c585e8a2\"}]"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "manoj_selvakumar5_multimodal_rag_cicd_automation_Source"
+         }
+        ],
+        "Name": "Synth",
+        "OutputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       }
+      ],
+      "Name": "Build"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineUpdatePipelineSelfMutation01531462"
+         },
+         "EnvironmentVariables": "[{\"name\":\"_PROJECT_CONFIG_HASH\",\"type\":\"PLAINTEXT\",\"value\":\"b51c1e1858e9009a1e1e8f445dccf7dc088a7d41f210c3cb8b370c837350382e\"}]"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "SelfMutate",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       }
+      ],
+      "Name": "UpdatePipeline"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsDockerAsset10757B1BA"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "DockerAsset1",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset15E1781E8"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset1",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset10F9111BA4"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset10",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset11EFF76689"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset11",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset12ADEF4DE5"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset12",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset131ED988F2"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset13",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset1494969516"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset14",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset152F8DF2D7"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset15",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset16551A41C0"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset16",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset1794571C99"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset17",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset18B336C4E5"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset18",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset2E3B3BE93"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset2",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset3843B048D"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset3",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset454CEF680"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset4",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset5ECCEB2E2"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset5",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset638DDAC05"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset6",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset744636BC2"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset7",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset8F951CDAD"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset8",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineAssetsFileAsset965C72E1A"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "FileAsset9",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       }
+      ],
+      "Name": "Assets"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "PreQABucketSetupStage-S3BucketStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-east-1"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-PreQABucketSetupStage/CodePipelineStackPreQABucketSetupStageS3BucketStack2D625C4A.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "Prepare",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "PreQABucketSetupStage-S3BucketStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "Deploy",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 2
+       }
+      ],
+      "Name": "PreQABucketSetupStage"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineQABuildLambdaPackage600CB5CE"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "manoj_selvakumar5_multimodal_rag_cicd_automation_Source"
+         }
+        ],
+        "Name": "BuildLambdaPackage",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "QA-BedrockStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-east-1"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-QA/CodePipelineStackQABedrockStack05B8BDB4.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "BedrockStack.Prepare",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 2
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "QA-BedrockStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "BedrockStack.Deploy",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 3
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "QA-DataIngestionStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-east-1"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "DataIngestionStack.Prepare",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 4
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "QA-WebAppStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-east-1"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-QA/CodePipelineStackQAWebAppStackD740ACE4.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "WebAppStack.Prepare",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 4
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "QA-DataIngestionStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "DataIngestionStack.Deploy",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 5
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "QA-WebAppStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "WebAppStack.Deploy",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 5
+       }
+      ],
+      "Name": "QA"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "PostQAApproval-RAGEvaluationStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-east-1"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-PostQAApproval/CodePipelineStackPostQAApprovalRAGEvaluationStack76DAC120.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "RAGEvaluationStack.Prepare",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "PostQAApproval-RAGEvaluationStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "RAGEvaluationStack.Deploy",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-east-1"
+          ]
+         ]
+        },
+        "RunOrder": 2
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Approval",
+         "Owner": "AWS",
+         "Provider": "Manual",
+         "Version": "1"
+        },
+        "Name": "ManualApprovalForProduction",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelinePostQAApprovalManualApprovalForProductionCodePipelineActionRole0BF0EA5C",
+          "Arn"
+         ]
+        },
+        "RunOrder": 3
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentEC57C99B"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "manoj_selvakumar5_multimodal_rag_cicd_automation_Source"
+         }
+        ],
+        "Name": "TriggerRAGEvaluationAfterQADeployment",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 3
+       }
+      ],
+      "Name": "PostQAApproval"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "PreProdBucketSetupStage-S3BucketStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-west-2"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-PreProdBucketSetupStage/CodePipelineStackPreProdBucketSetupStageS3BucketStackF4BF093B.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "Prepare",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "PreProdBucketSetupStage-S3BucketStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "Deploy",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 2
+       }
+      ],
+      "Name": "PreProdBucketSetupStage"
+     },
+     {
+      "Actions": [
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineProdBuildLambdaPackageForProdEAED07F4"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "manoj_selvakumar5_multimodal_rag_cicd_automation_Source"
+         }
+        ],
+        "Name": "BuildLambdaPackageForProd",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 1
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "Prod-BedrockStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-west-2"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-Prod/CodePipelineStackProdBedrockStackA358C029.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "BedrockStack.Prepare",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 2
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "Prod-BedrockStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "BedrockStack.Deploy",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 3
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "Prod-DataIngestionStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-west-2"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-Prod/CodePipelineStackProdDataIngestionStackA4EF9CB6.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "DataIngestionStack.Prepare",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 4
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "Prod-WebAppStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-west-2"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-Prod/CodePipelineStackProdWebAppStack9F693921.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "WebAppStack.Prepare",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 4
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "Prod-DataIngestionStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "DataIngestionStack.Deploy",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 5
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "Prod-WebAppStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "WebAppStack.Deploy",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 5
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "Prod-MoveFilesStack",
+         "Capabilities": "CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND",
+         "RoleArn": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:",
+            {
+             "Ref": "AWS::Partition"
+            },
+            ":iam::533267284022:role/cdk-hnb659fds-cfn-exec-role-533267284022-us-west-2"
+           ]
+          ]
+         },
+         "ActionMode": "CHANGE_SET_REPLACE",
+         "ChangeSetName": "PipelineChange",
+         "TemplatePath": "Synth_Output::assembly-CodePipelineStack-Prod/CodePipelineStackProdMoveFilesStack9ADCDEF7.template.json"
+        },
+        "InputArtifacts": [
+         {
+          "Name": "Synth_Output"
+         }
+        ],
+        "Name": "MoveFilesStack.Prepare",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 6
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Deploy",
+         "Owner": "AWS",
+         "Provider": "CloudFormation",
+         "Version": "1"
+        },
+        "Configuration": {
+         "StackName": "Prod-MoveFilesStack",
+         "ActionMode": "CHANGE_SET_EXECUTE",
+         "ChangeSetName": "PipelineChange"
+        },
+        "Name": "MoveFilesStack.Deploy",
+        "Region": "us-west-2",
+        "RoleArn": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:role/cdk-hnb659fds-deploy-role-533267284022-us-west-2"
+          ]
+         ]
+        },
+        "RunOrder": 7
+       },
+       {
+        "ActionTypeId": {
+         "Category": "Build",
+         "Owner": "AWS",
+         "Provider": "CodeBuild",
+         "Version": "1"
+        },
+        "Configuration": {
+         "ProjectName": {
+          "Ref": "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineDCD42A8F"
+         }
+        },
+        "InputArtifacts": [
+         {
+          "Name": "manoj_selvakumar5_multimodal_rag_cicd_automation_Source"
+         }
+        ],
+        "Name": "TriggerCopyFilesFromQAToProdStateMachine",
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineCodeBuildActionRole1BF96F53",
+          "Arn"
+         ]
+        },
+        "RunOrder": 8
+       }
+      ],
+      "Name": "Prod"
+     }
+    ]
+   },
+   "DependsOn": [
+    "CodePipelineRoleDefaultPolicy2731C56D",
+    "CodePipelineRoleB31C27BE"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Resource"
+   }
+  },
+  "MultimodalRAGPipelineSourcemanojselvakumar5multimodalragcicdautomationWebhookResource189DFA09": {
+   "Type": "AWS::CodePipeline::Webhook",
+   "Properties": {
+    "Authentication": "GITHUB_HMAC",
+    "AuthenticationConfiguration": {
+     "SecretToken": "{{resolve:secretsmanager:github-token:SecretString:::}}"
+    },
+    "Filters": [
+     {
+      "JsonPath": "$.ref",
+      "MatchEquals": "refs/heads/{Branch}"
+     }
+    ],
+    "RegisterWithThirdParty": true,
+    "TargetAction": "manoj-selvakumar5_multimodal-rag-cicd-automation",
+    "TargetPipeline": {
+     "Ref": "MultimodalRAGPipeline68F9D816"
+    },
+    "TargetPipelineVersion": 1
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Source/manoj-selvakumar5_multimodal-rag-cicd-automation/WebhookResource"
+   }
+  },
+  "MultimodalRAGPipelineBuildSynthCdkBuildProjectRole75206B8E": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codebuild.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Build/Synth/CdkBuildProject/Role/Resource"
+   }
+  },
+  "MultimodalRAGPipelineBuildSynthCdkBuildProjectRoleDefaultPolicyE6AB501A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineBuildSynthCdkBuildProjectCD945509"
+           }
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineBuildSynthCdkBuildProjectCD945509"
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "codebuild:CreateReportGroup",
+        "codebuild:CreateReport",
+        "codebuild:UpdateReport",
+        "codebuild:BatchPutTestCases",
+        "codebuild:BatchPutCodeCoverages"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":codebuild:us-east-1:533267284022:report-group/",
+          {
+           "Ref": "MultimodalRAGPipelineBuildSynthCdkBuildProjectCD945509"
+          },
+          "-*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MultimodalRAGPipelineBuildSynthCdkBuildProjectRoleDefaultPolicyE6AB501A",
+    "Roles": [
+     {
+      "Ref": "MultimodalRAGPipelineBuildSynthCdkBuildProjectRole75206B8E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Build/Synth/CdkBuildProject/Role/DefaultPolicy/Resource"
+   }
+  },
+  "MultimodalRAGPipelineBuildSynthCdkBuildProjectCD945509": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Build/Synth",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": true,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineBuildSynthCdkBuildProjectRole75206B8E",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"build\": {\n      \"commands\": [\n        \"npm ci\",\n        \"npm run build\",\n        \"npx cdk synth\"\n      ]\n    }\n  },\n  \"artifacts\": {\n    \"base-directory\": \"cdk.out\",\n    \"files\": \"**/*\"\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Build/Synth/CdkBuildProject/Resource"
+   }
+  },
+  "MultimodalRAGPipelineQABuildLambdaPackage600CB5CE": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/QA/BuildLambdaPackage",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "EnvironmentVariables": [
+      {
+       "Name": "CODE_PIPELINE_NAME",
+       "Type": "PLAINTEXT",
+       "Value": "MultimodalRAG"
+      },
+      {
+       "Name": "STAGE_NAME",
+       "Type": "PLAINTEXT",
+       "Value": "PreQABucketSetupStage"
+      },
+      {
+       "Name": "AWS_REGION",
+       "Type": "PLAINTEXT",
+       "Value": "us-east-1"
+      }
+     ],
+     "Image": "aws/codebuild/standard:5.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "CodeBuildRole728CBADE",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"build\": {\n      \"commands\": [\n        \"chmod +x ./src/app/build_lambda.sh\",\n        \"./src/app/build_lambda.sh\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/QA/BuildLambdaPackage/BuildLambdaPackage/Resource"
+   }
+  },
+  "MultimodalRAGPipelinePostQAApprovalManualApprovalForProductionCodePipelineActionRole0BF0EA5C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":iam::533267284022:root"
+          ]
+         ]
+        }
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/PostQAApproval/ManualApprovalForProduction/CodePipelineActionRole/Resource"
+   }
+  },
+  "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentRoleBE0CC3C4": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codebuild.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/PostQAApproval/TriggerRAGEvaluationAfterQADeployment/TriggerRAGEvaluationAfterQADeployment/Role/Resource"
+   }
+  },
+  "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentRoleDefaultPolicy56AB6CA4": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentEC57C99B"
+           }
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentEC57C99B"
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "codebuild:CreateReportGroup",
+        "codebuild:CreateReport",
+        "codebuild:UpdateReport",
+        "codebuild:BatchPutTestCases",
+        "codebuild:BatchPutCodeCoverages"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":codebuild:us-east-1:533267284022:report-group/",
+          {
+           "Ref": "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentEC57C99B"
+          },
+          "-*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "ssm:GetParameter",
+        "states:StartExecution"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:ssm:us-east-1:533267284022:parameter/MultimodalRAG/PostQAApproval/rag-evaluation-state-machine-arn",
+        "arn:aws:states:us-east-1:533267284022:stateMachine:*"
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentRoleDefaultPolicy56AB6CA4",
+    "Roles": [
+     {
+      "Ref": "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentRoleBE0CC3C4"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/PostQAApproval/TriggerRAGEvaluationAfterQADeployment/TriggerRAGEvaluationAfterQADeployment/Role/DefaultPolicy/Resource"
+   }
+  },
+  "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentEC57C99B": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/PostQAApproval/TriggerRAGEvaluationAfterQADeployment",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:5.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentRoleBE0CC3C4",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"build\": {\n      \"commands\": [\n        \"aws stepfunctions start-execution --region us-east-1 --state-machine-arn $(aws ssm get-parameter --name /MultimodalRAG/PostQAApproval/rag-evaluation-state-machine-arn --region us-east-1 --query \\\"Parameter.Value\\\" --output text) --input '{}'\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/PostQAApproval/TriggerRAGEvaluationAfterQADeployment/TriggerRAGEvaluationAfterQADeployment/Resource"
+   }
+  },
+  "MultimodalRAGPipelineProdBuildLambdaPackageForProdEAED07F4": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Prod/BuildLambdaPackageForProd",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "EnvironmentVariables": [
+      {
+       "Name": "CODE_PIPELINE_NAME",
+       "Type": "PLAINTEXT",
+       "Value": "MultimodalRAG"
+      },
+      {
+       "Name": "STAGE_NAME",
+       "Type": "PLAINTEXT",
+       "Value": "PreProdBucketSetupStage"
+      },
+      {
+       "Name": "AWS_REGION",
+       "Type": "PLAINTEXT",
+       "Value": "us-west-2"
+      }
+     ],
+     "Image": "aws/codebuild/standard:5.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "CodeBuildRole728CBADE",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"build\": {\n      \"commands\": [\n        \"chmod +x ./src/app/build_lambda.sh\",\n        \"./src/app/build_lambda.sh\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Prod/BuildLambdaPackageForProd/BuildLambdaPackageForProd/Resource"
+   }
+  },
+  "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineRole84F6D28B": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codebuild.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Prod/TriggerCopyFilesFromQAToProdStateMachine/TriggerCopyFilesFromQAToProdStateMachine/Role/Resource"
+   }
+  },
+  "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineRoleDefaultPolicy6F235AC2": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineDCD42A8F"
+           }
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineDCD42A8F"
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "codebuild:CreateReportGroup",
+        "codebuild:CreateReport",
+        "codebuild:UpdateReport",
+        "codebuild:BatchPutTestCases",
+        "codebuild:BatchPutCodeCoverages"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":codebuild:us-east-1:533267284022:report-group/",
+          {
+           "Ref": "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineDCD42A8F"
+          },
+          "-*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "ssm:GetParameter",
+        "states:StartExecution"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:ssm:us-west-2:533267284022:parameter/MultimodalRAG/Prod/move-files-state-machine-arn",
+        "arn:aws:states:us-west-2:533267284022:stateMachine:*"
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineRoleDefaultPolicy6F235AC2",
+    "Roles": [
+     {
+      "Ref": "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineRole84F6D28B"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Prod/TriggerCopyFilesFromQAToProdStateMachine/TriggerCopyFilesFromQAToProdStateMachine/Role/DefaultPolicy/Resource"
+   }
+  },
+  "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineDCD42A8F": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Prod/TriggerCopyFilesFromQAToProdStateMachine",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:5.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineRole84F6D28B",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"build\": {\n      \"commands\": [\n        \"aws stepfunctions start-execution --region us-west-2 --state-machine-arn $(aws ssm get-parameter --name /MultimodalRAG/Prod/move-files-state-machine-arn --region us-west-2 --query \\\"Parameter.Value\\\" --output text) --input '{}'\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Pipeline/Prod/TriggerCopyFilesFromQAToProdStateMachine/TriggerCopyFilesFromQAToProdStateMachine/Resource"
+   }
+  },
+  "MultimodalRAGPipelineCodeBuildActionRole1BF96F53": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CodePipelineRoleB31C27BE",
+          "Arn"
+         ]
+        }
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/CodeBuildActionRole/Resource"
+   }
+  },
+  "MultimodalRAGPipelineCodeBuildActionRoleDefaultPolicy98A860F7": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineBuildSynthCdkBuildProjectCD945509",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineUpdatePipelineSelfMutation01531462",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsDockerAsset10757B1BA",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset15E1781E8",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset10F9111BA4",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset11EFF76689",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset12ADEF4DE5",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset131ED988F2",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset1494969516",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset152F8DF2D7",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset16551A41C0",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset1794571C99",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset18B336C4E5",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset2E3B3BE93",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset3843B048D",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset454CEF680",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset5ECCEB2E2",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset638DDAC05",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset744636BC2",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset8F951CDAD",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineAssetsFileAsset965C72E1A",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineQABuildLambdaPackage600CB5CE",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelinePostQAApprovalTriggerRAGEvaluationAfterQADeploymentEC57C99B",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineProdBuildLambdaPackageForProdEAED07F4",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "MultimodalRAGPipelineProdTriggerCopyFilesFromQAToProdStateMachineDCD42A8F",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MultimodalRAGPipelineCodeBuildActionRoleDefaultPolicy98A860F7",
+    "Roles": [
+     {
+      "Ref": "MultimodalRAGPipelineCodeBuildActionRole1BF96F53"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/CodeBuildActionRole/DefaultPolicy/Resource"
+   }
+  },
+  "MultimodalRAGPipelineUpdatePipelineSelfMutationRole70A69D81": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codebuild.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/UpdatePipeline/SelfMutation/Role/Resource"
+   }
+  },
+  "MultimodalRAGPipelineUpdatePipelineSelfMutationRoleDefaultPolicy03A5B2A5": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineUpdatePipelineSelfMutation01531462"
+           }
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineUpdatePipelineSelfMutation01531462"
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "codebuild:CreateReportGroup",
+        "codebuild:CreateReport",
+        "codebuild:UpdateReport",
+        "codebuild:BatchPutTestCases",
+        "codebuild:BatchPutCodeCoverages"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":codebuild:us-east-1:533267284022:report-group/",
+          {
+           "Ref": "MultimodalRAGPipelineUpdatePipelineSelfMutation01531462"
+          },
+          "-*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Condition": {
+        "ForAnyValue:StringEquals": {
+         "iam:ResourceTag/aws-cdk:bootstrap-role": [
+          "image-publishing",
+          "file-publishing",
+          "deploy"
+         ]
+        }
+       },
+       "Effect": "Allow",
+       "Resource": "arn:*:iam::533267284022:role/*"
+      },
+      {
+       "Action": "cloudformation:DescribeStacks",
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": "s3:ListBucket",
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MultimodalRAGPipelineUpdatePipelineSelfMutationRoleDefaultPolicy03A5B2A5",
+    "Roles": [
+     {
+      "Ref": "MultimodalRAGPipelineUpdatePipelineSelfMutationRole70A69D81"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/UpdatePipeline/SelfMutation/Role/DefaultPolicy/Resource"
+   }
+  },
+  "MultimodalRAGPipelineUpdatePipelineSelfMutation01531462": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/UpdatePipeline/SelfMutate",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "Name": "MultimodalRAG-selfupdate",
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineUpdatePipelineSelfMutationRole70A69D81",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g aws-cdk@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk -a . deploy CodePipelineStack --require-approval=never --verbose\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/UpdatePipeline/SelfMutation/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsDockerRoleAC36E0C6": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codebuild.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/DockerRole/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsDockerRoleDefaultPolicy054A46DB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":logs:us-east-1:533267284022:log-group:/aws/codebuild/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:CreateReportGroup",
+        "codebuild:CreateReport",
+        "codebuild:UpdateReport",
+        "codebuild:BatchPutTestCases",
+        "codebuild:BatchPutCodeCoverages"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":codebuild:us-east-1:533267284022:report-group/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Sub": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-image-publishing-role-533267284022-us-east-1"
+        },
+        {
+         "Fn::Sub": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-image-publishing-role-533267284022-us-west-2"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MultimodalRAGPipelineAssetsDockerRoleDefaultPolicy054A46DB",
+    "Roles": [
+     {
+      "Ref": "MultimodalRAGPipelineAssetsDockerRoleAC36E0C6"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/DockerRole/DefaultPolicy/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsDockerAsset10757B1BA": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/DockerAsset1",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": true,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsDockerRoleAC36E0C6",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQAWebAppStackD740ACE4.assets.json\\\" --verbose publish \\\"8c713a914859995714f2ad77c8cd54b7bc3c6f708f81c53c484d71bbd4f39bcb:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdWebAppStack9F693921.assets.json\\\" --verbose publish \\\"8c713a914859995714f2ad77c8cd54b7bc3c6f708f81c53c484d71bbd4f39bcb:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/DockerAsset1/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileRoleA1B559AA": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codebuild.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileRole/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileRoleDefaultPolicyBB0AF1F8": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":logs:us-east-1:533267284022:log-group:/aws/codebuild/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:CreateReportGroup",
+        "codebuild:CreateReport",
+        "codebuild:UpdateReport",
+        "codebuild:BatchPutTestCases",
+        "codebuild:BatchPutCodeCoverages"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":codebuild:us-east-1:533267284022:report-group/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codebuild:StopBuild"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Sub": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-file-publishing-role-533267284022-us-east-1"
+        },
+        {
+         "Fn::Sub": "arn:${AWS::Partition}:iam::533267284022:role/cdk-hnb659fds-file-publishing-role-533267284022-us-west-2"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MultimodalRAGPipelineAssetsFileRoleDefaultPolicyBB0AF1F8",
+    "Roles": [
+     {
+      "Ref": "MultimodalRAGPipelineAssetsFileRoleA1B559AA"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileRole/DefaultPolicy/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset15E1781E8": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset1",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-PreQABucketSetupStage/CodePipelineStackPreQABucketSetupStageS3BucketStack2D625C4A.assets.json\\\" --verbose publish \\\"faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-PreProdBucketSetupStage/CodePipelineStackPreProdBucketSetupStageS3BucketStackF4BF093B.assets.json\\\" --verbose publish \\\"faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset1/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset10F9111BA4": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset10",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.assets.json\\\" --verbose publish \\\"7b7a83d5fdd51af9a9e19678869bf786bf0530cf448f0f3e089ff56b6ca1f125:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdDataIngestionStackA4EF9CB6.assets.json\\\" --verbose publish \\\"7b7a83d5fdd51af9a9e19678869bf786bf0530cf448f0f3e089ff56b6ca1f125:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset10/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset11EFF76689": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset11",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.assets.json\\\" --verbose publish \\\"996c03cce843a58761fa4fa44daf1c355ee46edc6f654864a8d535dbe68f6408:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdDataIngestionStackA4EF9CB6.assets.json\\\" --verbose publish \\\"996c03cce843a58761fa4fa44daf1c355ee46edc6f654864a8d535dbe68f6408:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset11/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset12ADEF4DE5": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset12",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.assets.json\\\" --verbose publish \\\"135ca5d18f70aef476abbe6d5a340d62ab3ed674d35d08d16194c0d4d032f012:533267284022-us-east-1\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset12/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset131ED988F2": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset13",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQAWebAppStackD740ACE4.assets.json\\\" --verbose publish \\\"96400fa9d14a06c6d281b5bfcda13974a623f7690e8feda8e88a40427e66cc19:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdWebAppStack9F693921.assets.json\\\" --verbose publish \\\"96400fa9d14a06c6d281b5bfcda13974a623f7690e8feda8e88a40427e66cc19:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset13/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset1494969516": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset14",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-PostQAApproval/CodePipelineStackPostQAApprovalRAGEvaluationStack76DAC120.assets.json\\\" --verbose publish \\\"07844a06ca3d03acbe8238962e83c773dbc0f13d157eb969e776331e1237a5cd:533267284022-us-east-1\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset14/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset152F8DF2D7": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset15",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-PostQAApproval/CodePipelineStackPostQAApprovalRAGEvaluationStack76DAC120.assets.json\\\" --verbose publish \\\"ce227b29cae74522866a89952d03e773e37299c2b542a37eac7d718f81ac60fc:533267284022-us-east-1\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset15/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset16551A41C0": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset16",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-PostQAApproval/CodePipelineStackPostQAApprovalRAGEvaluationStack76DAC120.assets.json\\\" --verbose publish \\\"4e4d886a0a6e329f7aaa7c8b266ab5eec20f81b2d65a71a9fc61ed9cbc2bd9f3:533267284022-us-east-1\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset16/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset1794571C99": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset17",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdMoveFilesStack9ADCDEF7.assets.json\\\" --verbose publish \\\"97f30e67419a1676a2215492723e5add1aa491caf0cbe2dd878fc4fab0468cd4:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset17/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset18B336C4E5": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset18",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdMoveFilesStack9ADCDEF7.assets.json\\\" --verbose publish \\\"2375f897b40f1495d53bf708ba24dbd1cbfb737149a500ab17336d81f040482a:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset18/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset2E3B3BE93": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset2",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQABedrockStack05B8BDB4.assets.json\\\" --verbose publish \\\"dcfd04687616d4f45ded11c0aa79a04f573efecee6d3df84ba73836fdfe1adcb:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdBedrockStackA358C029.assets.json\\\" --verbose publish \\\"dcfd04687616d4f45ded11c0aa79a04f573efecee6d3df84ba73836fdfe1adcb:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset2/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset3843B048D": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset3",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQABedrockStack05B8BDB4.assets.json\\\" --verbose publish \\\"4e26bf2d0a26f2097fb2b261f22bb51e3f6b4b52635777b1e54edbd8e2d58c35:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdBedrockStackA358C029.assets.json\\\" --verbose publish \\\"4e26bf2d0a26f2097fb2b261f22bb51e3f6b4b52635777b1e54edbd8e2d58c35:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset3/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset454CEF680": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset4",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQABedrockStack05B8BDB4.assets.json\\\" --verbose publish \\\"d9861ea7a45affd23e47a614acb2fddc6e45c20a891284c958187dafbf9ee36b:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdBedrockStackA358C029.assets.json\\\" --verbose publish \\\"d9861ea7a45affd23e47a614acb2fddc6e45c20a891284c958187dafbf9ee36b:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset4/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset5ECCEB2E2": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset5",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.assets.json\\\" --verbose publish \\\"477a3a08b9900d720cdf88cffad05f7d360be3e97b3481a7a7c9b5675e21441c:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdDataIngestionStackA4EF9CB6.assets.json\\\" --verbose publish \\\"477a3a08b9900d720cdf88cffad05f7d360be3e97b3481a7a7c9b5675e21441c:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset5/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset638DDAC05": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset6",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.assets.json\\\" --verbose publish \\\"359dd32e952c9836aff26c3afc338a9d0ec2a7e7a50a032e12061f4f30baa72c:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdDataIngestionStackA4EF9CB6.assets.json\\\" --verbose publish \\\"359dd32e952c9836aff26c3afc338a9d0ec2a7e7a50a032e12061f4f30baa72c:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset6/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset744636BC2": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset7",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.assets.json\\\" --verbose publish \\\"7c979ffdde678b25a05cab8b8fce9e2d650e284e4ded2e86dbca100aa83f9f13:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdDataIngestionStackA4EF9CB6.assets.json\\\" --verbose publish \\\"7c979ffdde678b25a05cab8b8fce9e2d650e284e4ded2e86dbca100aa83f9f13:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset7/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset8F951CDAD": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset8",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.assets.json\\\" --verbose publish \\\"67b210adb27d45260d6169966b9ab619558eb7c26dabb7edb9166d0bb3dc37fa:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdDataIngestionStackA4EF9CB6.assets.json\\\" --verbose publish \\\"67b210adb27d45260d6169966b9ab619558eb7c26dabb7edb9166d0bb3dc37fa:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset8/Resource"
+   }
+  },
+  "MultimodalRAGPipelineAssetsFileAsset965C72E1A": {
+   "Type": "AWS::CodeBuild::Project",
+   "Properties": {
+    "Artifacts": {
+     "Type": "CODEPIPELINE"
+    },
+    "Cache": {
+     "Type": "NO_CACHE"
+    },
+    "Description": "Pipeline step CodePipelineStack/Pipeline/Assets/FileAsset9",
+    "EncryptionKey": "alias/aws/s3",
+    "Environment": {
+     "ComputeType": "BUILD_GENERAL1_SMALL",
+     "Image": "aws/codebuild/standard:7.0",
+     "ImagePullCredentialsType": "CODEBUILD",
+     "PrivilegedMode": false,
+     "Type": "LINUX_CONTAINER"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "MultimodalRAGPipelineAssetsFileRoleA1B559AA",
+      "Arn"
+     ]
+    },
+    "Source": {
+     "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"commands\": [\n        \"npm install -g cdk-assets@2\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-QA/CodePipelineStackQADataIngestionStack9A96DC7E.assets.json\\\" --verbose publish \\\"1af63ce07a339fcc4201b8503e9453f9cc451207e07da3f1a96be995d195c629:533267284022-us-east-1\\\"\",\n        \"cdk-assets --path \\\"assembly-CodePipelineStack-Prod/CodePipelineStackProdDataIngestionStackA4EF9CB6.assets.json\\\" --verbose publish \\\"1af63ce07a339fcc4201b8503e9453f9cc451207e07da3f1a96be995d195c629:533267284022-us-west-2\\\"\"\n      ]\n    }\n  }\n}",
+     "Type": "CODEPIPELINE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/MultimodalRAGPipeline/Assets/FileAsset9/Resource"
+   }
+  },
+  "CodeBuildRole728CBADE": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "codebuild.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AdministratorAccess"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CodeBuildRole/Resource"
+   }
+  },
+  "CodeBuildRoleDefaultPolicy829527DE": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "ssm:GetParameter",
+       "Effect": "Allow",
+       "Resource": "arn:aws:ssm:us-east-1:533267284022:parameter/MultimodalRAG/*"
+      },
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineQABuildLambdaPackage600CB5CE"
+           }
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineQABuildLambdaPackage600CB5CE"
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "codebuild:CreateReportGroup",
+        "codebuild:CreateReport",
+        "codebuild:UpdateReport",
+        "codebuild:BatchPutTestCases",
+        "codebuild:BatchPutCodeCoverages"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":codebuild:us-east-1:533267284022:report-group/",
+          {
+           "Ref": "MultimodalRAGPipelineQABuildLambdaPackage600CB5CE"
+          },
+          "-*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MultimodalRAGPipelineArtifactsBucketFD70C2D4",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineProdBuildLambdaPackageForProdEAED07F4"
+           }
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:",
+           {
+            "Ref": "AWS::Partition"
+           },
+           ":logs:us-east-1:533267284022:log-group:/aws/codebuild/",
+           {
+            "Ref": "MultimodalRAGPipelineProdBuildLambdaPackageForProdEAED07F4"
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "codebuild:CreateReportGroup",
+        "codebuild:CreateReport",
+        "codebuild:UpdateReport",
+        "codebuild:BatchPutTestCases",
+        "codebuild:BatchPutCodeCoverages"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":codebuild:us-east-1:533267284022:report-group/",
+          {
+           "Ref": "MultimodalRAGPipelineProdBuildLambdaPackageForProdEAED07F4"
+          },
+          "-*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CodeBuildRoleDefaultPolicy829527DE",
+    "Roles": [
+     {
+      "Ref": "CodeBuildRole728CBADE"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CodeBuildRole/DefaultPolicy/Resource"
+   }
+  },
+  "CleanUpFunctionServiceRole43CEA3F3": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CleanUpFunction/ServiceRole/Resource"
+   }
+  },
+  "CleanUpFunctionServiceRoleDefaultPolicyADD19E3A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "cloudformation:ListStacks",
+        "cloudformation:DeleteStack"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CleanUpFunctionServiceRoleDefaultPolicyADD19E3A",
+    "Roles": [
+     {
+      "Ref": "CleanUpFunctionServiceRole43CEA3F3"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CleanUpFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "CleanUpFunction8AFD13B6": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "5256080372a5e78ebb9ffce0c4760af6ed259734ce92ef03c74148d3897694d3.zip"
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CleanUpFunctionServiceRole43CEA3F3",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 900
+   },
+   "DependsOn": [
+    "CleanUpFunctionServiceRoleDefaultPolicyADD19E3A",
+    "CleanUpFunctionServiceRole43CEA3F3"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CleanUpFunction/Resource",
+    "aws:asset:path": "asset.5256080372a5e78ebb9ffce0c4760af6ed259734ce92ef03c74148d3897694d3",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "CleanupTrigger5CCC9103": {
+   "Type": "Custom::AWS",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+      "Arn"
+     ]
+    },
+    "Delete": {
+     "Fn::Join": [
+      "",
+      [
+       "{\"service\":\"Lambda\",\"action\":\"invoke\",\"parameters\":{\"FunctionName\":\"",
+       {
+        "Ref": "CleanUpFunction8AFD13B6"
+       },
+       "\",\"InvocationType\":\"Event\"},\"physicalResourceId\":{\"id\":\"CleanupTrigger\"}}"
+      ]
+     ]
+    },
+    "InstallLatestAwsSdk": false
+   },
+   "DependsOn": [
+    "CleanupTriggerCustomResourcePolicy2B01D6FE"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CleanupTrigger/Resource/Default"
+   }
+  },
+  "CleanupTriggerCustomResourcePolicy2B01D6FE": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "CleanUpFunction8AFD13B6",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CleanupTriggerCustomResourcePolicy2B01D6FE",
+    "Roles": [
+     {
+      "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CleanupTrigger/CustomResourcePolicy/Resource"
+   }
+  },
+  "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/AWS679f53fac002430cb0da5b7982bd2287/ServiceRole/Resource"
+   }
+  },
+  "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-533267284022-us-east-1",
+     "S3Key": "97f30e67419a1676a2215492723e5add1aa491caf0cbe2dd878fc4fab0468cd4.zip"
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 120
+   },
+   "DependsOn": [
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/AWS679f53fac002430cb0da5b7982bd2287/Resource",
+    "aws:asset:path": "asset.97f30e67419a1676a2215492723e5add1aa491caf0cbe2dd878fc4fab0468cd4",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/12PzW6DMBCEnyV3s01C+wAJUo8RgkOPyNgLNRg7Yk1RZfHuFeav7Wm+Ge3Oaq9weXuFy4mPFAnZRlqV4HPHRcv4SIVXvAOfWY0sqUzQ1Golvme70MSElfhUT9TKIPh0pTDxiz+w/LS2nRjF4O+DaNHN8UqLHN1//GLunHA5Vg5Ky+NS2tsGRWhbcWKad6XkhbESG4JHkPfBCKesYRQXnAgdwW2WdRh8Upl9Jlem1ujskWwwTSxDskMvkG1vEyRW4v5uqM0dr5WpmRjI2a7o1x2C20hJyPaa/7YyG09sfgEaevm6nuESw/nUkFJRPxinOoRs0R846CNgxwEAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "CodePipelineStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
