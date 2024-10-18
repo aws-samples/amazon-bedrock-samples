@@ -47,7 +47,7 @@ export class CodePipelineStack extends Stack {
           "npm run build",
           "npx cdk synth"
         ],
-        primaryOutputDirectory: 'rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd'  // Updated to reflect the correct project root directory
+        primaryOutputDirectory: 'rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/cdk.out'  // Updated to reflect the correct project root directory
       }),
       dockerEnabledForSynth: true,
     });
