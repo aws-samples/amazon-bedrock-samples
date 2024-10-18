@@ -1,6 +1,16 @@
 <h1> Fine-Tuning Mistral LLM and importing into Bedrock: A Step-by-Step Instructional Guide </h1>
 
-In this notebook we will walk through how to fine-tune a Mistral LLM for Question Answering on Amazon SageMaker using PyTorch FSDP and Flash Attention 2 including Q-LORA and PEFT. This notebook also explains using PEFT and merging the adapters. 
+<h2> Overview </h2>
+
+In this notebook we will walk through how to fine-tune a Mistral LLM for Question Answering on Amazon SageMaker using PyTorch FSDP and Flash Attention 2 including Q-LORA and PEFT. This notebook also explains using PEFT and merging the adapters. This fine tuned model will then be imported into Amazon Bedrock Custom Model Import (CMI). 
+
+<h2> Amazon Bedrock Custom Model Import (CMI) </h2>
+
+The resulting model files are imported into Amazon Bedrock via [Custom Model Import (CMI)](https://docs.aws.amazon.com/bedrock/latest/userguide/model-customization-import-model.html). 
+
+Bedrock Custom Model Import allows for importing foundation models that have been customized in other environments outside of Amazon Bedrock, such as Amazon Sagemaker, EC2, etc. 
+
+<h2> Use case Details </h2>
 
 We will quantize the model as bf16 model. We use [Supervised Fine-tuning Trainer](https://huggingface.co/docs/trl/sft_trainer) (SFT) for fine tuning the model. We will use [Open-Orca/OpenOrca] (https://huggingface.co/datasets/Open-Orca/OpenOrca) dataset for fine tuning the model. This is a reading comprehension dataset containing over 650K question-answer-evidence triples. 
 
@@ -16,9 +26,14 @@ This notebook is inspired by Philipp Schmid Blog - https://www.philschmid.de/fsd
 
 In this notebook we use the Mistral-7B-v0.3 model from HuggingFace repository. This model is a gated model within HuggingFace repository. Mistral released this model under the Apache 2.0 license (https://mistral.ai/news/announcing-mistral-7b/). To use the model from Huggingface as this model is a gated model you have to request access to the model before it using in this notebook.
 
-<h2>Notebook code and comments </h2>
+<h2> Pre-Requisites </h2>
 
-<h3> Install the Pre-Requisites </h3>
+You will require an AWS account and access to Amazon Sagemaker 
+
+<h2> Code with comments </h2>
+
+<h3> Install libraries </h3>
+
 
 ```python
 !pip3 uninstall autogluon autogluon-multimodal -y
@@ -63,6 +78,7 @@ print(f"sagemaker session region: {sess.boto_region_name}")
 ```
 
 <h3> Define the Parameters </h3>
+
 
 ```python
 model_id = "mistralai/Mistral-7B-v0.3"
@@ -458,14 +474,13 @@ huggingface_estimator.fit(data, wait=True)
 
 <h3> Print the Model location to be used in Bedrock </h3>
 
-
 ```python
 huggingface_estimator.model_data
 ```
 
 <h3> Import the Finetuned model into Bedrock: </h3>
 
-<h3> Now follow the steps from the link below to continue to import this model </h3>
+<h4> Now follow the steps from the link below to continue to import this model </h4>
 
 https://docs.aws.amazon.com/bedrock/latest/userguide/model-customization-import-model.html
 
@@ -578,3 +593,13 @@ native_request = {
 }
 call_invoke_model_and_print(native_request)
 ```
+
+<h3> Clean Up </h3>
+
+You can delete your Imported Model in the console as shown in the image below:
+
+![Delete](./images/delete.png "Delete")
+
+Ensure to shut down your instance/compute that you have run this notebook on.
+
+**END OF NOTEBOOK**
