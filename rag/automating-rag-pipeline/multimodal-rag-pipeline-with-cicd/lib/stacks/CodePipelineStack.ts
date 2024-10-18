@@ -110,9 +110,10 @@ export class CodePipelineStack extends Stack {
             commands: [
               "echo 'Current working directory:' $(pwd)",
               "ls -R",
-              "chmod +x ./src/app/build_lambda.sh",  // Make the script executable
-              "./src/app/build_lambda.sh"            // Run the script
+              "chmod +x rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/build_lambda.sh",  // Make the script executable
+              "./rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/build_lambda.sh"            // Run the script
             ],
+
             role: codeBuildRole,
             buildEnvironment: {
               buildImage: LinuxBuildImage.STANDARD_5_0, // Use standard CodeBuild image
