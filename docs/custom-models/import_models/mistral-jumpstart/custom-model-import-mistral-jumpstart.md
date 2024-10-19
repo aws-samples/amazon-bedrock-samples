@@ -1,10 +1,8 @@
 <h1> Fine tuning Mistral-7b on Sagemaker Jumpstart and deploying to Amazon Bedrock using Custom Model Import </h1>
 
-<h2>Overview</h2>
----
-In this demo notebook, we demonstrate how to use the SageMaker Python SDK to fine-tuning [Mistral 7B](mistralai/Mistral-7B-v0.1) models for text generation. For fine-tuning, we include two types of fine-tuning: instruction fine-tuning and domain adaption fine-tuning. Then we deploy these models to Amazon Bedrock via Custom Model Import feature. 
+<h2> Overview </h2>
 
----
+In this demo notebook, we demonstrate how to use the SageMaker Python SDK to fine-tuning [Mistral 7B](mistralai/Mistral-7B-v0.1) models for text generation. For fine-tuning, we include two types of fine-tuning: instruction fine-tuning and domain adaption fine-tuning. Then we deploy these models to Amazon Bedrock via Custom Model Import feature. 
 
 Below is the content of the notebook.
 
@@ -23,8 +21,23 @@ Below is the content of the notebook.
    * [2.5. Invoke model from Bedrock](#2.5.-Invoke-model-from-Bedrock)
    * [2.6. Clean up endpoint](#2.6.-Clean-up-the-endpoint)
 
-<h2>Notebook code and comments</h2>
-Install latest SageMaker and dependencies.
+<h2> Amazon Bedrock Custom Model Import (CMI) </h2>
+
+The resulting model files are imported into Amazon Bedrock via [Custom Model Import (CMI)](https://docs.aws.amazon.com/bedrock/latest/userguide/model-customization-import-model.html). 
+
+Bedrock Custom Model Import allows for importing foundation models that have been customized in other environments outside of Amazon Bedrock, such as Amazon Sagemaker, EC2, etc. 
+
+<h2> Context </h2>
+
+Now, we demonstrate how to instruction-tune `huggingface-llm-mistral-7b` model for a new task. The Mistral-7B-v0.1 Large Language Model (LLM) is a pretrained generative text model with 7 billion parameters. Mistral-7B-v0.1 outperforms Llama 2 13B on all benchmarks we tested. For details, see its [HuggingFace webpage](https://huggingface.co/mistralai/Mistral-7B-v0.1).
+
+<h2> Use Case </h2>
+
+We are can fine-tuneing on the dataset with domain adaptation format or instruction tuning format. In this section, we will use a subset of [Dolly dataset](https://huggingface.co/datasets/databricks/databricks-dolly-15k) in an instruction tuning format. Dolly dataset contains roughly 15,000 instruction following records for various categories such as question answering, summarization, information extraction etc. It is available under Apache 2.0 license. We will select the summarization examples for fine-tuning.
+
+<h2> Code with Comments </h2>
+
+<h3> Installs </h3>
 
 
 ```python
@@ -40,9 +53,7 @@ Install latest SageMaker and dependencies.
     sparkmagic 0.21.0 requires pandas<2.0.0,>=0.17.1, but you have pandas 2.2.2 which is incompatible.[0m[31m
     [0m
 
-<h3> 1. Instruction fine-tuning </h3>
-
-Now, we demonstrate how to instruction-tune `huggingface-llm-mistral-7b` model for a new task. The Mistral-7B-v0.1 Large Language Model (LLM) is a pretrained generative text model with 7 billion parameters. Mistral-7B-v0.1 outperforms Llama 2 13B on all benchmarks we tested. For details, see its [HuggingFace webpage](https://huggingface.co/mistralai/Mistral-7B-v0.1).
+<h3> Insert name/ID of model from Jumpstart </h3>
 
 
 ```python
@@ -52,8 +63,7 @@ model_id, model_version = "huggingface-llm-mistral-7b", "*"
 
 <h3> 1.1. Preparing training data </h3>
 
-You can fine-tune on the dataset with domain adaptation format or instruction tuning format. In this section, we will use a subset of [Dolly dataset](https://huggingface.co/datasets/databricks/databricks-dolly-15k) in an instruction tuning format. Dolly dataset contains roughly 15,000 instruction following records for various categories such as question answering, summarization, information extraction etc. It is available under Apache 2.0 license. We will select the summarization examples for fine-tuning.
-
+Pulling the [Dolly dataset](https://huggingface.co/datasets/databricks/databricks-dolly-15k) from the HuggingFace hub.
 Training data is formatted in JSON lines (.jsonl) format, where each line is a dictionary representing a single data sample. All training data must be in a single folder, however it can be saved in multiple jsonl files. The training folder can also contain a template.json file describing the input and output formats.
 
 
@@ -370,7 +380,7 @@ Note. <b>For dolly dataset, we observe the performance of fine-tuned model is eq
 Click on `Models` to see your model. Delete the Model.
 ```
 
-<h3> 2. Domain adaptation fine-tuning </h3>
+<h2> 2. Domain adaptation fine-tuning </h2>
 
 We also have domain adaptation fine-tuning enabled for Mistral models. Different from instruction fine-tuning, you do not need prepare instruction-formatted dataset and can directly use unstructured text document which is demonstrated as below. However, the model that is domain-adaptation fine-tuned may not give concise responses as the instruction-tuned model because of less restrictive requirements on training data formats.
 
@@ -432,7 +442,7 @@ training_dataset_s3_path = f"s3://{data_bucket}/{data_prefix}/train/"
 validation_dataset_s3_path = f"s3://{data_bucket}/{data_prefix}/validation/"
 ```
 
-<h3> 2.2. Prepare training parameters- </h3>
+<h3> 2.2. Prepare training parameters </h3>
 
 We pick the `max_input_length` to be 2048 on `g5.12xlarge`. You can use higher input length on larger instance type.
 
@@ -641,8 +651,12 @@ As you can, the fine-tuned model starts to generate responses that are more spec
 
 <h3> 2.6. Clean up the endpoint </h3>
 
-```python
-# Delete the Bedrock Model
+<h3> Clean Up </h3>
 
-Click on `Models` to see your model. Delete the Model.
-```
+You can delete your Imported Model in the console as shown in the image below:
+
+![Delete](./images/delete.png "Delete")
+
+Ensure to shut down your instance/compute that you have run this notebook on.
+
+**END OF NOTEBOOK**
