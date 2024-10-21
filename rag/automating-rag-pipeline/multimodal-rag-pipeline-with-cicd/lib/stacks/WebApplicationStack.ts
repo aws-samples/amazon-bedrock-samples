@@ -76,7 +76,8 @@ export class WebApplicationStack extends Stack {
         // Grant the Lambda function permission to access KnowledgeBase for Amazon Bedrock to retrieve and generate responses
         const kbRetrieveAndGeneratePolicy = new PolicyStatement({
             actions: ['bedrock:RetrieveAndGenerate', 'bedrock:Retrieve'],
-            resources: ['*'],  // TODO CRITICAL: Restrict to specific knowledge bases
+            resources: ['arn:aws:bedrock:${this.region}:${process.env.CDK_DEFAULT_ACCOUNT}:knowledge-base/${props.knowledgeBaseId}'],
+            // arn:aws:bedrock:{Region}:{Account}:knowledge-base/{KnowledgeBaseId}
             sid: 'KnowledgebaseRetrieveAndGeneratePolicy',
         });
 
