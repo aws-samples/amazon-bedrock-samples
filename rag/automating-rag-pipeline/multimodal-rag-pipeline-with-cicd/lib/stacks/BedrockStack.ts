@@ -94,14 +94,6 @@ export class BedrockStack extends Stack {
       ],
     });
 
-    // // Retrieve QA Bucket Name from SSM Parameter Store.
-    // const bedrockCustomLambdaBucketName = new SSMParameterReader(this, 'BedrockCustomLambdaPackageBucketName', {
-    //   // parameterName: `/${props.codePipelineName}/S3BucketStage/lambda-package-bucket-name`,   // SSM parameter name. Stage name is different from the stageName in the props 
-    //   parameterName: '/MultimodalRAG/S3BucketStage/lambda-package-bucket-name',
-    //   region: 'us-east-1', // SSM parameter region.
-    // }).getParameterValue();
-
-
     // Retrieve the custom Lambda package bucket name from the SSM parameter store
     let bedrockCustomLambdaBucketName: string;
     if (props.stageName === "QA") {
@@ -121,13 +113,6 @@ export class BedrockStack extends Stack {
     });
 
     const bedrockCustomLambdaPackageBucket = Bucket.fromBucketName(this, 'BedrockCustomLambdaPackageBucket', bedrockCustomLambdaBucketName);
-
-    // // To make the Lambda function read the code from an S3 bucket in a different region
-    // const bedrockCustomLambdaPackageBucket = Bucket.fromBucketAttributes(this, 'BedrockCustomLambdaPackageBucket', {
-    //   bucketName: bedrockCustomLambdaBucketName,
-    //   region: 'us-east-1',
-    // }
-    // )
 
 
     // Create the Lambda function responsible for transforming data

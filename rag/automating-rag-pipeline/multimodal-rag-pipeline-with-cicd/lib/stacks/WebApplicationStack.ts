@@ -69,7 +69,7 @@ export class WebApplicationStack extends Stack {
         mainLambdaFunction.addToRolePolicy(
             new PolicyStatement({
                 actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
-                resources: ['*'],  // TODO CRITICAL: Restrict to specific models
+                resources: ['*'],  // TODO: Restrict to specific models
             }),
         );
 
@@ -171,19 +171,3 @@ export class WebApplicationStack extends Stack {
         });
     }
 }
-
-
-
-
-// // Add a container to the Fargate task definition, using the 'amazon/amazon-ecs-sample' image.
-// const container = fargateTaskDefinition.addContainer('MyContainer', {
-//     image: ecs.ContainerImage.fromRegistry('amazon/amazon-ecs-sample'),  // Container image
-//     memoryLimitMiB: 512,  // Memory limit for the container
-//     cpu: 256,  // CPU units for the container
-//     logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'WebContainerLogs' }),  // Enable logging
-// });
-
-// // Map port 80 of the container to the host.
-// container.addPortMappings({
-//     containerPort: 80,  // Port on the container
-// });

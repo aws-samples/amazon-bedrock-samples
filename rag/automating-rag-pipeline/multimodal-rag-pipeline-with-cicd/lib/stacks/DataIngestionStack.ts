@@ -34,15 +34,18 @@ export class DataIngestionStack extends Stack {
     constructor(scope: Construct, id: string, props: DataIngestionStackProps) {
         super(scope, id, props);
 
+
         // ================================Create S3 Buckets================================
         // Create a s3 bucket that will be used as the organization's data source
-        const rawS3DataSource = new Bucket(this, 'RawDataSourceBucket', {
-            bucketName: 'raw-data-source-bucket-' + process.env.CDK_DEFAULT_ACCOUNT + '-' + props?.stageName?.toLowerCase(),
-            blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-            autoDeleteObjects: true,
-            removalPolicy: RemovalPolicy.DESTROY,
-            eventBridgeEnabled: true,
-        });
+        // const rawS3DataSource = new Bucket(this, 'RawDataSourceBucket', {
+        //     bucketName: 'raw-data-source-bucket-' + process.env.CDK_DEFAULT_ACCOUNT + '-' + props?.stageName?.toLowerCase(),
+        //     blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+        //     autoDeleteObjects: true,
+        //     removalPolicy: RemovalPolicy.DESTROY,
+        //     eventBridgeEnabled: true,
+        // });
+
+        const rawS3DataSource = this.createBucket('RawDataSourceBucket', 'raw-data-source-bucket', props.stageName);
 
         // Store the bucket name in SSM Parameter Store
         new StringParameter(this, 'rawS3DataSource', {
@@ -53,13 +56,15 @@ export class DataIngestionStack extends Stack {
         this.rawS3DataSourceBucketName = rawS3DataSource.bucketName;
 
         // Create a s3 bucket that will be used as the organization's processed data source (KB s3 source)
-        const processedS3DataSource = new Bucket(this, 'ProcessedDataSourceBucket', {
-            bucketName: 'processed-data-source-bucket-' + process.env.CDK_DEFAULT_ACCOUNT + '-' + props?.stageName?.toLowerCase(),
-            blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-            autoDeleteObjects: true,
-            removalPolicy: RemovalPolicy.DESTROY,
-            eventBridgeEnabled: true,
-        });
+        // const processedS3DataSource = new Bucket(this, 'ProcessedDataSourceBucket', {
+        //     bucketName: 'processed-data-source-bucket-' + process.env.CDK_DEFAULT_ACCOUNT + '-' + props?.stageName?.toLowerCase(),
+        //     blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+        //     autoDeleteObjects: true,
+        //     removalPolicy: RemovalPolicy.DESTROY,
+        //     eventBridgeEnabled: true,
+        // });
+
+        const processedS3DataSource = this.createBucket('ProcessedDataSourceBucket', 'processed-data-source-bucket', props.stageName);
 
         // Store the bucket name in SSM Parameter Store
         new StringParameter(this, 'processedS3DataSource', {
@@ -96,13 +101,17 @@ export class DataIngestionStack extends Stack {
 
 
         // Lambda function to mark the new files in the DynamoDB table
-        const metadataTrackingLambda = new NodejsFunction(this, 'MetadataTrackingLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: join(__dirname, '..', '..', 'src', 'services', 'metadata-tracking.ts'),
-            handler: 'handler',
-            environment: {
-                FILE_METADATA_TABLE_NAME: fileMetadataTable.tableName,
-            },
+        // const metadataTrackingLambda = new NodejsFunction(this, 'MetadataTrackingLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: join(__dirname, '..', '..', 'src', 'services', 'metadata-tracking.ts'),
+        //     handler: 'handler',
+        //     environment: {
+        //         FILE_METADATA_TABLE_NAME: fileMetadataTable.tableName,
+        //     },
+        // });
+
+        const metadataTrackingLambda = this.createLambdaFunction('MetadataTrackingLambda', 'metadata-tracking.ts', 5, {
+            FILE_METADATA_TABLE_NAME: fileMetadataTable.tableName,
         });
 
         // Grant permissions to the Lambda function for the unified metadata table and S3 buckets
@@ -415,19 +424,6 @@ export class DataIngestionStack extends Stack {
 
         const jobFailedState = Condition.stringEquals('$.GetIngestionJobResult.Payload.status', 'FAILED');
 
-        // Pass states to indicate that the ingestion job is completed; for testing purposes
-        // const jobCompletedPassStateQA = new Pass(this, `IngestionJobCompleted-${props.stageName}`, {
-        //     result: Result.fromObject({
-        //         message: `The ingestion job completed successfully in -${props.stageName} stage.`,
-        //     }),
-        // });
-
-        // const jobCompletedPassStateProd = new Pass(this, `IngestionJobCompleted-${props.stageName}`, {
-        //     result: Result.fromObject({
-        //         message: `The ingestion job completed successfully in -${props.stageName} stage.`,
-        //     }),
-        // });
-
         const jobCompletedPassState = new Pass(this, `IngestionJobCompleted-${props.stageName}`, {
             result: Result.fromObject({
                 message: `The ingestion job completed successfully in -${props.stageName} stage.`,
@@ -557,6 +553,32 @@ export class DataIngestionStack extends Stack {
             name: "KnowledgeBasesDataIngestionSchedule",
             state: "ENABLED",
         });
+
+
+
+
     }
+
+    private createBucket(id: string, namePrefix: string, stageName: string): Bucket {
+        return new Bucket(this, id, {
+            bucketName: `${namePrefix}-${process.env.CDK_DEFAULT_ACCOUNT}-${stageName.toLowerCase()}`,
+            blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+            autoDeleteObjects: true,
+            removalPolicy: RemovalPolicy.DESTROY,
+            eventBridgeEnabled: true,
+        });
+    }
+
+    private createLambdaFunction(id: string, entryPath: string, timeoutMinutes: number, environment: Record<string, string> = {}): NodejsFunction {
+        return new NodejsFunction(this, id, {
+            runtime: Runtime.NODEJS_18_X,
+            entry: join(__dirname, '..', '..', 'src', 'services', entryPath),
+            handler: 'handler',
+            environment,
+            timeout: Duration.minutes(timeoutMinutes),
+        });
+
+    }
+
 }
 
