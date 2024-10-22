@@ -18,25 +18,34 @@ export class RAGEvaluationStack extends Stack {
         super(scope, id, props);
 
         // Lambda to evaluate new data ingestion
-        const ingestionEvaluationLambda = new NodejsFunction(this, 'RAGEvaluationLambda', {
-            functionName: 'RAGEvaluationLambda',
-            runtime: Runtime.NODEJS_18_X,
-            entry: join(__dirname, '..', '..', 'src', 'services', 'evaluate-new-data-ingestion.ts'),
-            handler: 'handler',
-            environment: {
-                STAGE_NAME: props.stageName,
-            },
+        // const ingestionEvaluationLambda = new NodejsFunction(this, 'RAGEvaluationLambda', {
+        //     functionName: 'RAGEvaluationLambda',
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: join(__dirname, '..', '..', 'src', 'services', 'evaluate-new-data-ingestion.ts'),
+        //     handler: 'handler',
+        //     environment: {
+        //         STAGE_NAME: props.stageName,
+        //     },
+        // });
+
+        const ingestionEvaluationLambda = this.createLambdaFunction('RAGEvaluationLambda', 'evaluate-new-data-ingestion.ts', 5, {
+            STAGE_NAME: props.stageName,
         });
 
         // Lambda to trigger approval in CodePipeline
-        const triggerApprovalLambda = new NodejsFunction(this, 'TriggerApprovalLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: join(__dirname, '..', '..', 'src', 'services', 'trigger-approval.ts'),
-            handler: 'handler',
-            environment: {
-                STAGE_NAME: props.stageName,
-                PIPELINE_NAME: props.codePipelineName,
-            },
+        // const triggerApprovalLambda = new NodejsFunction(this, 'TriggerApprovalLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: join(__dirname, '..', '..', 'src', 'services', 'trigger-approval.ts'),
+        //     handler: 'handler',
+        //     environment: {
+        //         STAGE_NAME: props.stageName,
+        //         PIPELINE_NAME: props.codePipelineName,
+        //     },
+        // });
+
+        const triggerApprovalLambda = this.createLambdaFunction('TriggerApprovalLambda', 'trigger-approval.ts', 5, {
+            STAGE_NAME: props.stageName,
+            PIPELINE_NAME: props.codePipelineName,
         });
 
         // Add necessary permissions for triggerApprovalLambda
@@ -68,13 +77,17 @@ export class RAGEvaluationStack extends Stack {
 
         // StepFunctionsStartExecution construct in AWS CDK does not have a region property as part of its API. Instead, you need to manage cross-region invocations using AWS SDK calls within a Lambda function that runs in the region where the Step Function is located.
         // Create a new Lambda to start the Step Function in us-west-2
-        const startMoveFilesLambda = new NodejsFunction(this, 'StartMoveFilesLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: join(__dirname, '..', '..', 'src', 'services', 'start-move-files-state-machine.ts'),
-            handler: 'handler',
-            environment: {
-                PIPELINE_NAME: props.codePipelineName,
-            },
+        // const startMoveFilesLambda = new NodejsFunction(this, 'StartMoveFilesLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: join(__dirname, '..', '..', 'src', 'services', 'start-move-files-state-machine.ts'),
+        //     handler: 'handler',
+        //     environment: {
+        //         PIPELINE_NAME: props.codePipelineName,
+        //     },
+        // });
+
+        const startMoveFilesLambda = this.createLambdaFunction('StartMoveFilesLambda', 'start-move-files-state-machine.ts', 5, {
+            PIPELINE_NAME: props.codePipelineName,
         });
 
         // Add necessary permissions to start Step Function in us-west-2
@@ -113,6 +126,18 @@ export class RAGEvaluationStack extends Stack {
             stringValue: ragEvaluationStateMachine.stateMachineArn,
         });
     }
-}
 
 
+    private createLambdaFunction(id: string, entryPath: string, timeoutMinutes: number, environment: Record<string, string> = {}): NodejsFunction {
+        return new NodejsFunction(this, id, {
+            runtime: Runtime.NODEJS_18_X,
+            entry: join(__dirname, '..', '..', 'src', 'services', entryPath),
+            handler: 'handler',
+            environment,
+            timeout: Duration.minutes(timeoutMinutes),
+        });
+
+    }
+
+
+}   

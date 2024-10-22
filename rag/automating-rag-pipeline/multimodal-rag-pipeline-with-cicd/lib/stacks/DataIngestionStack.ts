@@ -45,14 +45,6 @@ export class DataIngestionStack extends Stack {
 
         // ================================Create S3 Buckets================================
         // Create a s3 bucket that will be used as the organization's data source
-        // const rawS3DataSource = new Bucket(this, 'RawDataSourceBucket', {
-        //     bucketName: 'raw-data-source-bucket-' + process.env.CDK_DEFAULT_ACCOUNT + '-' + props?.stageName?.toLowerCase(),
-        //     blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-        //     autoDeleteObjects: true,
-        //     removalPolicy: RemovalPolicy.DESTROY,
-        //     eventBridgeEnabled: true,
-        // });
-
         const rawS3DataSource = this.createBucket('RawDataSourceBucket', 'raw-data-source-bucket', props.stageName);
 
         // Store the bucket name in SSM Parameter Store
@@ -64,14 +56,6 @@ export class DataIngestionStack extends Stack {
         this.rawS3DataSourceBucketName = rawS3DataSource.bucketName;
 
         // Create a s3 bucket that will be used as the organization's processed data source (KB s3 source)
-        // const processedS3DataSource = new Bucket(this, 'ProcessedDataSourceBucket', {
-        //     bucketName: 'processed-data-source-bucket-' + process.env.CDK_DEFAULT_ACCOUNT + '-' + props?.stageName?.toLowerCase(),
-        //     blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-        //     autoDeleteObjects: true,
-        //     removalPolicy: RemovalPolicy.DESTROY,
-        //     eventBridgeEnabled: true,
-        // });
-
         const processedS3DataSource = this.createBucket('ProcessedDataSourceBucket', 'processed-data-source-bucket', props.stageName);
 
         // Store the bucket name in SSM Parameter Store
@@ -109,15 +93,6 @@ export class DataIngestionStack extends Stack {
 
 
         // Lambda function to mark the new files in the DynamoDB table
-        // const metadataTrackingLambda = new NodejsFunction(this, 'MetadataTrackingLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: join(__dirname, '..', '..', 'src', 'services', 'metadata-tracking.ts'),
-        //     handler: 'handler',
-        //     environment: {
-        //         FILE_METADATA_TABLE_NAME: fileMetadataTable.tableName,
-        //     },
-        // });
-
         const metadataTrackingLambda = this.createLambdaFunction('MetadataTrackingLambda', 'metadata-tracking.ts', 5, {
             FILE_METADATA_TABLE_NAME: fileMetadataTable.tableName,
         });
@@ -168,12 +143,6 @@ export class DataIngestionStack extends Stack {
         // ===============================ETL Step Function Workflow================================
 
         // Create a Lambda function to process s3 events and extract the file name and event type
-        // const s3EventProcessor = new NodejsFunction(this, 'S3EventProcessorLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: (join(__dirname, '..', '..', 'src', 'services', 's3-event-processor.ts')),
-        //     handler: 'handler',
-        // });
-
         const s3EventProcessor = this.createLambdaFunction('S3EventProcessorLambda', 's3-event-processor.ts', 1);
 
         // Step 1: Create a Step Functions task to invoke the Lambda function
@@ -213,16 +182,6 @@ export class DataIngestionStack extends Stack {
         });
 
         // Create a Lambda function to process the added file by picking up the message from the FileUploadQueue
-        // const fileProcessor = new NodejsFunction(this, 'FileProcessorLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: (join(__dirname, '..', '..', 'src', 'services', 'file-upload-processor.ts')),
-        //     handler: 'handler',
-        //     environment: {
-        //         RAW_S3: rawS3DataSource.bucketArn,
-        //         PROCESSED_S3: processedS3DataSource.bucketArn
-        //     },
-        // });
-
         const fileProcessor = this.createLambdaFunction('FileProcessorLambda', 'file-upload-processor.ts', 5, {
             RAW_S3: rawS3DataSource.bucketArn,
             PROCESSED_S3: processedS3DataSource.bucketArn,
@@ -285,15 +244,6 @@ export class DataIngestionStack extends Stack {
 
         // =======================Step 1: Check for new files in the processed S3 bucket=======================
         // Create a Lambda function to check for new files in the processed S3 bucket.
-        // const checkForNewFileModificationsLambda = new NodejsFunction(this, 'CheckForNewFileModificationsLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: join(__dirname, '..', '..', 'src', 'services', 'check-for-new-files.ts'),
-        //     handler: 'handler',
-        //     environment: {
-        //         FILE_METADATA_TABLE: fileMetadataTable.tableName,
-        //     },
-        // });
-
         const checkForNewFileModificationsLambda = this.createLambdaFunction('CheckForNewFileModificationsLambda', 'check-for-new-files.ts', 5, {
             FILE_METADATA_TABLE: fileMetadataTable.tableName,
         });
@@ -328,19 +278,6 @@ export class DataIngestionStack extends Stack {
         // =======================Step 3: Start the KB ingestion process if new files are available=======================
 
         // Create a Lambda function to start the KB ingestion process
-        // const startKBIngestionLambda = new NodejsFunction(this, 'StartKBIngestionLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: (join(__dirname, '..', '..', 'src', 'services', 'kb-data-ingestion.ts')),
-        //     handler: 'handler',
-        //     timeout: Duration.minutes(10),
-        //     environment: {
-        //         FILE_METADATA_TABLE: fileMetadataTable.tableArn,
-        //         PROCESSED_S3: processedS3DataSource.bucketArn,
-        //         KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
-        //         DATA_SOURCE_ID: props.dataSourceId,
-        //     },
-        // });
-
         const startKBIngestionLambda = this.createLambdaFunction('StartKBIngestionLambda', 'kb-data-ingestion.ts', 10, {
             FILE_METADATA_TABLE: fileMetadataTable.tableArn,
             PROCESSED_S3: processedS3DataSource.bucketArn,
@@ -372,16 +309,6 @@ export class DataIngestionStack extends Stack {
         // =======================Step 4: Get the KB ingestion job status=======================
 
         // Create a Lambda function to get the KB ingestion job status
-        // const getIngestionJobStatusLambda = new NodejsFunction(this, 'GetIngestionJobStatusLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: (join(__dirname, '..', '..', 'src', 'services', 'get-ingestion-job-status.ts')),
-        //     handler: 'handler',
-        //     timeout: Duration.minutes(5),
-        //     environment: {
-        //         FILE_METADATA_TABLE: fileMetadataTable.tableArn,
-        //     },
-        // });
-
         const getIngestionJobStatusLambda = this.createLambdaFunction('GetIngestionJobStatusLambda', 'get-ingestion-job-status.ts', 5, {
             FILE_METADATA_TABLE: fileMetadataTable.tableArn,
         });
@@ -418,15 +345,6 @@ export class DataIngestionStack extends Stack {
 
         // =======================Step 6: Update the file metadata table with the KB ingestion status=======================
         // Create a Lambda function to update the file metadata table with the KB ingestion status
-        // const updateFileMetadataLambda = new NodejsFunction(this, 'UpdateFileMetadataLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: (join(__dirname, '..', '..', 'src', 'services', 'update-file-metadata.ts')),
-        //     handler: 'handler',
-        //     environment: {
-        //         FILE_METADATA_TABLE: fileMetadataTable.tableArn,
-        //     },
-        // });
-
         const updateFileMetadataLambda = this.createLambdaFunction('UpdateFileMetadataLambda', 'update-file-metadata.ts', 5, {
             FILE_METADATA_TABLE: fileMetadataTable.tableArn,
         });
@@ -489,16 +407,6 @@ export class DataIngestionStack extends Stack {
 
         if (props.stageName === 'QA') {
             // Lambda function to trigger the ragEvaluationStateMachine using the AWS SDK's StartExecution API,
-            // const triggerRAGEvalLambda = new NodejsFunction(this, 'TriggerRAGEvaluationLambda', {
-            //     runtime: Runtime.NODEJS_18_X,
-            //     entry: join(__dirname, '..', '..', 'src', 'services', 'trigger-rag-evaluation.ts'),
-            //     handler: 'handler',
-            //     timeout: Duration.minutes(5),
-            //     environment: {
-            //         CODE_PIPELINE_NAME: props.codePipelineName,
-            //     },
-            // });
-
             const triggerRAGEvalLambda = this.createLambdaFunction('TriggerRAGEvaluationLambda', 'trigger-rag-evaluation.ts', 5, {
                 CODE_PIPELINE_NAME: props.codePipelineName,
             });
@@ -571,7 +479,6 @@ export class DataIngestionStack extends Stack {
 
         // Allow the scheduler to invoke the Step Functions state machine
         kbDataIngestionStateMachine.grantStartExecution(kbIngestionSchedulerRole);
-
 
 
         //Create an EventBridge scheduler to invoke the Step Functions state machine every 2 minutes
