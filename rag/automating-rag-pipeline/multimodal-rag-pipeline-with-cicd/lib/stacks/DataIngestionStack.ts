@@ -27,6 +27,14 @@ export interface DataIngestionStackProps extends StackProps {
     dataSourceId: string;
 }
 
+// Define the enum for ingestion job statuses
+enum IngestionJobStatus {
+    IN_PROGRESS = 'IN_PROGRESS',
+    STARTING = 'STARTING',
+    COMPLETE = 'COMPLETE',
+    FAILED = 'FAILED'
+}
+
 export class DataIngestionStack extends Stack {
     public readonly kbDataIngestionStateMachineArn: string;
     public readonly rawS3DataSourceBucketName: string;
@@ -160,11 +168,13 @@ export class DataIngestionStack extends Stack {
         // ===============================ETL Step Function Workflow================================
 
         // Create a Lambda function to process s3 events and extract the file name and event type
-        const s3EventProcessor = new NodejsFunction(this, 'S3EventProcessorLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: (join(__dirname, '..', '..', 'src', 'services', 's3-event-processor.ts')),
-            handler: 'handler',
-        });
+        // const s3EventProcessor = new NodejsFunction(this, 'S3EventProcessorLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: (join(__dirname, '..', '..', 'src', 'services', 's3-event-processor.ts')),
+        //     handler: 'handler',
+        // });
+
+        const s3EventProcessor = this.createLambdaFunction('S3EventProcessorLambda', 's3-event-processor.ts', 1);
 
         // Step 1: Create a Step Functions task to invoke the Lambda function
         const lambdaInvokeTask = new LambdaInvoke(this, 'S3EventProcessorLambdaInvokeTask', {
@@ -203,15 +213,21 @@ export class DataIngestionStack extends Stack {
         });
 
         // Create a Lambda function to process the added file by picking up the message from the FileUploadQueue
-        const fileProcessor = new NodejsFunction(this, 'FileProcessorLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: (join(__dirname, '..', '..', 'src', 'services', 'file-upload-processor.ts')),
-            handler: 'handler',
-            environment: {
-                RAW_S3: rawS3DataSource.bucketArn,
-                PROCESSED_S3: processedS3DataSource.bucketArn
-            },
+        // const fileProcessor = new NodejsFunction(this, 'FileProcessorLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: (join(__dirname, '..', '..', 'src', 'services', 'file-upload-processor.ts')),
+        //     handler: 'handler',
+        //     environment: {
+        //         RAW_S3: rawS3DataSource.bucketArn,
+        //         PROCESSED_S3: processedS3DataSource.bucketArn
+        //     },
+        // });
+
+        const fileProcessor = this.createLambdaFunction('FileProcessorLambda', 'file-upload-processor.ts', 5, {
+            RAW_S3: rawS3DataSource.bucketArn,
+            PROCESSED_S3: processedS3DataSource.bucketArn,
         });
+
 
         // Add permissions to the Lambda function to access the S3 buckets
         rawS3DataSource.grantRead(fileProcessor);
@@ -269,13 +285,17 @@ export class DataIngestionStack extends Stack {
 
         // =======================Step 1: Check for new files in the processed S3 bucket=======================
         // Create a Lambda function to check for new files in the processed S3 bucket.
-        const checkForNewFileModificationsLambda = new NodejsFunction(this, 'CheckForNewFileModificationsLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: join(__dirname, '..', '..', 'src', 'services', 'check-for-new-files.ts'),
-            handler: 'handler',
-            environment: {
-                FILE_METADATA_TABLE: fileMetadataTable.tableName,
-            },
+        // const checkForNewFileModificationsLambda = new NodejsFunction(this, 'CheckForNewFileModificationsLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: join(__dirname, '..', '..', 'src', 'services', 'check-for-new-files.ts'),
+        //     handler: 'handler',
+        //     environment: {
+        //         FILE_METADATA_TABLE: fileMetadataTable.tableName,
+        //     },
+        // });
+
+        const checkForNewFileModificationsLambda = this.createLambdaFunction('CheckForNewFileModificationsLambda', 'check-for-new-files.ts', 5, {
+            FILE_METADATA_TABLE: fileMetadataTable.tableName,
         });
 
         // Grant read permissions to the DynamoDB table for the CheckForNewFiles Lambda.
@@ -308,18 +328,26 @@ export class DataIngestionStack extends Stack {
         // =======================Step 3: Start the KB ingestion process if new files are available=======================
 
         // Create a Lambda function to start the KB ingestion process
-        const startKBIngestionLambda = new NodejsFunction(this, 'StartKBIngestionLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: (join(__dirname, '..', '..', 'src', 'services', 'kb-data-ingestion.ts')),
-            handler: 'handler',
-            timeout: Duration.minutes(10),
-            environment: {
-                FILE_METADATA_TABLE: fileMetadataTable.tableArn,
-                PROCESSED_S3: processedS3DataSource.bucketArn,
-                KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
-                DATA_SOURCE_ID: props.dataSourceId,
-            },
+        // const startKBIngestionLambda = new NodejsFunction(this, 'StartKBIngestionLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: (join(__dirname, '..', '..', 'src', 'services', 'kb-data-ingestion.ts')),
+        //     handler: 'handler',
+        //     timeout: Duration.minutes(10),
+        //     environment: {
+        //         FILE_METADATA_TABLE: fileMetadataTable.tableArn,
+        //         PROCESSED_S3: processedS3DataSource.bucketArn,
+        //         KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
+        //         DATA_SOURCE_ID: props.dataSourceId,
+        //     },
+        // });
+
+        const startKBIngestionLambda = this.createLambdaFunction('StartKBIngestionLambda', 'kb-data-ingestion.ts', 10, {
+            FILE_METADATA_TABLE: fileMetadataTable.tableArn,
+            PROCESSED_S3: processedS3DataSource.bucketArn,
+            KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
+            DATA_SOURCE_ID: props.dataSourceId,
         });
+
 
 
         // Grant permissions to the Lambda function to access the DynamoDB table and start the KB ingestion
@@ -344,14 +372,18 @@ export class DataIngestionStack extends Stack {
         // =======================Step 4: Get the KB ingestion job status=======================
 
         // Create a Lambda function to get the KB ingestion job status
-        const getIngestionJobStatusLambda = new NodejsFunction(this, 'GetIngestionJobStatusLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: (join(__dirname, '..', '..', 'src', 'services', 'get-ingestion-job-status.ts')),
-            handler: 'handler',
-            timeout: Duration.minutes(5),
-            environment: {
-                FILE_METADATA_TABLE: fileMetadataTable.tableArn,
-            },
+        // const getIngestionJobStatusLambda = new NodejsFunction(this, 'GetIngestionJobStatusLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: (join(__dirname, '..', '..', 'src', 'services', 'get-ingestion-job-status.ts')),
+        //     handler: 'handler',
+        //     timeout: Duration.minutes(5),
+        //     environment: {
+        //         FILE_METADATA_TABLE: fileMetadataTable.tableArn,
+        //     },
+        // });
+
+        const getIngestionJobStatusLambda = this.createLambdaFunction('GetIngestionJobStatusLambda', 'get-ingestion-job-status.ts', 5, {
+            FILE_METADATA_TABLE: fileMetadataTable.tableArn,
         });
 
         // Allow the Lambda function to get the ingestion job status
@@ -386,14 +418,20 @@ export class DataIngestionStack extends Stack {
 
         // =======================Step 6: Update the file metadata table with the KB ingestion status=======================
         // Create a Lambda function to update the file metadata table with the KB ingestion status
-        const updateFileMetadataLambda = new NodejsFunction(this, 'UpdateFileMetadataLambda', {
-            runtime: Runtime.NODEJS_18_X,
-            entry: (join(__dirname, '..', '..', 'src', 'services', 'update-file-metadata.ts')),
-            handler: 'handler',
-            environment: {
-                FILE_METADATA_TABLE: fileMetadataTable.tableArn,
-            },
+        // const updateFileMetadataLambda = new NodejsFunction(this, 'UpdateFileMetadataLambda', {
+        //     runtime: Runtime.NODEJS_18_X,
+        //     entry: (join(__dirname, '..', '..', 'src', 'services', 'update-file-metadata.ts')),
+        //     handler: 'handler',
+        //     environment: {
+        //         FILE_METADATA_TABLE: fileMetadataTable.tableArn,
+        //     },
+        // });
+
+        const updateFileMetadataLambda = this.createLambdaFunction('UpdateFileMetadataLambda', 'update-file-metadata.ts', 5, {
+            FILE_METADATA_TABLE: fileMetadataTable.tableArn,
         });
+
+
 
         // Grant the Lambda function permissions to read and write to the DynamoDB table
         fileMetadataTable.grantReadWriteData(updateFileMetadataLambda);
@@ -417,12 +455,12 @@ export class DataIngestionStack extends Stack {
 
         // Define the states to transition to based on the job status
         const jobInProgressState = Condition.or(
-            Condition.stringEquals('$.GetIngestionJobResult.Payload.status', 'IN_PROGRESS'),
-            Condition.stringEquals('$.GetIngestionJobResult.Payload.status', 'STARTING')
+            Condition.stringEquals('$.GetIngestionJobResult.Payload.status', IngestionJobStatus.IN_PROGRESS),
+            Condition.stringEquals('$.GetIngestionJobResult.Payload.status', IngestionJobStatus.STARTING),
         );
-        const jobCompletedState = Condition.stringEquals('$.GetIngestionJobResult.Payload.status', 'COMPLETE');
+        const jobCompletedState = Condition.stringEquals('$.GetIngestionJobResult.Payload.status', IngestionJobStatus.COMPLETE);
 
-        const jobFailedState = Condition.stringEquals('$.GetIngestionJobResult.Payload.status', 'FAILED');
+        const jobFailedState = Condition.stringEquals('$.GetIngestionJobResult.Payload.status', IngestionJobStatus.FAILED);
 
         const jobCompletedPassState = new Pass(this, `IngestionJobCompleted-${props.stageName}`, {
             result: Result.fromObject({
@@ -451,17 +489,18 @@ export class DataIngestionStack extends Stack {
 
         if (props.stageName === 'QA') {
             // Lambda function to trigger the ragEvaluationStateMachine using the AWS SDK's StartExecution API,
-            const triggerRAGEvalLambda = new NodejsFunction(this, 'TriggerRAGEvaluationLambda', {
-                runtime: Runtime.NODEJS_18_X,
-                entry: join(__dirname, '..', '..', 'src', 'services', 'trigger-rag-evaluation.ts'),
-                handler: 'handler',
-                timeout: Duration.minutes(5),
-                environment: {
-                    CODE_PIPELINE_NAME: props.codePipelineName,
-                },
-                // environment: {
-                //     RAG_EVALUATION_STATE_MACHINE_ARN: ragEvaluationStateMachineArn.getParameterValue(),
-                // },
+            // const triggerRAGEvalLambda = new NodejsFunction(this, 'TriggerRAGEvaluationLambda', {
+            //     runtime: Runtime.NODEJS_18_X,
+            //     entry: join(__dirname, '..', '..', 'src', 'services', 'trigger-rag-evaluation.ts'),
+            //     handler: 'handler',
+            //     timeout: Duration.minutes(5),
+            //     environment: {
+            //         CODE_PIPELINE_NAME: props.codePipelineName,
+            //     },
+            // });
+
+            const triggerRAGEvalLambda = this.createLambdaFunction('TriggerRAGEvaluationLambda', 'trigger-rag-evaluation.ts', 5, {
+                CODE_PIPELINE_NAME: props.codePipelineName,
             });
 
 
