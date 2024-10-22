@@ -50,7 +50,7 @@ The first step of utilizing this repo is performing a git clone of the repositor
 ```
 $ git clone https://github.com/aws-samples/amazon-bedrock-samples.git
 
-$ cd amazon-bedrock-samples/agents-for-bedrock/features-examples/09-fine-grained-access-permissions/
+$ cd amazon-bedrock-samples/agents-and-function-calling/bedrock-agents/features-examples/09-fine-grained-access-permissions/
 ```
 
 ## Step 2:

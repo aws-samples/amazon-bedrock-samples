@@ -16,7 +16,7 @@ The Agent is designed to:
 - Retrieve database schemas
 - Execute SQL queries
 
-## Differences from [text-2-sql-agent](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/use-case-examples/text-2-sql-agent)
+## Differences from [text-2-sql-agent](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/use-case-examples/text-2-sql-agent)
 
 
 This repository enhances the original Text to SQL Bedrock Agent with the following improvements:

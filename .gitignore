@@ -48,10 +48,10 @@ multimodal/rag/__pycache__/
 
 
 # ignore cdk-related directories
-agents-for-bedrock/agent-blueprint-templates/node_modules
-agents-for-bedrock/agent-blueprint-templates/dist
-agents-for-bedrock/agent-blueprint-templates/cdk.out
-agents-for-bedrock/agent-blueprint-templates/.cdk.staging
-agents-for-bedrock/agent-blueprint-templates/.package-lock.json
-agents-for-bedrock/agent-blueprint-templates/yarn.lock
+agents-and-function-calling/bedrock-agents/agent-blueprint-templates/node_modules
+agents-and-function-calling/bedrock-agents/agent-blueprint-templates/dist
+agents-and-function-calling/bedrock-agents/agent-blueprint-templates/cdk.out
+agents-and-function-calling/bedrock-agents/agent-blueprint-templates/.cdk.staging
+agents-and-function-calling/bedrock-agents/agent-blueprint-templates/.package-lock.json
+agents-and-function-calling/bedrock-agents/agent-blueprint-templates/yarn.lock
 
