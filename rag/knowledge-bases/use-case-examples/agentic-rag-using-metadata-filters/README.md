@@ -102,11 +102,7 @@ For more detailed troubleshooting, refer to the Amazon Bedrock documentation or 
 
 ## Contributing
 
-We welcome contributions to improve this project. Please feel free to submit pull requests or open issues for any bugs or enhancements.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+We welcome community contributions! Please ensure your sample aligns with AWS [best practices](https://aws.amazon.com/architecture/well-architected/), and please update the **Contents** section of this README file with a link to your sample, along with a description.
 
 ---
 
