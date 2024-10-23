@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "values.pdf",
+        "title": "VALUES: A Framework for Systematic Validation of Uncertainty Estimation in Semantic Segmentation",
+        "summary": "This paper presents a framework called ValUES for systematic validation of uncertainty estimation methods in semantic segmentation tasks. The framework aims to bridge the gap between theoretical advancements and practical applications by providing 1) a controlled environment to study data ambiguities and distribution shifts, 2) systematic ablations of relevant method components, and 3) test-beds for evaluating uncertainty methods on five downstream tasks: out-of-distribution detection, active learning, failure detection, calibration, and ambiguity modeling. Through empirical studies on simulated and real-world datasets, the authors demonstrate how ValUES can resolve contradictions in the literature, identify the importance of components like aggregation strategies, and provide recommendations for practitioners to select the best uncertainty method for their specific task. Key insights include that separating aleatoric and epistemic uncertainty works on simulated data but does not necessarily translate to real-world data, and that ensembles generally perform most robustly across different downstream tasks while test-time augmentation can be a lightweight alternative."
+    }
+}

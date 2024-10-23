@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "vr_mcl.pdf",
+        "title": "META CONTINUAL LEARNING REVISITED : IMPLIC - ITLY ENHANCING ONLINE HESSIAN APPROXIMATION VIAVARIANCE REDUCTION",
+        "summary": "This paper revisits meta-continual learning (Meta-CL) methods and establishes a connection between Meta-CL and regularization-based continual learning methods from the perspective of Hessian matrix approximation. The key findings are: 1) Meta-CL implicitly approximates the Hessian matrix in an online manner through the hypergradient computation, enjoying timely adaptation but suffering from high variance due to random memory buffer sampling. 2) To address the high variance issue, a variance-reduced Meta-CL (VR-MCL) method is proposed by incorporating a momentum-based variance reduction technique into Meta-CL. 3) Theoretically, VR-MCL is shown to impose an effective regularization on the implicitly estimated Hessian, preventing excessive updates along wrongly estimated low-curvature directions and achieving a more accurate iterative update rule. 4) Comprehensive experiments validate the effectiveness of VR-MCL, consistently outperforming other state-of-the-art methods across various datasets and settings."
+    }
+}
