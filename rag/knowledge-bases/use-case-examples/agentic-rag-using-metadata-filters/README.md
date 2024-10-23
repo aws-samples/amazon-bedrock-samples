@@ -1,4 +1,4 @@
-# Building a Two-Stage agentic RAG System with Amazon Bedrock Knowledge Bases and Amazon Bedrock Converse API
+# Building a two-stage agentic RAG System with Amazon Bedrock Knowledge Bases and Amazon Bedrock Converse API
 
 This repository demonstrates how to build an advanced agentic RAG (Retrieval-Augmented Generation) system using Amazon Bedrock. The solution processes large document collections, extracts metadata and implements an intelligent agent that makes strategic decisions about document retrieval, using metadata and summaries to enhance response accuracy.
 
@@ -11,7 +11,7 @@ The project is divided into two main components, each implemented as a Jupyter n
 
 These notebooks guide you through the process of building a sophisticated document processing and querying system using Amazon Bedrock's powerful AI capabilities. By following this two-step process, you'll create a system that can efficiently search through document summaries, understand on which documents to dive deep, retrieve relevant information using filters, and provide accurate answers to complex queries.
 
-### Why Two Knowledge Bases?
+### Why two Knowledge Bases?
 
 We create two separate Knowledge Bases for several reasons:
 
