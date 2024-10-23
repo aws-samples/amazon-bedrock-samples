@@ -132,7 +132,7 @@ export class BedrockStack extends Stack {
       runtime: Runtime.PYTHON_3_12, // Use Python 3.12 runtime
       // code: Code.fromAsset(lambdaCodePath), // Reference the pre-packaged Lambda code
       code: Code.fromBucket(bedrockCustomLambdaPackageBucket, 'custom_chunking_lambda_package.zip'),
-      handler: "custom_chunking_python.lambda_handler", // Lambda function handler
+      handler: "custom_chunking_lambda_function.lambda_handler", // Lambda function handler
       role: customLambdaRole, // Assign the Lambda execution role
       timeout: Duration.minutes(15), // Set timeout to 15 minutes
       memorySize: 10240, // Allocate 10 GB memory

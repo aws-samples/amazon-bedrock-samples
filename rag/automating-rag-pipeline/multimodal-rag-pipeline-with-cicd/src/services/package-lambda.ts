@@ -6,7 +6,7 @@ import archiver from 'archiver';
 async function packageLambda() {
     const tempDir = join(__dirname, 'tmp', 'custom_chunking_lambda_package');
     // const lambdaCodePath = join(__dirname, 'src', 'services', 'CustomChunker', 'custom_chunking_python.py');
-    const lambdaCodePath = join(__dirname, 'CustomChunker', 'custom_chunking_python.py');
+    const lambdaCodePath = join(__dirname, 'CustomChunker', 'custom_chunking_lambda_function.py');
     const zipFilePath = join(__dirname, 'lambda_package.zip');
 
     // Clean up the temp directory if it exists
@@ -21,7 +21,7 @@ async function packageLambda() {
 
     // Copy the Lambda code to the temp directory
     console.log(`Copying Lambda code from ${lambdaCodePath} to ${tempDir}`);
-    copyFileSync(lambdaCodePath, join(tempDir, 'custom_chunking_python.py'));
+    copyFileSync(lambdaCodePath, join(tempDir, 'custom_chunking_lambda_function.py'));
 
     // Install the required dependencies (e.g., pypdf) into the temp directory
     console.log('Installing dependencies in the temp directory...');
