@@ -35,7 +35,7 @@ export class CodePipelineStack extends Stack {
       synth: new ShellStep("Synth", {
         input: CodePipelineSource.gitHub(
           "manoj-selvakumar5/amazon-bedrock-samples",
-          "rag-cicd",
+          "rag-cicd-without-image-processing",
         ),
         commands: [
           "echo 'Current working directory:' $(pwd)",

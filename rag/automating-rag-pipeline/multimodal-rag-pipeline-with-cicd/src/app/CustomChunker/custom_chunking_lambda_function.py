@@ -55,9 +55,8 @@ def lambda_handler(event, context):
         original_file_location = input_file.get('originalFileLocation', {})
         logger.debug(f"Processing input file from: {original_file_location}")
 
-        # original_file_location = input_file['originalFileLocation']['s3_location']['uri']
         s3_uri = original_file_location['s3_location']['uri']
-        # bucket, key = original_file_location.replace("s3://", "").split('/', 1)
+
         # Use the extract_bucket_and_key function to get the bucket and key
         bucket, key = extract_bucket_and_key(s3_uri)
         logger.info(f"Reading PDF from S3: bucket={bucket}, key={key}")
@@ -67,7 +66,6 @@ def lambda_handler(event, context):
         images_with_metadata = extract_images_from_pdf(pdf_content)
         
         # Generate summaries for the extracted images
-        # prompt = "Summarize all the details in the image, focus on statistics such as bar charts and graphs."
         prompt = "Provide a comprehensive description of the image, highlighting all the key details. " \
                  "If the image includes charts or any other visual data representations, focus also on summarizing the " \
                  "statistical information, including trends, comparisons, and any relavant numerical data present in bar charts, line graphs, or other graphical elements."
@@ -86,11 +84,6 @@ def lambda_handler(event, context):
 
             file_content = read_s3_file(s3, input_bucket, input_key)
 
-            # # Update content metadata with page numbers and chunk the content
-            # for page_number, page_content in enumerate(file_content['fileContents'], start=1):
-            #     page_content['contentMetadata']['pageNumber'] = page_number
-
-
             # Create chunks using the SimpleChunker
             chunked_content = process_content(file_content, chunker)
             chunked_content['fileContents'].extend(processed_images)  # Combine the chunked content with image summaries
@@ -98,7 +91,6 @@ def lambda_handler(event, context):
 
 
             # Define the output key and write the final content to S3
-            # final_key = f"OutputLocal/{input_key}"
             output_key = f"Output/{input_key}"
 
             write_to_s3(s3, input_bucket, output_key, chunked_content)
@@ -220,7 +212,6 @@ def process_images_with_metadata(bedrock_client, model_id: str, input_text: str,
             results.append({
                 "contentType": "PDF",
                 "contentMetadata": {
-                    # "pageNumber": image_metadata['contentMetadata']['pageNumber'],
                     "base64Image": image_metadata['contentMetadata']['base64Image']
                 },
                 "contentBody": summary,
