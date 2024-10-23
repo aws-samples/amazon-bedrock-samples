@@ -1,6 +1,6 @@
 import { CloudFormation, S3 } from 'aws-sdk';
 
-const regions = ['us-east-1', 'us-west-2'];
+const regions = ['us-east-1', 'us-west-2'];  // TODO: Remove hardcoding
 
 export const handler = async (event: any) => {
     console.log('Event:', event);

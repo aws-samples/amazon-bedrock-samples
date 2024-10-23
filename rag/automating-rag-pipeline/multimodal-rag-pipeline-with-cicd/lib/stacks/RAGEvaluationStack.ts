@@ -32,17 +32,6 @@ export class RAGEvaluationStack extends Stack {
             STAGE_NAME: props.stageName,
         });
 
-        // Lambda to trigger approval in CodePipeline
-        // const triggerApprovalLambda = new NodejsFunction(this, 'TriggerApprovalLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: join(__dirname, '..', '..', 'src', 'services', 'trigger-approval.ts'),
-        //     handler: 'handler',
-        //     environment: {
-        //         STAGE_NAME: props.stageName,
-        //         PIPELINE_NAME: props.codePipelineName,
-        //     },
-        // });
-
         const triggerApprovalLambda = this.createLambdaFunction('TriggerApprovalLambda', 'trigger-approval.ts', 5, {
             STAGE_NAME: props.stageName,
             PIPELINE_NAME: props.codePipelineName,
@@ -77,15 +66,6 @@ export class RAGEvaluationStack extends Stack {
 
         // StepFunctionsStartExecution construct in AWS CDK does not have a region property as part of its API. Instead, you need to manage cross-region invocations using AWS SDK calls within a Lambda function that runs in the region where the Step Function is located.
         // Create a new Lambda to start the Step Function in us-west-2
-        // const startMoveFilesLambda = new NodejsFunction(this, 'StartMoveFilesLambda', {
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: join(__dirname, '..', '..', 'src', 'services', 'start-move-files-state-machine.ts'),
-        //     handler: 'handler',
-        //     environment: {
-        //         PIPELINE_NAME: props.codePipelineName,
-        //     },
-        // });
-
         const startMoveFilesLambda = this.createLambdaFunction('StartMoveFilesLambda', 'start-move-files-state-machine.ts', 5, {
             PIPELINE_NAME: props.codePipelineName,
         });
