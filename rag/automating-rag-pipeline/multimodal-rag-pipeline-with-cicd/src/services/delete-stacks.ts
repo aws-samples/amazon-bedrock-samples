@@ -37,7 +37,7 @@ const deleteStacksInRegion = async (cloudFormationClient: CloudFormation, region
 
     // Filter stacks that start with 'QA-' or 'Prod-' and are not already deleted
     const appStacks = stacks.StackSummaries?.filter(stack =>
-        (stack.StackName?.startsWith('QA') || stack.StackName?.startsWith('Prod')) || stack.StackName?.startsWith('PostQAApproval')
+        (stack.StackName?.startsWith('QA') || stack.StackName?.startsWith('Prod')) || stack.StackName?.startsWith('PostQA') || stack.StackName?.startsWith('PreQA') || stack.StackName?.startsWith('PreProd')
         && stack.StackStatus !== 'DELETE_COMPLETE'
     );
 
