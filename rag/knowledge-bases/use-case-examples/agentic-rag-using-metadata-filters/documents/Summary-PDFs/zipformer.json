@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "zipformer.pdf",
+        "title": "ZIPFORMER: A FASTER AND BETTER ENCODER FOR AUTOMATIC SPEECH RECOGNITION",
+        "summary": "This paper proposes Zipformer, a faster, more memory-efficient, and better-performing Transformer encoder for automatic speech recognition (ASR). Key innovations include a U-Net-like encoder structure operating at different frame rates, a redesigned block structure with more modules and attention weight reuse, BiasNorm for normalization, new activation functions SwooshR and SwooshL, and a parameter-scale-invariant optimizer called ScaledAdam. Extensive experiments on LibriSpeech, Aishell-1, and WenetSpeech datasets demonstrate Zipformer's state-of-the-art performance while requiring less computation and memory compared to previous models like Conformer. Zipformer enables over 50% speedup during inference and faster convergence during training."
+    }
+}

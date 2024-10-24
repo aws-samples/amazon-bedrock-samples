@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "longlora.pdf",
+        "title": "LONG LORA: EFFICIENT FINE-TUNING OF LONG-CONTEXT LARGE LANGUAGE MODELS",
+        "summary": "This paper proposes LongLoRA, an efficient approach to extend the context window of pre-trained large language models like Llama2 to much longer lengths, while maintaining computational efficiency. The key ideas are: 1) Using shifted sparse attention (S2-Attn) to approximate full self-attention during fine-tuning, which enables significant computation savings. 2) Making the embedding and normalization layers trainable in addition to the low-rank adaptation in LoRA, which is crucial for effective long context adaptation. With LongLoRA, models like Llama2 7B can be fine-tuned up to 100k context length, and Llama2 70B up to 32k context, on a single 8xA100 GPU machine. The fine-tuned models achieve comparable performance to full fine-tuning on language modeling benchmarks, while being much more efficient. The paper also introduces a long instruction-following dataset LongAlpaca and supervised fine-tuning of the LongLoRA models."
+    }
+}

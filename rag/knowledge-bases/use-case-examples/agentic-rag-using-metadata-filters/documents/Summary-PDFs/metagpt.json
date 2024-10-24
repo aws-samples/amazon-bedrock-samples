@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "metagpt.pdf",
+        "title": "MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework",
+        "summary": "MetaGPT is a novel meta-programming framework that leverages Standardized Operating Procedures (SOPs) to enhance the problem-solving capabilities of multi-agent systems based on Large Language Models (LLMs). It models a group of agents as a simulated software company, with specialized roles like Product Manager, Architect, Engineer, and QA Engineer following a streamlined workflow. MetaGPT uses structured communication interfaces, a publish-subscribe mechanism, and an executable feedback mechanism to improve code generation quality. On benchmarks like HumanEval and MBPP, MetaGPT achieves state-of-the-art performance, outperforming existing approaches. The successful integration of human-like SOPs inspires future research on human-inspired techniques for artificial multi-agent systems."
+    }
+}

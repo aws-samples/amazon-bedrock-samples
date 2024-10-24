@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "knowledge_card.pdf",
+        "title": "KNOWLEDGE CARD: FILLING LLMS' KNOWLEDGE GAPS WITH PLUG-IN SPECIALIZED LANGUAGE MODELS",
+        "summary": "This paper proposes KNOWLEDGE CARD, a framework to plug in new factual and relevant knowledge into general-purpose large language models (LLMs) through specialized language models called 'knowledge cards' trained on specific domains and sources. Knowledge cards generate background knowledge which is then selected and integrated into the LLM through relevance, brevity, and factuality selectors. Two approaches (bottom-up and top-down) are proposed for integrating the selected knowledge into the LLM. Experiments show KNOWLEDGE CARD outperforms baselines on knowledge-intensive tasks like question answering, misinformation detection, and updating LLM knowledge with new information."
+    }
+}
