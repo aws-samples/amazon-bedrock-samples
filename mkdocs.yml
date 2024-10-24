@@ -123,6 +123,8 @@ nav:
         - Return of Control: './agents-and-function-calling/function-calling/return_of_control/return_of_control.md'
         - Tool Binding: './agents-and-function-calling/function-calling/tool_binding/tool_bindings.md'
       - Open Source:
+        - CrewAI:
+            - Find Dream Destination with CrewAI: './agents-and-function-calling/open-source-agents/crew.ai/Find dream destination with CrewAI.md'
         - LangGraph:
           - LangGraph Agent with Function Calling: './agents-and-function-calling/open-source-agents/langgraph/langgraph-single-agent.md'
           - LangGraph Multi-Modal Agent with Function Calling: './agents-and-function-calling/open-source-agents/langgraph/langgraph-agents-multimodal.md'
@@ -157,6 +159,7 @@ nav:
     - Open-source L400:
       - Introduction to the Use Case: './workshop/open-source-l400/00_Lab_Intro to Use-Case.md'
       - Find a Dream Destination using RAG: './workshop/open-source-l400/02_Lab_Find a Dream Destination_RAG query.md'
+      - Find Dream Destination with CrewAI: './workshop/open-source-l400/05_Lab_Find dream destination with CrewAI.md'
     - Open-source L200:
       - Introduction to the Use Case: './workshop/open-source-l200/02_contextual_text_generation.md'
       - Retrieval Based Text Generation: './workshop/open-source-l200/03_retrieval_based_text_application.md'
