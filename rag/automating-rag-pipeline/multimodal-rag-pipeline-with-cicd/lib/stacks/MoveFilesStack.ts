@@ -9,6 +9,7 @@ import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { LambdaInvoke } from "aws-cdk-lib/aws-stepfunctions-tasks";
 import { DefinitionBody, StateMachine } from "aws-cdk-lib/aws-stepfunctions";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
+import { SSM } from "aws-sdk";
 
 
 export interface MoveFilesStackProps extends StackProps {
@@ -43,6 +44,15 @@ export class MoveFilesStack extends Stack {
             region: 'us-east-1', // SSM parameter region.
         });
 
+        // Read the DynamoDB table name from SSM Parameter Store
+        // const fileMetadataTableNameParam = StringParameter.fromStringParameterName(this,
+        //     'FileMetadataTableName', `/${props.codePipelineName}/QA/fileMetadataTableName`
+        // );
+        const fileMetadataTableNameParam = new SSMParameterReader(this, 'FileMetadataTableName', {
+            parameterName: `/${props.codePipelineName}/QA/fileMetadataTableName`,
+            region: 'us-east-1', // SSM parameter region.
+        });
+
         // Resolve QA and Production Bucket Names.
         const qaRawS3DataSourceBucketName = qaRawS3DataSourceBucketParameter.getParameterValue();
         const prodRawS3DataSourceBucketName = props.prodRawS3DataSourceBucketName;
@@ -56,6 +66,7 @@ export class MoveFilesStack extends Stack {
             environment: {
                 RAW_S3_QA: qaRawS3DataSourceBucketName, // QA raw bucket as environment variable.
                 RAW_S3_PROD: prodRawS3DataSourceBucketName, // Production raw bucket as environment variable.
+                FILE_METADATA_TABLE_NAME: fileMetadataTableNameParam.getParameterValue(),
             },
         });
 

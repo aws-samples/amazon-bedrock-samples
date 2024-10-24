@@ -62,7 +62,7 @@ export class RAGEvaluationStack extends Stack {
         });
 
         // Step 2: Invoke QA to Prod Approval Lambda
-        const invokeQAToProdApprovalLambdaTask = new LambdaInvoke(this, 'InvokeQAToProdApprovalLambda', {
+        const invokeQAToProdPipelineApprovalLambdaTask = new LambdaInvoke(this, 'InvokeQAToProdPipelineApprovalLambda', {
             lambdaFunction: triggerApprovalLambda,
             payload: TaskInput.fromObject({
                 success: JsonPath.stringAt('$.success'),
@@ -95,11 +95,11 @@ export class RAGEvaluationStack extends Stack {
         // Step 4: Choice state to handle different outcomes from the approval lambda
         const checkApprovalStatus = new Choice(this, 'CheckApprovalStatus')
             .when(Condition.numberEquals('$.statusCode', 500), invokeMoveFilesLambdaTask)
-            .otherwise(new Pass(this, 'ProceedNormally'));  // Default success path
+            .otherwise(new Pass(this, 'GoAheadAndEndTheStateMachine'));  // Default success path
 
         // Define the state machine
         const ragEvaluationStateMachineDefinition = evaluationLambdaInvokeTask
-            .next(invokeQAToProdApprovalLambdaTask)
+            .next(invokeQAToProdPipelineApprovalLambdaTask)
             .next(checkApprovalStatus);
 
         const ragEvaluationStateMachine = new StateMachine(this, 'RAGEvaluationStateMachine', {
