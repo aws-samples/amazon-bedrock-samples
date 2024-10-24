@@ -3,18 +3,17 @@ import { BedrockRuntimeClient, InvokeModelCommand, InvokeModelCommandInput, Invo
 import { BedrockAgentRuntimeClient, RetrieveAndGenerateCommand, RetrieveAndGenerateCommandInput, RetrieveAndGenerateCommandOutput } from "@aws-sdk/client-bedrock-agent-runtime";
 
 const awsRegion = process.env.AWS_REGION
-const modelID = 'anthropic.claude-3-haiku-20240307-v1:0';
+const modelID = process.env.MODEL_ID;
+// Knowledge base ID for BedrockAgentRuntimeClient
+const knowledgeBaseId = process.env.KNOWLEDGE_BASE_ID;
+console.log("Knowledge Base ID:", knowledgeBaseId);
+
+if (!modelID) throw new Error('MODEL_ID environment variable is missing.');
+if (!knowledgeBaseId) throw new Error('KNOWLEDGE_BASE_ID environment variable is missing.');
 
 // Create instances of both Bedrock clients
 const runtimeClient = new BedrockRuntimeClient({ region: awsRegion });
 const agentClient = new BedrockAgentRuntimeClient({ region: awsRegion });
-
-
-
-// Knowledge base ID for BedrockAgentRuntimeClient
-// const knowledgeBaseId = "45X4GMM8NC";
-const knowledgeBaseId = process.env.KNOWLEDGE_BASE_ID;
-console.log("Knowledge Base ID:", knowledgeBaseId);
 
 
 interface Reference {
@@ -104,7 +103,7 @@ async function queryKnowledgeBaseWithCitations(prompt: string): Promise<{ respon
 // Function to invoke a model using BedrockRuntimeClient
 async function invokeModel(prompt: string): Promise<string> {
     const payload: InvokeModelCommandInput = {
-        modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+        modelId: modelID,
         contentType: "application/json",
         accept: "application/json",
         body: JSON.stringify({

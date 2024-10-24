@@ -1,6 +1,3 @@
-
-
-
 import { DynamoDB } from "aws-sdk";
 import { BedrockAgentClient, StartIngestionJobCommand, GetIngestionJobCommand } from "@aws-sdk/client-bedrock-agent";
 

@@ -10,7 +10,7 @@ Here’s how to set up and start the project
 ### Installation
 1. **Navigate to the Project Folder**: Open your terminal or command prompt and navigate to the project folder.
    ```bash
-   cd path/to/MULTIMODAL-RAG-PIPELINE-WITH-CICD
+   cd path/to/RAG-PIPELINE-WITH-CICD
    ```
 
 2. **Install Dependencies**: 

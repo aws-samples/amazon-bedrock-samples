@@ -47,7 +47,7 @@ export class BedrockStack extends Stack {
 
     // Reference an existing S3 bucket by name
     const docBucket = Bucket.fromBucketName(this, "DocBucket", docBucketName);
-    console.log("Processed Files S3 Data Source: ", docBucketName); // Log the selected bucket name
+    // console.log("Processed Files S3 Data Source: ", docBucketName); // Log the selected bucket name
 
 
     // // Read the S3 bucket name from the SSM parameter store (the buckets are created as part of the data ingestion stack)
@@ -98,10 +98,10 @@ export class BedrockStack extends Stack {
     let bedrockCustomLambdaBucketName: string;
     if (props.stageName === "QA") {
       bedrockCustomLambdaBucketName = StringParameter.valueForStringParameter(this, '/MultimodalRAG/PreQABucketSetupStage/lambda-package-bucket-name');
-      console.log("Bedrock Custom Lambda Package Bucket Name: ", bedrockCustomLambdaBucketName); // Log the bucket name
+      // console.log("Bedrock Custom Lambda Package Bucket Name: ", bedrockCustomLambdaBucketName); // Log the bucket name
     } else {
       bedrockCustomLambdaBucketName = StringParameter.valueForStringParameter(this, '/MultimodalRAG/PreProdBucketSetupStage/lambda-package-bucket-name');
-      console.log("Bedrock Custom Lambda Package Bucket Name: ", bedrockCustomLambdaBucketName); // Log the bucket name
+      // console.log("Bedrock Custom Lambda Package Bucket Name: ", bedrockCustomLambdaBucketName); // Log the bucket name
     }
 
 

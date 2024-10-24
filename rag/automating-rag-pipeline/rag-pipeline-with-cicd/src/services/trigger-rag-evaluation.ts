@@ -1,4 +1,3 @@
-
 import { StepFunctions, SSM } from 'aws-sdk';
 import { APIGatewayProxyHandler } from 'aws-lambda';
 

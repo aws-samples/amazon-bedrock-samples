@@ -53,6 +53,12 @@ export class WebApplicationStack extends Stack {
             cpu: 256,  // CPU units for the task
         });
 
+        // Retrieve the modelId from cdk.json context
+        const modelId = this.node.tryGetContext('bedrockModelID');
+        if (!modelId) {
+            throw new Error("modelId not found in cdk.json context.");
+        }
+
         // Create the Lambda function
         const mainLambdaFunction = new NodejsFunction(this, 'MainLambdaFunction', {
             runtime: Runtime.NODEJS_18_X,
@@ -62,6 +68,7 @@ export class WebApplicationStack extends Stack {
             environment: {
                 STAGE_NAME: props?.stageName!,
                 KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
+                MODEL_ID: modelId,
             },
         });
 

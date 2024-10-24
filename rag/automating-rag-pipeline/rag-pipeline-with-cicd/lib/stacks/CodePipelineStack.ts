@@ -40,14 +40,14 @@ export class CodePipelineStack extends Stack {
         commands: [
           "echo 'Current working directory:' $(pwd)",
           "ls -ltr",
-          "cd rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd",
+          "cd rag/automating-rag-pipeline/rag-pipeline-with-cicd",
           "echo 'New working directory:' $(pwd)",
           "ls -ltr",
           "npm ci",
           "npm run build",
           "npx cdk synth"
         ],
-        primaryOutputDirectory: 'rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/cdk.out'  // Updated to reflect the correct project root directory
+        primaryOutputDirectory: 'rag/automating-rag-pipeline/rag-pipeline-with-cicd/cdk.out'  // Updated to reflect the correct project root directory
       }),
       dockerEnabledForSynth: true,
     });
@@ -66,17 +66,6 @@ export class CodePipelineStack extends Stack {
         `arn:aws:ssm:${this.region}:${this.account}:parameter/${props.codePipelineName}/*`,
       ],
     }));
-    // // **Add the S3 Bucket Stage**
-    // const s3BucketStage = cicdPipeline.addStage(
-    //   new CodePipelineStage(this, 'S3BucketStage', {
-    //     stageName: 'S3BucketStage',
-    //     env: {
-    //       account: this.node.tryGetContext('defaultAccount'),
-    //       region: this.node.tryGetContext('defaultRegion'),
-    //     },
-    //     codePipelineName: props.codePipelineName,
-    //   })
-    // );
 
 
     // **Add the S3 Bucket Stage**
@@ -84,7 +73,7 @@ export class CodePipelineStack extends Stack {
       new CodePipelineStage(this, 'PreQABucketSetupStage', {
         stageName: 'PreQABucketSetupStage',
         env: {
-          account: this.node.tryGetContext('defaultAccount'),
+          account: this.node.tryGetContext('defaultAccount'),  // Retrieve a value from the CDK application context
           region: this.node.tryGetContext('defaultRegion'),
         },
         codePipelineName: props.codePipelineName,
@@ -110,8 +99,8 @@ export class CodePipelineStack extends Stack {
             commands: [
               "echo 'Current working directory:' $(pwd)",
               "ls -R",
-              "chmod +x rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/build_lambda.sh",  // Make the script executable
-              "./rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/build_lambda.sh"            // Run the script
+              "chmod +x rag/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh",  // Make the script executable
+              "./rag/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh"            // Run the script
             ],
 
             role: codeBuildRole,
@@ -197,8 +186,8 @@ export class CodePipelineStack extends Stack {
             commands: [
               "echo 'Current working directory:' $(pwd)",
               "ls -R",
-              "chmod +x rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/build_lambda.sh",     // Make the script executable
-              "./rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/build_lambda.sh"            // Run the script
+              "chmod +x rag/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh",     // Make the script executable
+              "./rag/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh"            // Run the script
             ],
             role: codeBuildRole,  // Use the shared CodeBuild role
             buildEnvironment: {
