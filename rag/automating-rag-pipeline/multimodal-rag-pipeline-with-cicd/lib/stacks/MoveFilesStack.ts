@@ -86,7 +86,7 @@ export class MoveFilesStack extends Stack {
         );
 
         // Construct the ARN for the DynamoDB table
-        const fileMetadataTableArn = `arn:aws:dynamodb:${Stack.of(this).region}:${Stack.of(this).account}:table/${fileMetadataTableNameParam.stringValue}`;
+        const fileMetadataTableArn = `arn:aws:dynamodb:${Stack.of(this).region}:${Stack.of(this).account}:table/${fileMetadataTableNameParam.getParameterValue()}`;
 
 
         // Grant Lambda Function Permissions to Access DynamoDB Table.
