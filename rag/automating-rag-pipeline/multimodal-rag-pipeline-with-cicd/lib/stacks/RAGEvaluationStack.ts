@@ -19,7 +19,7 @@ export class RAGEvaluationStack extends Stack {
 
         // Read the DynamoDB table name from SSM Parameter Store
         const fileMetadataTableNameParam = StringParameter.fromStringParameterName(this,
-            'FileMetadataTableName', `/${props.codePipelineName}/${props.stageName}/fileMetadataTableName`
+            'FileMetadataTableName', `/${props.codePipelineName}/QA/fileMetadataTableName`
         );
 
         // Lambda to evaluate new data ingestion
