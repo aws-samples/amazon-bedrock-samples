@@ -21,7 +21,7 @@ from aws_cdk import (
 import json
 from constructs import Construct
 
-class BedrockagentStack(Stack):
+class BedrockAgentStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -31,66 +31,34 @@ class BedrockagentStack(Stack):
         region=os.environ["CDK_DEFAULT_REGION"]
         suffix = f"{region}-{account_id}"
 
+        # Load configuration
+        with open('./BedrockAgentStack/config.json', 'r') as config_file:
+            config = json.load(config_file)
+
         # Define parameters 
-        agent_name_param = CfnParameter(self, "AgentName",
-                                         type="String",
-                                         default="booking-agent",
-                                         description="The name of the Restaurant booking agent")
-        agent_name = agent_name_param.value_as_string
-        
-        agent_alias_name_param = CfnParameter(self, "AgentAliasName",
-                                         type="String",
-                                         default="booking-agent-alias",
-                                         description="The name of the Restaurant booking agent alias")
-        agent_alias_name = agent_alias_name_param.value_as_string
-
-        knowledge_base_name_param = CfnParameter(self, "KnowledgeBaseName",
-                                         type="String",
-                                         default= "booking-agent-kb",
-                                         description="The name of the Restaurant booking knowledge base")
-        knowledge_base_name =  knowledge_base_name_param.value_as_string
-
-        knowledge_base_description = "Knowledge Base containing the restaurant menu's collection"
-        
-        s3_bucket_name_param = CfnParameter(self, "S3BucketName",
-                                         type="String",
-                                         default= "booking-agent-us-east1-account",
-                                         description="The name of the S3 bucket")
-        s3_bucket_name = s3_bucket_name_param.value_as_string
-
-        agent_model_id_param=CfnParameter(self, "AgentModelId",
-                                         type="String",
-                                         default="anthropic.claude-3-sonnet-20240229-v1:0",
-                                         description="The model id of the Restaurant booking agent"
-                                         )        
-        agent_model_id = agent_model_id_param.value_as_string
+        agent_name = config['agentName']
+        agent_alias_name = config['agentAliasName']
+        knowledge_base_name =  config['knowledgeBaseName']
+        knowledge_base_description = config['knowledgeBaseDescription']
+        s3_bucket_name = config['s3BucketName']
+        agent_model_id = config['agentModelId']
         agent_model_arn = bedrock.FoundationModel.from_foundation_model_id(
             scope=self,
             _id='AgentModel',
             foundation_model_id=bedrock.FoundationModelIdentifier(agent_model_id)).model_arn
         
         # Bedrock embedding model Amazon Titan Text v2
-        embedding_model_id_param=CfnParameter(self, "EmbeddingModelId",
-                                         type="String",
-                                         default="amazon.titan-embed-text-v2:0",
-                                         description="The embedding model id of the Restaurant booking agent"
-                                         )
-        embedding_model_id=embedding_model_id_param.value_as_string
+        embedding_model_id = config['embeddingModelId']
         embedding_model_arn = bedrock.FoundationModel.from_foundation_model_id(
             scope=self,
             _id='EmbeddingsModel',
             foundation_model_id=bedrock.FoundationModelIdentifier(embedding_model_id)).model_arn
 
-        agent_description = "Agent in charge of a restaurants table bookings"
-        agent_instruction = """
-        You are a restaurant agent, helping clients retrieve information from their booking, 
-        create a new booking or delete an existing booking
-        """
-        agent_action_group_description = """
-        Actions for getting table booking information, create a new booking or delete an existing booking"""
-
-        agent_action_group_name = "TableBookingsActionGroup"
-        table_name = 'restaurant_bookings'
+        agent_description = config['agentDescription']
+        agent_instruction = config['agentInstruction']
+        agent_action_group_description = config['agentActionGroupDescription']
+        agent_action_group_name = config['agentActionGroupName']
+        table_name = config['tableName']
         
         # Role that will be used by the KB
         kb_role = iam.Role(scope=self,
@@ -434,7 +402,6 @@ class BedrockagentStack(Stack):
         # Agent is created with booking-agent-alias and prepared, so it shoudld be ready to test #
         
         # Declare the stack outputs
-        
         CfnOutput(scope=self, id='S3_bucket', value=s3Bucket.bucket_name)
         CfnOutput(scope=self, id='Datasource_id', value=datasource.attr_data_source_id)
         CfnOutput(scope=self, id='Knowedgebase_name', value=knowledge_base.name)
