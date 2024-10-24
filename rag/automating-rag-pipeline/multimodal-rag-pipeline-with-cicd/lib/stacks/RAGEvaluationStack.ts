@@ -28,6 +28,17 @@ export class RAGEvaluationStack extends Stack {
             FILE_METADATA_TABLE_NAME: fileMetadataTableNameParam.stringValue,
         });
 
+        // Construct the ARN for the DynamoDB table
+        const fileMetadataTableArn = `arn:aws:dynamodb:${Stack.of(this).region}:${Stack.of(this).account}:table/${fileMetadataTableNameParam.stringValue}`;
+
+        // Add necessary permissions for ingestionEvaluationLambda
+        const allowDynamoDBAccess = new PolicyStatement({
+            actions: ['dynamodb:Scan', 'dynamodb:UpdateItem'],
+            resources: [fileMetadataTableArn],
+        });
+        ingestionEvaluationLambda.addToRolePolicy(allowDynamoDBAccess);
+
+
         const triggerApprovalLambda = this.createLambdaFunction('TriggerApprovalLambda', 'trigger-approval.ts', 5, {
             STAGE_NAME: props.stageName,
             PIPELINE_NAME: props.codePipelineName,
