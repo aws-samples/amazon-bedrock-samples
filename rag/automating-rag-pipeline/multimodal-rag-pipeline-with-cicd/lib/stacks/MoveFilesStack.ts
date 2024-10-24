@@ -85,6 +85,19 @@ export class MoveFilesStack extends Stack {
             })
         );
 
+        // Construct the ARN for the DynamoDB table
+        const fileMetadataTableArn = `arn:aws:dynamodb:${Stack.of(this).region}:${Stack.of(this).account}:table/${fileMetadataTableNameParam.stringValue}`;
+
+
+        // Grant Lambda Function Permissions to Access DynamoDB Table.
+        copyfilesFromQAToProdLambda.addToRolePolicy(
+            new PolicyStatement({
+                actions: ['dynamodb:Scan', 'dynamodb:UpdateItem'], // Required DynamoDB actions.
+                resources: [fileMetadataTableArn], // DynamoDB table ARN.
+            })
+        );
+
+
         // Define a Step Function Task to Invoke the Copy Files Lambda.
         const copyFilesTask = new LambdaInvoke(this, 'CopyDataLambdaInvokeTask', {
             lambdaFunction: copyfilesFromQAToProdLambda,
