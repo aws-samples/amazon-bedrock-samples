@@ -17,19 +17,15 @@ export class RAGEvaluationStack extends Stack {
     constructor(scope: Construct, id: string, props: RAGEvaluationStackProps) {
         super(scope, id, props);
 
-        // Lambda to evaluate new data ingestion
-        // const ingestionEvaluationLambda = new NodejsFunction(this, 'RAGEvaluationLambda', {
-        //     functionName: 'RAGEvaluationLambda',
-        //     runtime: Runtime.NODEJS_18_X,
-        //     entry: join(__dirname, '..', '..', 'src', 'services', 'evaluate-new-data-ingestion.ts'),
-        //     handler: 'handler',
-        //     environment: {
-        //         STAGE_NAME: props.stageName,
-        //     },
-        // });
+        // Read the DynamoDB table name from SSM Parameter Store
+        const fileMetadataTableNameParam = StringParameter.fromStringParameterName(this,
+            'FileMetadataTableName', `/${props.codePipelineName}/${props.stageName}/fileMetadataTableName`
+        );
 
+        // Lambda to evaluate new data ingestion
         const ingestionEvaluationLambda = this.createLambdaFunction('RAGEvaluationLambda', 'evaluate-new-data-ingestion.ts', 5, {
             STAGE_NAME: props.stageName,
+            FILE_METADATA_TABLE_NAME: fileMetadataTableNameParam.stringValue,
         });
 
         const triggerApprovalLambda = this.createLambdaFunction('TriggerApprovalLambda', 'trigger-approval.ts', 5, {

@@ -56,7 +56,7 @@ export class WebApplicationStack extends Stack {
         // Create the Lambda function
         const mainLambdaFunction = new NodejsFunction(this, 'MainLambdaFunction', {
             runtime: Runtime.NODEJS_18_X,
-            entry: (join(__dirname, '..', '..', 'src', 'services', 'main-lambda.ts')),
+            entry: (join(__dirname, '..', '..', 'src', 'services', 'call-bedrock-lambda.ts')),
             handler: 'handler',
             timeout: Duration.minutes(5),
             environment: {

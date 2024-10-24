@@ -59,6 +59,8 @@ export const handler: S3Handler = async (event: S3Event) => {
                     lastModified: new Date().toISOString(),
                     status: 'active', // Status of the file (active, deleted), set the initial status to 'active'; when a new file is added, the status is set to 'active'
                     kbIngestionStatus: kbIngestionStatus, // Set based on fileType: 'not applicable' for raw, 'pending' for processed
+                    ragEvaluationStatus: 'pending', // Status of the RAG evaluation (pending, passed, failed)
+                    ragEvaluationTimestamp: '', // Timestamp when RAG evaluation was performed
 
                 };
 
