@@ -1,14 +1,18 @@
 import { S3, DynamoDB } from 'aws-sdk';
 
 const s3Client = new S3();
-const dynamodbClient = new DynamoDB.DocumentClient();
-const tableName = process.env.FILE_METADATA_TABLE_NAME as string;
+const dynamodbClient = new DynamoDB.DocumentClient({ region: 'us-east-1' });
 
 export const handler = async (event: any): Promise<any> => {
     console.log("Event: ", event);
 
     const rawS3BucketQA = process.env.RAW_S3_QA as string;
     const rawS3BucketProd = process.env.RAW_S3_PROD as string;
+    const tableName = process.env.FILE_METADATA_TABLE_NAME as string;
+
+    console.log('Raw S3 Bucket (QA):', rawS3BucketQA);
+    console.log('Raw S3 Bucket (Prod):', rawS3BucketProd);
+    console.log('File Metadata Table:', tableName);
 
     if (!rawS3BucketQA || !rawS3BucketProd || !tableName) {
         console.error('Required environment variables are missing.');
@@ -20,7 +24,7 @@ export const handler = async (event: any): Promise<any> => {
 
     try {
         // Step 1: Query DynamoDB for files with ragEvaluationStatus = 'PASSED'
-        const passedFiles = await getPassedFilesFromDynamoDB();
+        const passedFiles = await getPassedFilesFromDynamoDB(tableName);
         console.log(`Found ${passedFiles.length} files with RAG status 'PASSED'.`);
 
         const passedFileSet = new Set(passedFiles.map(file => file.fileId.split('/').pop()));
@@ -108,7 +112,7 @@ export const handler = async (event: any): Promise<any> => {
 };
 
 // Function to query DynamoDB for files with ragEvaluationStatus = 'PASSED'
-async function getPassedFilesFromDynamoDB(): Promise<any[]> {
+async function getPassedFilesFromDynamoDB(tableName: string): Promise<any[]> {
     const params = {
         TableName: tableName,
         FilterExpression: 'ragEvaluationStatus = :status',
