@@ -98,11 +98,11 @@ The `blueprints.sh` script provides the following commands:
 ## Contents
 
 - **Stacks**: This folder contains the stacks for different agent blueprints.
-  - [01-agent-with-function-definitions](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/agent-blueprint-templates/lib/stacks/01-agent-with-function-definitions): Stack for creating an agent with function definitions.
-  - [02-agent-with-return-of-control](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/agent-blueprint-templates/lib/stacks/02-agent-with-return-of-control): Stack for creating an agent with return of control.
-  - [03-agent-with-kb-and-guardrails](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/agent-blueprint-templates/lib/stacks/03-agent-with-kb-and-guardrails): Stack for creating an agent with a knowledge base and guardrails.
-  - [04-agent-with-lambda-parser](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/agent-blueprint-templates/lib/stacks/04-agent-with-lambda-parser): Stack for creating an agent with a custom Lambda parser.
-  - [05-agent-with-classification-instructions](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-for-bedrock/agent-blueprint-templates/lib/stacks/05-agent-with-classification-instructions): Stack for creating an agent with simple classification instructions.
+  - [01-agent-with-function-definitions](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/agent-blueprint-templates/lib/stacks/01-agent-with-function-definitions): Stack for creating an agent with function definitions.
+  - [02-agent-with-return-of-control](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/agent-blueprint-templates/lib/stacks/02-agent-with-return-of-control): Stack for creating an agent with return of control.
+  - [03-agent-with-kb-and-guardrails](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/agent-blueprint-templates/lib/stacks/03-agent-with-kb-and-guardrails): Stack for creating an agent with a knowledge base and guardrails.
+  - [04-agent-with-lambda-parser](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/agent-blueprint-templates/lib/stacks/04-agent-with-lambda-parser): Stack for creating an agent with a custom Lambda parser.
+  - [05-agent-with-classification-instructions](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/agent-blueprint-templates/lib/stacks/05-agent-with-classification-instructions): Stack for creating an agent with simple classification instructions.
 - **bin**: This folder contains the entry point for deploying the stacks.
   - [main.ts](notion://www.notion.so/bin/main.ts): Main entry point for deploying the stacks using AWS CDK.
 - **cdk.json**: Configuration file for AWS CDK.
