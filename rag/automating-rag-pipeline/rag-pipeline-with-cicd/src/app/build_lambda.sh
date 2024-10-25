@@ -30,7 +30,7 @@ ls -ltr
 
 
 # Variables
-SRC_DIR="./rag/automating-rag-pipeline/multimodal-rag-pipeline-with-cicd/src/app/CustomChunker"
+SRC_DIR="./rag/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/CustomChunker"
 TMP_DIR="/tmp/my-lambda-package"  # Use /tmp for temporary storage
 ZIP_FILE="$TMP_DIR/lambda.zip"
 S3_KEY="custom_chunking_lambda_package.zip"
