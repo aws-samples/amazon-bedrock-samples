@@ -18,6 +18,22 @@ interface CodePipelineStackProps extends StackProps {
   codePipelineName: string;
 }
 
+/** 
+ * ## CodePipelineStack Overview
+ *
+ * ### Usage:
+ * This stack defines the CI/CD pipeline that automates the deployment of the RAG system across multiple environments (QA and Production).
+ * It uses AWS CodePipeline, CodeBuild, and approval steps to manage infrastructure updates and deployments.
+ *
+ * ### Key Features:
+ * - CodePipeline Integration: Automates the build, test, and deployment process for each environment.
+ * - CodeBuild Step: Packages Lambda functions and builds the infrastructure using CDK.
+ * - Manual Approval Workflow: Ensures that only validated code and data changes are promoted to production.
+ * - SSM Parameter Store: Stores configuration values like bucket names and pipeline parameters.
+ * - Multi-Environment Support: Deploys and promotes resources across QA and Production environments.
+ */
+
+
 export class CodePipelineStack extends Stack {
   constructor(scope: Construct, id: string, props: CodePipelineStackProps) {
     super(scope, id, props);
@@ -68,7 +84,7 @@ export class CodePipelineStack extends Stack {
     }));
 
 
-    // **Add the S3 Bucket Stage**
+    // Add the S3 Bucket Stage
     const preQABucketSetupStage = cicdPipeline.addStage(
       new CodePipelineStage(this, 'PreQABucketSetupStage', {
         stageName: 'PreQABucketSetupStage',
@@ -82,7 +98,7 @@ export class CodePipelineStack extends Stack {
 
 
 
-    // **Add Lambda Build Step to QA Stage**
+    // Add Lambda Build Step to QA Stage
     const qaStage = cicdPipeline.addStage(
       new CodePipelineStage(this, "QA", {
         stageName: "QA",
@@ -134,7 +150,7 @@ export class CodePipelineStack extends Stack {
       new CodeBuildStep("TriggerRAGEvaluationAfterQADeployment", {
         commands: [
           // Retrieve the state machine ARN from SSM in the us-east-1 region
-          `aws stepfunctions start-execution --region us-east-1 --state-machine-arn $(aws ssm get-parameter --name /${props.codePipelineName}/PostQAApproval/rag-evaluation-state-machine-arn --region us-east-1 --query "Parameter.Value" --output text) --input '{}'`,
+          `aws stepfunctions start-execution --region ${this.node.tryGetContext("defaultRegion")} --state-machine-arn $(aws ssm get-parameter --name /${props.codePipelineName}/PostQAApproval/rag-evaluation-state-machine-arn --region ${this.node.tryGetContext("defaultRegion")} --query "Parameter.Value" --output text) --input '{}'`,
         ],
         buildEnvironment: {
           buildImage: LinuxBuildImage.STANDARD_5_0,
@@ -143,8 +159,8 @@ export class CodePipelineStack extends Stack {
           new PolicyStatement({
             actions: ['ssm:GetParameter', 'states:StartExecution'],
             resources: [
-              `arn:aws:ssm:us-east-1:${this.account}:parameter/${props.codePipelineName}/PostQAApproval/rag-evaluation-state-machine-arn`,
-              `arn:aws:states:us-east-1:${this.account}:stateMachine:*`,
+              `arn:aws:ssm:${this.node.tryGetContext("defaultRegion")}:${this.account}:parameter/${props.codePipelineName}/PostQAApproval/rag-evaluation-state-machine-arn`,
+              `arn:aws:states:${this.node.tryGetContext("defaultRegion")}:${this.account}:stateMachine:*`,
             ],
           }),
         ],
@@ -156,7 +172,7 @@ export class CodePipelineStack extends Stack {
 
 
 
-    // **Add the S3 Bucket Stage**
+    // Add the S3 Bucket Stage
     const preProdBucketSetupStage = cicdPipeline.addStage(
       new CodePipelineStage(this, 'PreProdBucketSetupStage', {
         stageName: 'PreProdBucketSetupStage',
@@ -204,7 +220,7 @@ export class CodePipelineStack extends Stack {
           // Post-deployment step: Trigger Copy Files State Machine
           new CodeBuildStep("TriggerCopyFilesFromQAToProdStateMachine", {
             commands: [
-              `aws stepfunctions start-execution --region us-west-2 --state-machine-arn $(aws ssm get-parameter --name /${props.codePipelineName}/Prod/move-files-state-machine-arn --region us-west-2 --query "Parameter.Value" --output text) --input '{}'`,
+              `aws stepfunctions start-execution --region ${this.node.tryGetContext("prodRegion")} --state-machine-arn $(aws ssm get-parameter --name /${props.codePipelineName}/Prod/move-files-state-machine-arn --region us-west-2 --query "Parameter.Value" --output text) --input '{}'`,
             ],
             buildEnvironment: {
               buildImage: LinuxBuildImage.STANDARD_5_0,

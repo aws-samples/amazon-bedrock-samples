@@ -15,6 +15,22 @@ export interface WebAppStackProps extends StackProps {
 
 }
 
+/**
+ * ## WebApplicationStack Overview
+ *
+ * ### Usage:
+ * This stack deploys the Streamlit web application, which serves as the interface for interacting with Amazon Bedrock Knowledge Base.
+ * It showcases a chat interface where users can interact with the RAG-powered system.
+ *
+ * ### Key Features:
+ * - Application Load Balancer: Provides public access to the Streamlit app.
+ * - API Gateway Integration: Exposes an API endpoint for invoking the backend Lambda function, which interacts with Bedrock.
+ * - Lambda Functions: Invokes Bedrock models to generate responses for the chat interface.
+ * - Fargate Service: Runs the containerized web application within an ECS cluster.
+ * - IAM Policies: Grants permissions for invoking Bedrock models and retrieving knowledge base data.
+ */
+
+
 export class WebApplicationStack extends Stack {
     constructor(scope: Construct, id: string, props: WebAppStackProps) {
         super(scope, id, props);

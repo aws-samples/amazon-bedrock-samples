@@ -13,6 +13,21 @@ export interface BedrockStackProps extends StackProps {
   stageName: string;
   codePipelineName: string;
 }
+/**
+ * ## BedrockStack Overview
+ *
+ * ### Usage:
+ * This stack sets up the core resources required for the RAG pipeline, integrating with Amazon Bedrock Knowledge bases. 
+ * It provisions Lambda functions, S3 buckets, IAM roles, and policies to manage the ingestion, transformation, and retrieval of data.
+ *
+ * ### Key Features:
+ * - Amazon Bedrock Integration: Configures Bedrock knowledge bases, data sources and custom chunking Lambda functions.
+ * - Lambda Function for Data Transformation: Handles data chunking and transformation for ingestion.
+ * - S3 Buckets: Stores intermediate data and documents for knowledge ingestion.
+ * - IAM Policies: Grants secure access to Lambda functions and Bedrock models.
+ * - SSM Parameter Store Integration: Retrieves configuration values dynamically for different environments (QA/Prod).
+ */
+
 
 export class BedrockStack extends Stack {
   public knowledgeBaseId!: string; // Store the Knowledge Base ID

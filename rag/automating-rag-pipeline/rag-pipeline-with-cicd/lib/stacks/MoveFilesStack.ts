@@ -41,7 +41,7 @@ export class MoveFilesStack extends Stack {
         // Retrieve QA Bucket Name from SSM Parameter Store.
         const qaRawS3DataSourceBucketParameter = new SSMParameterReader(this, 'QARawS3DataSourceBucketParameter', {
             parameterName: `/${props.codePipelineName}/QA/raw-s3-data-source`,
-            region: 'us-east-1', // SSM parameter region.
+            region: this.node.tryGetContext("defaultRegion"), // SSM parameter region.
         });
 
         // Read the DynamoDB table name from SSM Parameter Store
@@ -50,7 +50,7 @@ export class MoveFilesStack extends Stack {
         // );
         const fileMetadataTableNameParam = new SSMParameterReader(this, 'FileMetadataTableName', {
             parameterName: `/${props.codePipelineName}/QA/fileMetadataTableName`,
-            region: 'us-east-1', // SSM parameter region.
+            region: this.node.tryGetContext("defaultRegion") // SSM parameter region.
         });
 
         // Resolve QA and Production Bucket Names.

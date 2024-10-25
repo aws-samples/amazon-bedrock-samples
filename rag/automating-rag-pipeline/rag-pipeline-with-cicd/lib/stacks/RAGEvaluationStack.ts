@@ -13,6 +13,22 @@ export interface RAGEvaluationStackProps extends StackProps {
     codePipelineName: string;
 }
 
+/**
+ * ## RAGEvaluationStack Overview
+ *
+ * ### Usage:
+ * This stack manages the evaluation of the RAG pipeline based on data or code changes. 
+ * It ensures that updates are only promoted to production after successful evaluations.
+ *
+ * ### Key Features:
+ * - Lambda Functions: Handles data ingestion evaluations and triggers approvals.
+ * - Step Functions State Machine: Automates the evaluation and approval process.
+ * - Manual Approval Step: Ensures that only validated changes are promoted to production.
+ * - SSM Parameter Store Integration: Stores configuration values like state machine ARNs.
+ * - IAM Policies: Grants the necessary permissions to manage CodePipeline and Step Functions.
+ */
+
+
 export class RAGEvaluationStack extends Stack {
     constructor(scope: Construct, id: string, props: RAGEvaluationStackProps) {
         super(scope, id, props);

@@ -35,6 +35,24 @@ enum IngestionJobStatus {
     FAILED = 'FAILED'
 }
 
+
+/**
+ * ## DataIngestionStack Overview
+ *
+ * ### Usage:
+ * This stack manages the ingestion of raw data, processing and tracks metadata in DynamoDB. 
+ * It uses Step Functions to automate data ingestion workflows and trigger knowledge base updates.
+ *
+ * ### Key Features:
+ * - S3 Buckets: Stores raw and processed data thats used for Knowledge Base ingestion.
+ * - DynamoDB Table: Tracks file metadata and ingestion statuses.
+ * - Step Functions Workflow: Automates ETL (Extract, Transform, Load) processes.
+ * - Lambda Functions: Handles file upload events and metadata tracking.
+ * - EventBridge Integration: Captures S3 events and triggers workflows.
+ */
+
+
+
 export class DataIngestionStack extends Stack {
     public readonly kbDataIngestionStateMachineArn: string;
     public readonly rawS3DataSourceBucketName: string;
