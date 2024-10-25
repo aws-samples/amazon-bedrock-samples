@@ -4,6 +4,23 @@ This project implements a robust **CI/CD pipeline** for an end-to-end **Retrieva
 
 The solution leverages **AWS CodePipeline** to streamline multi-stage deployments, automating infrastructure updates from code commits to production rollouts. RAG evaluations act as critical checkpoints to ensure system integrity by validating both **data and code changes**. Promotions from QA to Production are only allowed after successful RAG evaluations, ensuring that only validated changes make it to production. The architecture offers **fine-grained control** over the deployment lifecycle, with **manual/automatic approvals** and **state machine-driven workflows** managing critical decisions. By combining **CI/CD best practices with RAG workflows**, the project provides a scalable and automated framework to continuously deploy GenAI-powered applications, leveraging real-time external knowledge. This solution accelerates time-to-market by providing a production-ready framework for enterprises building AI-powered applications with Amazon Bedrock.
 
+## **Accessing the Example Streamlit App**
+
+The **Streamlit app** deployed as part of this project serves as an **example interface** to demonstrate the capabilities of the **RAG pipeline**. 
+
+1. **Go to the AWS CloudFormation Console**:
+   - In the list of stacks, locate the **Web App Stack** (e.g., `Prod-WebAppStack`).
+
+2. **Find the Web App Endpoint**:
+   - Click on the **`Prod-WebAppStack`**.
+   - In the **"Outputs" tab**, look for the key labeled **`AlbDnsName`**.
+   - This value provides the **DNS name** of the Application Load Balancer (ALB) hosting the example Streamlit app.
+
+3. **Access the App**:
+   - Click on the **AlbDnsName** or copy the link and open it in a browser.
+   - The Streamlit app should load, allowing you to explore the chat functionality.
+
+
 ---
 
 ## **cdk.json: Configuration for Your CDK Project**
@@ -118,6 +135,7 @@ Ensure the following tools are installed:
 - **Synthesize**: `npx cdk synth`
 - **Deploy**: `npx cdk deploy`
 - **Destroy**: `npx cdk destroy`
+
 
 ---
 
