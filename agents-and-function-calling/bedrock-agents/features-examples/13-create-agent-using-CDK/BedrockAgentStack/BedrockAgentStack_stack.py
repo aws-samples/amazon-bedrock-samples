@@ -58,7 +58,7 @@ class BedrockAgentStack(Stack):
         agent_instruction = config['agentInstruction']
         agent_action_group_description = config['agentActionGroupDescription']
         agent_action_group_name = config['agentActionGroupName']
-        table_name = config['tableName']
+        table_name = config['dynamodbTableName']
         
         # Role that will be used by the KB
         kb_role = iam.Role(scope=self,
@@ -229,8 +229,8 @@ class BedrockAgentStack(Stack):
 
         # Create Knowlegebase datasource for provisioned S3 bucket
         datasource = bedrock.CfnDataSource(scope=self,
-                                            id='AgentKBDataSource',
-                                            name='HotelDataS3Source',
+                                            id=config['knowledgeBaseDataSourceId'],
+                                            name= config['knowledgeBaseDataSourceName'],
                                             knowledge_base_id=knowledge_base.attr_knowledge_base_id,
                                             data_source_configuration={'s3Configuration':
                                                                            {'bucketArn': s3Bucket.bucket_arn},
@@ -265,9 +265,9 @@ class BedrockAgentStack(Stack):
         bucket_deployment.node.add_dependency(kb_sync_lambda)
          
         # Create the DynamoDB table
-        dynamodbable=dynamodb.Table(self, "restaurant_bookings",
+        dynamodbable=dynamodb.Table(self, config['dynamodbTableId'],
             partition_key=dynamodb.Attribute(
-                name="booking_id",
+                name= config['dynamodbPartitionKeyId'],
                 type=dynamodb.AttributeType.STRING
             ),
             table_name=table_name,

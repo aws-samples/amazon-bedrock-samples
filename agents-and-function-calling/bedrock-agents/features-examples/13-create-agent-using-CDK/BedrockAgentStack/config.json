@@ -1,14 +1,23 @@
 {
+  "s3BucketName": "booking-agent-us-east1-account",
+  
   "agentName": "booking-agent",
   "agentAliasName": "booking-agent-alias", 
-  "knowledgeBaseName": "booking-agent-kb",
-  "knowledgeBaseDescription": "Knowledge Base containing the restaurant menu's collection",
-  "s3BucketName": "booking-agent-us-east1-account",
-  "agentModelId": "anthropic.claude-3-sonnet-20240229-v1:0",
-  "embeddingModelId": "amazon.titan-embed-text-v2:0",
   "agentDescription": "Agent in charge of a restaurants table bookings",
   "agentInstruction": "You are a restaurant agent, helping clients retrieve information from their booking, create a new booking or delete an existing booking",
   "agentActionGroupDescription": "Actions for getting table booking information, create a new booking or delete an existing booking",
   "agentActionGroupName": "TableBookingsActionGroup",
-  "tableName": "restaurant_bookings"
+
+  "agentModelId": "anthropic.claude-3-sonnet-20240229-v1:0",
+  "embeddingModelId": "amazon.titan-embed-text-v2:0",
+
+  "knowledgeBaseName": "booking-agent-kb",
+  "knowledgeBaseDescription": "Knowledge Base containing the restaurant menu's collection",
+  "knowledgeBaseDataSourceId": "kb-datasource-id",
+  "knowledgeBaseDataSourceName": "restaurant-menu",
+
+  "dynamodbTableName": "restaurant_bookings",
+  "dynamodbTableId": "restaurant-reservation-table",
+  "dynamodbPartitionKeyId": "booking_id"
+  
 }
