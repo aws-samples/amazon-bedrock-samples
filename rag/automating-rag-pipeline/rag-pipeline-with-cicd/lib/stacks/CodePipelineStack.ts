@@ -220,7 +220,7 @@ export class CodePipelineStack extends Stack {
           // Post-deployment step: Trigger Copy Files State Machine
           new CodeBuildStep("TriggerCopyFilesFromQAToProdStateMachine", {
             commands: [
-              `aws stepfunctions start-execution --region ${this.node.tryGetContext("prodRegion")} --state-machine-arn $(aws ssm get-parameter --name /${props.codePipelineName}/Prod/move-files-state-machine-arn --region us-west-2 --query "Parameter.Value" --output text) --input '{}'`,
+              `aws stepfunctions start-execution --region ${this.node.tryGetContext("prodRegion")} --state-machine-arn $(aws ssm get-parameter --name /${props.codePipelineName}/Prod/move-files-state-machine-arn --region ${this.node.tryGetContext("prodRegion")} --query "Parameter.Value" --output text) --input '{}'`,
             ],
             buildEnvironment: {
               buildImage: LinuxBuildImage.STANDARD_5_0,
@@ -229,8 +229,8 @@ export class CodePipelineStack extends Stack {
               new PolicyStatement({
                 actions: ["ssm:GetParameter", "states:StartExecution"],
                 resources: [
-                  `arn:aws:ssm:us-west-2:${this.account}:parameter/${props.codePipelineName}/Prod/move-files-state-machine-arn`,
-                  `arn:aws:states:us-west-2:${this.account}:stateMachine:*`,
+                  `arn:aws:ssm:${this.node.tryGetContext("prodRegion")}:${this.account}:parameter/${props.codePipelineName}/Prod/move-files-state-machine-arn`,
+                  `arn:aws:states:${this.node.tryGetContext("prodRegion")}:${this.account}:stateMachine:*`,
                 ],
               }),
             ],

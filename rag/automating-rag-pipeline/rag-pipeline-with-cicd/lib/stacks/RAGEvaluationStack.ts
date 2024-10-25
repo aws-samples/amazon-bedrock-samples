@@ -65,7 +65,7 @@ export class RAGEvaluationStack extends Stack {
             actions: ['codepipeline:GetPipelineState', 'codepipeline:PutApprovalResult', 'ssm:GetParameter'],
             resources: [
                 `arn:aws:codepipeline:${this.region}:${this.account}:${props.codePipelineName}`,
-                `arn:aws:ssm:us-west-2:${this.account}:parameter/${props.codePipelineName}/Prod/move-files-state-machine-arn`,
+                `arn:aws:ssm:${this.node.tryGetContext("prodRegion")}:${this.account}:parameter/${props.codePipelineName}/Prod/move-files-state-machine-arn`,
                 `arn:aws:codepipeline:${this.region}:${this.account}:${props.codePipelineName}/${props.stageName}/ManualApprovalForProduction`,  // The manual approval action resource
             ],
         }));
@@ -88,21 +88,21 @@ export class RAGEvaluationStack extends Stack {
         });
 
         // StepFunctionsStartExecution construct in AWS CDK does not have a region property as part of its API. Instead, you need to manage cross-region invocations using AWS SDK calls within a Lambda function that runs in the region where the Step Function is located.
-        // Create a new Lambda to start the Step Function in us-west-2
+        // Create a new Lambda to start the Step Function in ${this.node.tryGetContext("prodRegion")}
         const startMoveFilesLambda = this.createLambdaFunction('StartMoveFilesLambda', 'start-move-files-state-machine.ts', 5, {
             PIPELINE_NAME: props.codePipelineName,
         });
 
-        // Add necessary permissions to start Step Function in us-west-2
+        // Add necessary permissions to start Step Function in ${this.node.tryGetContext("prodRegion")}
         startMoveFilesLambda.addToRolePolicy(new PolicyStatement({
             actions: ['states:StartExecution', 'ssm:GetParameter'],
             resources: [
-                `arn:aws:states:us-west-2:${this.account}:stateMachine:*`,
-                `arn:aws:ssm:us-west-2:${this.account}:parameter/${props.codePipelineName}/Prod/move-files-state-machine-arn`,
+                `arn:aws:states:${this.node.tryGetContext("prodRegion")}:${this.account}:stateMachine:*`,
+                `arn:aws:ssm:${this.node.tryGetContext("prodRegion")}:${this.account}:parameter/${props.codePipelineName}/Prod/move-files-state-machine-arn`,
             ],
         }));
 
-        // Create the Lambda task to invoke the Step Function in us-west-2
+        // Create the Lambda task to invoke the Step Function in ${this.node.tryGetContext("prodRegion")}
         const invokeMoveFilesLambdaTask = new LambdaInvoke(this, 'InvokeMoveFilesLambdaTask', {
             lambdaFunction: startMoveFilesLambda,
             outputPath: '$.Payload',
