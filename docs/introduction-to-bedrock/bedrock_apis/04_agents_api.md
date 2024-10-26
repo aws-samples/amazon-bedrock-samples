@@ -521,7 +521,7 @@ agent_id
 
 We will now create an agent action group that uses the lambda function created earlier. The [`create_agent_action_group`](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-agent/client/create_agent_action_group.html){:target="_blank"} function provides this functionality. We will use `DRAFT` as the agent version since we haven't yet created an agent version or alias. To inform the agent about the action group capabilities, we provide an action group description.
 
-In this example, we provide the Action Group functionality using a `functionSchema`. You can alternatively provide an `APISchema`. The notebook [02-create-agent-with-api-schema.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-for-bedrock/features-examples/02-create-agent-with-api-schema/02-create-agent-with-api-schema.ipynb){:target="_blank"} provides an example of that approach.
+In this example, we provide the Action Group functionality using a `functionSchema`. You can alternatively provide an `APISchema`. The notebook [02-create-agent-with-api-schema.ipynb](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/bedrock-agents/features-examples/02-create-agent-with-api-schema/02-create-agent-with-api-schema.ipynb){:target="_blank"} provides an example of that approach.
 
 To define the functions using a function schema, you need to provide the `name`, `description` and `parameters` for each function.
 

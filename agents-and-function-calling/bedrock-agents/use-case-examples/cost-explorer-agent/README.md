@@ -54,7 +54,7 @@ Keep these values handy; you'll need them for the CloudFormation deployment.
 1. Clone this repository:
    ```
    git clone https://github.com/aws-samples/amazon-bedrock-samples.git 
-   cd amazon-bedrock-samples/agents-for-bedrock/use-case-examples/cost-explorer-agent/
+   cd amazon-bedrock-samples/agents-and-function-calling/bedrock-agents/use-case-examples/cost-explorer-agent/
    ```
 
 2. Run the deployment script:
