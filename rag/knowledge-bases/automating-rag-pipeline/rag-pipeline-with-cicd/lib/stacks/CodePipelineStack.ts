@@ -56,14 +56,14 @@ export class CodePipelineStack extends Stack {
         commands: [
           "echo 'Current working directory:' $(pwd)",
           "ls -ltr",
-          "cd rag/automating-rag-pipeline/rag-pipeline-with-cicd",
+          "cd rag/knowledge-bases/automating-rag-pipeline/rag-pipeline-with-cicd",
           "echo 'New working directory:' $(pwd)",
           "ls -ltr",
           "npm ci",
           "npm run build",
           "npx cdk synth"
         ],
-        primaryOutputDirectory: 'rag/automating-rag-pipeline/rag-pipeline-with-cicd/cdk.out'  // Updated to reflect the correct project root directory
+        primaryOutputDirectory: 'rag/knowledge-bases/automating-rag-pipeline/rag-pipeline-with-cicd/cdk.out'  // Updated to reflect the correct project root directory
       }),
       dockerEnabledForSynth: true,
     });
@@ -115,7 +115,7 @@ export class CodePipelineStack extends Stack {
             commands: [
               "echo 'Current working directory:' $(pwd)",
               "ls -R",
-              "chmod +x rag/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh",  // Make the script executable
+              "chmod +x rag/knowledge-bases/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh",  // Make the script executable
               "./rag/knowledge-bases/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh"            // Run the script
             ],
 
@@ -202,7 +202,7 @@ export class CodePipelineStack extends Stack {
             commands: [
               "echo 'Current working directory:' $(pwd)",
               "ls -R",
-              "chmod +x rag/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh",     // Make the script executable
+              "chmod +x rag/knowledge-bases/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh",     // Make the script executable
               "./rag/knowledge-bases/automating-rag-pipeline/rag-pipeline-with-cicd/src/app/build_lambda.sh"            // Run the script
             ],
             role: codeBuildRole,  // Use the shared CodeBuild role
