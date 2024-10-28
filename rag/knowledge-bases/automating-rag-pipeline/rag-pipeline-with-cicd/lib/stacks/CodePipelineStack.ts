@@ -39,7 +39,7 @@ export class CodePipelineStack extends Stack {
     super(scope, id, props);
 
     // Initialize the pipeline
-    const cicdPipeline = new CodePipeline(this, "MultimodalRAGPipeline", {
+    const cicdPipeline = new CodePipeline(this, "RAGPipeline", {
       pipelineName: props.codePipelineName,
       selfMutation: true,
       role: new Role(this, "CodePipelineRole", {

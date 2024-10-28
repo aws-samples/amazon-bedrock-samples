@@ -112,10 +112,10 @@ export class BedrockStack extends Stack {
     // Retrieve the custom Lambda package bucket name from the SSM parameter store
     let bedrockCustomLambdaBucketName: string;
     if (props.stageName === "QA") {
-      bedrockCustomLambdaBucketName = StringParameter.valueForStringParameter(this, '/MultimodalRAG/PreQABucketSetupStage/lambda-package-bucket-name');
+      bedrockCustomLambdaBucketName = StringParameter.valueForStringParameter(this, '/RAGPipeline/PreQABucketSetupStage/lambda-package-bucket-name');
       // console.log("Bedrock Custom Lambda Package Bucket Name: ", bedrockCustomLambdaBucketName); // Log the bucket name
     } else {
-      bedrockCustomLambdaBucketName = StringParameter.valueForStringParameter(this, '/MultimodalRAG/PreProdBucketSetupStage/lambda-package-bucket-name');
+      bedrockCustomLambdaBucketName = StringParameter.valueForStringParameter(this, '/RAGPipeline/PreProdBucketSetupStage/lambda-package-bucket-name');
       // console.log("Bedrock Custom Lambda Package Bucket Name: ", bedrockCustomLambdaBucketName); // Log the bucket name
     }
 
