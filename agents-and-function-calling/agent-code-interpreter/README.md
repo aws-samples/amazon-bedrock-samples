@@ -18,7 +18,7 @@ This repository demonstrates how to set up, use, and test an Amazon Bedrock Agen
 
 ### 1. Data Preparation
 
-`1_Data_Preparation.ipynb`
+`00_data_prep.ipynb`
 
 This notebook focuses on processing open-source taxi data to be used by our Amazon Bedrock Agent.
 
@@ -28,7 +28,7 @@ This notebook focuses on processing open-source taxi data to be used by our Amaz
 
 ### 2. Bedrock Agent Creation
 
-`2_Bedrock_Agent_Creation.ipynb`
+`01_create_agent.ipynb`
 
 This notebook guides you through the process of creating an Amazon Bedrock Agent.
 
@@ -38,7 +38,7 @@ This notebook guides you through the process of creating an Amazon Bedrock Agent
 
 ### 3. Testing and Cleanup
 
-`3_Testing_and_Cleanup.ipynb`
+`02_invoke_agent.ipynb`
 
 The final notebook demonstrates how to test the Bedrock Agent and clean up resources.
 
