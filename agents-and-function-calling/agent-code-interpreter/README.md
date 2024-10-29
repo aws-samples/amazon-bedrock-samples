@@ -4,7 +4,7 @@ This repository demonstrates how to set up, use, and test an Amazon Bedrock Agen
 
 ## Contents
 
-1. [Data Preparation](#data-preparation)
+1. [Data Preparation](./agent-code-interpreter/00_data_prep.ipynb)
 2. [Bedrock Agent Creation](#bedrock-agent-creation)
 3. [Testing and Cleanup](#testing-and-cleanup)
 
