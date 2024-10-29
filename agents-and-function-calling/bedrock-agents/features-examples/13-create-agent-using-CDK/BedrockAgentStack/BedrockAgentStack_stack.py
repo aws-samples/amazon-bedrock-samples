@@ -294,11 +294,19 @@ class BedrockAgentStack(Stack):
                                                      effect=iam.Effect.ALLOW,
                                                      resources=[dynamodbable.table_arn],
                                                      actions=['dynamodb:GetItem','dynamodb:PutItem','dynamodb:DeleteItem']))
-                
-        cfn_agent = bedrock.CfnAgent(self, "CfnAgent",
-            agent_name= agent_name,
 
-            # the properties below are optional
+        # Create the Agent
+        cfn_agent = bedrock.CfnAgent(self, "CfnAgent",
+            agent_name=agent_name,
+            agent_resource_role_arn=agent_role.role_arn,
+            auto_prepare=True,
+            description=agent_description,
+            foundation_model=agent_model_id,
+            instruction= agent_instruction,
+            idle_session_ttl_in_seconds=1800,
+            knowledge_bases=[{'description': knowledge_base_description,
+                            'knowledgeBaseId': knowledge_base.attr_knowledge_base_id}],
+             
             action_groups=[bedrock.CfnAgent.AgentActionGroupProperty(
                 action_group_name= agent_action_group_name,
                 description=agent_action_group_description,
@@ -310,11 +318,11 @@ class BedrockAgentStack(Stack):
                                 
                 function_schema=bedrock.CfnAgent.FunctionSchemaProperty(
                     functions=[bedrock.CfnAgent.FunctionProperty(
-                    name="get_booking_details",
+                    name=config['func_getbooking_name'],
                     # the properties below are optional
-                    description="Retrieve details of a restaurant booking",
+                    description=config['func_getbooking_description'],
                     parameters={
-                        "booking_id": bedrock.CfnAgent.ParameterDetailProperty(
+                        config['func_getbooking_id']: bedrock.CfnAgent.ParameterDetailProperty(
                             type="string",
 
                             # the properties below are optional
@@ -323,34 +331,34 @@ class BedrockAgentStack(Stack):
                         )
                     }
                     ) ,
-                #create_booking
+                    #create_booking
                     bedrock.CfnAgent.FunctionProperty(
-                    name="create_booking",
+                    name=config['func_createbooking_name'],
                     # the properties below are optional
-                    description="Create a new restaurant booking",
+                    description=config['func_createbooking_description'],
                     parameters={
-                        "date": bedrock.CfnAgent.ParameterDetailProperty(
+                        config['func_createbooking_date']: bedrock.CfnAgent.ParameterDetailProperty(
                             type="string",
 
                             # the properties below are optional
                             description="The date of the booking",
                             required=True
                         ),
-                        "name": bedrock.CfnAgent.ParameterDetailProperty(
+                        config['func_createbooking_person_name']: bedrock.CfnAgent.ParameterDetailProperty(
                             type="string",
 
                             # the properties below are optional
                             description="The name of the booking",
                             required=True
                         ),
-                        "hour": bedrock.CfnAgent.ParameterDetailProperty(
+                        config['func_createbooking_hour']: bedrock.CfnAgent.ParameterDetailProperty(
                             type="string",
 
                             # the properties below are optional
                             description="The hour of the booking",
                             required=True
                         ),
-                        "num_guests": bedrock.CfnAgent.ParameterDetailProperty(
+                        config['func_createbooking_num_guests']: bedrock.CfnAgent.ParameterDetailProperty(
                             type="integer",
 
                             # the properties below are optional
@@ -361,11 +369,11 @@ class BedrockAgentStack(Stack):
                 ) ,
                 #delete_booking
                 bedrock.CfnAgent.FunctionProperty(
-                    name="delete_booking",
+                    name=config['func_deletebooking_name'],
                     # the properties below are optional
-                    description="Delete a restaurant booking",
+                    description=config['func_deletebooking_description'],
                     parameters={
-                        "booking_id": bedrock.CfnAgent.ParameterDetailProperty(
+                        config['func_deletebooking_id']: bedrock.CfnAgent.ParameterDetailProperty(
                             type="string",
 
                             # the properties below are optional
@@ -375,16 +383,7 @@ class BedrockAgentStack(Stack):
                     })
                 ]
                 ),
-                )],
-            agent_resource_role_arn=agent_role.role_arn,
-            auto_prepare=True,
-            description=agent_description,
-            foundation_model=agent_model_id,
-            instruction= agent_instruction,
-            knowledge_bases=[{'description': knowledge_base_description,
-                            'knowledgeBaseId': knowledge_base.attr_knowledge_base_id}],
-            idle_session_ttl_in_seconds=1800
-        )
+                )])
 
         cfn_agent_alias = bedrock.CfnAgentAlias(self, "MyCfnAgentAlias",
                             agent_alias_name=agent_alias_name,
