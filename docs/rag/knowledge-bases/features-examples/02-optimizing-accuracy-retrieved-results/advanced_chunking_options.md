@@ -1,10 +1,11 @@
 ---
 tags:
-    - RAG/ Knowledge-Bases
     - RAG/ Chunking-Strategies
+    - RAG/ Knowledge-Bases
+    - RAG/ Data-Ingestion
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/advanced_chunking_options.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/advanced_chunking_options.ipynb){:target="_blank"}
 
 <h2>Advanced chunking strategies provided by Knowledge Bases for Amazon Bedrock</h2>
 
@@ -34,7 +35,7 @@ First step is to install the pre-requisites packages.
 
 
 ```python
-# restart kernel
+<h2>restart kernel</h2>
 from IPython.core.display import HTML
 HTML("<script>Jupyter.notebook.kernel.restart()</script>")
 ```
@@ -76,12 +77,12 @@ region, account_id
 ```python
 import time
 
-# Get the current timestamp
+<h2>Get the current timestamp</h2>
 current_time = time.time()
 
-# Format the timestamp as a string
+<h2>Format the timestamp as a string</h2>
 timestamp_str = time.strftime("%Y%m%d%H%M%S", time.localtime(current_time))[-7:]
-# Create the suffix using the timestamp
+<h2>Create the suffix using the timestamp</h2>
 suffix = f"{timestamp_str}"
 knowledge_base_name_standard = 'standard-kb'
 knowledge_base_name_hierarchical = 'hierarchical-kb'
@@ -154,9 +155,9 @@ Now we start the ingestion job.
 
 
 ```python
-# ensure that the kb is available
+<h2>ensure that the kb is available</h2>
 time.sleep(30)
-# sync knowledge base
+<h2>sync knowledge base</h2>
 knowledge_base_standard.start_ingestion_job()
 ```
 
@@ -310,9 +311,9 @@ Now start the ingestion job. Since, we are using the same documents as used for 
 
 
 ```python
-# ensure that the kb is available
+<h2>ensure that the kb is available</h2>
 time.sleep(30)
-# sync knowledge base
+<h2>sync knowledge base</h2>
 knowledge_base_hierarchical.start_ingestion_job()
 ```
 
@@ -437,9 +438,9 @@ Now start the ingestion job. Since, we are using the same documents as used for 
 
 
 ```python
-# ensure that the kb is available
+<h2>ensure that the kb is available</h2>
 time.sleep(30)
-# sync knowledge base
+<h2>sync knowledge base</h2>
 knowledge_base_semantic.start_ingestion_job()
 ```
 
@@ -712,9 +713,9 @@ Now start the ingestion job.
 
 
 ```python
-# ensure that the kb is available
+<h2>ensure that the kb is available</h2>
 time.sleep(30)
-# sync knowledge base
+<h2>sync knowledge base</h2>
 knowledge_base_custom.start_ingestion_job()
 ```
 
@@ -923,4 +924,9 @@ print("===============================Knowledge base with semantic chunking=====
 knowledge_base_semantic.delete_kb(delete_s3_bucket=False,delete_iam_roles_and_policies=True)
 print("===============================Knowledge base with custom chunking==============================\n")
 knowledge_base_custom.delete_kb(delete_s3_bucket=True,delete_iam_roles_and_policies=True, delete_lambda_function = True)
+```
+
+
+```python
+
 ```
