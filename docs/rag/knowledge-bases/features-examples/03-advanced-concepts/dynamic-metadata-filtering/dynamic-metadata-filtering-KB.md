@@ -1,10 +1,11 @@
 ---
 tags:
-    - RAG/ Knowledge-Bases
     - RAG/ Metadata-Filtering
+    - Agents/ Function Calling
+    - RAG/ Knowledge-Bases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/knowledge-bases/features-examples/03-advanced-concepts/dynamic-metadata-filtering/dynamic-metadata-filtering-KB.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/03-advanced-concepts/dynamic-metadata-filtering/dynamic-metadata-filtering-KB.ipynb){:target="_blank"}
 
 <h2>Dynamic Metadata Filtering for Knowledge Bases for Amazon Bedrock</h2>
 
@@ -42,7 +43,7 @@ First, let's set up the environment with the necessary imports and boto3 clients
 
 
 ```python
-# # restart kernel
+<h2># restart kernel</h2>
 from IPython.core.display import HTML
 HTML("<script>Jupyter.notebook.kernel.restart()</script>")
 ```
@@ -66,7 +67,7 @@ bedrock_agent_runtime = boto3.client("bedrock-agent-runtime")
 
 MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0" # "<add-model-id>"
 
-# KB with FAISS for metadata filtering
+<h2>KB with FAISS for metadata filtering</h2>
 kb_id = kb_id_standard
 ```
 
@@ -236,7 +237,7 @@ You can test the implementation with the following example:
 text = "Provide a list of all video games published by Rockstar Games and released after 2010"
 results = process_query(text, tool_properties)
 
-# Print results
+<h2>Print results</h2>
 print(results)
 ```
 
@@ -259,7 +260,7 @@ It's important to note that this dynamic approach introduces an additional FM ca
 2. Implement caching mechanisms for common queries to avoid redundant FM calls.
 3. Monitor and optimize the performance of your metadata extraction model regularly.
 
-<h2>Cleanup<h2>
+<h2>Cleanup</h2>
 
 After you've finished experimenting with this solution, it's crucial to clean up your resources to avoid unnecessary charges. Please follow the detailed cleanup instructions provided in the `Clean up` section of the blog post: [Knowledge Bases for Amazon Bedrock now supports metadata filtering to improve retrieval accuracy](https://aws.amazon.com/blogs/machine-learning/knowledge-bases-for-amazon-bedrock-now-supports-metadata-filtering-to-improve-retrieval-accuracy/).
 
@@ -270,3 +271,6 @@ These steps will guide you through deleting your Knowledge Base, vector database
 By implementing dynamic metadata filtering using Amazon Bedrock and Pydantic, we've significantly enhanced the flexibility and power of RAG applications. This approach allows for more intuitive querying of knowledge bases, leading to improved context recall and more relevant AI-generated responses.
 
 As you explore this technique, remember to balance the benefits of dynamic filtering against the additional computational costs. We encourage you to try this method in your own RAG applications and share your experiences with the community.
+
+
+<h2>End</h2>
