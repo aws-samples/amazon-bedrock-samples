@@ -1,21 +1,11 @@
 
-# Creating Agent with Knowledge Base and an Action Group connection
+# AWS CDK (Python) to provision AWS Bedrock Agent with Knowledge Base and an Action Group Connection
 
 In this folder, we provide an example of creating an agent with Amazon Bedrock and integrating it with a 
-Knowledge Base for Amazon Bedrock and with an Action Group. 
-With this integration, the agent will be able to respond to a user query by taking a sequence of actions, 
-consulting the knowledge base to obtain more information, and/or executing tasks using the lambda function 
-connected with an Action Group.
+Knowledge Base for Amazon Bedrock and with an Action Group using Infrastructure as Code (IaC). IaC is implemented using AWS CDK for Python. With this integration, the agent will be able to respond to a user query by taking a sequence of actions, consulting the knowledge base to obtain more information, and/or executing tasks using the lambda function 
+connected with an Action Group. AWS CDK for Python is implemented configurable parameters from 'config.json' file. 
 
-
-## Agent Architecture
-In this example we will create a restaurant assistant agent that connects with a Knowledge Base for Amazon Bedrock containing the restaurant's different menus. 
-This agent also connects to an action group that provides functionalities for handling the table booking in this restaurant. 
-![Agents architecture - showing an agent responding on one end using APIs and action groups and then on the end responding to other questions with a knowledge base on a vector database](images/architecture.png)
-
-The action group created in this example uses [function details](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-action-function.html) to define the functionalities for 
-`create_booking`, `get_booking_details` and `delete_booking`.
-The action group execution connects with a Lambda function that interacts with an Amazon DynamoDB table.
+The Agent architecture can be referred [here](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/05-create-agent-with-knowledge-base-and-action-group)
 
 ## Build and Deploy with AWS CDK 
 The complete provisioning of Amazon Bedrock agent, integration with a Knowledge Base and an Action Group is automated using AWS CDK [Cloud Development Kit](https://aws.amazon.com/cdk/) in [Python](https://docs.aws.amazon.com/cdk/v2/guide/work-with-cdk-python.html). AWS CDK is used primarily used to provision and manage cloud resources in a programmatic and infrastructure-as-code (IaC) manner.
@@ -78,51 +68,27 @@ You use `cdk deploy` actually to create the resources with default parameters an
 cdk deploy
 ```
 
-### CDK Deploy with Parameters (Optional)
+### CDK Deploy with Parameters 
 
-You use `cdk deploy` with parameters with your own set of values to create the resources.
+You use `cdk deploy` with parameters in 'config.json' file. 
 
-![Supported Parameters - shows the list of supported parameters for cdk deploy](images/cdk-parameters.png)
+You can update the number of supported parameters shown as examples below:
+
+  "agentName": "booking-agent",
+
+  "agentAliasName": "booking-agent-alias", 
+  
+  "knowledgeBaseName": "booking-agent-kb",
+
+  "knowledgeBaseDescription": "Knowledge Base containing the restaurant menu's collection"
+  
+  "func_getbooking_name": "get_booking_details",
+  
+  "func_getbooking_description": "Retrieve details of a restaurant booking",
+  
+  "func_getbooking_id": "booking_id",
 
 Note: AgentModelId with claude-3-sonnet and EmbeddingModelId with titan-embed-text-v2 are only supported in this example.
-
-You can select and decide to use the number of supported parameters shown as examples below
-
-```
-cdk deploy BedrockagentStack --parameters AgentName=<user input>
-
-cdk deploy BedrockagentStack --parameters AgentName=<user input>, AgentAliasName=<user input> , KnowledgeBaseName=<user input> , S3BucketName=<user input> , AgentModelId=<user input> , EmbeddingModelId=<user input>
-
-```
-
-### Test the Agent
-
-Ask questions to Hotel booking agent:  
-
-Invoke Agent to query Knowledge Base  
-Q: What are the starters in the childrens menu?   
-
-Invoke Agent to execute function from Action Group  
-Q: Hi, I am Anna. I want to create a booking for 2 people, at 8pm on the 5th of August 2024.   
-
-Invoke Agent with prompt attribute   
-Q: I want to create a booking for 2 people, at 8pm on the 5th of May 2024   
-
-Validating prompt attribute   
-Q: What was the name used in my last reservation?    
-
-Retrieving information from the database in a new session  
-Q: I want to get the information for booking 007659d1    
-
-Canceling reservation  
-Q: I want to delete the booking 007659d1  
-
-Handling context with PromptAttributes  
-Q: I want to create a booking for 2 people, at 8pm tomorrow.  
-
-Important: remember to replace the booking id with the new one  
-Q:I want to get the information for booking 98e6464f  
-
 
 ### CDK Destroy
 
