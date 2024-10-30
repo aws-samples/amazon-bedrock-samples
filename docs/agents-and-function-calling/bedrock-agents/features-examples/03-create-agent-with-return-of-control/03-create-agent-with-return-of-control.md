@@ -5,7 +5,7 @@ tags:
     - Agents/ Tool Binding
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/features-examples/03-create-agent-with-return-of-control/03-create-agent-with-return-of-control.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/03-create-agent-with-return-of-control/03-create-agent-with-return-of-control.ipynb){:target="_blank"}"
 
 <h2>Create Agent with Return of Control (ROC)</h2>
 

@@ -5,7 +5,7 @@ tags:
     - Agents/ Tool Binding
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/features-examples/09-create-agent-with-memory/09-create-agent-with-memory.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/09-create-agent-with-memory/09-create-agent-with-memory.ipynb){:target="_blank"}"
 
 <h2>Create Agent with Memory</h2>
 

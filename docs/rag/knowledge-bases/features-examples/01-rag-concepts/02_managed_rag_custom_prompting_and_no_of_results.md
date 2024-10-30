@@ -5,15 +5,20 @@ tags:
     - RAG/ Data-Ingestion
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/01-rag-concepts/02_managed_rag_custom_prompting_and_no_of_results.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/01-rag-concepts/02_managed_rag_custom_prompting_and_no_of_results.ipynb){:target="_blank"}"
 
 <h2>RetrieveAndGenerate API - Fully managed RAG</h2>
 
 In this module, you'll learn how to improve the Foundation Model (FM) generations by controlling the maximum no. of results retrieved and performing custom prompting in Knowledge bases (KB) for Amazon Bedrock.
+
 This module contains:
+
 1. [Overview](#1-Overview)
+
 2. [Pre-requisites](#2-Pre-requisites)
+
 3. [How to leverage maximum number of results](#3-how-to-leverage-the-maximum-number-of-results-feature)
+
 4. [How to use custom prompting](#4-how-to-use-the-custom-prompting-feature)
 
 <h2>Overview</h2>

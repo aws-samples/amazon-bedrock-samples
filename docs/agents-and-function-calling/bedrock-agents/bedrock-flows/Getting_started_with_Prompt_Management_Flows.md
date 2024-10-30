@@ -4,7 +4,7 @@ tags:
     - API-Usage-Example
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/bedrock-flows/Getting_started_with_Prompt_Management_Flows.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/bedrock-flows/Getting_started_with_Prompt_Management_Flows.ipynb){:target="_blank"}"
 
 <h2>Getting Started with Prompt Management and Flows for Amazon Bedrock</h2>
 

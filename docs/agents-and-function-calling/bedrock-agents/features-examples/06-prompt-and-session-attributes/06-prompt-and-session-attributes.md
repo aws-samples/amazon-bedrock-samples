@@ -5,7 +5,7 @@ tags:
     - Bedrock/ Prompt-Management
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/features-examples/06-prompt-and-session-attributes/06-prompt-and-session-attributes.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/06-prompt-and-session-attributes/06-prompt-and-session-attributes.ipynb){:target="_blank"}"
 
 <h2>Prompt and session parameters</h2>
 

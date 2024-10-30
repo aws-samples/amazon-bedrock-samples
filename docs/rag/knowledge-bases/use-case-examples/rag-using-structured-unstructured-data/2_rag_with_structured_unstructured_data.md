@@ -5,7 +5,7 @@ tags:
     - Agents/ Multi-Agent-Orchestration
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/2_rag_with_structured_unstructured_data.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/2_rag_with_structured_unstructured_data.ipynb){:target="_blank"}"
 
 <h2>RAG with structured and unstructed data</h2>
 This notebook demonstrates how to leverage multiple data sources, including structured data from a database and unstructed data (like pdf, txt, etc.), to answer questions using Retrieval Augmented Generation (RAG). Specifically, we'll show how to integrate a knowledge base and a database to retrieve relevant information and generate comprehensive natural language responses.
