@@ -5,7 +5,7 @@ tags:
     - RAG/ Knowledge-Bases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/03-advanced-concepts/dynamic-metadata-filtering/dynamic-metadata-filtering-KB.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/03-advanced-concepts/dynamic-metadata-filtering/dynamic-metadata-filtering-KB.ipynb){:target="_blank"}"
 
 <h2>Dynamic Metadata Filtering for Knowledge Bases for Amazon Bedrock</h2>
 

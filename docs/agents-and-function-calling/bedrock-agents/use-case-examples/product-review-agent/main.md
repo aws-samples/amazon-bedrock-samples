@@ -1,14 +1,9 @@
-I'll help you find the last 2 reviews for hair conditioner from Jokic. Let me search through the reviews.
+---
+tags:
+    - Use cases
+---
 
-Based on the search results, I found reviews that match your criteria. Here are the 2 reviews from Jokic:
-
-1. "This conditioner is amazing! It left my hair feeling so soft and manageable. I've tried many different brands but this one really stands out. The scent is pleasant and not overpowering. My hair feels moisturized but not weighed down."
-
-2. "I was skeptical at first but this conditioner really delivers. It detangles well and makes my hair look healthy and shiny. A little goes a long way, so the bottle lasts quite a while. Would definitely recommend for anyone looking for a good quality hair conditioner."
-
-These reviews were found within your specified date range from October 2016 to December 2020.
-
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/use-case-examples/product-review-agent/main.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/use-case-examples/product-review-agent/main.ipynb){:target="_blank"}"
 
 ```python
 <h2>%pip install -r requirements.txt</h2>

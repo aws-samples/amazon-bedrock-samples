@@ -5,7 +5,7 @@ tags:
     - Use cases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/03-advanced-concepts/reranking/qa-generator.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/03-advanced-concepts/reranking/qa-generator.ipynb){:target="_blank"}"
 
 <h2>Use LLM to Generate Question And Answer For Q&A conversational chatbot</h2>
 

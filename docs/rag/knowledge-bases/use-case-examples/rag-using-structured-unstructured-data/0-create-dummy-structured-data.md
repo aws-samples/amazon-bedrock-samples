@@ -4,7 +4,7 @@ tags:
     - Use cases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/0-create-dummy-structured-data.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/0-create-dummy-structured-data.ipynb){:target="_blank"}"
 
 <h2>Context:</h2>
 The purpose of this notebook is to generate synthetic tabular data that you can use for the `Rag with structured and unstructed data` workshop.
