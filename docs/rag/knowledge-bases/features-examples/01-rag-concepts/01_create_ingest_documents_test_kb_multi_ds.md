@@ -5,7 +5,7 @@ tags:
     - Vector-DB/ OpenSearch
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb){:target="_blank"}"
 
 <h2>Knowledge Bases for Amazon Bedrock - End to end example using multiple data sources as data source(s)</h2>
 

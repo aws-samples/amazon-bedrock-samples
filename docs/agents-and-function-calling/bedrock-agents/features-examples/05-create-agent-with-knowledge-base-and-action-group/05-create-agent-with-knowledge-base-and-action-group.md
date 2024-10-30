@@ -5,7 +5,7 @@ tags:
     - Agents/ Tool Binding
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/features-examples/05-create-agent-with-knowledge-base-and-action-group/05-create-agent-with-knowledge-base-and-action-group.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/05-create-agent-with-knowledge-base-and-action-group/05-create-agent-with-knowledge-base-and-action-group.ipynb){:target="_blank"}"
 
 <h2>Create an Agent for Amazon Bedrock integrated with Knowledge Bases for Amazon Bedrock and attach Action Group</h2>
 

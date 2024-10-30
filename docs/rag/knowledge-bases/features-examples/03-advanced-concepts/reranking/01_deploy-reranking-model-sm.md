@@ -5,7 +5,7 @@ tags:
     - Use cases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/03-advanced-concepts/reranking/01_deploy-reranking-model-sm.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/03-advanced-concepts/reranking/01_deploy-reranking-model-sm.ipynb){:target="_blank"}"
 
 <h2>Reranking Model with Hugging Face Transformers and Amazon SageMaker</h2>
 The goal of using a reranking model is to improve search relevance by reordering the result set returned by a retriever using a different model.

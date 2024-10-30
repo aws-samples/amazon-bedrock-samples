@@ -3,7 +3,7 @@ tags:
     - Use cases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/use-case-examples/agentsforbedrock-retailagent/workshop/test_retailagent_agentsforbedrock.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/use-case-examples/agentsforbedrock-retailagent/workshop/test_retailagent_agentsforbedrock.ipynb){:target="_blank"}"
 
 ```python
 #Needs awscli-1.29.73-py3-none-any.whl, boto3-1.28.73-py3-none-any.whl, botocore-1.31.73-py3-none-any.whl

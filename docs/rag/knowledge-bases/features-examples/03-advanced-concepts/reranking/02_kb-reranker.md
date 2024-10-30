@@ -5,11 +5,11 @@ tags:
     - Vector-DB/ OpenSearch
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/03-advanced-concepts/reranking/02_kb-reranker.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/03-advanced-concepts/reranking/02_kb-reranker.ipynb){:target="_blank"}"
 
 <h2>Improving accuracy for RAG based applications using Knowledge Bases For Amazon Bedrock and a Re-ranking model </h2>
 
-<img src="img/bedrock-icon.png" alt="bedrock" style="width: 300px;"/>
+<img src="../img/bedrock-icon.png" alt="bedrock" style="width: 300px;"/>
 
 <h2>Overview</h2>
 

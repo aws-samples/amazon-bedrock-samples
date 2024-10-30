@@ -3,7 +3,7 @@ tags:
     - Use cases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/use-case-examples/product-review-agent/main.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/use-case-examples/product-review-agent/main.ipynb){:target="_blank"}"
 
 ```python
 <h2>%pip install -r requirements.txt</h2>

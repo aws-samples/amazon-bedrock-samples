@@ -5,7 +5,7 @@ tags:
     - Use cases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/use-case-examples/metadata-filter-access-control/kb-end-to-end-acl.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/use-case-examples/metadata-filter-access-control/kb-end-to-end-acl.ipynb){:target="_blank"}"
 
 <h2>Knowledge Bases for Amazon Bedrock</h2>
 <h2>Access Control Filtering - End to end notebook</h2>

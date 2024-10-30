@@ -5,7 +5,7 @@ tags:
     - Agents/ Return of Control
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/query_reformulation.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/query_reformulation.ipynb){:target="_blank"}"
 
 <h2>Query Reformulation Supported by Knowledge Bases on Amazon Bedrock</h2>
 

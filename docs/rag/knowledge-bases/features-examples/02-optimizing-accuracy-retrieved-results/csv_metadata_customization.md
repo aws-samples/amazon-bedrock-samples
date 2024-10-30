@@ -5,7 +5,7 @@ tags:
     - RAG/ Knowledge-Bases
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/csv_metadata_customization.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/csv_metadata_customization.ipynb){:target="_blank"}"
 
 <h2>CSV metadata customization walkthrough</h2>
 This notebook provides sample code walkthrough for 'CSV metadata customization' feature, a newly realsed feautre for Knowledge bases for Amazon Bedrock.
