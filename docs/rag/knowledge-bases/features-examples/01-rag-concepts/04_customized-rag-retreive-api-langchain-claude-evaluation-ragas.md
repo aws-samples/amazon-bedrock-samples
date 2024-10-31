@@ -5,7 +5,7 @@ tags:
     - RAG/ Data-Ingestion
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/01-rag-concepts/04_customized-rag-retreive-api-langchain-claude-evaluation-ragas.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/01-rag-concepts/04_customized-rag-retreive-api-langchain-claude-evaluation-ragas.ipynb){:target="_blank"}"
 
 <h2>Building and evaluating Q&A Application using Knowledge Bases for Amazon Bedrock using RAG Assessment (RAGAS) framework</h2>
 

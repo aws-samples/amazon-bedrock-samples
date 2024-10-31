@@ -5,7 +5,7 @@ tags:
     - RAG/ Data-Ingestion
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/advanced_chunking_options.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/advanced_chunking_options.ipynb){:target="_blank"}"
 
 <h2>Advanced chunking strategies provided by Knowledge Bases for Amazon Bedrock</h2>
 

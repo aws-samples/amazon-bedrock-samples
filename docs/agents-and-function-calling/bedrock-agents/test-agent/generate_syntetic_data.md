@@ -4,7 +4,7 @@ tags:
     - RAG/ Data-Ingestion
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/bedrock-agents/test-agent/generate_syntetic_data.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/test-agent/generate_syntetic_data.ipynb){:target="_blank"}"
 
 <h2>Support notebook to generate test data</h2>
 

@@ -5,7 +5,7 @@ tags:
     - API-Usage-Example
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/00-zero-setup-chat-with-your-document/chat_with_document_kb.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/00-zero-setup-chat-with-your-document/chat_with_document_kb.ipynb){:target="_blank"}"
 
 <h2>Chat with your document using Knowledge Bases for Amazon Bedrock - RetrieveAndGenerate API</h2>
  With `chat with your document` capability, you can securely ask questions on single documents, without the overhead of setting up a vector database or ingesting data, making it effortless for businesses to use their enterprise data. You only need to provide a relevant data file as input and choose your FM to get started.

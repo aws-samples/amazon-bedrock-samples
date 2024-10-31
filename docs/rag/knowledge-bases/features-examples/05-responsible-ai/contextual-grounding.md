@@ -5,7 +5,7 @@ tags:
     - Vector-DB/ OpenSearch
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/knowledge-bases/features-examples/05-responsible-ai/contextual-grounding.ipynb){:target="_blank"}
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/rag/knowledge-bases/features-examples/05-responsible-ai/contextual-grounding.ipynb){:target="_blank"}"
 
 <h2>Combining Guardrails Contextual Grounding and Knowledge Bases</h2>
 This notebook demonstrates how to combine Guardrails for Amazon Bedrock contextual grounding filter with the Knowledge Bases for Amazon Bedrock. By doing so, we can ensure that the model's responses are factually grounded and aligned with the information stored in the Knowledge Base.
