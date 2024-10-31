@@ -1,4 +1,11 @@
----tags:-InferenceProfiles-PocToProd---
+---
+tags:
+    - Bedrock/ Inference-Profiles
+    - PoC-to-Prod
+---
+
+[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/poc-to-prod/inference-profiles/inference-profile-basics.ipynb)
+
 <h1> Amazon Bedrock Custom Inference Profiles </h1>
 
 This notebook demonstrates how organizations can implement, test, validate, and operationalize Amazon Bedrock Application Inference Profiles. The aim is to provide a comprehensive understanding of how to manage and utilize Application Inference Profiles effectively.
