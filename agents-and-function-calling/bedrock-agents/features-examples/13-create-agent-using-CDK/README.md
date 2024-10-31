@@ -10,7 +10,7 @@ The Agent architecture can be referred [here](https://github.com/aws-samples/ama
 ## Build and Deploy with AWS CDK 
 The complete provisioning of Amazon Bedrock agent, integration with a Knowledge Base and an Action Group is automated using AWS CDK [Cloud Development Kit](https://aws.amazon.com/cdk/) in [Python](https://docs.aws.amazon.com/cdk/v2/guide/work-with-cdk-python.html). AWS CDK is used primarily used to provision and manage cloud resources in a programmatic and infrastructure-as-code (IaC) manner.
 
-Developers can leverage their existing skills as CDK supports TypeScript, JavaScript, Python, Java, C#/.Net, and Go programming languages and tools to define infrastructure, leading to faster development cycles. Develop faster by using and sharing reusable components called [constructs](https://docs.aws.amazon.com/cdk/v2/guide/constructs.html). Use high-level constructs to quickly define larger components of your application, with secure defaults for your AWS resources, defining more infrastructure with less code.  It's common to see reductions ranging from 30% to 50% or more in terms of lines of code when moving from notebook-based implementations to CDK. This reduction primarily stems from improved organization, modularity, and abstraction capabilities offered by CDK.
+Developers can leverage their existing skills as CDK supports TypeScript, JavaScript, Python, Java, C#/.Net, and Go programming languages and tools to define infrastructure, leading to faster development cycles. It's common to see reductions ranging from 30% to 50% or more in terms of lines of code when moving from notebook-based implementations to CDK. This reduction primarily stems from improved organization, modularity, and abstraction capabilities offered by CDK.
 
 CDK integrates well with CI/CD pipelines (e.g., AWS CodePipeline, CodeBuild). This enables automated testing, deployment, and rollback of infrastructure changes, enhancing reliability and speed of deployments. 
 
@@ -46,11 +46,6 @@ Once the virtualenv is activated, install the required dependencies.
 
 ```
 pip3 install -r requirements.txt
-```
-Install AWS [GenAI CDK constructs](https://github.com/awslabs/generative-ai-cdk-constructs) for provisioning of Bedrock Knowledgebase and Agent
-
-```
-pip3 install cdklabs.generative-ai-cdk-constructs
 ```
 ### CDK Synthesize
 
