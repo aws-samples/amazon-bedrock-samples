@@ -76,11 +76,15 @@ You can update the number of supported parameters shown as examples below:
   "func_getbooking_id": "booking_id",
 
  You can add a new parameter or edit the existing parameter in config.json file. Here is the example to edit an existing parameter:
+
       a) Change the "agentName" parameter with "test-booking-agent" in 'config.json' file 
+
       b) Ensure that same parameter is used correctly in 'BedrockAgentStack_stack.py' file 
+
       c) Finally deploy the updated stack with 'cdk deploy'   
 
-Note: AgentModelId with claude-3-sonnet and EmbeddingModelId with titan-embed-text-v2 are only supported in this example.
+
+Note: AgentModelId with claude-3-sonnet and EmbeddingModelId with titan-embed-text-v2 are used in this example.
 
 ### CDK Destroy
 
