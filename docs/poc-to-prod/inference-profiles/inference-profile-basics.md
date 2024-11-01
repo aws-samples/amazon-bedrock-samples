@@ -6,24 +6,24 @@ tags:
 
 [Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/poc-to-prod/inference-profiles/inference-profile-basics.ipynb)
 
-<h1> Amazon Bedrock Custom Inference Profiles </h1>
+<h1> Amazon Bedrock Application Inference Profiles </h1>
 
-This notebook demonstrates how organizations can implement, test, validate, and operationalize Amazon Bedrock Application Inference Profiles. The aim is to provide a comprehensive understanding of how to manage and utilize Application Inference Profiles effectively.
+This notebook demonstrates how organizations can implement, test, validate, and operationalize Amazon Bedrock application inference profiles. The aim is to provide a comprehensive understanding of how to manage and utilize application inference profiles effectively.
 
 <h2> Overview </h2>
 
-Amazon Bedrock Custom Inference Profiles enable organizations to tag all Bedrock base foundation models with Cost Allocation Tags, making it possible to categorize usage by organizational taxonomies like cost centers, business units, teams, and applications. This scalable, programmatic approach to managing AI spend across multiple workloads reduces reliance on manual processes, lowers the risk of cost overruns, and ensures that critical applications receive priority. With enhanced visibility and control over AI-related expenses, organizations can optimize their GenAI investments and drive innovation more efficiently. This notebook demonstrates the creation of a Custom Inference Profile and its use in invoking models.
+Amazon Bedrock application inference profiles enable organizations to tag all Bedrock base foundation models with Cost Allocation Tags, making it possible to categorize usage by organizational taxonomies like cost centers, business units, teams, and applications. This scalable, programmatic approach to managing AI spend across multiple workloads reduces reliance on manual processes, lowers the risk of cost overruns, and ensures that critical applications receive priority. With enhanced visibility and control over AI-related expenses, organizations can optimize their GenAI investments and drive innovation more efficiently. This notebook demonstrates the creation of an application inference profile and its use in invoking models.
 
 <h2> Architecture </h2>
 ![Architecture](./images/architecture.png)
 
 
 
-The preceding architecture illustrates the configuration of Amazon Bedrock’s Custom Inference Profiles, which enable granular control over model usage and cost allocation. A Custom Inference Profile is associated with a specific model ID and AWS region, and can be created by copying a System-Defined Inference Profile template and adding custom tags for detailed tracking and management. While System-Defined Inference Profiles support cross-region inference, automatically routing requests across regions using a unified model identifier, these predefined profiles cannot be tagged, limiting visibility for managing costs and performance. To address this, Amazon Bedrock has introduced Application Inference Profiles, a new capability that empowers organizations to optimize foundation model management across regions. With Application Inference Profiles, organizations can create custom profiles with metadata tailored to tenants, such as teams, projects, and workloads, streamlining resource allocation and monitoring expenses across diverse AI applications.
+The preceding architecture illustrates the configuration of Amazon Bedrock’s application inference profiles, which enable granular control over model usage and cost allocation. An application inference profile is associated with a specific model ID and AWS region, and can be created by copying a System-Defined Inference Profile template and adding custom tags for detailed tracking and management. While System-Defined Inference Profiles support cross-region inference, automatically routing requests across regions using a unified model identifier, these predefined profiles cannot be tagged, limiting visibility for managing costs and performance. To address this, Amazon Bedrock has introduced application inference profiles, a new capability that empowers organizations to optimize foundation model management across regions. With application inference profiles, organizations can create custom profiles with metadata tailored to tenants, such as teams, projects, and workloads, streamlining resource allocation and monitoring expenses across diverse AI applications.
 
 <h2> Use case </h2>
 
-This notebook contains implementation, test, and validation steps for various Bedrock Inference Profile API functionalities, including:
+This notebook contains implementation, test, and validation steps for various Amazon Bedrock application inference profile API functionalities, including:
 - Create Inference Profile
 - Get Inference Profile
 - List Inference Profiles
@@ -40,9 +40,9 @@ This notebook contains implementation, test, and validation steps for various Be
 
 1. Ensure an AWS account has been created: [Link](https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-creating.html)
 2. Ensure the user has permissions to access the correct models in Amazon Bedrock: [Link](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
-3. This Notebook was created in Amazon SageMaker in the us-west-2 region. If using this notebook in an outside environment ensure the AWS credentials are set correctly. If using in a different region, ensure the region variable is changed and that Amazon Bedrock Custom Inference Profiles are available in that region.
+3. This Notebook was created in Amazon SageMaker in the us-west-2 region. If using this notebook in an outside environment ensure the AWS credentials are set correctly. If using in a different region, ensure the region variable is changed and that Amazon Bedrock application inference profiles are available in that region.
 
-<h2> Notebook Code with Comments
+<h2> Notebook Code with Comments </h2>
 
 <h3> Setting up the Bedrock clients </h3>
 
@@ -95,7 +95,7 @@ print(json.dumps(model_arns, indent=4))
 ```
 
 <h3> Create Inference Profile </h3>
-This cell calls the `create_inference_profile` method to create a Custom Inference Profile. By specifying a base foundation model ARN and custom tags, the Inference Profile provides a way to organize and manage model configurations for the department's specific use case. The created Inference Profile ARN will be stored and can be used in place of default model IDs when making API calls to Bedrock, enabling more tailored interaction with the chosen model.
+This cell calls the `create_inference_profile` method to create an application inference profile. By specifying a base foundation model ARN and custom tags, the application inference profile provides a way to organize and manage model configurations for the department's specific use case. The created inference profile ARN will be stored and can be used in place of default model IDs when making API calls to Bedrock, enabling more tailored interaction with the chosen model.
 
 
 ```python
@@ -122,7 +122,7 @@ claims_dept_claude_3_sonnet_profile_arn = claims_dept_claude_3_sonnet_profile['i
 ```
 
 <h3> Get Inference Profile </h3>
-This cell retrieves metadata for the Inference Profile created earlier by using its ARN. The `get_inference_profile` method takes the Inference Profile's ARN as input and calls the Bedrock API to fetch detailed metadata about the profile, such as configuration settings, model information, and associated tags. This retrieval allows you to verify and inspect the properties and setup of the profile, ensuring it meets the intended specifications.
+This cell retrieves metadata for the application inference profile created earlier by using its ARN. The `get_inference_profile` method takes the Inference Profile's ARN as input and calls the Bedrock API to fetch detailed metadata about the profile, such as configuration settings, model information, and associated tags. This retrieval allows you to verify and inspect the properties and setup of the profile, ensuring it meets the intended specifications.
 
 
 ```python
@@ -140,7 +140,7 @@ profile_response = get_inference_profile(claims_dept_claude_3_sonnet_profile_arn
 ```
 
 <h3> List Inference Profiles </h3>
-This cell utilizes the `list_inference_profiles` method to retrieve and display all Inference Profiles filtered by type: `SYSTEM_DEFINED` or `APPLICATION`. The response provides an overview of each profile's details, allowing you to view all configured profiles and their metadata.
+This cell utilizes the `list_inference_profiles` method to retrieve and display all inference profiles filtered by type: `SYSTEM_DEFINED` or `APPLICATION`. The response provides an overview of each profile's details, allowing you to view all configured profiles and their metadata.
 
 
 ```python
@@ -159,7 +159,7 @@ profile_list_response = list_inference_profiles()
 
 ```
 
-<h3> Invoke model with Inference Profile using Converse API </h3>
+<h3> Invoke model with the application inference profile using Converse API </h3>
 The `Converse` API in Amazon Bedrock is a unified interface designed for engaging with large language models (LLMs), supporting features like chat history, automated prompt formatting specific to each model, and simplified model testing or swapping. This flexibility allows for easy substitution of Inference Profiles, regardless of the LLM powering them.
 
 This cell uses the `parse_converse_response` function processes the response received from the Converse API. It extracts various components from the response, including -
@@ -274,7 +274,7 @@ messages = [{"role": "user", "content": [{"text": prompt}]}]
 response = converse(claims_dept_claude_3_sonnet_profile_arn, messages)
 ```
 
-### Invoke model with Inference Profile using ConverseStream API 
+<h3> Invoke model with Inference Profile using ConverseStream API </h3>
 The `parse_converse_stream_response` function is designed to handle and interpret the responses from the `ConverseStream` API. It initializes an empty list to store parsed events and retrieves the event stream from the API response. The function checks if the stream is present; if not, it logs an appropriate message and returns an empty list. 
 
 The function then iterates through each event, identifying the event type (such as messageStart, contentBlockStart, contentBlockDelta, contentBlockStop, messageStop, and metadata) and extracting relevant information for each type. Additionally, the function handles potential exceptions, logging pertinent details when encountered. The parsed events are collected into a list, which is returned for further processing.
@@ -381,7 +381,7 @@ def converse_stream(model_id, messages):
 ```
 
 <h3> ConverseStream test </h3>
-This cell demonstrates a test of the `converse_stream` functionality by passing in the inference profile ARN and the user messages. The output from this interaction will showcase how the model responds to the user's input in a streaming manner, allowing for a dynamic conversational experience. The results of the conversation will be displayed in the console, providing insights into the model's performance and response handling.
+This cell demonstrates a test of the `converse_stream` functionality by passing in the application inference profile ARN and the user messages. The output from this interaction will showcase how the model responds to the user's input in a streaming manner, allowing for a dynamic conversational experience. The results of the conversation will be displayed in the console, providing insights into the model's performance and response handling.
 
 
 ```python
@@ -418,7 +418,7 @@ def parse_invoke_model_response(response):
 ```
 
 <h3> InvokeModel API </h3>
-The `invoke_model` method utilizes the Amazon Bedrock `InvokeModel` API to run inference on a specified model using provided input data. This function takes in the model's ARN and the input body, converts the body to a JSON-encoded byte format, and sends it to the API. After invoking the model, it prints the HTTP status code and the full response for debugging purposes, before returning the response for further processing.
+The `invoke_model` method utilizes the Amazon Bedrock `InvokeModel` API to run inference on a specified model using provided input data. This function takes in the model's ARN and the input body, converts the body to a JSON-encoded byte format, and sends it to the API. After invoking the model, it prints the HTTP status code and the full response for debugging purposes, before returning the response for further processing. 
 
 
 ```python
@@ -525,8 +525,7 @@ parsed_output = parse_invoke_model_with_stream(response)
 print("Parsed Model Output:", parsed_output)
 ```
 
-<h3> Tagging </h3>
-<h4> Create Tag </h4>
+<h3> Create Tag </h3>
 The `tag_resource` method tags a specified resource in Amazon Bedrock. It takes a resource's ARN and a list of tags as input. In the provided example, two resources are tagged: one with the department tag "claims" and another with the department tag "underwriting." This tagging process helps in organizing and managing resources based on specific departments, enhancing resource identification and categorization within the Amazon Bedrock environment.
 
 
@@ -551,7 +550,7 @@ underwriting_tag = [{"key": "dept", "value": "underwriting"}]
 underwriting_response = tag_resource(claims_dept_llama3_70b_profile_arn, underwriting_tag)
 ```
 
-<h4> List Tags </h4>
+<h3> List Tags </h3>
 In this code block, the `list_tags_for_resource` method retrieves and displays the tags associated with a specified Bedrock resourc. The function takes the resource ARN as its parameter. The example demonstrates how to list tags for the previously tagged resource, providing insight into its metadata and organization.
 
 
@@ -572,7 +571,7 @@ claims_response = list_tags(claims_dept_claude_3_sonnet_profile_arn)
 underwriting_response = list_tags(claims_dept_llama3_70b_profile_arn)
 ```
 
-<h4> Remove Tag </h4>
+<h3> Remove Tag </h3>
 This block calls the `untag_resource` method, which removes specified tags from a given resource in Amazon Bedrock. The function accepts a resource ARN and a list of tag keys to be removed. The provided example illustrates the untagging process for a resource by removing a tag associated with the department, demonstrating how to manage and modify resource tagging effectively.
 
 
@@ -596,7 +595,7 @@ claims_response = list_tags(claims_dept_claude_3_sonnet_profile_arn)
 ```
 
 <h2> Clean up section </h2>
-The `delete_inference_profile` function accepts a Bedrock ARN as an argument to delete the corresponding Inference Profile. The function is called twice to delete all inference profiles that were created earlier in the notebook: `claims_dept_llama3_70b_profile_arn` and `claims_dept_claude_3_sonnet_profile_arn`. This cleanup process ensures that resources are properly decommissioned, helping maintain a tidy and organized environment by preventing orphaned resources.
+The `delete_inference_profile` function accepts a Bedrock ARN as an argument to delete the corresponding application inference profile. The function is called twice to delete all inference profiles that were created earlier in the notebook: `claims_dept_llama3_70b_profile_arn` and `claims_dept_claude_3_sonnet_profile_arn`. This cleanup process ensures that resources are properly decommissioned, helping maintain a tidy and organized environment by preventing unused resources.
 
 
 ```python
@@ -618,4 +617,4 @@ delete_inference_profile(claims_dept_llama3_70b_profile_arn)
 delete_inference_profile(claims_dept_claude_3_sonnet_profile_arn)
 ```
 
-<h2> END OF NOTEBOOK </h2>
+# END OF NOTEBOOK 
