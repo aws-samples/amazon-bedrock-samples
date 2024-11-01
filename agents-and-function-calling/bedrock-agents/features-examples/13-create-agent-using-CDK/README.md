@@ -1,28 +1,20 @@
 
 # AWS CDK (Python) to provision AWS Bedrock Agent with Knowledge Base and an Action Group Connection
 
-In this folder, we provide an example of creating an agent with Amazon Bedrock and integrating it with a 
-Knowledge Base for Amazon Bedrock and with an Action Group using Infrastructure as Code (IaC). IaC is implemented using AWS CDK for Python. With this integration, the agent will be able to respond to a user query by taking a sequence of actions, consulting the knowledge base to obtain more information, and/or executing tasks using the lambda function 
-connected with an Action Group. AWS CDK for Python is implemented configurable parameters from 'config.json' file. 
+In this folder, we provide an example to create Bedrock Agent using Infrastructure as Code (IaC).IaC is implemented using with [AWS CDK Python APIs](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrock.html). The Bedrock agent is integrated with a Knowledge Base and an Action Group. With this integration, the agent will be able to respond to a user query by taking a sequence of actions, consulting the knowledge base to obtain more information, and/or executing tasks using the lambda function connected with an Action Group. 
+
+AWS CDK for Python is implemented with configurable parameters from 'config.json' file. 
 
 The Agent architecture can be referred [here](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/05-create-agent-with-knowledge-base-and-action-group)
 
+
 ## Build and Deploy with AWS CDK 
-The complete provisioning of Amazon Bedrock agent, integration with a Knowledge Base and an Action Group is automated using AWS CDK [Cloud Development Kit](https://aws.amazon.com/cdk/) in [Python](https://docs.aws.amazon.com/cdk/v2/guide/work-with-cdk-python.html). AWS CDK is used primarily used to provision and manage cloud resources in a programmatic and infrastructure-as-code (IaC) manner.
 
-Developers can leverage their existing skills as CDK supports TypeScript, JavaScript, Python, Java, C#/.Net, and Go programming languages and tools to define infrastructure, leading to faster development cycles. It's common to see reductions ranging from 30% to 50% or more in terms of lines of code when moving from notebook-based implementations to CDK. This reduction primarily stems from improved organization, modularity, and abstraction capabilities offered by CDK.
+This project is set up like a standard Python project. The initialization process also creates a virtualenv within this project, stored under the .venv directory. To create the virtualenv it assumes that there is a python3 (or python for Windows) executable in your path with access to the venv package. If for any reason the automatic creation of the virtualenv fails, you can create the virtualenv manually.
 
-CDK integrates well with CI/CD pipelines (e.g., AWS CodePipeline, CodeBuild). This enables automated testing, deployment, and rollback of infrastructure changes, enhancing reliability and speed of deployments. 
-
-For complex architectures or microservices-based applications, CDK can manage dependencies and relationships between resources, ensuring they are provisioned and configured correctly.CDK promotes adherence to AWS best practices through built-in constructs and libraries. For example, it can enforce secure defaults for IAM policies, VPC configurations, and encryption settings.
-
-This folder contains the complete Python CDK code for of Amazon Bedrock agent, integration with a Knowledge Base and with an Action Group.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+The `cdk.json` file tells the CDK toolkit how to execute your app.
 
 ### Python Setup
-
-This project is set up like a standard Python project. The initialization process also needs a virtualenv within this project, stored under the `.env` directory. To create the virtualenv it assumes that there is a `python3` (or `python` for Windows) executable in your path with access to the `venv` package.
 
 Manually create a virtualenv on MacOS and Linux:
 
@@ -82,6 +74,11 @@ You can update the number of supported parameters shown as examples below:
   "func_getbooking_description": "Retrieve details of a restaurant booking",
   
   "func_getbooking_id": "booking_id",
+
+ You can add a new parameter or edit the existing parameter in config.json file. Here is the example to edit an existing parameter:
+      a) Change the "agentName" parameter with "test-booking-agent" in 'config.json' file 
+      b) Ensure that same parameter is used correctly in 'BedrockAgentStack_stack.py' file 
+      c) Finally deploy the updated stack with 'cdk deploy'   
 
 Note: AgentModelId with claude-3-sonnet and EmbeddingModelId with titan-embed-text-v2 are only supported in this example.
 
