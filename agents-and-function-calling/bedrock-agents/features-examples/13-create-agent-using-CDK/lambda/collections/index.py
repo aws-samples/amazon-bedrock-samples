@@ -8,11 +8,12 @@ from requests_aws4auth import AWS4Auth
 from opensearchpy import OpenSearch, RequestsHttpConnection
 
 
-def create_collection_index(host: str, index_name: str, metadata_field_name: str, text_field_name: str,
+def create_collection_index(host: str, index_name: str,
+                            metadata_field_name: str, text_field_name: str,
                             vector_field_name: str, vector_size: int = 1024):
     """
     Create an index in the given collection with the given param
-    
+
     Parameters
     ----------
     host : endpoint for OpenSearch Collection
@@ -35,23 +36,24 @@ def create_collection_index(host: str, index_name: str, metadata_field_name: str
                         connection_class=RequestsHttpConnection,
                         timeout=300)
     # Create index
-    response = client.indices.create(index=index_name,
-                                     body={'settings': {'index.knn': True},
-                                           'mappings': {'properties': {
-                                               metadata_field_name: {'type': 'text', 'index': False},
-                                               text_field_name: {'type': 'text'},
-                                               'id': {'type': 'text',
-                                                      'fields': {'keyword': {'type': 'keyword', 'ignore_above': 256}}},
-                                               'x-amz-bedrock-kb-source-uri': {'type': 'text',
-                                                                               'fields': {'keyword': {'type': 'keyword',
-                                                                                                      'ignore_above': 256}}},
-                                               vector_field_name: {'type': 'knn_vector',
-                                                                   'dimension': vector_size,
-                                                                   'method': {'name': 'hnsw',
-                                                                              'engine': 'faiss',
-                                                                              'parameters': {
-                                                                                  'ef_construction': 512,
-                                                                                  'm': 16}}}}}})
+    response = client.indices.create(
+        index=index_name,
+        body={'settings': {'index.knn': True},
+              'mappings': {'properties': {
+                  metadata_field_name: {'type': 'text', 'index': False},
+                  text_field_name: {'type': 'text'},
+                  'id': {'type': 'text',
+                         'fields': {'keyword': {'type': 'keyword', 'ignore_above': 256}}},
+                  'x-amz-bedrock-kb-source-uri': {'type': 'text',
+                                                  'fields': {'keyword': {'type': 'keyword',
+                                                                         'ignore_above': 256}}},
+                  vector_field_name: {'type': 'knn_vector',
+                                      'dimension': vector_size,
+                                      'method': {'name': 'hnsw',
+                                                 'engine': 'faiss',
+                                                 'parameters': {
+                                                     'ef_construction': 512,
+                                                     'm': 16}}}}}})
     print(response)
     time.sleep(5)
 
@@ -60,10 +62,11 @@ def handler(event, context):
     """
     Handle the Custom Resource eevnts from CDK.
 
-    In practice, it will only create the index in the Collection provided in the event ResourceProperties
+    In practice, it will only create the index in the Collection provided 
+    in the event ResourceProperties
 
-    This lambda expects the Collection to be created already, but will wait for it
-    to be available if status is 'CREATING'
+    This lambda expects the Collection to be created already, 
+    but will wait for it to be available if status is 'CREATING'
 
     Parameters
     ----------
@@ -78,12 +81,15 @@ def handler(event, context):
     if collection_name is None:
         raise RuntimeError('Could not get collection name from event')
     endpoint = event.get('ResourceProperties', dict()).get('endpoint')
-    index_name = event.get('ResourceProperties', dict()).get('vector_index_name')
-    metadata_field = event.get('ResourceProperties', dict()).get('metadata_field')
+    index_name = event.get('ResourceProperties', dict()
+                           ).get('vector_index_name')
+    metadata_field = event.get(
+        'ResourceProperties', dict()).get('metadata_field')
     text_field = event.get('ResourceProperties', dict()).get('text_field')
     vector_field = event.get('ResourceProperties', dict()).get('vector_field')
     vector_size = event.get('ResourceProperties', dict()).get('vector_size')
-    print(f'Creating index on collection {collection_name} in endpoint {endpoint}')
+    print(f'Creating index on collection {
+          collection_name} in endpoint {endpoint}')
 
     # Read the basic Collection information
     parts = parse.urlparse(endpoint)
