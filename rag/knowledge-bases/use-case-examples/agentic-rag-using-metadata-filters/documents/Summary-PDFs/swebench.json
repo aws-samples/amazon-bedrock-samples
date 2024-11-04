@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "swebench.pdf",
+        "title": "SWE-BENCH: CAN LANGUAGE MODELS RESOLVE REAL-WORLD GITHUB ISSUES?",
+        "summary": "SWE-bench is a benchmark that evaluates language models on the task of resolving real-world software engineering issues from popular GitHub repositories. Given a codebase and an issue description, a language model is tasked with generating a patch to edit the codebase and resolve the issue. The benchmark consists of 2,294 task instances drawn from 12 Python repositories, where resolving an issue often requires understanding long contexts, coordinating changes across multiple files, and processing complex reasoning. State-of-the-art models like Claude 2 can only resolve a mere 1.96% of the issues when using a retrieval system. The benchmark highlights the significant gap between current language models and the capabilities needed for practical software engineering tasks. SWE-bench also introduces SWE-Llama, a fine-tuned 13B parameter model that can process contexts exceeding 100,000 tokens and is competitive with Claude 2 on this benchmark. The paper discusses the unique properties of SWE-bench, the training procedure for SWE-Llama, an extensive evaluation of multiple models, qualitative analysis of generations, and future directions for language models in software engineering."
+    }
+}

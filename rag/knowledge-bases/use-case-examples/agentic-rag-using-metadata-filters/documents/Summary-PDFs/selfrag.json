@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "selfrag.pdf",
+        "title": "SELF-RAG: LEARNING TO RETRIEVE, GENERATE, AND CRITIQUE THROUGH SELF-REFLECTION",
+        "summary": "This paper introduces SELF-RAG, a new framework that enhances the quality and factuality of large language models (LLMs) through retrieval on demand and self-reflection. SELF-RAG trains an LLM to learn to retrieve relevant passages, generate text, and critique its own generation by predicting special tokens called reflection tokens. These tokens indicate the need for retrieval, relevance of retrieved passages, whether the output is supported by the passages, and the overall utility of the response. The framework enables controlling the LLM's behavior at inference time by leveraging the reflection tokens. Experiments on diverse tasks show that SELF-RAG significantly outperforms pre-trained LLMs, retrieval-augmented models, and concurrent approaches in terms of overall performance, factuality, and citation accuracy."
+    }
+}

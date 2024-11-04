@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "loftq.pdf",
+        "title": "LOFTQ: LORA-FINE-TUNING-AWARE QUANTIZATION FOR LARGE LANGUAGE MODELS",
+        "summary": "This paper proposes a novel quantization framework called LoftQ (LoRA-Fine-Tuning-aware Quantization) for large language models that require quantization and LoRA fine-tuning. LoftQ alternatively applies quantization and low-rank approximation to the original pre-trained weights to obtain an initialization for the subsequent LoRA fine-tuning. This approach mitigates the discrepancy between quantized weights and pre-trained weights, providing a better initialization for fine-tuning and improving performance on downstream tasks. Extensive experiments on natural language understanding, question answering, summarization, and natural language generation show that LoftQ remarkably outperforms existing quantization methods like QLoRA, especially in low-bit regimes like 2-bit quantization. The method is effective across different model architectures (encoder-only, encoder-decoder, decoder-only) and quantization techniques."
+    }
+}
