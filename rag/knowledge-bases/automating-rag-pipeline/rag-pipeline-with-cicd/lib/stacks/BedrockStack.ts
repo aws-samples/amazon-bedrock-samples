@@ -221,10 +221,11 @@ export class BedrockStack extends Stack {
     });
 
     kb.role.attachInlinePolicy(lambdaInvokePolicy);
-    kb.role.attachInlinePolicy(this.s3AccessPolicy);
-    kb.role.attachInlinePolicy(foundationalModelInvokePolicy);
+    kb.role.attachInlinePolicy(this.s3AccessPolicy); // Allow KB to access S3 buckets
+    kb.role.attachInlinePolicy(foundationalModelInvokePolicy); // Allow KB to invoke foundational models
 
-    // Create a custom data source linked to the knowledge base
+    // Create a knowledge base data source and attach necessary policies
+    // CustomS3DataSource is a custom construct that extends the native S3DataSource L1 construct to include additional properties such as intermediateBucket and transformationLambda
     const kbS3DataSource = new CustomS3DataSource(this, "KBS3DataSource", {
       bucket: docBucket,
       knowledgeBase: kb,

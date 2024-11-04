@@ -240,8 +240,7 @@ export class CodePipelineStack extends Stack {
     );
 
 
-
-    // Create the cleanup Lambda function
+    // Lambda function to clean up CloudFormation stacks upon pipeline deletion, ensuring resources are properly removed.
     const cleanUpFunction = new NodejsFunction(this, 'CleanUpFunction', {
       runtime: Runtime.NODEJS_18_X,
       entry: join(__dirname, '..', '..', 'src', 'services', 'delete-stacks.ts'),
