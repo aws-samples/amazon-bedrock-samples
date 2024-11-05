@@ -19,7 +19,7 @@ Let's delve into the architecture of the solution we will be building, focusing 
  ## Architecture
 
 
- ![Event-driven Ticket Agent Architecture](/event-driven-ticket-resolution/images/architecture-event-driven.png)
+ ![Event-driven Ticket Agent Architecture](/agents-and-function-calling/bedrock-agents/use-case-examples/event-driven-ticket-resolution/images/architecture-event-driven.png)
 
 The solution is composed of several components and services including:
 
@@ -54,7 +54,7 @@ As you are running the workshop in your own environment, you will incur costs fo
 
 We recommend that you shut down all resources that you no longer need, when you have completed the workshop. If you are not sure about which resources you have launched in a particular notebook, then please jump to the end of the notebook for cleanup instructions.
 
-#### Create InfraStructure
+### I. Create InfraStructure
 
 Click the following button to deploy AWS resources via CloudFormation stack:
 
@@ -64,7 +64,7 @@ Click the following button to deploy AWS resources via CloudFormation stack:
 
 |   Region   | codepipeline.yaml |
 | ---------- | ----------------- |
-| us-west-2  | [![launch-stack](/event-driven-ticket-resolution/images//cloudformation-launch-stack.png)}](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=ticket-agent-infra&templateURL=https://ws-assets-prod-iad-r-pdx-f3b3f9f1a7d6a3d0.s3.us-west-2.amazonaws.com/1f096fe9-e179-4a2d-812f-d02c0b884e82/infrastructure-stack.yaml)|
+| us-west-2  | [![launch-stack](/agents-and-function-calling/bedrock-agents/use-case-examples/event-driven-ticket-resolution/images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=ticket-agent-infra&templateURL=https://ws-assets-prod-iad-r-pdx-f3b3f9f1a7d6a3d0.s3.us-west-2.amazonaws.com/1f096fe9-e179-4a2d-812f-d02c0b884e82/infrastructure-stack.yaml)|
 
 
 > [!IMPORTANT]  
@@ -90,11 +90,11 @@ Click the following button to deploy AWS resources via CloudFormation stack:
 >
 >The stack also includes IAM roles with appropriate permissions for the Lambda functions to interact with DynamoDB tables, CloudWatch Logs, and other necessary services.
 
-#### Model Access
+### II. Model Access
 
 First, log into your AWS account, go to the Amazon Bedrock console and click on **Model access**:
 
-![1-model-access](/event-driven-ticket-resolution/images/Prerequisites/01-model-access.png)
+![1-model-access](/agents-and-function-calling/bedrock-agents/use-case-examples/event-driven-ticket-resolution/images/Prerequisites/01-model-access.png)
 
 - Amazon
     * Titan Text Embeddings V2
@@ -102,20 +102,20 @@ First, log into your AWS account, go to the Amazon Bedrock console and click on 
     * Anthropic Claude 3.5 Sonnet
     * Anthropic Claude 3 Sonnet
 
-![2-model-access](/event-driven-ticket-resolution/images/Prerequisites/02-model-access.png)
+![2-model-access](/agents-and-function-calling/bedrock-agents/use-case-examples/event-driven-ticket-resolution/images/Prerequisites/02-model-access.png)
 
 
-#### Follow the below steps to launch the SageMaker Notebook Instance
+### III. Follow the below steps to launch the SageMaker Notebook Instance
 
 1. Click on the **AWS Console** button, search for **SageMaker**, and then navigate to your SageMaker Console.
 2. On the left panel, under **Applications and IDEs** click on **Notebooks**. 
 
-![3-notebook-access](/event-driven-ticket-resolution/images/Prerequisites/03-notebook-access.png)
+![3-notebook-access](/agents-and-function-calling/bedrock-agents/use-case-examples/event-driven-ticket-resolution/images/Prerequisites/03-notebook-access.png)
 
 3. Follow the steps on [Create an Amazon SageMaker notebook instance](https://docs.aws.amazon.com/sagemaker/latest/dg/howitworks-create-ws.html) to setup your environment, name the instance **agent-notebook-instance**.
 4. Once created, click **Open JupyterLab**.
 
-![4-lab-access](/event-driven-ticket-resolution/images/Prerequisites/04-lab-access.png)
+![4-lab-access](/agents-and-function-calling/bedrock-agents/use-case-examples/event-driven-ticket-resolution/images/Prerequisites/04-lab-access.png)
 
 
 5. In the new Launcher, click on terminal and run the following commands: 
