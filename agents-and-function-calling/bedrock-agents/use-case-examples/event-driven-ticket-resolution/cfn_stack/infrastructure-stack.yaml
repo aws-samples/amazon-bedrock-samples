@@ -1,0 +1,394 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: | 
+  This CloudFormation stack sets up the necessary infrastructure for an application that manages users, environments, user access, and tickets. It creates the following resources:
+
+    1. LogsPolicy: An IAM policy that grants permissions to create and manage CloudWatch logs.
+    
+    2. DynamoDB Tables:
+      - UserDynamoDBTable
+      - EnvironmentDynamoDBTable
+      - UserAccessDynamoDBTable
+      - TicketDynamoDBTable
+    
+    3. DynamoDB Streams:
+      - TicketDynamoDBStream
+      - ProcessTicketDynamoDBStreamFunction
+    
+    4. PutTicketDynamoDBFunction
+    
+    5. InitDynamoDBDataFunction
+    
+    6. CloudWatch Log Groups for Lambda functions.
+    
+    The stack also includes IAM roles with necessary permissions for Lambda functions to interact with DynamoDB, CloudWatch Logs, and other services. Finally, it outputs the ARNs of the created DynamoDB tables for potential use by other resources or applications.
+
+Resources:
+
+  LogsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Path: /
+      ManagedPolicyName: LogsPolicyCustom
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:PutRetentionPolicy
+            Resource: '*'
+
+  ############################
+  ##### DynamoDB Tables #####
+  ##########################
+  
+  UserDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UserTable
+      BillingMode: PROVISIONED
+      AttributeDefinitions:
+        # - AttributeName: manager
+        #   AttributeType: S
+        - AttributeName: employeeId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: employeeId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+  
+  EnvironmentDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: EnvironmentTable
+      BillingMode: PROVISIONED
+      AttributeDefinitions:
+        # - AttributeName: environment_name
+        #   AttributeType: S
+        # - AttributeName: managing_entity
+        #   AttributeType: S
+        - AttributeName: environmentId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: environmentId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+  
+  UserAccessDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UserAccessTable
+      BillingMode: PROVISIONED
+      AttributeDefinitions:
+        # - AttributeName: description
+        #   AttributeType: S
+        - AttributeName: employeeId
+          AttributeType: S
+        - AttributeName: environmentId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: employeeId
+          KeyType: HASH
+        - AttributeName: environmentId
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+  
+  TicketDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TicketTable
+      BillingMode: PROVISIONED
+      AttributeDefinitions:
+        # - AttributeName: ticket_content
+        #   AttributeType: S
+        # - AttributeName: communication
+        #   AttributeType: S
+        - AttributeName: ticketId
+          AttributeType: S
+        - AttributeName: employeeId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ticketId
+          KeyType: HASH
+        - AttributeName: employeeId
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  #############################
+  ##### DynamoDB Streams #####
+  ##########################
+  
+  TicketDynamoDBStream:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt TicketDynamoDBTable.StreamArn
+      FunctionName: !GetAtt ProcessTicketDynamoDBStreamFunction.Arn
+      StartingPosition: LATEST
+      BatchSize: 1
+  
+  ProcessTicketDynamoDBStreamFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ProcessTicketDynamoDBStreamFunction
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt ProcessTicketDynamoDBStreamFunctionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+
+          def lambda_handler(event, context):
+              for record in event['Records']:
+                  if record['eventName'] == 'INSERT':
+                    # TODO: invoke an agent
+                    pass
+                  elif record['eventName'] == 'MODIFY':
+                    # TODO: invoke sns
+                    pass
+
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Data processing completed successfully')
+              }
+
+  # Lambda Role
+  ProcessTicketDynamoDBStreamFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !GetAtt LogsPolicy.PolicyArn
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:DescribeStream'
+                  - 'dynamodb:GetRecords'
+                  - 'dynamodb:GetShardIterator'
+                  - 'dynamodb:ListStreams'
+                Resource:
+                  - !GetAtt TicketDynamoDBTable.StreamArn
+        - PolicyName: BedrockAgentInvokeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'bedrock:InvokeAgent'
+                Resource:
+                  - '*'
+        - PolicyName: SNSInvokeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'sns:Publish'
+                Resource:
+                  - !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:NotifyTicketCreation" 
+
+  # CloudWatch Logs
+  ProcessTicketDynamoDBStreamFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/ProcessTicketDynamoDBStreamFunction'
+      RetentionInDays: 14
+  
+  #######################
+  ##### Put ticket #####
+  #####################
+
+  PutTicketDynamoDBFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: PutTicketDynamoDBFunction
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt PutTicketDynamoDBFunctionRole.Arn
+      Environment:
+        Variables:
+          TicketDynamoDBTable: !Ref TicketDynamoDBTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          
+          dynamodb = boto3.resource('dynamodb')
+          ticket_table = dynamodb.Table(os.environ['TicketDynamoDBTable'])
+          
+          def lambda_handler(event, context):
+            ticket = event['ticket']
+            _ = ticket_table.put_item(Item=ticket)
+
+  PutTicketDynamoDBFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !GetAtt LogsPolicy.PolicyArn
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:PutItem'
+                Resource:
+                  - !GetAtt TicketDynamoDBTable.Arn
+
+  PutTicketDynamoDBFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/PutTicketDynamoDBFunction'
+      RetentionInDays: 14
+  
+  ########################################
+  ##### Initialize Tables with data #####
+  ######################################
+
+  InitDynamoDBDataFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: InitDynamoDBDataFunctionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - !GetAtt LogsPolicy.PolicyArn
+      Policies:
+        - PolicyName: DynamoDBPutItem
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                Resource:
+                  - !GetAtt UserDynamoDBTable.Arn
+                  - !GetAtt EnvironmentDynamoDBTable.Arn
+                  - !GetAtt UserAccessDynamoDBTable.Arn
+
+  InitDynamoDBDataFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: InitDynamoDBDataFunction
+      Handler: index.handler
+      Role: !GetAtt InitDynamoDBDataFunctionRole.Arn
+      Timeout: 300
+      Runtime: python3.12
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+
+          dynamodb = boto3.resource('dynamodb')
+
+          def item_put(table, item):
+            _ = table.put_item(Item=item)
+            
+          def handler(event, context):
+            UserDynamoDBTable = dynamodb.Table(event['ResourceProperties']['UserDynamoDBTable'])
+            EnvironmentDynamoDBTable = dynamodb.Table(event['ResourceProperties']['EnvironmentDynamoDBTable'])
+            UserAccessDynamoDBTable = dynamodb.Table(event['ResourceProperties']['UserAccessDynamoDBTable'])
+            # TicketDynamoDBTable = dynamodb.Table(event['ResourceProperties']['TicketDynamoDBTable'])
+            
+            try:
+              request_type = event['RequestType']
+              if request_type == 'Create':
+                  UserDynamoDBTable_data = [{'employeeId': '111', 'manager': '@sam'}, {'employeeId': '121', 'manager': '@sam'}, {'employeeId': '131', 'manager': '@kirk'}, {'employeeId': '141', 'manager': '@kirk'}, {'employeeId': '@sam', 'manager': '@samManager'}, {'employeeId': '@kirk', 'manager': '@kirkManager'}, {'employeeId': '@susi', 'manager': '@susiManager'}]
+                  EnvironmentDynamoDBTable_data = [{'environmentId': '1', 'environment_name': 'AnalyticsEnv', 'managing_entity': '@sam'}, {'environmentId': '2', 'environment_name': 'DeveloperEnv', 'managing_entity': '@sam'}, {'environmentId': '3', 'environment_name': 'DevOpsEnv', 'managing_entity': '@kirk'}, {'environmentId': '4', 'environment_name': 'MachineLearningEnv', 'managing_entity': '@susi'}]
+                  UserAccessDynamoDBTable_data = [{'employeeId': '111', 'environmentId': '2', 'description': 'Assigned manually by @sam'}, {'employeeId': '111', 'environmentId': '4', 'description': 'Assigned manually by @susi'}, {'employeeId': '121', 'environmentId': '2', 'description': 'Assigned manually by @sam'}, {'employeeId': '141', 'environmentId': '3', 'description': 'Assigned manually by @kirk'}]
+                  
+                  for item in UserDynamoDBTable_data:
+                    item_put(UserDynamoDBTable, item)
+                  
+                  for item in EnvironmentDynamoDBTable_data:
+                    item_put(EnvironmentDynamoDBTable, item)
+                  
+                  for item in UserAccessDynamoDBTable_data:
+                    item_put(UserAccessDynamoDBTable, item)
+                    
+            except Exception as ex:
+              print(ex)
+              cfnresponse.send(event, context, cfnresponse.FAILED, {})
+            else:
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+
+  SInitDynamoDBDataFunctionResource:
+    Type: Custom::BuildCode
+    Properties:
+      ServiceToken: !GetAtt InitDynamoDBDataFunction.Arn
+      UserDynamoDBTable: !Ref UserDynamoDBTable
+      EnvironmentDynamoDBTable: !Ref EnvironmentDynamoDBTable
+      UserAccessDynamoDBTable: !Ref UserAccessDynamoDBTable
+      TicketDynamoDBTable: !Ref TicketDynamoDBTable
+      
+Outputs:
+  UserDynamoDBTable:
+    Description: Arn of the UserDynamoDBTable
+    Value: !GetAtt UserDynamoDBTable.Arn
+
+  EnvironmentDynamoDBTable:
+    Description: Arn of the EnvironmentDynamoDBTable
+    Value: !GetAtt EnvironmentDynamoDBTable.Arn
+    
+  UserAccessDynamoDBTable:
+    Description: Arn of the UserAccessDynamoDBTable
+    Value: !GetAtt UserAccessDynamoDBTable.Arn
+
+  TicketDynamoDBTable:
+    Description: Arn of the TicketDynamoDBTable
+    Value: !GetAtt TicketDynamoDBTable.Arn
