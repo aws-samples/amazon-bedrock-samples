@@ -40,7 +40,7 @@ class BedrockAgentStack(Stack):
         agent_alias_name = config['agentAliasName']
         knowledge_base_name = config['knowledgeBaseName']
         knowledge_base_description = config['knowledgeBaseDescription']
-        s3_bucket_name = config['s3BucketName']
+        s3_bucket_name = config['s3BucketName']+region+"-"+account_id
         agent_model_id = config['agentModelId']
         agent_model_arn = bedrock.FoundationModel.from_foundation_model_id(
             scope=self,

@@ -1,5 +1,5 @@
 {
-  "s3BucketName": "booking-agent-us-east1-account",
+  "s3BucketName": "booking-agent",
   "_comment1": "Bedrock Agent definition",
   "agentName": "booking-agent",
   "agentAliasName": "booking-agent-alias",

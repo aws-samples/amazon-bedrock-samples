@@ -8,6 +8,10 @@ AWS CDK for Python is implemented with configurable parameters from 'config.json
 The Agent architecture can be referred [here](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/05-create-agent-with-knowledge-base-and-action-group)
 
 
+## Pre-requisites
+
+Ensure that Node.js, Python and CDK are installed on your enviorment. These are required for next steps to deploy this Bedrock Agent.
+
 ## Build and Deploy with AWS CDK 
 
 This project is set up like a standard Python project. The initialization process also creates a virtualenv within this project, stored under the .venv directory. To create the virtualenv it assumes that there is a python3 (or python for Windows) executable in your path with access to the venv package. If for any reason the automatic creation of the virtualenv fails, you can create the virtualenv manually.
@@ -19,6 +23,7 @@ The `cdk.json` file tells the CDK toolkit how to execute your app.
 Manually create a virtualenv on MacOS and Linux:
 
 ```
+cd amazon-bedrock-samples/agents-and-function-calling/bedrock-agents/features-examples/13-create-agent-using-CDK
 python3 -m venv .env
 ```
 
