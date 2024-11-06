@@ -29,11 +29,13 @@ def convert_message_langchain_to_ragas(lc_message):
             text = list(filter((lambda x: x['type'] == 'text'), message_dict['content']))
             tool = list(filter((lambda x: x['type'] == 'tool_use'), message_dict['content']))
             if len(text) > 0 and len(tool) > 0:
-                rg_message = RGAIMessage(content=text[0]['text'], tool_calls=[RGToolCall(name=tool[0]['name'], args={'id': tool[0]['id'], 'query': tool[0]['input'][list(tool[0]['input'].keys())[0]]})])
+                rg_message = RGAIMessage(content=text[0]['text'], tool_calls=[RGToolCall(name=tool[0]['name'], args={#'id': tool[0]['id'], 
+                                                                                                                    'query': tool[0]['input'][list(tool[0]['input'].keys())[0]]})])
             elif len(text) > 0:
                 rg_message = RGAIMessage(content=text[0]['text'])
             elif len(tool) > 0:
-                rg_message = RGAIMessage(content='', tool_calls=[RGToolCall(name=tool[0]['name'], args={'id': tool[0]['id'], 'query': tool[0]['input'][list(tool[0]['input'].keys())[0]]})])
+                rg_message = RGAIMessage(content='', tool_calls=[RGToolCall(name=tool[0]['name'], args={#'id': tool[0]['id'], 
+                                                                                                        'query': tool[0]['input'][list(tool[0]['input'].keys())[0]]})])
         else:
             rg_message = RGAIMessage(content= message_dict['content'], tool_calls=message_dict['tool_calls'], metadata=message_dict['usage_metadata'])
     if message_dict['type'] == 'tool':
