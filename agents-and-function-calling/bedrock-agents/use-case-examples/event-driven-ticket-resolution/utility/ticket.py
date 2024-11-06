@@ -48,13 +48,16 @@ def display_table(table_name):
         items.extend(response['Items'])
 
     data = list()
-    cols = items[0].keys()
-    for item in items:
-        temp_list = list()
-        for col in cols:
-            temp_list.append(item[col]['S'])
-        data.append(temp_list)
-    # Convert the items to a DataFrame
-    df = pd.DataFrame(data=data, columns=cols)
+    if len(items) != 0:
+        cols = items[0].keys()
+        for item in items:
+            temp_list = list()
+            for col in cols:
+                temp_list.append(item[col]['S'])
+            data.append(temp_list)
+        # Convert the items to a DataFrame
+        df = pd.DataFrame(data=data, columns=cols)
+    else:
+        df = pd.DataFrame(data=[], columns=["ticketId", "assignStatus", "ticket_content", "communication", "employeeId"])
     # Print the DataFrame
     display(HTML(df.to_html()))
