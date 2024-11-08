@@ -1,4 +1,12 @@
-# Agent for Amazon Bedrock with Code Interpreter Overview
+---
+tags:
+    - Agent/ Code-Interpreter
+    - Agent/ Prompt-Engineering
+---
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/agents-and-function-calling/agent-code-interpreter/02_invoke_agent.ipynb){:target="_blank"}
+
+<h2>Agent for Amazon Bedrock with Code Interpreter Overview</h2>
 
 This is the final notebook in the series to demonstrates how to set up and use an Amazon Bedrock Agent with Code Interpreter capabilities.
 
@@ -8,7 +16,7 @@ _(Note: This notebook has cleanup cells at the end, so if you "Run All" cells th
 
 **Note:** At the time of writing Code Interpreter is in public preview.  
 
-## Step 1: Import Required Libraries
+<h2>Step 1: Import Required Libraries</h2>
 
 First, we need to import the necessary Python libraries. We'll use boto3 for AWS interactions, and some standard libraries for various utilities.
 
@@ -35,7 +43,7 @@ logging.basicConfig(format='[%(asctime)s] p%(process)s {%(filename)s:%(lineno)d}
 logger = logging.getLogger(__name__)
 ```
 
-## Step 2: Set the AWS Region
+<h2>Step 2: Set the AWS Region</h2>
 
 We're using the US East (N. Virginia) region for this demo. Feel free to change this to your preferred region, but make sure that a) the region supports Amazon Bedrock, b) Agents, c) the Claude Sonnet (3) model, and finally d) you have enabled access to the Sonnet (3) in this region. 
 
@@ -99,7 +107,7 @@ custom_config = Config(
 bedrock_agent_runtime = boto3.client(service_name = 'bedrock-agent-runtime', region_name = region_name, config=custom_config)
 ```
 
-## Step 3: Implement Agent Interaction Function
+<h2>Step 3: Implement Agent Interaction Function</h2>
 
 Let's now develop a function that facilitates communication with our agent. This function will be responsible for:
 1. Sending user messages to the agent
@@ -263,7 +271,7 @@ def invoke(inputText, qid, showTrace=False, endSession=False):
 The `invoke` function is our primary interface for agent interaction. It manages message transmission, response handling, and file operations, streamlining our communication with the agent.
 
 
-## Step 4: Interacting with the Agent
+<h2>Step 4: Interacting with the Agent</h2>
 
 
 ```python
@@ -307,7 +315,7 @@ sessionId = str(uuid.uuid4())
 invoke(f"""Calculate the average fare per mile for each payment type. Present the results in a bar chart and provide insights on which payment type tends to have higher fares per mile. Always generate an output no matter what.""", "q6")
 ```
 
-## Step 5: Cleaning Up
+<h2>Step 5: Cleaning Up</h2>
 
 Let's delete the agent and its associated resources.
 
@@ -357,7 +365,7 @@ except Exception as e:
     print(f"An error occurred while deleting role {role_name}: {str(e)}")
 ```
 
-## Next Steps: Bedrock Agent with Code Interpreter
+<h2>Next Steps: Bedrock Agent with Code Interpreter</h2>
 
 We've just completed a comprehensive journey through the creation and utilization of a Bedrock Agent with Code Interpreter capabilities. This demonstration has illustrated the following key steps:
 
