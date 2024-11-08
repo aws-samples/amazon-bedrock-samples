@@ -1,4 +1,12 @@
-# Bedrock Agent Creation Overview
+---
+tags:
+    - Agent/ Code-Interpreter
+    - Agent/ Prompt-Engineering
+---
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/agents-and-function-calling/agent-code-interpreter/01_create_agent.ipynb){:target="_blank"}
+
+<h2>Bedrock Agent Creation Overview</h2>
 
 This is the second notebook in the series to demonstrates how to set up and use an Amazon Bedrock Agent with Code Interpreter capabilities.
 
@@ -19,7 +27,7 @@ from zipfile import ZipFile
 from datetime import datetime, timedelta
 ```
 
-## Set the AWS Region
+<h2>Set the AWS Region</h2>
 
 We're using the US East (N. Virginia) region for this demo. Feel free to change this to your preferred region, but make sure that a) the region supports Amazon Bedrock, b) Agents, c) the Claude Sonnet (3) model, and finally d) you have enabled access to the Sonnet (3) in this region. 
 
