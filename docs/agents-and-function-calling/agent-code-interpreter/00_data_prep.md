@@ -1,19 +1,27 @@
-# Overview
+---
+tags:
+    - Agent/ Code-Interpreter
+    - Agent/ Prompt-Engineering
+---
+
+!!! tip inline end "[Open in github](https://github.com/aws-samples/agents-and-function-calling/agent-code-interpreter/00_data_prep.ipynb){:target="_blank"}
+
+<h2>Overview</h2>
 
 This repository demonstrates how to set up, use, and test an Amazon Bedrock Agent with Code Interpreter capabilities. The project is divided into three Jupyter notebooks, each focusing on a specific aspect of the process.
 
 
-## Context
+<h2>Context</h2>
 
 This is the first notebook in the series to demonstrates how to set up and use an Amazon Bedrock Agent with Code Interpreter capabilities.
 
 In this notebook we process open souce NYC Taxi and Limousine data to be used by our Amazon Bedrock Agent later
-#### NYC TLC Trip Record Data
+<h3>NYC TLC Trip Record Data</h3>
 
 - **Source**: [NYC TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
 - **Content**: Yellow and green taxi trip records (pickup/dropoff times, locations, fares, etc.)
 
-#### Process
+<h3>Process</h3>
 1. Download Parquet file for target date
 2. Convert to CSV, reduce to <100MB
 3. Upload to S3 for agent use
@@ -37,7 +45,7 @@ If running on SageMaker Studio, you should add the following managed policies to
 <b>Note:</b> Please make sure to enable `Anthropic Claude 3.5 Sonnet` model access in Amazon Bedrock Console, as the later notebook will use Anthropic Claude 3.5 Sonnet model.
 </div>
 
-## Setup
+<h2>Setup</h2>
 
 We need to import the necessary Python libraries 
 
@@ -124,7 +132,7 @@ download_nyc_taxi_data(start_date, end_date, data_types)
 
 ```
 
-## Prepare the large data and send it to S3 to be used by the agent
+<h2>Prepare the large data and send it to S3 to be used by the agent</h2>
 
 Now, we will prepare the data and upload it to S3. This is the new york taxi dataset. S3 allows for larger files (100MB) to be used by the agent for code interpretation, so we will upload a CSV file that is `99.67 MB` in size.
 
