@@ -1,0 +1,6 @@
+boto3
+opensearch-py
+botocore
+awscli
+retrying
+requests-aws4auth

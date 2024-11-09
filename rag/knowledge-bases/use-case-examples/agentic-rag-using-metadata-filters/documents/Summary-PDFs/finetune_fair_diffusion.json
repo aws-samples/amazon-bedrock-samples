@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "finetune_fair_diffusion.pdf",
+        "title": "FINETUNING TEXT-TO-IMAGE DIFFUSION MODELS FOR FAIRNESS",
+        "summary": "This paper proposes a method to finetune text-to-image diffusion models like Stable Diffusion to reduce biases related to gender, race, age etc. in the generated images. The key contributions are: 1) A distributional alignment loss to steer the generated images towards a user-defined target distribution for specific attributes like gender, race etc. 2) An adjusted direct finetuning technique to effectively finetune the diffusion model's sampling process by addressing issues with exploding gradient norms and variances. Experiments show the method can significantly reduce gender, racial and intersectional biases for occupational prompts while preserving image quality and semantics. It also allows controlling non-uniform distributions like 75% young and 25% old for age. The method scales to debiasing multiple concepts simultaneously."
+    }
+}

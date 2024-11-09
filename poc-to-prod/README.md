@@ -1,11 +1,13 @@
-# POC to Prod 
+# PoC to Prod
 
-Productionize workloads using Bedrock
+This folder includes resources and examples to assist organizations in transitioning Amazon Bedrock-powered applications from proof-of-concept (PoC) to production-ready solutions. It offers tools, best practices, and sample code to guide the effective implementation, testing, validation, and operationalization of Bedrock applications.
 
-## Contents
+### Key Resources
 
-* Work in Progress. Contributions are welcome.
+- **[Inference Profiles](./inference-profiles/inference-profile-basics.ipynb):** This notebook provides a comprehensive guide to:
+  1. **Create and Configure Inference Profiles**: Understand and apply profile options for optimal application performance.
+  2. **Invoke Models with Inference Profiles**: Validate model invocation with real-time response streaming.
+  3. **Operationalize Tagging and Cleanup**: Implement organized tagging for resource management and automate profile cleanup as needed.
 
 ## Contributing
-
-We welcome community contributions! Please ensure your sample aligns with  [AWS best practices](https://aws.amazon.com/architecture/well-architected/), and please update the **Contents** section of this README file with a link to your sample, along with a description.
+We welcome community contributions! Please ensure that your sample aligns with AWS best practices. Update the **Contents** section of this README file with a link to your sample, along with a brief description.
