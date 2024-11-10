@@ -25,6 +25,9 @@ node_modules/
 
 .idea
 
+.vscode
+.vscode/**
+
 ._*
 .Spotlight-V100
 .Trashes
