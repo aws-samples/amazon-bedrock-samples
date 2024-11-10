@@ -150,6 +150,7 @@ nav:
           - LangGraph Fact Checker with Multi Agent: './agents-and-function-calling/open-source-agents/langgraph/langgraph-fact-checker-feedback-loop.md'
           - LangGraph Multi Agent With SQL tools: './agents-and-function-calling/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.md'
           - LangGraph Multi Agent with tools: './agents-and-function-calling/open-source-agents/langgraph/03_langgraph_agents_of_agent.md'
+          - Managing Memory for Multi Agents: './agents-and-function-calling/open-source-agents/langgraph/Travel_planner_with_langgraph.md'
     - RAG:
       - Amazon Bedrock Knowledge Bases:
         - Zero Setup:
