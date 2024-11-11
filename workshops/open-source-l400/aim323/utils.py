@@ -50,7 +50,7 @@ def create_agent(enable_memory = False):
     
     
     llm = ChatBedrockConverse(
-        model="anthropic.claude-3-sonnet-20240229-v1:0",
+        model="anthropic.claude-3-haiku-20240307-v1:0",
         temperature=0,
         max_tokens=None,
         client=bedrock_client,
