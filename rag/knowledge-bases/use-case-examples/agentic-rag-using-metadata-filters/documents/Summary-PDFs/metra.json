@@ -1,0 +1,7 @@
+{
+    "metadataAttributes": {
+        "filename": "metra.pdf",
+        "title": "METRA: SCALABLE UNSUPERVISED RL WITH METRIC-AWARE ABSTRACTION",
+        "summary": "This paper proposes METRA, a novel unsupervised reinforcement learning (RL) objective that aims to discover a diverse set of useful behaviors that can approximately cover the state space of complex environments. The key ideas are: 1) Instead of directly covering the entire high-dimensional state space, METRA learns to cover a compact latent space that is metrically connected to the state space by temporal distances. 2) METRA uses the temporal distance between states as the metric, which is invariant to state representations and thus scalable to pixel-based environments. By learning skills that move in different directions in this latent space, METRA obtains behaviors that approximately span the state space. Through experiments on locomotion and manipulation benchmarks, METRA demonstrates state-of-the-art performance, being the first method to discover diverse locomotion skills in pixel-based quadruped and humanoid environments without any supervision."
+    }
+}

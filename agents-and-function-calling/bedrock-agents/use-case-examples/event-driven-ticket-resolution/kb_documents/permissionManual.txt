@@ -1,0 +1,30 @@
+The ticket that an employee creates needs to be in the following format:
+
+```
+Title: Request Environment Access <Title that describes what the ticket is for>
+
+EnvironmentId: 223 <EnvironmentId for which the employee has requested access>
+
+Business Justification: Need to test new features on Quicksight Dashboard <Business justification for requesting access>
+
+Access Duration: 8 days <Duration for which the employee needs access>
+
+Access Type: Read <Type of access required>
+```
+
+If employee already has acesss to Environment, the ticket can be auto-resolved. 
+
+Access Type can be one of the following values:
+ i. Read
+ ii. Write
+ iii. Developer
+ iv. Admin
+ v. DevOps
+
+Access to the employee can be auto-assigned if all the given scenarios are true:
+
+1. The environment is owned by the manager of the employee.
+2. The employee has asked for less than 30 days of access.
+3. The access type is not Admin.
+
+If all the above scenarios are not true, then the ticket should be assigned to the owner of the environment.

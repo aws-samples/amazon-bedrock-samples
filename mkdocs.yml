@@ -113,8 +113,25 @@ nav:
         - Guardrail API Example: './introduction-to-bedrock/bedrock_apis/02_guardrails_api.md'
         - Converse API Example: './introduction-to-bedrock/converse_api/01_converse_api.md'
     - Agents:
-      - Create Agent Examples:
+      - Amazon Bedrock Agents:
         - How to create an Agent: './agents-and-function-calling/introduction-to-agents/how_to_create_custom_agents.md'
+        - Bedrock Agent Features:
+          - Create Agent with Function Definition: './agents-and-function-calling/bedrock-agents/features-examples/01-create-agent-with-function-definition/01-create-agent-with-function-definition.md'
+          - Create Agent with API Schema: './agents-and-function-calling/bedrock-agents/features-examples/02-create-agent-with-api-schema/02-create-agent-with-api-schema.md'
+          - Create Agent with Return of Control: './agents-and-function-calling/bedrock-agents/features-examples/03-create-agent-with-return-of-control/03-create-agent-with-return-of-control.md'
+          - Create Agent with Single Knowledge Base: './agents-and-function-calling/bedrock-agents/features-examples/04-create-agent-with-single-knowledge-base/04-create-agent-with-single-knowledge-base.md'
+          - Create Agent with Knowledge Base and Action Group: './agents-and-function-calling/bedrock-agents/features-examples/05-create-agent-with-knowledge-base-and-action-group/05-create-agent-with-knowledge-base-and-action-group.md'
+          - Prompt and Session Attributes: './agents-and-function-calling/bedrock-agents/features-examples/06-prompt-and-session-attributes/06-prompt-and-session-attributes.md'
+          - Custom Prompt and Lambda Parsers: './agents-and-function-calling/bedrock-agents/features-examples/07-advanced-prompts-and-custom-parsers/07-custom-prompt-and-lambda-parsers.md'
+          - Create Agent with Guardrails: './agents-and-function-calling/bedrock-agents/features-examples/08-create-agent-with-guardrails/08-create-agent-with-guardrails.md'
+          - Create Agent with Memory: './agents-and-function-calling/bedrock-agents/features-examples/09-create-agent-with-memory/09-create-agent-with-memory.md'
+          - Create Agent with Code Interpreter: './agents-and-function-calling/bedrock-agents/features-examples/10-create-agent-with-code-interpreter/10-create-agent-with-code-interpreter.md'
+        - Bedrock Flows:
+          - Getting Started with Prompt Management Flows: './agents-and-function-calling/bedrock-agents/bedrock-flows/Getting_started_with_Prompt_Management_Flows.md'
+        - Use Case Examples:
+          - Text to SQL Agent: './agents-and-function-calling/bedrock-agents/use-case-examples/text-2-sql-agent/create_and_invoke_sql_agent.md'
+          - Retail Agent Workshop: './agents-and-function-calling/bedrock-agents/use-case-examples/agentsforbedrock-retailagent/workshop/test_retailagent_agentsforbedrock.md'
+          - Product Review Agent: './agents-and-function-calling/bedrock-agents/use-case-examples/product-review-agent/main.md'
       - Multi Agent:
         - Multi Agent Orchestration: './agents-and-function-calling/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.md'
       - Function Calling:
@@ -133,12 +150,35 @@ nav:
           - LangGraph Fact Checker with Multi Agent: './agents-and-function-calling/open-source-agents/langgraph/langgraph-fact-checker-feedback-loop.md'
           - LangGraph Multi Agent With SQL tools: './agents-and-function-calling/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.md'
           - LangGraph Multi Agent with tools: './agents-and-function-calling/open-source-agents/langgraph/03_langgraph_agents_of_agent.md'
+          - Managing Memory for Multi Agents: './agents-and-function-calling/open-source-agents/langgraph/Travel_planner_with_langgraph.md'
     - RAG:
-      - Knowledge Bases:
+      - Amazon Bedrock Knowledge Bases:
+        - Zero Setup:
+          - Chat with Your Document: './rag/knowledge-bases/features-examples/00-zero-setup-chat-with-your-document/chat_with_document_kb.md'
+        - RAG Concepts:
+          - Create and Ingest Documents with Multi-Data Sources: './rag/knowledge-bases/features-examples/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.md'
+          - Managed RAG with Custom Prompting: './rag/knowledge-bases/features-examples/01-rag-concepts/02_managed_rag_custom_prompting_and_no_of_results.md'
+          - Customized RAG with Claude 3 and Langchain: './rag/knowledge-bases/features-examples/01-rag-concepts/03_customized-rag-retreive-api-hybrid-search-claude-3-sonnet-langchain.md'
+          - RAG Evaluation with Langchain and RAGAS: './rag/knowledge-bases/features-examples/01-rag-concepts/04_customized-rag-retreive-api-langchain-claude-evaluation-ragas.md'
         - Optimizing Retrieval Results:
-          - Advanced Chunking Strategies: './rag/knowledge-bases/feature-examples/02-optimizing-accuracy-retrieved-results/advanced_chunking_options.md'
-        - RAG Advanced Concepts:
-          - Dynamic Metadata Filtering: './rag/knowledge-bases/feature-examples/03/dynamic-metadata-filtering/dynamic-metadata-filtering-KB.md'
+          - Advanced Chunking Options: './rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/advanced_chunking_options.md'
+          - CSV Metadata Customization: './rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/csv_metadata_customization.md'
+          - Query Reformulation: './rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/query_reformulation.md'
+        - Advanced Concepts:
+          - Dynamic Metadata Filtering: './rag/knowledge-bases/features-examples/03-advanced-concepts/dynamic-metadata-filtering/dynamic-metadata-filtering-KB.md'
+          - Reranking:
+            - Deploy Reranking Model: './rag/knowledge-bases/features-examples/03-advanced-concepts/reranking/01_deploy-reranking-model-sm.md'
+            - Knowledge Base Reranker: './rag/knowledge-bases/features-examples/03-advanced-concepts/reranking/02_kb-reranker.md'
+            - QA Generator: './rag/knowledge-bases/features-examples/03-advanced-concepts/reranking/qa-generator.md'
+        - Responsible AI:
+          - Contextual Grounding: './rag/knowledge-bases/features-examples/05-responsible-ai/contextual-grounding.md'
+        - Use Case Examples:
+          - Metadata Filter Access Control:
+            - End-to-End ACL with Knowledge Base: './rag/knowledge-bases/use-case-examples/metadata-filter-access-control/kb-end-to-end-acl.md'
+          - RAG with Structured and Unstructured Data:
+            - Create Dummy Structured Data: './rag/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/0-create-dummy-structured-data.md'
+            - Create SQL Dataset (Optional): './rag/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/1_create_sql_dataset_optional.md'
+            - RAG with Structured and Unstructured Data: './rag/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/2_rag_with_structured_unstructured_data.md'
       - Open Source:
         - Chatbot using Langchain: './rag/open-source/chatbots/qa_chatbot_langchain_bedrock.md'
         - Chunking strategies for RAG applications: './rag/open-source/chunking/rag_chunking_strategies_langchain_bedrock.md'

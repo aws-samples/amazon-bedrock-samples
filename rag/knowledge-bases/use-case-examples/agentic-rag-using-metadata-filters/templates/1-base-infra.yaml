@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Access Control with Knowledge Bases for Amazon Bedrock infrastructure.
+
+Parameters:
+  SolutionId:
+    Type: String
+    Default: kb123
+    AllowedPattern: '[a-z0-9]*'
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Join ['', [!Ref 'SolutionId', '-bucket']]
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteAllObjects
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+            ExpirationInDays: 1
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ForceDeleteAllObjects
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - s3:DeleteObject
+            Resource: !Sub '${S3Bucket.Arn}/*'
+
+  EncryptionPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    Properties:
+      Name: !Join ['', [!Ref 'SolutionId', '-kbcollection-enc']]
+      Policy:
+        Fn::Sub: '{"Rules": [{"ResourceType": "collection", "Resource": ["collection/${SolutionId}-kbcollection"]}], "AWSOwnedKey": true}'
+      Type: encryption
+
+  NetworkPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    DependsOn:
+      - EncryptionPolicy
+    Properties:
+      Name: !Join ['', [!Ref 'SolutionId', '-kbcollection-net']]
+      Policy:
+        Fn::Sub: '[{"Description": "Public access for ct-kb-aoss-collection collection", "Rules": [{"ResourceType": "dashboard", "Resource": ["collection/${SolutionId}-kbcollection"]}, {"ResourceType": "collection", "Resource": ["collection/${SolutionId}-kbcollection"]}], "AllowFromPublic": true}]'
+      Type: network
+
+  DataAccessPolicy:
+    Type: AWS::OpenSearchServerless::AccessPolicy
+    DependsOn:
+      - NetworkPolicy
+    Properties:
+        Name: !Join ['', [!Ref 'SolutionId', '-kbcollection-access']]
+        Policy:
+            Fn::Sub: '[{"Rules": [{"Resource": ["collection/${SolutionId}-kbcollection"], "Permission": ["aoss:CreateCollectionItems", "aoss:UpdateCollectionItems", "aoss:DescribeCollectionItems"], "ResourceType": "collection"}, {"ResourceType": "index", "Resource": ["index/${SolutionId}-kbcollection/*"], "Permission": ["aoss:CreateIndex", "aoss:DescribeIndex", "aoss:ReadDocument", "aoss:WriteDocument", "aoss:UpdateIndex", "aoss:DeleteIndex"]}], "Principal": ["arn:aws:iam::${AWS::AccountId}:role/${SolutionId}-kbrole"]}]'
+        Type: data
+
+  Collection:
+    Type: AWS::OpenSearchServerless::Collection
+    DependsOn:
+      - EncryptionPolicy
+    Properties:
+      Description: KB AOSS Collection
+      Name: !Join ['', [!Ref 'SolutionId', '-kbcollection']]
+      Type: VECTORSEARCH
+
+Outputs:
+  s3bucket:
+    Description: S3 Bucket Name
+    Value: !Ref S3Bucket
+
+  OpenSearchCollectionId:
+    Description: OpenSearch Serverless Collection Id
+    Value: !Ref Collection

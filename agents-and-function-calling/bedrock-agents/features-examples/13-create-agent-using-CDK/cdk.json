@@ -1,0 +1,24 @@
+{
+  "app": "python3 app.py",
+  "watch": {
+    "include": [
+      "**"
+    ],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "requirements*.txt",
+      "source.bat",
+      "**/__init__.py",
+      "**/__pycache__",
+      "tests"
+    ]
+  },
+  "context": {
+   "@aws-cdk/core:target-partitions": [
+      "aws",
+      "aws-cn"
+    ]
+   
+  }
+}
