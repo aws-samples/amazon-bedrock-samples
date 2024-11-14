@@ -5,6 +5,7 @@ This repository contains pre-built examples to help customers get started with R
 ## Contents
 
 - [bedrock-guardrails](./bedrock-guardrails) - Examples highlighting how Amazon Bedrock Guardrails can be used.
+- [tdd-guardrail] (./tdd-guardrail) - Explore a solution that automates building guardrails using a test-driven development approach.
 
 
 ## Contributing
