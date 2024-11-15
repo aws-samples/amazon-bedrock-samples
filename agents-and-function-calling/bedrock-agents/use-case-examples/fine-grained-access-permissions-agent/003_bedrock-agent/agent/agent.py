@@ -4,114 +4,190 @@ import os
 import logging
 import cognitojwt
 
-
-# Set up logging
+# Enhanced logging configuration
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 verified_permissions_client = boto3.client("verifiedpermissions")
 
-
 def get_named_parameter(event, name):
-    return next(item for item in event['parameters'] if item['name'] == name)['value']
+    logger.info(f"Retrieving parameter: {name} from event")
+    value = next(item for item in event['parameters'] if item['name'] == name)['value']
+    logger.info(f"Retrieved parameter value: {value}")
+    return value
 
-
-def list_claims(event):
-    # TODO: Implement logic to retrieve and return a list of claims
+def list_claims(event, user_info):
+    # This function retrieves claims based on user role, filtering for adjusters by region.
+    # TODO: Implement logic to retrieve and return a list of claims from DynamoDB.
+    # For now, we'll use dummy claims for demonstration purposes.
+    logger.info(f"Entering list_claims function with user_info: {user_info}")
     dummy_claims = [
         {
             "id": 1,
             "claimAmount": 1000.0,
             "claimDescription": "Dummy claim 1",
-            "claimStatus": "approved"
+            "claimStatus": "approved",
+            "region": "northeast"
         },
         {
             "id": 2,
             "claimAmount": 2500.75,
             "claimDescription": "Dummy claim 2",
-            "claimStatus": "pending"
+            "claimStatus": "pending",
+            "region": "northwest"
         }
     ]
-    return dummy_claims
+    logger.info(f"Retrieved dummy claims: {dummy_claims}")
+    
+    user_role = user_info.get('role')
+    user_region = user_info.get('region')
+    logger.info(f"Processing claims for user_role: {user_role}, region: {user_region}")
 
+    # Adjusters can only access claims in their assigned region
+    if user_role == 'ClaimsAdjuster':
+        logger.info("Filtering claims for adjuster role")
+        filtered_claims = [claim for claim in dummy_claims if claim['region'] == user_region]
+        logger.info(f"Filtered claims count: {len(filtered_claims)}")
+        return filtered_claims
+    else:
+        # Non-adjusters (assumed to be admins) can access all claims
+        logger.info("Returning all claims for admin role")
+        return dummy_claims
 
-def get_claim(event):
+def get_claim(event, user_info):
+    # This function retrieves a claim by ID and applies role-based access control.
+    logger.info(f"Entering get_claim function with user_info: {user_info}")
     claim_id = int(get_named_parameter(event, 'claimId'))
-    # TODO: Implement logic to retrieve and return a claim by ID
+    logger.info(f"Retrieving claim with ID: {claim_id}")
+
+    # TODO: Implement logic to retrieve a claim by ID from DynamoDB.
+    # For now, we'll use a dummy claim for demonstration purposes.
     dummy_claim = {
         "id": claim_id,
         "claimAmount": 1000.0,
         "claimDescription": "Dummy claim 1",
-        "claimStatus": "approved"
+        "claimStatus": "approved",
+        "region": "northeast"
     }
-    return dummy_claim
+    logger.info(f"Retrieved dummy claim: {dummy_claim}")
+
+    user_role = user_info.get('role')
+    user_region = user_info.get('region')
+    logger.info(f"Checking access for user_role: {user_role}, region: {user_region}")
+
+    if user_role == 'ClaimsAdjuster':
+        # Adjusters can only access claims in their assigned region
+        if dummy_claim['region'] == user_region:
+            logger.info("Access granted: Claim region matches adjuster region")
+            return dummy_claim
+        else:
+            logger.warning("Access denied: Claim region does not match adjuster region")
+            return None
+    else:
+        # Non-adjusters (assumed to be admins) can access all claims
+        logger.info("Access granted: Admin role")
+        return dummy_claim
 
 
-def update_claim(event):
+    # TODO: Implement error handling for cases where the claim doesn't exist
+
+
+def update_claim(event, user_info):
+    # This method allows adjusters to update claims they are managing.
+    # It assumes any calling method has already validated the adjuster's region.
+    logger.info(f"Entering update_claim function with user_info: {user_info}")
+    
     claim_id = int(get_named_parameter(event, 'claimId'))
-    # TODO: Implement logic to update and return a claim by ID
+    logger.info(f"Updating claim with ID: {claim_id}")
+
+    # Using dummy claim data for demonstration purpose (to be replaced by database retrieval).
     dummy_claim = {
         "id": claim_id,
         "claimAmount": 3000.0,
         "claimDescription": "Updated dummy claim",
-        "claimStatus": "approved"
+        "claimStatus": "approved",
+        "region": "northeast"
     }
-    return dummy_claim
 
+    # Here we would normally retrieve the existing claim from the database but for now, we use the dummy claim.
+    existing_claim = dummy_claim  # Placeholder: Replace this with actual database retrieval logic.
+    logger.info(f"Retrieved existing claim: {existing_claim}")
+
+    # Since the adjuster's region is already validated in the calling method,
+    # we can proceed to update the claim data. Assuming we're updating to some new values:
+    updated_claim = {
+        "id": existing_claim['id'],
+        "claimAmount": existing_claim['claimAmount'] + 500.0,  # Example update
+        "claimDescription": "Further updated dummy claim",
+        "claimStatus": "approved",
+        "region": existing_claim['region']
+    }
+
+    # TODO: Implement logic to save the updated claim to the database.
+    logger.info(f"Updated claim: {updated_claim}")
+    return updated_claim  # Return the updated claim to confirm the changes.
 
 def lambda_handler(event, context):
-    logger.info(f'event: {event}')
-    logger.info(f'context: {context}')
+    logger.info(f"Lambda handler invoked with event: {event}")
+    try:
+        # sessionAttributes contain the authorization_header which is later retrieved to validate the request. 
+        # This is the JWT token.
+        sessionAttributes = event.get("sessionAttributes")
+        logger.info(f"Session attributes retrieved: {sessionAttributes}")
 
-    # sessionAttributes contain the authorization_header which is later retrieved to validate the request. This is the JWT token.
-    sessionAttributes = event.get("sessionAttributes")
-    
-    # print("sessionAttributes:", sessionAttributes)
-    response_code = 200
-    action_group = event['actionGroup']
-    api_path = event['apiPath']
-    http_method = event['httpMethod'].upper()
-    action_id = getActionID(api_path, http_method)
+        action_group = event['actionGroup']
+        api_path = event['apiPath']
+        http_method = event['httpMethod'].upper()
+        action_id = getActionID(api_path, http_method)
+        logger.info(f"Processing request - Path: {api_path}, Method: {http_method}, Action ID: {action_id}")
 
-    auth, reason = verifyAccess(sessionAttributes, action_id)
-    print("auth",auth)
-    print("reason",reason)
+        user_info, auth, reason = verifyAccess(sessionAttributes, action_id)
+        logger.info(f"Access verification result - Auth: {auth}, Reason: {reason}")
 
-
-    if auth == "ALLOW":
-        if api_path == '/listClaims' and http_method == 'GET':
-            result = list_claims(event)
-        elif api_path == '/getClaim/{claimId}' and http_method == 'GET':
-            result = get_claim(event)
-        elif api_path == '/updateClaim/{claimId}' and http_method == 'PUT':
-            result = update_claim(event)
+        if auth == "ALLOW":
+            response_code = 200
+            if api_path == '/listClaims' and http_method == 'GET':
+                claims = list_claims(event, user_info)
+                # Return the raw claims data without any text formatting
+                result = claims
+            elif api_path == '/getClaim/{claimId}' and http_method == 'GET':
+                result = get_claim(event, user_info)
+            elif api_path == '/updateClaim/{claimId}' and http_method == 'PUT':
+                result = update_claim(event, user_info)
+            else:
+                response_code = 404
+                result = {"error": f"Unrecognized api path: {action_group}::{api_path}"}
+                logger.error(f"Unrecognized API path: {api_path}")
         else:
-            response_code = 404
-            result = f"Unrecognized api path: {action_group}::{api_path}"
+            response_code = 401
+            result = {"error": reason}
+            logger.warning(f"Access denied: {reason}")
 
         response_body = {
             'application/json': {
-                'body': result
-            }
-        }
-    else:  # auth == "DENY"
-        response_code = 401
-        response_body = {
-            'application/json': {
-                'body': reason
+                'body': result  # Don't use json.dumps here as it's not needed
             }
         }
 
-    action_response = {
-        'actionGroup': event['actionGroup'],
-        'apiPath': event['apiPath'],
-        'httpMethod': event['httpMethod'],
-        'httpStatusCode': response_code,
-        'responseBody': response_body
-    }
-
-    api_response = {'messageVersion': '1.0', 'response': action_response}
-    return api_response
+        api_response = {
+            'messageVersion': '1.0',
+            'response': {
+                'actionGroup': action_group,
+                'apiPath': api_path,
+                'httpMethod': http_method,
+                'httpStatusCode': response_code,
+                'responseBody': response_body
+            }
+        }
+        logger.info(f"Returning response with status code: {response_code}")
+        return api_response
+    except Exception as e:
+        logger.error(f"Error in lambda_handler: {str(e)}", exc_info=True)
+        raise
 
 
 def verifyAccess(sessionAttributes, action_id):
@@ -142,7 +218,7 @@ def verifyAccess(sessionAttributes, action_id):
                 else:
                     reason = "Unauthorized request"
 
-    return auth, reason
+    return user_info, auth, reason
 
 
 def verifyJWT_getUserInfo(token):

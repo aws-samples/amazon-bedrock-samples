@@ -81,15 +81,16 @@ const parseJwtToken = (tokenType) => {
       <button onClick={() => parseJwtToken('accessToken')}>Parse Access Token</button>
       <pre>{parsedAccessToken}</pre>
   
-      <input
+      Chat Box: <input
         type="text"
         value={inputPrompt}
         onChange={handleInputChange}
         placeholder="Enter claim action"
       />
-      <button onClick={() => callAPIGW(accessToken, idToken, inputPrompt, setIsLoading, sessionId)}>Call API Gateway</button>
+      <br/><br/><button onClick={() => callAPIGW(accessToken, idToken, inputPrompt, setIsLoading, sessionId)}>Call API Gateway</button>
   
       <button onClick={generateSessionId}>Reset Session</button>
+      <br/>
       {isLoading && <ClipLoader color="#36d7b7" />} {/* Render the spinner when isLoading is true */}
       <div id="apiresponse"></div>
     </>

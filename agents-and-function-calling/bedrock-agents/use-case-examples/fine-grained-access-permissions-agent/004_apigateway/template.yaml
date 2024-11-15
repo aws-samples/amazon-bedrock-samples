@@ -148,7 +148,7 @@ Resources:
       MemorySize: 128
       Timeout: 180
       Handler: invoke_lambda.lambda_handler
-      Runtime: python3.9
+      Runtime: python3.12
       Architectures:
         - x86_64
       EphemeralStorage:
@@ -163,7 +163,7 @@ Resources:
             - Effect: Allow
               Action:
                 - bedrock:InvokeAgent
-              Resource:  !Sub 'arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/${BedrockAgentId}/alias/${BedrockAgentAliasId}'
+              Resource:  !Sub 'arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent-alias/${BedrockAgentId}/${BedrockAgentAliasId}'
       SnapStart:
         ApplyOn: None
       Events:
