@@ -1,6 +1,7 @@
 # Designing secure generative AI Application workflows with Amazon Verified Permissions and Agents for Bedrock
 
-[Link AWS Blog: https://aws.amazon.com/blogs/aws/](https://aws.amazon.com/blogs/aws/) \
+[Link AWS Blog: https://aws.amazon.com/blogs/machine-learning/design-secure-generative-ai-application-workflows-with-amazon-verified-permissions-and-amazon-bedrock-agents/](https://aws.amazon.com/blogs/machine-learning/design-secure-generative-ai-application-workflows-with-amazon-verified-permissions-and-amazon-bedrock-agents/) 
+
 [Link to Amazon Verified Permissions: https://aws.amazon.com/verified-permissions/](https://aws.amazon.com/verified-permissions/)
 
 This is sample code we will demonstrate how to design fine-grained access controls using Verified Permissions for a generative AI application that uses agents for Bedrock to answer questions about insurance claims that exist in a claims review system using textual prompts as inputs and outputs.
@@ -48,9 +49,13 @@ The application architecture flow is as follows:
 The first step of utilizing this repo is performing a git clone of the repository and navigate to the folder.
 
 ```
-$ git clone https://github.com/aws-samples/amazon-bedrock-samples.git
+git clone https://github.com/aws-samples/amazon-bedrock-samples.git
+```
 
-$ cd amazon-bedrock-samples/agents-and-function-calling/bedrock-agents/features-examples/09-fine-grained-access-permissions/
+CD to the project folder
+
+```
+cd amazon-bedrock-samples/agents-and-function-calling/bedrock-agents/use-case-examples/fine-grained-access-permissions-agent
 ```
 
 ## Step 2:
@@ -59,9 +64,13 @@ Managing CLI parameters as Environment Variables.
 Start with setting a default region. This code was tested in us-east-1.
 
 ```
-$ aws configure set default.region us-east-1
-$ export AWS_PROFILE=<profilename>
+aws configure set default.region us-east-1
+```
 
+Set AWS Profile
+
+```
+export AWS_PROFILE=<profilename>
 ```
 
 
@@ -77,42 +86,63 @@ The below step will use AWS SAM (Serverless Application Model) to create the fol
 Please ensure that your AWS CLI Profile has access to run CloudFormation and create resources!
 
 ```
-$ sam build 
-
-$ sam deploy --guided --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+sam build 
 ```
+This command will run the AWS SAM build. If you notice python version related issues, please update the following files to make sure that build works with the python version supported by Lambda and present in your local build environment. 
+
+003_bedrock-agent/template.yaml
+004_apigateway/template.yaml
+
+```
+sam deploy --guided --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+```
+
 When you run the command, AWS SAM will prompt for few questions, enter "claims-app" for the stack name and retain defaults for rest of the questions
+
+## The below Steps will setup the Frontend application
 
 ### Step 4 - Set the environment variables 
 
-```
 #### Set the AWS region ####
-$ AWS_REGION="us-east-1"
+```
+AWS_REGION="us-east-1"
+```
 
 #### Get the User Pool ID ####
-$ WS_USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 20 --query 'UserPools[?Name==`claims-app-userpool`].Id | [0]' --output text --region $AWS_REGION)
+```
+WS_USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 20 --query 'UserPools[?Name==`claims-app-userpool`].Id | [0]' --output text --region $AWS_REGION)
+```
 
 #### Get the Cognito Domain ####
-$ WS_COGNITO_DOMAIN=$(aws cognito-idp describe-user-pool --user-pool-id $WS_USER_POOL_ID --query 'UserPool.Domain' --output text --region $AWS_REGION)
+```
+WS_COGNITO_DOMAIN=$(aws cognito-idp describe-user-pool --user-pool-id $WS_USER_POOL_ID --query 'UserPool.Domain' --output text --region $AWS_REGION)
+```
 
 #### Get the User Pool Client ID ####
-$ WS_USER_POOL_CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id $WS_USER_POOL_ID --query 'UserPoolClients[0].ClientId' --output text --region $AWS_REGION)
+```
+WS_USER_POOL_CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id $WS_USER_POOL_ID --query 'UserPoolClients[0].ClientId' --output text --region $AWS_REGION)
+```
 
 #### Get the User Pool ARN ####
-$ WS_USER_POOL_ARN=$(aws cognito-idp describe-user-pool --user-pool-id $WS_USER_POOL_ID --query 'UserPool.Arn' --output text --region $AWS_REGION)
+```
+WS_USER_POOL_ARN=$(aws cognito-idp describe-user-pool --user-pool-id $WS_USER_POOL_ID --query 'UserPool.Arn' --output text --region $AWS_REGION)
+```
 
 #### Get the React APP URL ####
-$ REACT_APP_API_GATEWAY_URL=$(aws cloudformation describe-stacks --stack-name claims-app --query "Stacks[0].Outputs[?OutputKey=='APIEndpoint'].OutputValue" --output text --region $AWS_REGION )
+```
+REACT_APP_API_GATEWAY_URL=$(aws cloudformation describe-stacks --stack-name claims-app --query "Stacks[0].Outputs[?OutputKey=='APIEndpoint'].OutputValue" --output text --region $AWS_REGION )
 ```
 
 ## Step 5:
 
-Set credentials in Amazon Cognito for test users follows: 
+Set credentials in Amazon Cognito for claims-app-adjuster users follows (Make sure to set a password in insert_password section below): 
 
 ```
-aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-adjuster --password <insert_password> --permanent
-aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-admin    --password <insert_password> --permanent
-
+aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-adjuster --password <insert_password> --permanent --region $AWS_REGION
+```
+Set credentials in Amazon Cognito for claims-app-admin users follows (Make sure to set a password in insert_password section below): 
+```
+aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --username claims-app-admin    --password <insert_password> --permanent --region $AWS_REGION
 ```
 
 ## Step 6:
@@ -120,31 +150,43 @@ aws cognito-idp admin-set-user-password --user-pool-id $WS_USER_POOL_ID --userna
 Run the below command to change to the frontend directory. Then run the following command to deploy the frontend application :
 
 ```
-$ cd 005_Frontend
+cd 005_Frontend
 ```
 ### Step 6.1 - Set the environment variables in env file
 
-```
-#### Set the .env file ####
-$ rm .env
-# Create the .env file
-$ echo "AWS_REGION=$AWS_REGION" > .env
-$ echo "WS_USER_POOL_ID=$WS_USER_POOL_ID" >> .env
-$ echo "WS_COGNITO_DOMAIN=$WS_COGNITO_DOMAIN" >> .env
-$ echo "WS_USER_POOL_CLIENT_ID=$WS_USER_POOL_CLIENT_ID" >> .env
-$ echo "WS_USER_POOL_ARN=$WS_USER_POOL_ARN" >> .env
-$ echo "REACT_APP_API_GATEWAY_URL"=$REACT_APP_API_GATEWAY_URL >> .env
 
+
+Remove the environment file if already exists
+```
+rm .env
+```
+# Create the .env file
+```
+echo "AWS_REGION=$AWS_REGION" > .env
+echo "WS_USER_POOL_ID=$WS_USER_POOL_ID" >> .env
+echo "WS_COGNITO_DOMAIN=$WS_COGNITO_DOMAIN" >> .env
+echo "WS_USER_POOL_CLIENT_ID=$WS_USER_POOL_CLIENT_ID" >> .env
+echo "WS_USER_POOL_ARN=$WS_USER_POOL_ARN" >> .env
+echo "REACT_APP_API_GATEWAY_URL"=$REACT_APP_API_GATEWAY_URL >> .env
+```
+
+Confirm that the environment variables are set in .env file. You will also find the User Pool details configured  using the Cloudformation stack
+
+```
+more .env
+```
 #### install the dependencies ####
-$ npm install react-scripts@latest
+```
+npm install react-scripts@latest
 ```
 
 ### Step 6.2 - Initialize Amplify project
 
 The amplify init command is used to initialize a new Amplify project. This command sets up the project directory, configures deployment resources in the cloud, and prepares the project for further Amplify operations.
 
+
 ```
-$ amplify init
+amplify init
 ```
 You will enter "bedrocksecurity" for name of the project and follow the prompts. You can use the below to help you configure:
 ```
@@ -207,7 +249,7 @@ Some next steps:
 
 Run this command to link the Cognito User pool that was created in CloudFormation to the Amplify application that we are deploying. This will ensure that the requests will be authenticated by the users in the Cognito userpool. 
 ```
-$ amplify auth import
+amplify auth import
 ```
 You will use the below details for configuration: 
 ```
@@ -221,20 +263,20 @@ claims-app-demo
 ```
 You will then see this message:
 
-```
+
 ✅ Cognito User Pool 'claims-app-userpool' was successfully imported.
-```
 
 ### Step 6.3 - Add Amplify hosting 
+When you run the below command you will be be selecting 'Hosting with Amplify Console' option
 ```
-$ amplify add hosting
+amplify add hosting
 ```
 
 ### Step 6.4 - Publish Amplify project 
 
 Run the below command to publish the project to AWS Amplify. You will use the below details for configuration: 
 ```
-$ amplify publish
+amplify publish
 ```
 ```
 Select the plugin module to execute : 
@@ -273,7 +315,7 @@ You will login to the application with the username: claims-app-adjuster followe
 
 ![Alt text](images/claims-app.png "Claims Application")
 
-You can begin asking questions in textbox like using natural language questions like :
+You can begin asking questions in chat box like using natural language questions like :
 
 1. list all claims
 2. get claim details for claim 101
