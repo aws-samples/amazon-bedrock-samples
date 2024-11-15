@@ -201,7 +201,7 @@ Resources:
       MemorySize: 128
       Timeout: 3
       Handler: agent.lambda_handler
-      Runtime: python3.9
+      Runtime: python3.12
       Architectures:
         - x86_64
       EphemeralStorage:
@@ -221,7 +221,7 @@ Resources:
               Action:
                 - verifiedpermissions:IsAuthorized
                 - verifiedpermissions:IsAuthorizedWithToken
-              Resource: !Sub 'arn:aws:verifiedpermissions:${AWS::Region}:${AWS::AccountId}:policy-store/${PolicyStoreId}'
+              Resource: !Sub 'arn:aws:verifiedpermissions::${AWS::AccountId}:policy-store/${PolicyStoreId}'
             - Effect: Allow
               Action:
                 - verifiedpermissions:GetPolicyStore
