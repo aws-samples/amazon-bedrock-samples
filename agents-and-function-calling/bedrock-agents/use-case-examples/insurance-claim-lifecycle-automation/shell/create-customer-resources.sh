@@ -23,7 +23,7 @@ export BEDROCK_AGENTS_LAYER_ARN=$(aws lambda publish-layer-version \
     --layer-name bedrock-agents-and-function-calling \
     --description "Agents for Bedrock Layer" \
     --license-info "MIT" \
-    --content S3Bucket=${ARTIFACT_BUCKET_NAME},S3Key=agent/lambda/lambda-layer/bedrock-agents-and-function-calling-layer.zip \
+    --content S3Bucket=${ARTIFACT_BUCKET_NAME},S3Key=agent/lambda/lambda-layer/bedrock-agents-layer.zip \
     --compatible-runtimes python3.11 \
     --region ${AWS_REGION} \
     --query LayerVersionArn --output text)
