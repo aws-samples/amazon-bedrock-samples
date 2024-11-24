@@ -197,9 +197,13 @@ nav:
     # - Data access control: 'general/license.md'
   - Workshops:
     - Open-source L400:
-      - Introduction to the Use Case: './workshop/open-source-l400/00_Lab_Intro to Use-Case.md'
-      - Find a Dream Destination using RAG: './workshop/open-source-l400/02_Lab_Find a Dream Destination_RAG query.md'
-      - Find Dream Destination with CrewAI: './workshop/open-source-l400/05_Lab_Find dream destination with CrewAI.md'
+      - Introduction to the Use Case: './workshop/open-source-l400/01_usecase_introduction.md'
+      - Advanced RAG for Agents: './workshop/open-source-l400/02_Lab_Find a Dream Destination_RAG query.md'
+      - Conversational Memory in Agents: './workshop/open-source-l400/02_travel_planner_with_langgraph.md'
+      - Multi-Modal and Types of Agents: './workshop/open-source-l400/03_travel_agent_with_tools.md'
+      - Multi-Agent Collaboration with Human-in-loop: './workshop/open-source-l400/04_travel_booking_multi_agent.md'
+      - Find Dream Destination with CrewAI: './workshop/open-source-l400/05_dream_destination_with_crewai.md'
+      - RAGAs Agents Evaluation: './workshop/open-source-l400/06_agent_evaluation_with_ragas.md'
     - Open-source L200:
       - Introduction to the Use Case: './workshop/open-source-l200/02_contextual_text_generation.md'
       - Retrieval Based Text Generation: './workshop/open-source-l200/03_retrieval_based_text_application.md'
