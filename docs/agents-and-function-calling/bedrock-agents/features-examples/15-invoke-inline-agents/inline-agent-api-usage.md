@@ -4,7 +4,7 @@ tags:
     - API-Usage-Example
 ---
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/15-invoke-inline-agents/Inline-Agent-Api-Usage.ipynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/agents-and-function-calling/bedrock-agents/features-examples/15-invoke-inline-agents/inline-agent-api-usage.ipynb){:target="_blank"}"
 
 <h2>Building Dynamic AI Assistants with Amazon Bedrock Inline Agents</h2>
 
