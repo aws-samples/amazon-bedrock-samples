@@ -6,7 +6,7 @@ tags:
 ---
 <!-- <h2>Complete Document Retrieval and RAG</h2> -->
 
-!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/workshops/open-source-l400/02_Lab_Find a Dream Destination_RAG query.pynb){:target="_blank"}"
+!!! tip inline end "[Open in github](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/workshops/open-source-l400/02_Lab_Find_a_Dream_Destination_RAG_query.pynb){:target="_blank"}"
 
 ---
 
