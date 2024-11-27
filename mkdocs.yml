@@ -200,7 +200,7 @@ nav:
     - Open-source L400:
       - Introduction to the Use Case: './workshop/open-source-l400/01_usecase_introduction.md'
       - Advanced RAG for Agents: './workshop/open-source-l400/02_Lab_Find a Dream Destination_RAG query.md'
-      - Conversational Memory in Agents: './workshop/open-source-l400/02_travel_planner_with_langgraph.md'
+      - Conversational Memory in Agents: './workshop/open-source-l400/02_travel_planner_with_langgraph.md' 
       - Multi-Modal and Types of Agents: './workshop/open-source-l400/03_travel_agent_with_tools.md'
       - Multi-Agent Collaboration with Human-in-loop: './workshop/open-source-l400/04_travel_booking_multi_agent.md'
       - Find Dream Destination with CrewAI: './workshop/open-source-l400/05_dream_destination_with_crewai.md'
