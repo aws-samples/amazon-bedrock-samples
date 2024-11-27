@@ -126,6 +126,7 @@ nav:
           - Create Agent with Guardrails: './agents-and-function-calling/bedrock-agents/features-examples/08-create-agent-with-guardrails/08-create-agent-with-guardrails.md'
           - Create Agent with Memory: './agents-and-function-calling/bedrock-agents/features-examples/09-create-agent-with-memory/09-create-agent-with-memory.md'
           - Create Agent with Code Interpreter: './agents-and-function-calling/bedrock-agents/features-examples/10-create-agent-with-code-interpreter/10-create-agent-with-code-interpreter.md'
+          - Create Dynamic Tooling Inline Agents: './agents-and-function-calling/bedrock-agents/features-examples/15-invoke-inline-agents/inline-agent-api-usage.md'
         - Bedrock Flows:
           - Getting Started with Prompt Management Flows: './agents-and-function-calling/bedrock-agents/bedrock-flows/Getting_started_with_Prompt_Management_Flows.md'
         - Use Case Examples:
