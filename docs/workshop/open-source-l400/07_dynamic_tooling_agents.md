@@ -1,14 +1,15 @@
 # Lab 7:Create `dynamic tooling` based agents
 
-**Building a ReWoO agent using tools which get determined at run time**
+**Building a ReWoO agent using tools which get selected at run time**
 
 ## Overview
 
-In this lab we are going to create an Agent that will have access to tools to find weather. You will be able to ask this agent questions, watch it call the required tools, and have conversations with it. The lab will cover the following scenario:
+In this lab we are going to create an Agent that will have access to tools to find weather. You will be able to ask this agent questions, watch it call the required tools, and have conversations with it. However the `agent` is able to **select dynamically** the tools it needs to invoke. We will use RAG to get the list of tools needed based on the user input. The lab will cover the following scenario:
 
 #### What gets covered in this lab: 
 we will cover these aspects below:
-- Single Agent configuration
+- Create a dynamic tool selector
+- Agent configuration and create Graph
 - Create with multiple tools
 - Cover rewoo agents in detail
 - Add RAG to create the tools on the fly 
@@ -28,7 +29,7 @@ The agent is a weather assistant and will need a coupel of functions to create t
 
 ### Architecture [ Weather lookup]
 
-<img src="./images/weather.jpg" width="30%" />
+<img src="./images/weather.jpg" width="70%" />
  
 
 ## Setup
