@@ -205,6 +205,7 @@ nav:
       - Multi-Agent Collaboration with Human-in-loop: './workshop/open-source-l400/04_travel_booking_multi_agent.md'
       - Find Dream Destination with CrewAI: './workshop/open-source-l400/05_dream_destination_with_crewai.md'
       - RAGAs Agents Evaluation: './workshop/open-source-l400/06_agent_evaluation_with_ragas.md'
+      - Dynamic Tool invocation: './workshop/open-source-l400/07_dynamic_tooling_agents.md'
     - Open-source L200:
       - Introduction to the Use Case: './workshop/open-source-l200/02_contextual_text_generation.md'
       - Retrieval Based Text Generation: './workshop/open-source-l200/03_retrieval_based_text_application.md'
