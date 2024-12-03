@@ -186,6 +186,9 @@ nav:
         - Chunking strategies for RAG applications: './rag/open-source/chunking/rag_chunking_strategies_langchain_bedrock.md'
         - Vector Stores:
           - Langchain Chatbot with Opensearch: './rag/open-source/vector_stores/rag_langchain_bedrock_opensearch.md'
+    - Model Customization:
+      - Model Distillation with Invocation Logs: './custom-models/model-distillation/Historical_invocation_distillation.md'
+      - Model Distillation with S3 Data: './custom-models/model-distillation/Distillation-via-S3-input.md'
   - Gen AI Usecases:
     - Text Generation:
       - Streaming Response with Converse: './genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock.md'
