@@ -126,6 +126,7 @@ nav:
           - Create Agent with Guardrails: './agents-and-function-calling/bedrock-agents/features-examples/08-create-agent-with-guardrails/08-create-agent-with-guardrails.md'
           - Create Agent with Memory: './agents-and-function-calling/bedrock-agents/features-examples/09-create-agent-with-memory/09-create-agent-with-memory.md'
           - Create Agent with Code Interpreter: './agents-and-function-calling/bedrock-agents/features-examples/10-create-agent-with-code-interpreter/10-create-agent-with-code-interpreter.md'
+          - Create Agent with Custom Orchestration: './agents-and-function-calling/bedrock-agents/features-examples/14-create-agent-with-custom-orchestration/custom_orchestration_example.md'
           - Create Dynamic Tooling Inline Agents: './agents-and-function-calling/bedrock-agents/features-examples/15-invoke-inline-agents/inline-agent-api-usage.md'
         - Bedrock Flows:
           - Getting Started with Prompt Management Flows: './agents-and-function-calling/bedrock-agents/bedrock-flows/Getting_started_with_Prompt_Management_Flows.md'
@@ -133,8 +134,6 @@ nav:
           - Text to SQL Agent: './agents-and-function-calling/bedrock-agents/use-case-examples/text-2-sql-agent/create_and_invoke_sql_agent.md'
           - Retail Agent Workshop: './agents-and-function-calling/bedrock-agents/use-case-examples/agentsforbedrock-retailagent/workshop/test_retailagent_agentsforbedrock.md'
           - Product Review Agent: './agents-and-function-calling/bedrock-agents/use-case-examples/product-review-agent/main.md'
-      - Multi Agent:
-        - Multi Agent Orchestration: './agents-and-function-calling/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.md'
       - Function Calling:
         - Function Calling with Converse: './agents-and-function-calling/function-calling/function_calling_with_converse/function_calling_with_converse.md'
         - Function Calling with Invoke: './agents-and-function-calling/function-calling//function_calling_with_invoke/function_calling_model_with_invoke.md'
@@ -152,6 +151,8 @@ nav:
           - LangGraph Multi Agent With SQL tools: './agents-and-function-calling/open-source-agents/langgraph/langgraph-multi-agent-sql-tools.md'
           - LangGraph Multi Agent with tools: './agents-and-function-calling/open-source-agents/langgraph/03_langgraph_agents_of_agent.md'
           - Managing Memory for Multi Agents: './agents-and-function-calling/open-source-agents/langgraph/Travel_planner_with_langgraph.md'
+        - Multi Agent:
+          - Multi Agent Orchestration: './agents-and-function-calling/introduction-to-agents/how_to_create_multi_agents_from_custom_agents.md'
     - RAG:
       - Amazon Bedrock Knowledge Bases:
         - Zero Setup:
