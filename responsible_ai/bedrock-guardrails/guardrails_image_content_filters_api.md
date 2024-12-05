@@ -295,11 +295,6 @@ print(json.dumps(list_guardrails_response, indent=2, default=datetime_handler))
 
 ### Testing our Guardrail
 
-
-##### Lets review the sample image we are using for our tests. This image is used to raise awareness about domestic abuse and the importance of addressing such harmful behaviors.
-![sample image](images/test-image1.jpg)
-
-
 ##### Lets test our guardrail using the above sample image and call Bedrock using the converse API.
 
 ##### In the below example we will send the sample image as part of a message and request the model to describe the image. We will use the Converse operation and the Anthropic Claude 3.5 Sonnet model.
