@@ -1,0 +1,18 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+                "bedrock:ListFoundationModels",
+                "bedrock:ListCustomModels",
+                "bedrock:GetFoundationModel",
+                "bedrock:ListModelCustomizationJobs",
+                "bedrock:ListProvisionedModelThroughput"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
