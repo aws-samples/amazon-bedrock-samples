@@ -9,3 +9,4 @@ iprogress
 langchain
 langchain_aws
 langchain_community
+s3fs
