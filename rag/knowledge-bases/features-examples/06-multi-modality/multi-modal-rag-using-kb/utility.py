@@ -511,7 +511,7 @@ def create_bedrock_execution_role_structured_rag(workgroup_arn, secrets_arn = No
                 "secretsmanager:GetSecretValue"
             ],
             "Resource": [
-                f"{secrets_arns}"
+                f"{secrets_arn}"
             ]
         },
         {
