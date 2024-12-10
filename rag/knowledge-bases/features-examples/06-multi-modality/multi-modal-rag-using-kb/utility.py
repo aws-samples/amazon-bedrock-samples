@@ -22,7 +22,12 @@ bda_policy_name = f'AmazonBedrockBDAPolicyForKnowledgeBase_{suffix}'
 
 sm_policy_flag = False
 
-def create_bedrock_execution_role(bucket_name):
+def create_bedrock_execution_role(bucket_name, region = None):
+    if not region:
+        region_name = boto3_session.region_name
+    else:
+        region_name = region
+        
     foundation_model_policy_document = {
         "Version": "2012-10-17",
         "Statement": [
@@ -111,7 +116,13 @@ def create_bedrock_execution_role(bucket_name):
     return bedrock_kb_execution_role
 
 
-def create_oss_policy_attach_bedrock_execution_role(collection_id, bedrock_kb_execution_role):
+def create_oss_policy_attach_bedrock_execution_role(collection_id, bedrock_kb_execution_role, region =  None):
+    
+    if not region:
+        region_name = boto3_session.region_name
+    else:
+        region_name = region
+    
     # define oss policy document
     oss_policy_document = {
         "Version": "2012-10-17",
@@ -247,7 +258,11 @@ def interactive_sleep(seconds: int):
         print(dots, end='\r')
         time.sleep(1)
 
-def create_bedrock_execution_role_multi_ds(bucket_names = None, secrets_arns = None):
+def create_bedrock_execution_role_multi_ds(bucket_names = None, secrets_arns = None, region = None):
+    if not region:
+        region_name = boto3_session.region_name
+    else:
+        region_name = region
     
     # 0. Create bedrock execution role
 
@@ -291,7 +306,7 @@ def create_bedrock_execution_role_multi_ds(bucket_names = None, secrets_arns = N
                     f"arn:aws:bedrock:{region_name}::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0",
                     f"arn:aws:bedrock:{region_name}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0",
                     f"arn:aws:bedrock:{region_name}::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0",
-                    f"arn:aws:bedrock:{region_name}::foundation-model/cohere.rerank-v3-5:0"
+                    f"arn:aws:bedrock:{region_name}::foundation-model/cohere.rerank-v3-5:0",
                     f"arn:aws:bedrock:{region_name}::foundation-model/amazon.nova-micro-v1:0"
                 ]
             }
@@ -535,6 +550,5 @@ def create_bedrock_execution_role_structured_rag(workgroup_arn, secrets_arn = No
         RoleName=bedrock_kb_execution_role["Role"]["RoleName"],
         PolicyArn=redshift_policy_arn
     )
-
 
     return bedrock_kb_execution_role
