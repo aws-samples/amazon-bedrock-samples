@@ -10,6 +10,14 @@ from io import BytesIO
 import warnings
 warnings.filterwarnings('ignore')
 
+valid_generation_models = ["anthropic.claude-3-5-sonnet-20240620-v1:0", 
+                          "anthropic.claude-3-5-haiku-20241022-v1:0", 
+                          "anthropic.claude-3-sonnet-20240229-v1:0",
+                          "anthropic.claude-3-haiku-20240307-v1:0"] 
+
+valid_reranking_models = [ "cohere.rerank-v3-5:0",
+                          "amazon.nova-micro-v1:0"]
+
 valid_embedding_models = ["cohere.embed-multilingual-v3", 
                           "cohere.embed-english-v3", 
                           "amazon.titan-embed-text-v1", 
@@ -61,6 +69,8 @@ class BedrockKnowledgeBase:
             intermediate_bucket_name=f"{kb_name}-intermediate-{suffix}",
             lambda_function_name=f"{kb_name}-intermediate-{suffix}",
             embedding_model="amazon.titan-embed-text-v2:0",
+            generation_model="anthropic.claude-3-sonnet-20240229-v1:0",
+            reranking_model="cohere.rerank-v3-5:0",  # 'cohere.rerank-v3-5:0' or 'amazon.nova-micro-v1:0'
             chunking_strategy="FIXED_SIZE", 
             suffix=suffix,
     ):
@@ -104,12 +114,21 @@ class BedrockKnowledgeBase:
             valid_embeddings_str = str(valid_embedding_models)
             raise ValueError(f"Invalid embedding model. Your embedding model should be one of {valid_embeddings_str}")
         self.embedding_model = embedding_model
+        if generation_model not in valid_generation_models:
+            valid_generation_str = str(valid_generation_models)
+            raise ValueError(f"Invalid Generation model. Your embedding model should be one of {valid_generation_str}")
+        self.generation_model = generation_model
+        if reranking_model not in valid_reranking_models:
+            valid_reranking_str = str(valid_reranking_models)
+            raise ValueError(f"Invalid Reranking model. Your reranking model should be one of {valid_reranking_str}")
+        self.reranking_model = reranking_model
         self.encryption_policy_name = f"bedrock-sample-rag-sp-{self.suffix}"
         self.network_policy_name = f"bedrock-sample-rag-np-{self.suffix}"
         self.access_policy_name = f'bedrock-sample-rag-ap-{self.suffix}'
         self.kb_execution_role_name = f'AmazonBedrockExecutionRoleForKnowledgeBase_{self.suffix}'
         self.fm_policy_name = f'AmazonBedrockFoundationModelPolicyForKnowledgeBase_{self.suffix}'
         self.s3_policy_name = f'AmazonBedrockS3PolicyForKnowledgeBase_{self.suffix}'
+        self.cw_log_policy_name = f'AmazonBedrockCloudWatchPolicyForKnowledgeBase_{self.suffix}'
         self.oss_policy_name = f'AmazonBedrockOSSPolicyForKnowledgeBase_{self.suffix}'
         self.lambda_policy_name = f'AmazonBedrockLambdaPolicyForKnowledgeBase_{self.suffix}'
         self.lambda_arn = None
@@ -300,6 +319,7 @@ class BedrockKnowledgeBase:
         Returns:
             IAM role
         """
+        
         foundation_model_policy_document = {
             "Version": "2012-10-17",
             "Statement": [
@@ -309,7 +329,9 @@ class BedrockKnowledgeBase:
                         "bedrock:InvokeModel",
                     ],
                     "Resource": [
-                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.embedding_model}"
+                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.embedding_model}",
+                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.generation_model}",
+                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.reranking_model}"
                     ]
                 }
             ]
@@ -414,7 +436,22 @@ class BedrockKnowledgeBase:
                     }
                 ]
             }
-            
+
+        cw_log_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "logs:CreateLogStream",
+                        "logs:PutLogEvents",
+                        "logs:DescribeLogStreams"
+                    ],
+                    "Resource": "arn:aws:logs:*:*:log-group:/aws/bedrock/invokemodel:*"
+                }
+            ]
+        }
+    
         assume_role_policy_document = {
             "Version": "2012-10-17",
             "Statement": [
@@ -447,6 +484,16 @@ class BedrockKnowledgeBase:
         except self.iam_client.exceptions.EntityAlreadyExistsException:
             s3_policy = self.iam_client.get_policy(
                 PolicyArn=f"arn:aws:iam::{self.account_number}:policy/{self.s3_policy_name}"
+            )
+
+        try:
+            cw_log_policy = self.iam_client.create_policy(
+                PolicyName=self.cw_log_policy_name,
+                PolicyDocument=json.dumps(cw_log_policy_document),
+                Description='Policy for Cloudwatch Logs')
+        except self.iam_client.exceptions.EntityAlreadyExistsException:
+            s3_policy = self.iam_client.get_policy(
+                PolicyArn=f"arn:aws:iam::{self.account_number}:policy/{self.cw_log_policy_name}"
             )
         
          # create bedrock execution role
@@ -481,10 +528,10 @@ class BedrockKnowledgeBase:
                 PolicyArn=lambda_policy_arn
             )
                
-       
         # fetch arn of the policies and role created above
         s3_policy_arn = s3_policy["Policy"]["Arn"]
         fm_policy_arn = fm_policy["Policy"]["Arn"]
+        cw_log_policy_arn = cw_log_policy["Policy"]["Arn"]
 
         # attach policies to Amazon Bedrock execution role
         self.iam_client.attach_role_policy(
@@ -494,6 +541,10 @@ class BedrockKnowledgeBase:
         self.iam_client.attach_role_policy(
             RoleName=bedrock_kb_execution_role["Role"]["RoleName"],
             PolicyArn=s3_policy_arn
+        )
+        self.iam_client.attach_role_policy(
+            RoleName=bedrock_kb_execution_role["Role"]["RoleName"],
+            PolicyArn=cw_log_policy_arn
         )
         return bedrock_kb_execution_role
 
