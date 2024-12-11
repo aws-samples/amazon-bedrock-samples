@@ -305,7 +305,7 @@ def create_bedrock_execution_role_multi_ds(bucket_names = None, secrets_arns = N
                     f"arn:aws:bedrock:{region_name}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0",
                     f"arn:aws:bedrock:{region_name}::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0",
                     f"arn:aws:bedrock:{region_name}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0",
-                    f"arn:aws:bedrock:{region_name}::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0",
+                    f"arn:aws:bedrock:{region_name}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0",
                     f"arn:aws:bedrock:{region_name}::foundation-model/cohere.rerank-v3-5:0",
                     f"arn:aws:bedrock:{region_name}::foundation-model/amazon.nova-micro-v1:0"
                 ]
