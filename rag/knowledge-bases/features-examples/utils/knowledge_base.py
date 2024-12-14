@@ -692,7 +692,7 @@ class BedrockKnowledgeBase:
         # create Data Sources
         print("Creating Data Sources")
         try:
-            ds_list = self.create_data_stores(kb_id, self.data_sources)
+            ds_list = self.create_data_sources(kb_id, self.data_sources)
             pp.pprint(ds_list)
         except self.bedrock_agent_client.exceptions.ConflictException:
             ds_id = self.bedrock_agent_client.list_data_sources(
@@ -707,7 +707,7 @@ class BedrockKnowledgeBase:
             pp.pprint(ds)
         return kb, ds_list
     
-    def create_data_stores(self, kb_id, data_sources):
+    def create_data_sources(self, kb_id, data_sources):
         ds_list=[]
 
         chunking_strategy_configuration = self.create_chunking_strategy_config(self.chunking_strategy)
@@ -963,6 +963,7 @@ class BedrockKnowledgeBase:
                         dataSourceId=ds_id_list[idx]["dataSourceId"],
                         knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
                     )
+                    print("======== Data source deleted =========")
                 except Exception as e:
                     print(e)
             
@@ -971,26 +972,28 @@ class BedrockKnowledgeBase:
                 self.bedrock_agent_client.delete_knowledge_base(
                     knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
                 )
-                print("======== Knowledge base and data source deleted =========")
-
-                 # delete oss colletion and policies
-                try:
-                    self.aoss_client.delete_collection(id=self.collection_id)
-                    self.aoss_client.delete_access_policy(type="data", name=self.access_policy_name)
-                    self.aoss_client.delete_security_policy(type="network", name=self.network_policy_name)
-                    self.aoss_client.delete_security_policy(type="encryption", name=self.encryption_policy_name)
-                    print("======== Vector Index, collection and associated policies deleted =========")
-                except Exception as e:
-                    print(e)
-                
-                # delete role and policies
-                if delete_iam_roles_and_policies:
-                    self.delete_iam_role_and_policies()
+                print("======== Knowledge base deleted =========")
 
             except self.bedrock_agent_client.exceptions.ResourceNotFoundException as e:
                 print("Resource not found", e)
             except Exception as e:
                 print(e)
+
+            time.sleep(20)
+
+            # delete oss colletion and policies
+            try:
+                self.aoss_client.delete_collection(id=self.collection_id)
+                self.aoss_client.delete_access_policy(type="data", name=self.access_policy_name)
+                self.aoss_client.delete_security_policy(type="network", name=self.network_policy_name)
+                self.aoss_client.delete_security_policy(type="encryption", name=self.encryption_policy_name)
+                print("======== Vector Index, collection and associated policies deleted =========")
+            except Exception as e:
+                print(e)
+            
+            # delete role and policies
+            if delete_iam_roles_and_policies:
+                self.delete_iam_role_and_policies()
 
             # delete lambda
             if delete_lambda_function and self.lambda_function_name:
@@ -1043,3 +1046,46 @@ class BedrockKnowledgeBase:
                 print(f"Error deleting bucket {bucket_name}: {e}")
 
         print("======== All S3 buckets deleted =========")
+
+    def delete_knowledge_bases(self, kb_id):
+
+        knowledge_base_id = kb_id
+        # delete data sources
+        kb_ds_list = self.bedrock_agent_client.list_data_sources(
+            knowledgeBaseId=knowledge_base_id,
+            maxResults=100
+        )['dataSourceSummaries']
+        try:
+            for idx, ds in enumerate(kb_ds_list):
+                self.bedrock_agent_client.delete_data_source(dataSourceId = ds["dataSourceId"], knowledgeBaseId=knowledge_base_id)
+        except self.bedrock_agent_client.exceptions.ResourceNotFoundException:
+            print(f"Knowledge base data source not found or deleted.")
+        try:
+             self.bedrock_agent_client.delete_knowledge_base(knowledge_base_id)
+        except self.bedrock_agent_client.exceptions.ResourceNotFoundException:
+            print(f"Knowledge base {knowledge_base_id} not found or deleted")
+
+    def delete_resources(self):
+        # delete KB
+        knowledge_base_id = self.knowledge_base['knowledgeBaseId']
+        self.delete_knowledge_bases(knowledge_base_id)
+
+        # Delete Collection
+        kb_response = self.bedrock_agent_client.get_knowledge_base(knowledgeBaseId=knowledge_base_id)
+
+        if 'storageConfiguration' in kb_response['knowledgeBase']:
+            collection_arn = kb_response['knowledgeBase']['storageConfiguration']['opensearchServerlessConfiguration']['collectionArn']
+            collection_id = collection_arn.split('/')[-1]
+            # delete oss colletion and policies
+            try:
+                self.aoss_client.delete_collection(id=collection_id)
+                print("======== Vector Index, collection and associated policies deleted =========")
+            except Exception as e:
+                print(e)
+                
+        # delete role and policies
+        self.delete_iam_role_and_policies()
+
+        # if kb id isn't externally passed - delete associated s3 buckets
+        if not kb_id: 
+            self.delete_s3()
