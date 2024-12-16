@@ -1008,12 +1008,17 @@ class BedrockKnowledgeBase:
                 self.delete_s3()
 
     def delete_iam_role_and_policies(self):
-        policies_to_detach = [
-            f"arn:aws:iam::{self.account_number}:policy/{policy_name}"
-            for policy_name in [self.s3_policy_name, self.fm_policy_name, self.oss_policy_name, self.bda_policy_name]
-        ]
-        
-        for policy_arn in policies_to_detach:
+        iam = boto3.resource('iam')
+        client = boto3.client('iam')
+
+        # Fetch attached policies
+        response = client.list_attached_role_policies(RoleName=self.bedrock_kb_execution_role_name)
+        policies_to_detach = response['AttachedPolicies']
+
+        for policy in policies_to_detach:
+            policy_name = policy['PolicyName']
+            policy_arn = policy['PolicyArn']
+
             try:
                 self.iam_client.detach_role_policy(
                     RoleName=self.kb_execution_role_name,
@@ -1029,63 +1034,4 @@ class BedrockKnowledgeBase:
             print(f"Role {self.kb_execution_role_name} not found")
         
         print("======== All IAM roles and policies deleted =========")
-
-    def delete_s3(self):
-        s3 = boto3.resource('s3')
-        buckets_to_delete = self.bucket_names
-        if self.intermediate_bucket_name:
-            buckets_to_delete.append(self.intermediate_bucket_name)
-
-        for bucket_name in buckets_to_delete:
-            bucket = s3.Bucket(bucket_name)
-            try:
-                bucket.objects.all().delete()
-                bucket.delete()
-                print(f"======== S3 bucket {bucket_name} deleted =========")
-            except Exception as e:
-                print(f"Error deleting bucket {bucket_name}: {e}")
-
-        print("======== All S3 buckets deleted =========")
-
-    def delete_knowledge_bases(self, kb_id):
-
-        knowledge_base_id = kb_id
-        # delete data sources
-        kb_ds_list = self.bedrock_agent_client.list_data_sources(
-            knowledgeBaseId=knowledge_base_id,
-            maxResults=100
-        )['dataSourceSummaries']
-        try:
-            for idx, ds in enumerate(kb_ds_list):
-                self.bedrock_agent_client.delete_data_source(dataSourceId = ds["dataSourceId"], knowledgeBaseId=knowledge_base_id)
-        except self.bedrock_agent_client.exceptions.ResourceNotFoundException:
-            print(f"Knowledge base data source not found or deleted.")
-        try:
-             self.bedrock_agent_client.delete_knowledge_base(knowledge_base_id)
-        except self.bedrock_agent_client.exceptions.ResourceNotFoundException:
-            print(f"Knowledge base {knowledge_base_id} not found or deleted")
-
-    def delete_resources(self):
-        # delete KB
-        knowledge_base_id = self.knowledge_base['knowledgeBaseId']
-        self.delete_knowledge_bases(knowledge_base_id)
-
-        # Delete Collection
-        kb_response = self.bedrock_agent_client.get_knowledge_base(knowledgeBaseId=knowledge_base_id)
-
-        if 'storageConfiguration' in kb_response['knowledgeBase']:
-            collection_arn = kb_response['knowledgeBase']['storageConfiguration']['opensearchServerlessConfiguration']['collectionArn']
-            collection_id = collection_arn.split('/')[-1]
-            # delete oss colletion and policies
-            try:
-                self.aoss_client.delete_collection(id=collection_id)
-                print("======== Vector Index, collection and associated policies deleted =========")
-            except Exception as e:
-                print(e)
-                
-        # delete role and policies
-        self.delete_iam_role_and_policies()
-
-        # if kb id isn't externally passed - delete associated s3 buckets
-        if not kb_id: 
-            self.delete_s3()
+    
