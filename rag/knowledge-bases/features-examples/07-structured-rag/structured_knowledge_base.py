@@ -106,7 +106,7 @@ class BedrockStructuredKnowledgeBase:
         bedrock_kb_execution_role = self.iam_client.create_role(
             RoleName=self.kb_execution_role_name,
             AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
-            Description='Amazon Bedrock Knowledge Base Execution Role for accessing redshift, and secrets manager',
+            Description='Amazon Bedrock Knowledge Base Execution Role for accessing redshift',
             MaxSessionDuration=3600
         )
 
@@ -153,16 +153,17 @@ class BedrockStructuredKnowledgeBase:
             #     ]
             # },
         
-            {
-                "Sid": "GetSecretPermissions",
-                "Effect": "Allow",
-                "Action": [
-                    "secretsmanager:GetSecretValue"
-                ],
-                "Resource": [
-                    f"{self.secrets_arn}"
-                ]
-            },
+            # {
+            #     "Sid": "GetSecretPermissions",
+            #     "Effect": "Allow",
+            #     "Action": [
+            #         "secretsmanager:GetSecretValue"
+            #     ],
+            #     "Resource": [
+            #         f"{self.secrets_arn}"
+            #     ]
+            # },
+            
             {
                 "Sid": "SqlWorkbenchAccess",
                 "Effect": "Allow",
@@ -184,6 +185,32 @@ class BedrockStructuredKnowledgeBase:
             }
             ]
         }
+
+        if self.secrets_arn:
+            redshift_policy_document['Statement'].append(
+                {
+                    "Sid": "GetSecretPermissions",
+                    "Effect": "Allow",
+                    "Action": [
+                        "secretsmanager:GetSecretValue"
+                    ],
+                    "Resource": [
+                        f"{self.secrets_arn}"
+                    ]
+                }
+            )
+        else:
+            redshift_policy_document['Statement'].append(
+                {
+                    "Sid": "RedshiftServerlessGetCredentials",
+                    "Effect": "Allow",
+                    "Action": "redshift-serverless:GetCredentials",
+                    "Resource": [
+                        f"{self.workgroup_arn}"
+                    ]
+                }
+
+            )
         
         redshift_policy = self.iam_client.create_policy(
             PolicyName=self.rs_policy_name,

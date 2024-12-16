@@ -35,7 +35,6 @@ class BedrockStructuredKnowledgeBase:
             secrets_arn = None,
             kbConfigParam = None,
             generation_model="anthropic.claude-3-sonnet-20240229-v1:0",
-            chunking_strategy="FIXED_SIZE",
             suffix=None,
     ):
         boto3_session = boto3.session.Session()
@@ -49,7 +48,6 @@ class BedrockStructuredKnowledgeBase:
 
         self.kb_name = kb_name or f"structured-knowledge-base-{self.suffix}"
         self.kb_description = kb_description or "Structures Knowledge Base"
-        self.chunking_strategy = chunking_strategy
         self.generation_model = generation_model
         self.workgroup_arn = workgroup_arn
         self.secrets_arn = secrets_arn
@@ -78,15 +76,16 @@ class BedrockStructuredKnowledgeBase:
 
         print("========================================================================================")
         print(f"Step 1 - Creating Knowledge Base Execution Role ({self.kb_execution_role_name}) and Policies")
-        self.bedrock_kb_execution_role = self.create_bedrock_execution_role_structured_rag(self.bucket_names, self.secrets_arns)
-        self.bedrock_kb_execution_role_name = self.bedrock_kb_execution_role['Role']['RoleName']
         
+        self.bedrock_kb_execution_role = self.create_bedrock_execution_role_structured_rag()
+        self.bedrock_kb_execution_role_name = self.bedrock_kb_execution_role['Role']['RoleName']
+
         print("========================================================================================")
         print(f"Step 2 - Creating Knowledge Base")
-        self.structured_knowledge_base, self.data_source = self.create_structured_knowledge_base(self.data_sources)
+        self.knowledge_base, self.data_source = self.create_structured_knowledge_base()
         print("========================================================================================")
 
-    def create_bedrock_execution_role_structured_rag(self, workgroup_arn, secrets_arn = None):
+    def create_bedrock_execution_role_structured_rag(self):
 
         # 0. Create bedrock execution role
 
@@ -107,7 +106,7 @@ class BedrockStructuredKnowledgeBase:
         bedrock_kb_execution_role = self.iam_client.create_role(
             RoleName=self.kb_execution_role_name,
             AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
-            Description='Amazon Bedrock Knowledge Base Execution Role for accessing redshift, and secrets manager',
+            Description='Amazon Bedrock Knowledge Base Execution Role for accessing redshift',
             MaxSessionDuration=3600
         )
 
@@ -142,7 +141,7 @@ class BedrockStructuredKnowledgeBase:
                     "redshift-data:ExecuteStatement"
                 ],
                 "Resource": [
-                    f"{workgroup_arn}"
+                    f"{self.workgroup_arn}"
                 ]
             },
             # {
@@ -154,16 +153,17 @@ class BedrockStructuredKnowledgeBase:
             #     ]
             # },
         
-            {
-                "Sid": "GetSecretPermissions",
-                "Effect": "Allow",
-                "Action": [
-                    "secretsmanager:GetSecretValue"
-                ],
-                "Resource": [
-                    f"{secrets_arn}"
-                ]
-            },
+            # {
+            #     "Sid": "GetSecretPermissions",
+            #     "Effect": "Allow",
+            #     "Action": [
+            #         "secretsmanager:GetSecretValue"
+            #     ],
+            #     "Resource": [
+            #         f"{self.secrets_arn}"
+            #     ]
+            # },
+            
             {
                 "Sid": "SqlWorkbenchAccess",
                 "Effect": "Allow",
@@ -185,6 +185,32 @@ class BedrockStructuredKnowledgeBase:
             }
             ]
         }
+
+        if self.secrets_arn:
+            redshift_policy_document['Statement'].append(
+                {
+                    "Sid": "GetSecretPermissions",
+                    "Effect": "Allow",
+                    "Action": [
+                        "secretsmanager:GetSecretValue"
+                    ],
+                    "Resource": [
+                        f"{self.secrets_arn}"
+                    ]
+                }
+            )
+        else:
+            redshift_policy_document['Statement'].append(
+                {
+                    "Sid": "RedshiftServerlessGetCredentials",
+                    "Effect": "Allow",
+                    "Action": "redshift-serverless:GetCredentials",
+                    "Resource": [
+                        f"{self.workgroup_arn}"
+                    ]
+                }
+
+            )
         
         redshift_policy = self.iam_client.create_policy(
             PolicyName=self.rs_policy_name,
@@ -250,26 +276,29 @@ class BedrockStructuredKnowledgeBase:
         return kb, ds
     
     def start_ingestion_job(self):
+       
         try:
+            #  print(self.data_source)
+            #  print(self.structured_knowledge_base['knowledgeBaseId'])
             start_job_response = self.bedrock_agent_client.start_ingestion_job(
                 knowledgeBaseId=self.knowledge_base['knowledgeBaseId'],
-                dataSourceId=self.data_source[idx]["dataSourceId"]
+                dataSourceId=self.data_source["dataSourceId"]
             )
             job = start_job_response["ingestionJob"]
-            print(f"job {idx+1} started successfully\n")
+            print(f"job  started successfully\n")
             # pp.pprint(job)
             while job['status'] not in ["COMPLETE", "FAILED", "STOPPED"]:
                 get_job_response = self.bedrock_agent_client.get_ingestion_job(
                     knowledgeBaseId=self.knowledge_base['knowledgeBaseId'],
-                    dataSourceId=self.data_source[idx]["dataSourceId"],
+                    dataSourceId=self.data_source["dataSourceId"],
                     ingestionJobId=job["ingestionJobId"]
                 )
                 job = get_job_response["ingestionJob"]
             pp.pprint(job)
-            interactive_sleep(40)
+            interactive_sleep(5)
 
         except Exception as e:
-            print(f"Couldn't start {idx} job.\n")
+            print(f"Couldn't start job.\n")
             print(e)
             
 
@@ -310,19 +339,25 @@ class BedrockStructuredKnowledgeBase:
             except Exception as e:
                 print(e)
 
-            time.sleep(20)
+            time.sleep(10)
             
             # delete role and policies
             if delete_iam_roles_and_policies:
                 self.delete_iam_role_and_policies()
 
     def delete_iam_role_and_policies(self):
-        policies_to_detach = [
-            f"arn:aws:iam::{self.account_number}:policy/{policy_name}"
-            for policy_name in [self.s3_policy_name, self.fm_policy_name, self.oss_policy_name, self.bda_policy_name]
-        ]
+        iam = boto3.resource('iam')
+        client = boto3.client('iam')
+
+        # Fetch attached policies
+        response = client.list_attached_role_policies(RoleName=self.bedrock_kb_execution_role_name)
+        policies_to_detach = response['AttachedPolicies']
+
         
-        for policy_arn in policies_to_detach:
+        for policy in policies_to_detach:
+            policy_name = policy['PolicyName']
+            policy_arn = policy['PolicyArn']
+
             try:
                 self.iam_client.detach_role_policy(
                     RoleName=self.kb_execution_role_name,
