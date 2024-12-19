@@ -19,12 +19,15 @@ Before you can use Amazon Bedrock, you must carry out the following steps:
 - Sign up for an AWS account (if you don't already have one) and IAM Role with the necessary permissions for Amazon Bedrock, see [AWS Account and IAM Role](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#new-to-aws){:target="_blank"}.
 - Request access to the foundation models (FM) that you want to use, see [Request access to FMs](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#getting-started-model-access){:target="_blank"}. 
     
-    We have used below Foundation Models in our examples in this Notebook in `us-west-2` (Oregon) region.
-    
+    We have used below Foundation Models in our examples in this Notebook in `us-east-1` (North Virginia) region.
+      
 | Provider Name | Foundation Model Name | Model Id |
 | ------- | ------------- | ------------- |
-| Amazon | Titan Text G1 - Express  | amazon.titan-text-express-v1 |
-| Amazon | Titan Text G1 - Lite | amazon.titan-text-lite-v1 |
+| AI21 Labs | Jamba 1.5 Large | ai21.jamba-1-5-large-v1:0 |
+| AI21 Labs | Jamba-Instruct  | ai21.jamba-instruct-v1:0 |
+| Amazon | Nova Pro  | amazon.nova-pro-v1:0 |
+| Amazon | Nova Lite  | amazon.nova-lite-v1:0 |
+| Amazon | Nova Micro  | amazon.nova-micro-v1:0 |
 | Anthropic | Claude 3.5 Sonnet  | anthropic.claude-3-5-sonnet-20240620-v1:0 |
 | Anthropic | Claude 3 Haiku  | anthropic.claude-3-haiku-20240307-v1:0 |
 | Cohere | Command R+ | cohere.command-r-plus-v1:0 |
@@ -56,7 +59,7 @@ Let's define the region and models to use. We can also setup our boto3 client.
 
 
 ```python
-region = 'us-west-2'
+region = 'us-east-1'
 print('Using region: ', region)
 
 bedrock = boto3.client(
@@ -65,15 +68,18 @@ bedrock = boto3.client(
     )
 
 MODEL_IDS = [
-    "amazon.titan-text-express-v1",
-    "amazon.titan-text-lite-v1",
+    "ai21.jamba-1-5-large-v1:0",
+    "ai21.jamba-instruct-v1:0",
+    "amazon.nova-pro-v1:0",
+    "amazon.nova-lite-v1:0",
+    "amazon.nova-micro-v1:0",
     "anthropic.claude-3-5-sonnet-20240620-v1:0",
     "anthropic.claude-3-haiku-20240307-v1:0",
     "cohere.command-r-plus-v1:0",
     "cohere.command-r-v1:0",
-    "meta.llama3-1-70b-instruct-v1:0",
-    "meta.llama3-1-8b-instruct-v1:0",
-    "mistral.mistral-large-2407-v1:0",
+    "meta.llama3-70b-instruct-v1:0",
+    "meta.llama3-8b-instruct-v1:0",
+    "mistral.mistral-large-2402-v1:0",
     "mistral.mixtral-8x7b-instruct-v0:1"
     ]
 
@@ -83,8 +89,7 @@ MODEL_IDS = [
 
 We're now ready to setup our Converse API action in Bedrock. Note that we use the same syntax for any model, including the messages-formatted prompts, and the inference parameters. Also note that we read the output in the same way independently of the model used.
 
-Optionally, we could define additional model specific request fields that are not common across all providers. For more information on this check the Bedrock Converse API documentation.
-
+Optionally, we could define additional model specific request fields that are not common across all providers. For more information on this check the [Bedrock Converse API documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html){:target="_blank"}.
 
 <h3> Converse for one-shot invocations </h3>
 
@@ -189,7 +194,7 @@ for i in MODEL_IDS:
 
 <h3> Conversation with Text using Converse API and model specific parameters </h3>
 
-In this example we will call the Converse operation with the Anthropic Claude 3.5 Sonnet model. We will send the input text, inference parameters, and additional parameters that are unique to the model. We will start a conversation by asking the model to create a list of songs, then continues the conversation by asking that the songs are by artists from the United Kingdom.
+In this example we will call the Converse operation with the Anthropic Claude 3 Haiku model. We will send the input text, inference parameters, and additional parameters that are unique to the model. We will start a conversation by asking the model to create a list of songs, then continues the conversation by asking that the songs are by artists from the United Kingdom.
 
 
 ```python
@@ -243,7 +248,7 @@ def generate_conversation(bedrock_client,
 
 
 ```python
-model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+model_id = "anthropic.claude-3-haiku-20240307-v1:0"
 
 # Setup the system prompts and messages to send to the model.
 system_prompts = [{"text": "You are an app that creates playlists for a radio station that plays rock and pop music."
@@ -297,7 +302,7 @@ else:
 
 <h3> Conversation with Image using Converse API </h3>
 
-In this example we will send an image as part of a message and requests that the model describe the image. The example uses Converse operation and the Anthropic Claude 3.5 Sonnet model.
+In this example we will send an image as part of a message and requests that the model describe the image. The example uses Converse operation and the Amazon Nova Lite model.
 
 Sample image used in this example.
 
@@ -359,7 +364,7 @@ def image_conversation(bedrock_client,
 
 
 ```python
-model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+model_id = "amazon.nova-lite-v1:0"
 input_text = "What's in this image?"
 input_image = "assets/sample_image.jpg"
 
@@ -396,7 +401,7 @@ else:
 <h3>Conversation with Document using Converse API</h3>
 
 
-In this example, we will send a document as part of a message and requests that the model describe the contents of the document. The example uses Converse operation and the Meta Llama 3.1 8B Instruct Model.
+In this example, we will send a document as part of a message and requests that the model describe the contents of the document. The example uses Converse operation and the Mistral Large 2 (24.07) Model.
 
 
 ```python
@@ -455,7 +460,7 @@ def document_conversation(bedrock_client,
 
 
 ```python
-model_id = "meta.llama3-1-8b-instruct-v1:0" 
+model_id = "mistral.mistral-large-2402-v1:0" 
 input_text = "What's in this document?"
 input_document = 'assets/2022-Shareholder-Letter.pdf'
 
@@ -492,7 +497,7 @@ else:
 
 Now that we have seen the Converse API allow us to easily run the invocations with the same syntax across all the models, you can learn
 
-- How to do [function calling with the Converse API](../../agents/function-calling/function_calling_with_converse/function_calling_with_converse.md)
+- How to do [function calling with the Converse API](../../agents-and-function-calling/function-calling/function_calling_with_converse/function_calling_with_converse.md)
 - How to work with [Converse API and Amazon Bedrock Guardrails](https://github.com/aws-samples/amazon-bedrock-samples/tree/main/responsible_ai/){:target="_blank"}
 
 
