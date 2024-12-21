@@ -37,9 +37,9 @@ Before you can use Amazon Bedrock, you must carry out the following steps:
     
 | Provider Name | Foundation Model Name | Model Id |
 | ------- | ------------- | ------------- |
-| AI21 Labs | Jurassic-2 Mid | ai21.j2-mid-v1 |
-| Amazon | Titan Text G1 - Lite | amazon.titan-text-lite-v1 |
-| Anthropic | Claude Instant  | anthropic.claude-instant-v1 |
+| AI21 Labs | Jamba-Instruct | ai21.jamba-instruct-v1:0 |
+| Amazon | Nova Lite | amazon.nova-lite-v1:0 |
+| Anthropic | Claude 3.5 Sonnet  | anthropic.claude-3-5-sonnet-20240620-v1:0 |
 | Cohere | Command | cohere.command-text-v14 |
 | Meta | Llama 3 8B Instruct | meta.llama3-8b-instruct-v1:0 |
 | Mistral AI | Mixtral 8X7B Instruct | mistral.mixtral-8x7b-instruct-v0:1 |
@@ -313,7 +313,7 @@ def invoke_model(body, model_id, accept, content_type):
         raise e
 ```
 
-<h4>AI21 Jurassic Grande </h4>
+<h4>AI21 Labs Jamba </h4>
 
 
 ```python
@@ -323,21 +323,26 @@ prompt_data = """Command: Write me a blog about making strong business decisions
 Blog:
 """
 
-body = {
-    "prompt": prompt_data, 
-    "maxTokens": 200
-}
-modelId = "ai21.j2-mid-v1"  # change this to use a different version from the model provider
+body={"messages": [
+            {
+                "role": "user", 
+                "content": prompt_data 
+            }
+         ],
+        "max_tokens": 200,
+    }
+
+modelId = "ai21.jamba-instruct-v1:0"  # change this to use a different version from the model provider
 accept = "application/json"
 contentType = "application/json"
 
 response = invoke_model(body, modelId, accept, contentType)
 response_body = json.loads(response.get("body").read())
 
-print(response_body.get("completions")[0].get("data").get("text"))
+print(response_body.get("choices")[0].get("message").get("content"))
 ```
 
-<h4> Amazon Titan Text </h4>
+<h4> Amazon Nova </h4>
 
 
 
@@ -348,17 +353,26 @@ prompt_data = """Command: Write me a blog about making strong business decisions
 Blog:
 """
 
+# Define one or more messages using the "user" and "assistant" roles.
+message_list = [{"role": "user", "content": [{"text": prompt_data}]}]
+
+# Configure the inference parameters.
+inf_params = {"max_new_tokens": 250, "top_p": 0.9, "top_k": 20, "temperature": 0.7}
+
 body = {
-    "inputText": prompt_data
+    "schemaVersion": "messages-v1",
+    "messages": message_list,
+    "inferenceConfig": inf_params,
 }
-modelId = "amazon.titan-text-lite-v1"
+
+modelId = "amazon.nova-lite-v1:0"
 accept = "application/json"
 contentType = "application/json"
 
 response = invoke_model(body, modelId, accept, contentType)
 response_body = json.loads(response.get("body").read())
 
-print(response_body.get("results")[0].get("outputText"))
+print(response_body.get("output").get("message").get("content")[0].get("text"))
 ```
 
 <h4> Anthropic Claude </h4>
@@ -371,18 +385,22 @@ prompt_data = """Human: Write me a blog about making strong business decisions a
 Assistant:
 """
 
-body = {
-    "prompt": prompt_data, 
-    "max_tokens_to_sample": 500
-}
-modelId = "anthropic.claude-instant-v1"  # change this to use a different version from the model provider
+messages = [{"role": "user", "content": prompt_data}]
+
+body={
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 250,
+        "messages": messages
+    }
+
+modelId = "anthropic.claude-3-5-sonnet-20240620-v1:0"  # change this to use a different version from the model provider
 accept = "application/json"
 contentType = "application/json"
 
 response = invoke_model(body, modelId, accept, contentType)
 response_body = json.loads(response.get("body").read())
 
-print(response_body.get("completion"))
+print(response_body.get("content")[0].get("text"))
 ```
 
 <h4> Cohere </h4>
@@ -517,6 +535,7 @@ Run the code below to see how you can achieve this with Bedrock's `invoke_model_
 
 ```python
 from IPython.display import clear_output, display, display_markdown, Markdown
+from datetime import datetime
 
 # If you'd like to try your own prompt, edit this parameter!
 prompt_data = """Command: Write me a blog about making strong business decisions as a leader.
@@ -524,29 +543,53 @@ prompt_data = """Command: Write me a blog about making strong business decisions
 Blog:
 """
 
+# Define one or more messages using the "user" and "assistant" roles.
+message_list = [{"role": "user", "content": [{"text": prompt_data}]}]
 
-body = json.dumps({"inputText": prompt_data})
-modelId = "amazon.titan-text-lite-v1"  # (Change this, and the request body, to try different models)
+# Configure the inference parameters.
+inf_params = {"max_new_tokens": 250, "top_p": 0.9, "top_k": 20, "temperature": 0.7}
+
+body = json.dumps({
+    "schemaVersion": "messages-v1",
+    "messages": message_list,
+    "inferenceConfig": inf_params,
+})
+
+modelId = "amazon.nova-lite-v1:0"  # (Change this, and the request body, to try different models)
 accept = "application/json"
 contentType = "application/json"
 
-
+start_time = datetime.now()
 
 response = bedrock_runtime.invoke_model_with_response_stream(
     body=body, modelId=modelId, accept=accept, contentType=contentType
 )
-stream = response.get('body')
-output = []
+chunk_count = 0
+time_to_first_token = None
 
+# Process the response stream
+stream = response.get("body")
 if stream:
     for event in stream:
-        chunk = event.get('chunk')
+        chunk = event.get("chunk")
         if chunk:
-            chunk_obj = json.loads(chunk.get('bytes').decode())
-            text = chunk_obj['outputText']
-            clear_output(wait=True)
-            output.append(text)
-            display_markdown(Markdown(''.join(output)))
+            # Print the response chunk
+            chunk_json = json.loads(chunk.get("bytes").decode())
+            # Pretty print JSON
+            # print(json.dumps(chunk_json, indent=2, ensure_ascii=False))
+            content_block_delta = chunk_json.get("contentBlockDelta")
+            if content_block_delta:
+                if time_to_first_token is None:
+                    time_to_first_token = datetime.now() - start_time
+                    print(f"Time to first token: {time_to_first_token}")
+
+                chunk_count += 1
+                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+                # print(f"{current_time} - ", end="")
+                print(content_block_delta.get("delta").get("text"), end="")
+    print(f"Total chunks: {chunk_count}")
+else:
+    print("No response stream received.")
 ```
 
 <h3> Prompt Engineering</h3> 
@@ -572,18 +615,22 @@ provided by our customer support engineer.
 
 Assistant:
 """
-body = {
-    "prompt": prompt_data, 
-    "max_tokens_to_sample": 500
-}
-modelId = "anthropic.claude-instant-v1"  
+messages = [{"role": "user", "content": prompt_data}]
+
+body={
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 500,
+        "messages": messages
+    }
+
+modelId = "anthropic.claude-3-5-sonnet-20240620-v1:0"  # change this to use a different version from the model provider
 accept = "application/json"
 contentType = "application/json"
 
 response = invoke_model(body, modelId, accept, contentType)
 response_body = json.loads(response.get("body").read())
 
-print(response_body.get("completion"))
+print(response_body.get("content")[0].get("text"))
 ```
 
 
@@ -601,18 +648,22 @@ Hello Bob,
 
 Assistant:
 """
-body = {
-    "prompt": prompt_data, 
-    "max_tokens_to_sample": 500
-}
-modelId = "anthropic.claude-instant-v1"  
+messages = [{"role": "user", "content": prompt_data}]
+
+body={
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 500,
+        "messages": messages
+    }
+
+modelId = "anthropic.claude-3-5-sonnet-20240620-v1:0"  # change this to use a different version from the model provider
 accept = "application/json"
 contentType = "application/json"
 
 response = invoke_model(body, modelId, accept, contentType)
 response_body = json.loads(response.get("body").read())
 
-print(response_body.get("completion"))
+print(response_body.get("content")[0].get("text"))
 ```
 
 <h2>Next steps</h2>
