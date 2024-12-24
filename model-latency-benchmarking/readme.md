@@ -47,7 +47,7 @@ Your input JSONL file should contain one JSON object per line with the following
 Example entries from the test dataset:
 ```json
 {"text_prompt": "Summarize the key features of cloud computing in one sentence.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.meta.llama3-1-70b-instruct-v1:0", "inference_profile": "optimized"}
-{"text_prompt": "Explain the concept of machine learning in simple terms.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.meta.llama3-1-70b-instruct-v1:0", "inference_profile": "optimized"}
+{"text_prompt": "Explain the concept of machine learning in simple terms.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.anthropic.claude-3-5-haiku-20241022-v1:0", "inference_profile": "optimized"}
 ```
 
 ## Important notes
