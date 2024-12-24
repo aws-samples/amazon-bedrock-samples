@@ -1,0 +1,909 @@
+<!doctype html><html lang=en class=no-js> <head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Amazon Bedrock cookbook website"><meta name=author content=Bedrock-GTM><link href=https://github.amazon-bedrock-samples.com/agents-and-function-calling/open-source-agents/langgraph/langgraph-fact-checker-feedback-loop/ rel=canonical><link href=../02_medibot_V3_agents/ rel=prev><link href=../langgraph-multi-agent-sql-tools/ rel=next><link rel=icon href=../../../../assets/favicon.png><meta name=generator content="mkdocs-1.6.1, mkdocs-material-9.5.49"><title>LangGraph Fact Checker with Multi Agent - Amazon Bedrock Recipes</title><link rel=stylesheet href=../../../../assets/stylesheets/main.6f8fc17f.min.css><link rel=stylesheet href=../../../../assets/stylesheets/palette.06af60db.min.css><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback"><style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style><script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script></head> <body dir=ltr data-md-color-scheme=default data-md-color-primary=white data-md-color-accent=purple> <input class=md-toggle data-md-toggle=drawer type=checkbox id=__drawer autocomplete=off> <input class=md-toggle data-md-toggle=search type=checkbox id=__search autocomplete=off> <label class=md-overlay for=__drawer></label> <div data-md-component=skip> </div> <div data-md-component=announce> </div> <header class="md-header md-header--shadow" data-md-component=header> <nav class="md-header__inner md-grid" aria-label=Header> <a href=../../../.. title="Amazon Bedrock Recipes" class="md-header__button md-logo" aria-label="Amazon Bedrock Recipes" data-md-component=logo> <img src=../../../../logo.png alt=logo> </a> <label class="md-header__button md-icon" for=__drawer> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg> </label> <div class=md-header__title data-md-component=header-title> <div class=md-header__ellipsis> <div class=md-header__topic> <span class=md-ellipsis> Amazon Bedrock Recipes </span> </div> <div class=md-header__topic data-md-component=header-topic> <span class=md-ellipsis> LangGraph Fact Checker with Multi Agent </span> </div> </div> </div> <form class=md-header__option data-md-component=palette> <input class=md-option data-md-color-media data-md-color-scheme=default data-md-color-primary=white data-md-color-accent=purple aria-hidden=true type=radio name=__palette id=__palette_0> </form> <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script> <label class="md-header__button md-icon" for=__search> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg> </label> <div class=md-search data-md-component=search role=dialog> <label class=md-search__overlay for=__search></label> <div class=md-search__inner role=search> <form class=md-search__form name=search> <input type=text class=md-search__input name=query aria-label=Search placeholder=Search autocapitalize=off autocorrect=off autocomplete=off spellcheck=false data-md-component=search-query required> <label class="md-search__icon md-icon" for=__search> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg> </label> <nav class=md-search__options aria-label=Search> <button type=reset class="md-search__icon md-icon" title=Clear aria-label=Clear tabindex=-1> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> </button> </nav> <div class=md-search__suggest data-md-component=search-suggest></div> </form> <div class=md-search__output> <div class=md-search__scrollwrap tabindex=0 data-md-scrollfix> <div class=md-search-result data-md-component=search-result> <div class=md-search-result__meta> Initializing search </div> <ol class=md-search-result__list role=presentation></ol> </div> </div> </div> </div> </div> <div class=md-header__source> <a href=https://github.com/aws-samples/amazon-bedrock-samples/tree/main title="Go to repository" class=md-source data-md-component=source> <div class="md-source__icon md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 448 512"><!-- Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg> </div> <div class=md-source__repository> Github: Amazon-Bedrock-Samples </div> </a> </div> </nav> </header> <div class=md-container data-md-component=container> <main class=md-main data-md-component=main> <div class="md-main__inner md-grid"> <div class="md-sidebar md-sidebar--primary" data-md-component=sidebar data-md-type=navigation> <div class=md-sidebar__scrollwrap> <div class=md-sidebar__inner> <nav class="md-nav md-nav--primary md-nav--integrated" aria-label=Navigation data-md-level=0> <label class=md-nav__title for=__drawer> <a href=../../../.. title="Amazon Bedrock Recipes" class="md-nav__button md-logo" aria-label="Amazon Bedrock Recipes" data-md-component=logo> <img src=../../../../logo.png alt=logo> </a> Amazon Bedrock Recipes </label> <div class=md-nav__source> <a href=https://github.com/aws-samples/amazon-bedrock-samples/tree/main title="Go to repository" class=md-source data-md-component=source> <div class="md-source__icon md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 448 512"><!-- Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg> </div> <div class=md-source__repository> Github: Amazon-Bedrock-Samples </div> </a> </div> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../.. class=md-nav__link> <span class=md-ellipsis> Home </span> </a> </li> <li class="md-nav__item md-nav__item--active md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2 checked> <label class=md-nav__link for=__nav_2 id=__nav_2_label tabindex=0> <span class=md-ellipsis> Features </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=1 aria-labelledby=__nav_2_label aria-expanded=true> <label class=md-nav__title for=__nav_2> <span class="md-nav__icon md-icon"></span> Features </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_1> <label class=md-nav__link for=__nav_2_1 id=__nav_2_1_label tabindex=0> <span class=md-ellipsis> Intro to Amazon Bedrock </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=2 aria-labelledby=__nav_2_1_label aria-expanded=false> <label class=md-nav__title for=__nav_2_1> <span class="md-nav__icon md-icon"></span> Intro to Amazon Bedrock </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_1_1> <label class=md-nav__link for=__nav_2_1_1 id=__nav_2_1_1_label tabindex=0> <span class=md-ellipsis> API Usage </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=3 aria-labelledby=__nav_2_1_1_label aria-expanded=false> <label class=md-nav__title for=__nav_2_1_1> <span class="md-nav__icon md-icon"></span> API Usage </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../introduction-to-bedrock/bedrock_apis/01_invoke_api/ class=md-nav__link> <span class=md-ellipsis> Invoke Model API Example </span> </a> </li> <li class=md-nav__item> <a href=../../../../introduction-to-bedrock/bedrock_apis/04_agents_api/ class=md-nav__link> <span class=md-ellipsis> Agents API Example </span> </a> </li> <li class=md-nav__item> <a href=../../../../introduction-to-bedrock/bedrock_apis/03_knowledgebases_api/ class=md-nav__link> <span class=md-ellipsis> Knowledge Bases API Example </span> </a> </li> <li class=md-nav__item> <a href=../../../../introduction-to-bedrock/bedrock_apis/02_guardrails_api/ class=md-nav__link> <span class=md-ellipsis> Guardrail API Example </span> </a> </li> <li class=md-nav__item> <a href=../../../../introduction-to-bedrock/converse_api/01_converse_api/ class=md-nav__link> <span class=md-ellipsis> Converse API Example </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--active md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2 checked> <label class=md-nav__link for=__nav_2_2 id=__nav_2_2_label tabindex=0> <span class=md-ellipsis> Agents </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=2 aria-labelledby=__nav_2_2_label aria-expanded=true> <label class=md-nav__title for=__nav_2_2> <span class="md-nav__icon md-icon"></span> Agents </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_1> <label class=md-nav__link for=__nav_2_2_1 id=__nav_2_2_1_label tabindex=0> <span class=md-ellipsis> Amazon Bedrock Agents </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=3 aria-labelledby=__nav_2_2_1_label aria-expanded=false> <label class=md-nav__title for=__nav_2_2_1> <span class="md-nav__icon md-icon"></span> Amazon Bedrock Agents </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../introduction-to-agents/how_to_create_custom_agents/ class=md-nav__link> <span class=md-ellipsis> How to create an Agent </span> </a> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_1_2> <label class=md-nav__link for=__nav_2_2_1_2 id=__nav_2_2_1_2_label tabindex=0> <span class=md-ellipsis> Bedrock Agent Features </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_2_1_2_label aria-expanded=false> <label class=md-nav__title for=__nav_2_2_1_2> <span class="md-nav__icon md-icon"></span> Bedrock Agent Features </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/01-create-agent-with-function-definition/01-create-agent-with-function-definition/ class=md-nav__link> <span class=md-ellipsis> Create Agent with Function Definition </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/02-create-agent-with-api-schema/02-create-agent-with-api-schema/ class=md-nav__link> <span class=md-ellipsis> Create Agent with API Schema </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/03-create-agent-with-return-of-control/03-create-agent-with-return-of-control/ class=md-nav__link> <span class=md-ellipsis> Create Agent with Return of Control </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/04-create-agent-with-single-knowledge-base/04-create-agent-with-single-knowledge-base/ class=md-nav__link> <span class=md-ellipsis> Create Agent with Single Knowledge Base </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/05-create-agent-with-knowledge-base-and-action-group/05-create-agent-with-knowledge-base-and-action-group/ class=md-nav__link> <span class=md-ellipsis> Create Agent with Knowledge Base and Action Group </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/06-prompt-and-session-attributes/06-prompt-and-session-attributes/ class=md-nav__link> <span class=md-ellipsis> Prompt and Session Attributes </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/07-advanced-prompts-and-custom-parsers/07-custom-prompt-and-lambda-parsers/ class=md-nav__link> <span class=md-ellipsis> Custom Prompt and Lambda Parsers </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/08-create-agent-with-guardrails/08-create-agent-with-guardrails/ class=md-nav__link> <span class=md-ellipsis> Create Agent with Guardrails </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/09-create-agent-with-memory/09-create-agent-with-memory/ class=md-nav__link> <span class=md-ellipsis> Create Agent with Memory </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/10-create-agent-with-code-interpreter/10-create-agent-with-code-interpreter/ class=md-nav__link> <span class=md-ellipsis> Create Agent with Code Interpreter </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/14-create-agent-with-custom-orchestration/custom_orchestration_example/ class=md-nav__link> <span class=md-ellipsis> Create Agent with Custom Orchestration </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/features-examples/15-invoke-inline-agents/inline-agent-api-usage/ class=md-nav__link> <span class=md-ellipsis> Create Dynamic Tooling Inline Agents </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_1_3> <label class=md-nav__link for=__nav_2_2_1_3 id=__nav_2_2_1_3_label tabindex=0> <span class=md-ellipsis> Bedrock Flows </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_2_1_3_label aria-expanded=false> <label class=md-nav__title for=__nav_2_2_1_3> <span class="md-nav__icon md-icon"></span> Bedrock Flows </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../bedrock-agents/bedrock-flows/Getting_started_with_Prompt_Management_Flows/ class=md-nav__link> <span class=md-ellipsis> Getting Started with Prompt Management Flows </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_1_4> <label class=md-nav__link for=__nav_2_2_1_4 id=__nav_2_2_1_4_label tabindex=0> <span class=md-ellipsis> Use Case Examples </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_2_1_4_label aria-expanded=false> <label class=md-nav__title for=__nav_2_2_1_4> <span class="md-nav__icon md-icon"></span> Use Case Examples </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../bedrock-agents/use-case-examples/text-2-sql-agent/create_and_invoke_sql_agent/ class=md-nav__link> <span class=md-ellipsis> Text to SQL Agent </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/use-case-examples/agentsforbedrock-retailagent/workshop/test_retailagent_agentsforbedrock/ class=md-nav__link> <span class=md-ellipsis> Retail Agent Workshop </span> </a> </li> <li class=md-nav__item> <a href=../../../bedrock-agents/use-case-examples/product-review-agent/main/ class=md-nav__link> <span class=md-ellipsis> Product Review Agent </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_2> <label class=md-nav__link for=__nav_2_2_2 id=__nav_2_2_2_label tabindex=0> <span class=md-ellipsis> Function Calling </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=3 aria-labelledby=__nav_2_2_2_label aria-expanded=false> <label class=md-nav__title for=__nav_2_2_2> <span class="md-nav__icon md-icon"></span> Function Calling </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../function-calling/function_calling_with_converse/function_calling_with_converse/ class=md-nav__link> <span class=md-ellipsis> Function Calling with Converse </span> </a> </li> <li class=md-nav__item> <a href=../../../function-calling/function_calling_with_invoke/function_calling_model_with_invoke/ class=md-nav__link> <span class=md-ellipsis> Function Calling with Invoke </span> </a> </li> <li class=md-nav__item> <a href=../../../function-calling/return_of_control/return_of_control/ class=md-nav__link> <span class=md-ellipsis> Return of Control </span> </a> </li> <li class=md-nav__item> <a href=../../../function-calling/tool_binding/tool_bindings/ class=md-nav__link> <span class=md-ellipsis> Tool Binding </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--active md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_3 checked> <label class=md-nav__link for=__nav_2_2_3 id=__nav_2_2_3_label tabindex=0> <span class=md-ellipsis> Open Source </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=3 aria-labelledby=__nav_2_2_3_label aria-expanded=true> <label class=md-nav__title for=__nav_2_2_3> <span class="md-nav__icon md-icon"></span> Open Source </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_3_1> <label class=md-nav__link for=__nav_2_2_3_1 id=__nav_2_2_3_1_label tabindex=0> <span class=md-ellipsis> CrewAI </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_2_3_1_label aria-expanded=false> <label class=md-nav__title for=__nav_2_2_3_1> <span class="md-nav__icon md-icon"></span> CrewAI </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../crew.ai/Find%20dream%20destination%20with%20CrewAI/ class=md-nav__link> <span class=md-ellipsis> Find Dream Destination with CrewAI </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--active md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_3_2 checked> <label class=md-nav__link for=__nav_2_2_3_2 id=__nav_2_2_3_2_label tabindex=0> <span class=md-ellipsis> LangGraph </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_2_3_2_label aria-expanded=true> <label class=md-nav__title for=__nav_2_2_3_2> <span class="md-nav__icon md-icon"></span> LangGraph </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../langgraph-single-agent/ class=md-nav__link> <span class=md-ellipsis> LangGraph Agent with Function Calling </span> </a> </li> <li class=md-nav__item> <a href=../langgraph-agents-multimodal/ class=md-nav__link> <span class=md-ellipsis> LangGraph Multi-Modal Agent with Function Calling </span> </a> </li> <li class=md-nav__item> <a href=../langgraph-multi-agent-sql-tools/ class=md-nav__link> <span class=md-ellipsis> LangGraph Multi Agent Orchestration </span> </a> </li> <li class=md-nav__item> <a href=../02_medibot_V3_agents/ class=md-nav__link> <span class=md-ellipsis> LangGraph Multi Agent For Medical Chatbot </span> </a> </li> <li class="md-nav__item md-nav__item--active"> <input class="md-nav__toggle md-toggle" type=checkbox id=__toc> <a href=./ class="md-nav__link md-nav__link--active"> <span class=md-ellipsis> LangGraph Fact Checker with Multi Agent </span> </a> </li> <li class=md-nav__item> <a href=../langgraph-multi-agent-sql-tools/ class=md-nav__link> <span class=md-ellipsis> LangGraph Multi Agent Orchestration </span> </a> </li> <li class=md-nav__item> <a href=../03_langgraph_agents_of_agent/ class=md-nav__link> <span class=md-ellipsis> LangGraph Multi Agent with tools </span> </a> </li> <li class=md-nav__item> <a href=../Travel_planner_with_langgraph/ class=md-nav__link> <span class=md-ellipsis> Managing Memory for Multi Agents </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_2_3_3> <label class=md-nav__link for=__nav_2_2_3_3 id=__nav_2_2_3_3_label tabindex=0> <span class=md-ellipsis> Multi Agent </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_2_3_3_label aria-expanded=false> <label class=md-nav__title for=__nav_2_2_3_3> <span class="md-nav__icon md-icon"></span> Multi Agent </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../introduction-to-agents/how_to_create_multi_agents_from_custom_agents/ class=md-nav__link> <span class=md-ellipsis> Multi Agent Orchestration </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3> <label class=md-nav__link for=__nav_2_3 id=__nav_2_3_label tabindex=0> <span class=md-ellipsis> RAG </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=2 aria-labelledby=__nav_2_3_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3> <span class="md-nav__icon md-icon"></span> RAG </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1> <label class=md-nav__link for=__nav_2_3_1 id=__nav_2_3_1_label tabindex=0> <span class=md-ellipsis> Amazon Bedrock Knowledge Bases </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=3 aria-labelledby=__nav_2_3_1_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1> <span class="md-nav__icon md-icon"></span> Amazon Bedrock Knowledge Bases </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_1> <label class=md-nav__link for=__nav_2_3_1_1 id=__nav_2_3_1_1_label tabindex=0> <span class=md-ellipsis> Zero Setup </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_3_1_1_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_1> <span class="md-nav__icon md-icon"></span> Zero Setup </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/00-zero-setup-chat-with-your-document/chat_with_document_kb/ class=md-nav__link> <span class=md-ellipsis> Chat with Your Document </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_2> <label class=md-nav__link for=__nav_2_3_1_2 id=__nav_2_3_1_2_label tabindex=0> <span class=md-ellipsis> RAG Concepts </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_3_1_2_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_2> <span class="md-nav__icon md-icon"></span> RAG Concepts </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds/ class=md-nav__link> <span class=md-ellipsis> Create and Ingest Documents with Multi-Data Sources </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/01-rag-concepts/02_managed_rag_custom_prompting_and_no_of_results/ class=md-nav__link> <span class=md-ellipsis> Managed RAG with Custom Prompting </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/01-rag-concepts/03_customized-rag-retreive-api-hybrid-search-claude-3-sonnet-langchain/ class=md-nav__link> <span class=md-ellipsis> Customized RAG with Claude 3 and Langchain </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/01-rag-concepts/04_customized-rag-retreive-api-langchain-claude-evaluation-ragas/ class=md-nav__link> <span class=md-ellipsis> RAG Evaluation with Langchain and RAGAS </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_3> <label class=md-nav__link for=__nav_2_3_1_3 id=__nav_2_3_1_3_label tabindex=0> <span class=md-ellipsis> Optimizing Retrieval Results </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_3_1_3_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_3> <span class="md-nav__icon md-icon"></span> Optimizing Retrieval Results </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/advanced_chunking_options/ class=md-nav__link> <span class=md-ellipsis> Advanced Chunking Options </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/csv_metadata_customization/ class=md-nav__link> <span class=md-ellipsis> CSV Metadata Customization </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/02-optimizing-accuracy-retrieved-results/query_reformulation/ class=md-nav__link> <span class=md-ellipsis> Query Reformulation </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_4> <label class=md-nav__link for=__nav_2_3_1_4 id=__nav_2_3_1_4_label tabindex=0> <span class=md-ellipsis> Advanced Concepts </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_3_1_4_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_4> <span class="md-nav__icon md-icon"></span> Advanced Concepts </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/03-advanced-concepts/dynamic-metadata-filtering/dynamic-metadata-filtering-KB/ class=md-nav__link> <span class=md-ellipsis> Dynamic Metadata Filtering </span> </a> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_4_2> <label class=md-nav__link for=__nav_2_3_1_4_2 id=__nav_2_3_1_4_2_label tabindex=0> <span class=md-ellipsis> Reranking </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=5 aria-labelledby=__nav_2_3_1_4_2_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_4_2> <span class="md-nav__icon md-icon"></span> Reranking </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/03-advanced-concepts/reranking/01_deploy-reranking-model-sm/ class=md-nav__link> <span class=md-ellipsis> Deploy Reranking Model </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/03-advanced-concepts/reranking/02_kb-reranker/ class=md-nav__link> <span class=md-ellipsis> Knowledge Base Reranker </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/03-advanced-concepts/reranking/qa-generator/ class=md-nav__link> <span class=md-ellipsis> QA Generator </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_5> <label class=md-nav__link for=__nav_2_3_1_5 id=__nav_2_3_1_5_label tabindex=0> <span class=md-ellipsis> Responsible AI </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_3_1_5_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_5> <span class="md-nav__icon md-icon"></span> Responsible AI </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/features-examples/05-responsible-ai/contextual-grounding/ class=md-nav__link> <span class=md-ellipsis> Contextual Grounding </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_6> <label class=md-nav__link for=__nav_2_3_1_6 id=__nav_2_3_1_6_label tabindex=0> <span class=md-ellipsis> Use Case Examples </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_3_1_6_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_6> <span class="md-nav__icon md-icon"></span> Use Case Examples </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_6_1> <label class=md-nav__link for=__nav_2_3_1_6_1 id=__nav_2_3_1_6_1_label tabindex=0> <span class=md-ellipsis> Metadata Filter Access Control </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=5 aria-labelledby=__nav_2_3_1_6_1_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_6_1> <span class="md-nav__icon md-icon"></span> Metadata Filter Access Control </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/use-case-examples/metadata-filter-access-control/kb-end-to-end-acl/ class=md-nav__link> <span class=md-ellipsis> End-to-End ACL with Knowledge Base </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_1_6_2> <label class=md-nav__link for=__nav_2_3_1_6_2 id=__nav_2_3_1_6_2_label tabindex=0> <span class=md-ellipsis> RAG with Structured and Unstructured Data </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=5 aria-labelledby=__nav_2_3_1_6_2_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_1_6_2> <span class="md-nav__icon md-icon"></span> RAG with Structured and Unstructured Data </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/0-create-dummy-structured-data/ class=md-nav__link> <span class=md-ellipsis> Create Dummy Structured Data </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/1_create_sql_dataset_optional/ class=md-nav__link> <span class=md-ellipsis> Create SQL Dataset (Optional) </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/knowledge-bases/use-case-examples/rag-using-structured-unstructured-data/2_rag_with_structured_unstructured_data/ class=md-nav__link> <span class=md-ellipsis> RAG with Structured and Unstructured Data </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_2> <label class=md-nav__link for=__nav_2_3_2 id=__nav_2_3_2_label tabindex=0> <span class=md-ellipsis> Open Source </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=3 aria-labelledby=__nav_2_3_2_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_2> <span class="md-nav__icon md-icon"></span> Open Source </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/open-source/chatbots/qa_chatbot_langchain_bedrock/ class=md-nav__link> <span class=md-ellipsis> Chatbot using Langchain </span> </a> </li> <li class=md-nav__item> <a href=../../../../rag/open-source/chunking/rag_chunking_strategies_langchain_bedrock/ class=md-nav__link> <span class=md-ellipsis> Chunking strategies for RAG applications </span> </a> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_3_2_3> <label class=md-nav__link for=__nav_2_3_2_3 id=__nav_2_3_2_3_label tabindex=0> <span class=md-ellipsis> Vector Stores </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=4 aria-labelledby=__nav_2_3_2_3_label aria-expanded=false> <label class=md-nav__title for=__nav_2_3_2_3> <span class="md-nav__icon md-icon"></span> Vector Stores </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../rag/open-source/vector_stores/rag_langchain_bedrock_opensearch/ class=md-nav__link> <span class=md-ellipsis> Langchain Chatbot with Opensearch </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_2_4> <label class=md-nav__link for=__nav_2_4 id=__nav_2_4_label tabindex=0> <span class=md-ellipsis> Model Customization </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=2 aria-labelledby=__nav_2_4_label aria-expanded=false> <label class=md-nav__title for=__nav_2_4> <span class="md-nav__icon md-icon"></span> Model Customization </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../custom-models/model-distillation/Historical_invocation_distillation/ class=md-nav__link> <span class=md-ellipsis> Model Distillation with Invocation Logs </span> </a> </li> <li class=md-nav__item> <a href=../../../../custom-models/model-distillation/Distillation-via-S3-input/ class=md-nav__link> <span class=md-ellipsis> Model Distillation with S3 Data </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_3> <label class=md-nav__link for=__nav_3 id=__nav_3_label tabindex=0> <span class=md-ellipsis> Gen AI Usecases </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=1 aria-labelledby=__nav_3_label aria-expanded=false> <label class=md-nav__title for=__nav_3> <span class="md-nav__icon md-icon"></span> Gen AI Usecases </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_3_1> <label class=md-nav__link for=__nav_3_1 id=__nav_3_1_label tabindex=0> <span class=md-ellipsis> Text Generation </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=2 aria-labelledby=__nav_3_1_label aria-expanded=false> <label class=md-nav__title for=__nav_3_1> <span class="md-nav__icon md-icon"></span> Text Generation </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../genai-use-cases/text-generation/how_to_work_with_text_generation_w_bedrock/ class=md-nav__link> <span class=md-ellipsis> Streaming Response with Converse </span> </a> </li> <li class=md-nav__item> <a href=../../../../genai-use-cases/text-generation/how_to_work_with_code_generation_w_bedrock/ class=md-nav__link> <span class=md-ellipsis> Generate Python Code with Converse </span> </a> </li> <li class=md-nav__item> <a href=../../../../genai-use-cases/text-generation/how_to_work_with_text_translation_w_bedrock/ class=md-nav__link> <span class=md-ellipsis> Text Translation with Converse </span> </a> </li> <li class=md-nav__item> <a href=../../../../genai-use-cases/text-generation/how_to_work_with_text-summarization-titan%2Bclaude/ class=md-nav__link> <span class=md-ellipsis> Text summarization with Converse </span> </a> </li> <li class=md-nav__item> <a href=../../../../genai-use-cases/text-generation/how_to_work_with_batch_example_for_multi_threaded_invocation/ class=md-nav__link> <span class=md-ellipsis> Generate Bulk Emails with Batch Inference </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_4> <label class=md-nav__link for=__nav_4 id=__nav_4_label tabindex=0> <span class=md-ellipsis> Workshops </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=1 aria-labelledby=__nav_4_label aria-expanded=false> <label class=md-nav__title for=__nav_4> <span class="md-nav__icon md-icon"></span> Workshops </label> <ul class=md-nav__list data-md-scrollfix> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_4_1> <label class=md-nav__link for=__nav_4_1 id=__nav_4_1_label tabindex=0> <span class=md-ellipsis> Open-source L400 </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=2 aria-labelledby=__nav_4_1_label aria-expanded=false> <label class=md-nav__title for=__nav_4_1> <span class="md-nav__icon md-icon"></span> Open-source L400 </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../workshop/open-source-l400/01_usecase_introduction/ class=md-nav__link> <span class=md-ellipsis> Introduction to the Use Case </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l400/02_Lab_Find%20a%20Dream%20Destination_RAG%20query/ class=md-nav__link> <span class=md-ellipsis> Advanced RAG for Agents </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l400/02_travel_planner_with_langgraph/ class=md-nav__link> <span class=md-ellipsis> Conversational Memory in Agents </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l400/03_travel_agent_with_tools/ class=md-nav__link> <span class=md-ellipsis> Multi-Modal and Types of Agents </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l400/04_travel_booking_multi_agent/ class=md-nav__link> <span class=md-ellipsis> Multi-Agent Collaboration with Human-in-loop </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l400/05_dream_destination_with_crewai/ class=md-nav__link> <span class=md-ellipsis> Find Dream Destination with CrewAI </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l400/06_agent_evaluation_with_ragas/ class=md-nav__link> <span class=md-ellipsis> RAGAs Agents Evaluation </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l400/07_dynamic_tooling_agents/ class=md-nav__link> <span class=md-ellipsis> Dynamic Tool invocation </span> </a> </li> </ul> </nav> </li> <li class="md-nav__item md-nav__item--nested"> <input class="md-nav__toggle md-toggle " type=checkbox id=__nav_4_2> <label class=md-nav__link for=__nav_4_2 id=__nav_4_2_label tabindex=0> <span class=md-ellipsis> Open-source L200 </span> <span class="md-nav__icon md-icon"></span> </label> <nav class=md-nav data-md-level=2 aria-labelledby=__nav_4_2_label aria-expanded=false> <label class=md-nav__title for=__nav_4_2> <span class="md-nav__icon md-icon"></span> Open-source L200 </label> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=../../../../workshop/open-source-l200/02_contextual_text_generation/ class=md-nav__link> <span class=md-ellipsis> Introduction to the Use Case </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l200/03_retrieval_based_text_application/ class=md-nav__link> <span class=md-ellipsis> Retrieval Based Text Generation </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l200/04_retrieval_based_chat_application/ class=md-nav__link> <span class=md-ellipsis> Retrieval Based Chat Application </span> </a> </li> <li class=md-nav__item> <a href=../../../../workshop/open-source-l200/05_agent_based_text_generation/ class=md-nav__link> <span class=md-ellipsis> Agent Based Text Generation </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=../../../../general/tags/ class=md-nav__link> <span class=md-ellipsis> Tags </span> </a> </li> <li class=md-nav__item> <a href=../../../../general/license/ class=md-nav__link> <span class=md-ellipsis> License </span> </a> </li> </ul> </nav> </div> </div> </div> <div class=md-content data-md-component=content> <article class="md-content__inner md-typeset"> <nav class=md-tags> <a href=../../../../general/tags/#agents-multi-agent-orchestration class="md-tag md-tag-icon">Agents/ Multi-Agent-Orchestration</a> <a href=../../../../general/tags/#open-source-langgraph class="md-tag md-tag-icon">Open Source/ LangGraph</a> </nav> <h1>LangGraph Fact Checker with Multi Agent</h1> <!-- <h2>Fact-checker Feedback Loop with LangGraph on Amazon Bedrock</h2> --> <div class="admonition tip inline end"> <p class=admonition-title><a href=https://github.com/aws-samples/amazon-bedrock-samples/blob/main/agents-and-function-calling/open-source-agents/langgraph/langgraph-fact-checker-feedback-loop.ipynb target=_blank>Open in github</a></p> </div> <h2>1. Introduction to feedback loops</h2> <p>This solution implements an advanced fact-checking feedback mechanism for AI-generated summaries using LangGraph on Amazon Bedrock. The process begins with an AI model summarizing a given document. The summary then undergoes an evaluation loop where individual claims are extracted and verified against the original text. If any conflicts are found, the system provides specific feedback to the AI, prompting it to revise the summary. This cycle continues for a set number of iterations or until a faithful summary is produced.</p> <p>The approach is particularly useful in scenarios where accuracy and faithfulness to source material are crucial, such as in report generation in business settings, academic research, or legal document summarization. It helps mitigate the risk of AI hallucinations or misrepresentations by implementing a self-correcting mechanism. This method not only improves the quality of AI-generated content but also provides transparency in the summarization process, which is valuable in building trust in AI systems for critical applications.</p> <p><img alt=Fact-checker-main src=../assets/Fact-checker-main.png></p> <h2>2. How fact-checking feedback loop works</h2> <p>It begins with an input document fed into a Summarizer, which produces a summary using a specific prompt. This summary then moves to the Evaluator stage, where it undergoes two steps: first, a Claim Extractor extracts key claims from the summary, and then an Evaluator prompt assesses these claims against the original document. If the evaluation determines the summary is faithful to the original content, the process concludes successfully, outputting the verified summary. </p> <p><img alt=Fact-checker-if-faithful.png src=../assets/Fact-checker-if-faithful.png></p> <p>If the Evaluator concludes that the summary is unfaithful, the flow marked in blue text in the diagram is executed. The feedback is appended to the Summarizer chat as a human message. The Summarizer then uses this feedback to generate a revised summary. The revised summary proceeds to another evaluation by the Evaluator. If it's identified as faithful, the graph execution finishes with the revised summary.</p> <p><img alt=Fact-checker-if-not-faithful.png src=../assets/Fact-checker-if-not-faithful.png></p> <p>The summarization process incorporates a feedback and evaluation loop that iterates up to a predefined number (N) of attempts. The system strives to generate a faithful summary within these iterations. If a faithful summary is achieved at any point, the process concludes successfully. However, if after N attempts a faithful summary has not been produced, the process terminates with a fail response, clearly indicating that the goal was not met. This approach prioritizes accuracy over completion, opting to acknowledge failure rather than provide an unfaithful summary. It ensures that any summary output by the system meets a high standard of faithfulness to the original document.</p> <p><img alt=Fact-checker-faithful-check-n-times.png src=../assets/Fact-checker-faithful-check-n-times.png></p> <h2>3. Implement fact-checking</h2> <h3>3.1. Configuration</h3> <p>Install packages required</p> <div class=highlight><pre><span></span><code><span class=o>%</span><span class=n>pip</span> <span class=n>install</span> <span class=n>langgraph</span> <span class=n>langchain</span> <span class=n>langchain_aws</span> <span class=n>Pillow</span> <span class=o>--</span><span class=n>quiet</span>
+</code></pre></div> <p>Import the required packages</p> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>pprint</span>
+<span class=kn>import</span> <span class=nn>io</span>
+<span class=kn>from</span> <span class=nn>pathlib</span> <span class=kn>import</span> <span class=n>Path</span>
+
+<span class=kn>from</span> <span class=nn>typing</span> <span class=kn>import</span> <span class=n>Literal</span><span class=p>,</span> <span class=n>NotRequired</span><span class=p>,</span> <span class=n>Annotated</span>
+<span class=kn>from</span> <span class=nn>typing_extensions</span> <span class=kn>import</span> <span class=n>TypedDict</span>
+
+<span class=kn>from</span> <span class=nn>langchain_core.messages</span> <span class=kn>import</span> <span class=n>HumanMessage</span>
+<span class=kn>from</span> <span class=nn>langchain_core.prompts</span> <span class=kn>import</span> <span class=n>PromptTemplate</span>
+<span class=kn>from</span> <span class=nn>langchain_aws</span> <span class=kn>import</span> <span class=n>ChatBedrockConverse</span>
+<span class=kn>from</span> <span class=nn>langchain_core.output_parsers</span> <span class=kn>import</span> <span class=n>JsonOutputParser</span>
+<span class=kn>from</span> <span class=nn>langgraph.graph</span> <span class=kn>import</span> <span class=n>END</span><span class=p>,</span> <span class=n>StateGraph</span><span class=p>,</span> <span class=n>START</span>
+<span class=kn>from</span> <span class=nn>langgraph.graph.message</span> <span class=kn>import</span> <span class=n>add_messages</span>
+
+<span class=kn>from</span> <span class=nn>PIL</span> <span class=kn>import</span> <span class=n>Image</span>
+</code></pre></div> <p>Set langchain debug to True, this simplifies demonstration of the execution flow</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>langchain.globals</span> <span class=kn>import</span> <span class=n>set_debug</span>
+<span class=c1># Set debug mode for Langchain</span>
+<span class=n>set_debug</span><span class=p>(</span><span class=kc>True</span><span class=p>)</span>
+</code></pre></div> <div class=highlight><pre><span></span><code><span class=n>MAX_ITERATIONS</span> <span class=o>=</span> <span class=mi>3</span>
+</code></pre></div> <p>Setup AWS Python SDK (boto3) to access Amazon Bedrock resources</p> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>boto3</span> 
+<span class=kn>import</span> <span class=nn>botocore</span>
+
+<span class=c1># Configure Bedrock client for retry</span>
+<span class=n>retry_config</span> <span class=o>=</span> <span class=n>botocore</span><span class=o>.</span><span class=n>config</span><span class=o>.</span><span class=n>Config</span><span class=p>(</span>
+    <span class=n>retries</span> <span class=o>=</span> <span class=p>{</span>
+        <span class=s1>&#39;max_attempts&#39;</span><span class=p>:</span> <span class=mi>10</span><span class=p>,</span>
+        <span class=s1>&#39;mode&#39;</span><span class=p>:</span> <span class=s1>&#39;adaptive&#39;</span>
+    <span class=p>}</span>
+<span class=p>)</span>
+</code></pre></div> <div class=highlight><pre><span></span><code><span class=c1># ---- ⚠️ Un-comment or comment and edit the below lines as needed for your AWS setup ⚠️ ----</span>
+<span class=kn>import</span> <span class=nn>os</span>
+
+<span class=n>os</span><span class=o>.</span><span class=n>environ</span><span class=p>[</span><span class=s2>&quot;AWS_DEFAULT_REGION&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=s2>&quot;us-east-1&quot;</span> 
+<span class=n>os</span><span class=o>.</span><span class=n>environ</span><span class=p>[</span><span class=s2>&quot;AWS_PROFILE&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=s2>&quot;default&quot;</span>
+
+<span class=n>bedrock_runtime</span> <span class=o>=</span> <span class=n>boto3</span><span class=o>.</span><span class=n>client</span><span class=p>(</span><span class=s1>&#39;bedrock-runtime&#39;</span><span class=p>,</span> <span class=n>config</span><span class=o>=</span><span class=n>retry_config</span><span class=p>)</span>
+
+<span class=n>llm</span> <span class=o>=</span> <span class=n>ChatBedrockConverse</span><span class=p>(</span>
+    <span class=n>model</span><span class=o>=</span><span class=s1>&#39;anthropic.claude-3-haiku-20240307-v1:0&#39;</span><span class=p>,</span>
+    <span class=n>temperature</span><span class=o>=</span><span class=mi>0</span><span class=p>,</span>
+    <span class=n>max_tokens</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span>
+    <span class=n>client</span><span class=o>=</span><span class=n>bedrock_runtime</span><span class=p>,</span>
+<span class=p>)</span>
+</code></pre></div> <p>Validate that boto3 and langchain works well</p> <div class=highlight><pre><span></span><code><span class=n>llm</span><span class=o>.</span><span class=n>invoke</span><span class=p>(</span><span class=s2>&quot;Hello world&quot;</span><span class=p>)</span>
+</code></pre></div> <pre><code>[32;1m[1;3m[llm/start][0m [1m[llm:ChatBedrockConverse] Entering LLM run with input:
+[0m{
+  "prompts": [
+    "Human: Hello world"
+  ]
+}
+[36;1m[1;3m[llm/end][0m [1m[llm:ChatBedrockConverse] [693ms] Exiting LLM run with output:
+[0m{
+  "generations": [
+    [
+      {
+        "text": "Hello! It's nice to meet you.",
+        "generation_info": null,
+        "type": "ChatGeneration",
+        "message": {
+          "lc": 1,
+          "type": "constructor",
+          "id": [
+            "langchain",
+            "schema",
+            "messages",
+            "AIMessage"
+          ],
+          "kwargs": {
+            "content": "Hello! It's nice to meet you.",
+            "response_metadata": {
+              "ResponseMetadata": {
+                "RequestId": "0a11183b-719f-42b4-86f9-aac9a9558454",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                  "date": "Tue, 01 Oct 2024 21:25:39 GMT",
+                  "content-type": "application/json",
+                  "content-length": "209",
+                  "connection": "keep-alive",
+                  "x-amzn-requestid": "0a11183b-719f-42b4-86f9-aac9a9558454"
+                },
+                "RetryAttempts": 0
+              },
+              "stopReason": "end_turn",
+              "metrics": {
+                "latencyMs": 346
+              }
+            },
+            "type": "ai",
+            "id": "run-96740601-c85e-4959-aa7a-79e3b0d8b7bb-0",
+            "usage_metadata": {
+              "input_tokens": 9,
+              "output_tokens": 12,
+              "total_tokens": 21
+            },
+            "tool_calls": [],
+            "invalid_tool_calls": []
+          }
+        }
+      }
+    ]
+  ],
+  "llm_output": null,
+  "run": null,
+  "type": "LLMResult"
+}
+
+
+
+
+
+AIMessage(content="Hello! It's nice to meet you.", additional_kwargs={}, response_metadata={'ResponseMetadata': {'RequestId': '0a11183b-719f-42b4-86f9-aac9a9558454', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Tue, 01 Oct 2024 21:25:39 GMT', 'content-type': 'application/json', 'content-length': '209', 'connection': 'keep-alive', 'x-amzn-requestid': '0a11183b-719f-42b4-86f9-aac9a9558454'}, 'RetryAttempts': 0}, 'stopReason': 'end_turn', 'metrics': {'latencyMs': 346}}, id='run-96740601-c85e-4959-aa7a-79e3b0d8b7bb-0', usage_metadata={'input_tokens': 9, 'output_tokens': 12, 'total_tokens': 21})
+</code></pre> <p>Configure prompts for each task</p> <div class=highlight><pre><span></span><code><span class=n>summarizer_prompt</span> <span class=o>=</span> <span class=s2>&quot;&quot;&quot;</span>
+<span class=s2>Document to be summarized:</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+<span class=si>{doc_input}</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+
+<span class=s2>Summarize the provided document. Keep it clear and concise but do not skip any significant detail. </span>
+<span class=s2>IMPORTANT: Provide only the summary as the response, without any preamble.</span>
+<span class=s2>&quot;&quot;&quot;</span>
+
+<span class=n>summarizer_prompt_t</span> <span class=o>=</span> <span class=n>PromptTemplate</span><span class=o>.</span><span class=n>from_template</span><span class=p>(</span><span class=n>summarizer_prompt</span><span class=p>)</span>
+
+<span class=n>claim_extractor_prompt</span> <span class=o>=</span> <span class=s2>&quot;&quot;&quot;</span>
+<span class=s2>LLM-generated summary:</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+<span class=si>{summary}</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+<span class=s2>Extract all the claims from the provided summary. Extract every and every claim from the summary, never miss anything.</span>
+<span class=s2>Each claim should be atomic, containing only one distinct piece of information. </span>
+<span class=s2>These claims will later be used to evaluate the factual accuracy of the LLM-provided summary compared to the original content. </span>
+<span class=s2>Your task is solely to extract the claims from the summary. </span>
+<span class=s2>Present the output as a JSON list of strings, where each string represents one claim from the summary. </span>
+<span class=s2>Respond only with a valid JSON, nothing else, without any preamble.</span>
+<span class=s2>&quot;&quot;&quot;</span>
+
+<span class=n>claim_extractor_prompt_t</span> <span class=o>=</span> <span class=n>PromptTemplate</span><span class=o>.</span><span class=n>from_template</span><span class=p>(</span><span class=n>claim_extractor_prompt</span><span class=p>)</span>
+
+<span class=n>evaluator_prompt</span> <span class=o>=</span> <span class=s2>&quot;&quot;&quot;</span>
+<span class=s2>You are a Principal Editor at a prestigious publishing company. Your task is to evaluate whether an LLM-generated summary is faithful to the original document.</span>
+
+<span class=s2>You will be presented with:</span>
+<span class=s2>1. The original document content</span>
+<span class=s2>2. Claims extracted from the LLM-generated summary</span>
+
+<span class=s2>Instructions:</span>
+<span class=s2>1. Carefully read the original document content.</span>
+<span class=s2>2. Examine each extracted claim from the summary individually.</span>
+<span class=s2>3. For each claim, determine if it is accurately represented in the original document. Express your thinking and reasoning.</span>
+<span class=s2>4. After evaluating all claims, provide a single JSON output with the following structure (markdown json formatting: triple backticks and &quot;json&quot;):</span>
+<span class=s2>```json</span>
+<span class=s2>{{</span>
+<span class=s2>&quot;is_faithful&quot;: boolean,</span>
+<span class=s2>&quot;reason&quot;: &quot;string&quot; [Optional]</span>
+<span class=s2>}}</span>
+<span class=s2>`` `</span>
+<span class=s2>Important notes:</span>
+<span class=s2>- The &quot;is_faithful&quot; value should be true only if ALL extracted claims are accurately represented in the original document.</span>
+<span class=s2>- If even one claim is not faithful to the original content, set &quot;is_faithful&quot; to false.</span>
+<span class=s2>- When &quot;is_faithful&quot; is false, provide a clear explanation in the &quot;reason&quot; field, specifying which claim(s) are not faithful and why.</span>
+<span class=s2>- The &quot;reason&quot; field is optional when &quot;is_faithful&quot; is true.</span>
+<span class=s2>- The output should contain only one JSON output. This is how the software will parse your response. If you&#39;re responding with multiple JSON statements in your response, you&#39;re doing it wrong.</span>
+<span class=s2>The original document (the source of truth):</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+<span class=si>{doc_input}</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+<span class=s2>Extracted claims from the LLM-generated summary:</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+<span class=si>{claims_list}</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+<span class=s2>Please proceed by explaining your evaluation for each claim based on the source content. Then finalize with a single JSON output in markdown json formatting (triple backticks and &quot;json&quot;). Think step by step.</span>
+<span class=s2>&quot;&quot;&quot;</span>
+
+<span class=n>evaluator_prompt_t</span> <span class=o>=</span> <span class=n>PromptTemplate</span><span class=o>.</span><span class=n>from_template</span><span class=p>(</span><span class=n>evaluator_prompt</span><span class=p>)</span>
+
+<span class=n>feedback_prompt</span> <span class=o>=</span> <span class=s2>&quot;&quot;&quot;</span>
+<span class=s2>I gave your generated summary to our content review department, and they rejected it. Here is the feedback I received:</span>
+
+<span class=se>\&quot;\&quot;\&quot;</span>
+<span class=s2>The generated summary is not faithful. Reason: </span><span class=si>{reason}</span>
+<span class=se>\&quot;\&quot;\&quot;</span>
+
+<span class=s2>Now, please incorporate this feedback and regenerate the summary.</span>
+<span class=s2>IMPORTANT: Do not start with any preamble. Provide only the revised summary as your response.</span>
+<span class=s2>&quot;&quot;&quot;</span>
+
+<span class=n>feedback_prompt_t</span> <span class=o>=</span> <span class=n>PromptTemplate</span><span class=o>.</span><span class=n>from_template</span><span class=p>(</span><span class=n>feedback_prompt</span><span class=p>)</span>
+</code></pre></div> <p>Define nodes, and the State class to pass data between nodes</p> <div class=highlight><pre><span></span><code><span class=k>class</span> <span class=nc>State</span><span class=p>(</span><span class=n>TypedDict</span><span class=p>):</span>
+    <span class=n>messages</span><span class=p>:</span> <span class=n>Annotated</span><span class=p>[</span><span class=nb>list</span><span class=p>,</span> <span class=n>add_messages</span><span class=p>]</span>
+    <span class=n>doc_input</span><span class=p>:</span> <span class=nb>str</span>
+    <span class=n>is_faithful</span><span class=p>:</span> <span class=n>NotRequired</span><span class=p>[</span><span class=nb>bool</span><span class=p>]</span>
+    <span class=n>reason</span><span class=p>:</span> <span class=n>NotRequired</span><span class=p>[</span><span class=nb>list</span><span class=p>[</span><span class=nb>str</span><span class=p>]]</span>
+    <span class=n>num_of_iterations</span><span class=p>:</span> <span class=n>NotRequired</span><span class=p>[</span><span class=nb>int</span><span class=p>]</span>
+
+<span class=k>def</span> <span class=nf>summarizer</span><span class=p>(</span><span class=n>state</span><span class=p>:</span> <span class=n>State</span><span class=p>):</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;summarizer() invoked&quot;</span><span class=p>)</span>
+
+    <span class=k>if</span> <span class=s2>&quot;is_faithful&quot;</span> <span class=ow>in</span> <span class=n>state</span> <span class=ow>and</span> <span class=n>state</span><span class=p>[</span><span class=s2>&quot;is_faithful&quot;</span><span class=p>]</span> <span class=o>==</span> <span class=kc>False</span><span class=p>:</span>
+        <span class=n>state</span><span class=p>[</span><span class=s2>&quot;messages&quot;</span><span class=p>]</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>HumanMessage</span><span class=p>(</span><span class=n>content</span><span class=o>=</span><span class=n>feedback_prompt_t</span><span class=o>.</span><span class=n>format</span><span class=p>(</span><span class=n>reason</span><span class=o>=</span><span class=n>state</span><span class=p>[</span><span class=s2>&quot;reason&quot;</span><span class=p>][</span><span class=o>-</span><span class=mi>1</span><span class=p>])))</span>
+    <span class=k>else</span><span class=p>:</span>
+        <span class=n>state</span><span class=p>[</span><span class=s2>&quot;messages&quot;</span><span class=p>]</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>HumanMessage</span><span class=p>(</span><span class=n>content</span><span class=o>=</span><span class=n>summarizer_prompt_t</span><span class=o>.</span><span class=n>format</span><span class=p>(</span><span class=n>doc_input</span><span class=o>=</span><span class=n>state</span><span class=p>[</span><span class=s2>&quot;doc_input&quot;</span><span class=p>])))</span>
+
+    <span class=n>result</span> <span class=o>=</span> <span class=n>llm</span><span class=o>.</span><span class=n>invoke</span><span class=p>(</span><span class=n>state</span><span class=p>[</span><span class=s2>&quot;messages&quot;</span><span class=p>])</span>
+    <span class=n>state</span><span class=p>[</span><span class=s2>&quot;messages&quot;</span><span class=p>]</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>result</span><span class=p>)</span>
+
+    <span class=k>return</span> <span class=n>state</span>
+
+<span class=k>def</span> <span class=nf>evaluator</span><span class=p>(</span><span class=n>state</span><span class=p>:</span> <span class=n>State</span><span class=p>):</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;evaluator() invoked&quot;</span><span class=p>)</span>
+
+    <span class=n>claim_extractor_chain</span> <span class=o>=</span> <span class=n>claim_extractor_prompt_t</span> <span class=o>|</span> <span class=n>llm</span> <span class=o>|</span> <span class=n>JsonOutputParser</span><span class=p>()</span>
+    <span class=n>result</span> <span class=o>=</span> <span class=n>claim_extractor_chain</span><span class=o>.</span><span class=n>invoke</span><span class=p>({</span><span class=s2>&quot;summary&quot;</span><span class=p>:</span> <span class=n>state</span><span class=p>[</span><span class=s2>&quot;messages&quot;</span><span class=p>][</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span><span class=o>.</span><span class=n>content</span><span class=p>})</span>
+    <span class=n>evaluator_chain</span> <span class=o>=</span> <span class=n>evaluator_prompt_t</span> <span class=o>|</span> <span class=n>llm</span> <span class=o>|</span> <span class=n>JsonOutputParser</span><span class=p>()</span>
+    <span class=n>evaluator_result</span> <span class=o>=</span> <span class=n>evaluator_chain</span><span class=o>.</span><span class=n>invoke</span><span class=p>({</span><span class=s2>&quot;doc_input&quot;</span><span class=p>:</span> <span class=n>state</span><span class=p>[</span><span class=s2>&quot;doc_input&quot;</span><span class=p>],</span> <span class=s2>&quot;claims_list&quot;</span><span class=p>:</span> <span class=n>result</span><span class=p>})</span>
+
+    <span class=k>if</span> <span class=n>evaluator_result</span><span class=p>[</span><span class=s2>&quot;is_faithful&quot;</span><span class=p>]:</span>
+        <span class=n>state</span><span class=p>[</span><span class=s2>&quot;is_faithful&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=kc>True</span>
+    <span class=k>else</span><span class=p>:</span>
+        <span class=n>state</span><span class=p>[</span><span class=s2>&quot;is_faithful&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=kc>False</span>
+        <span class=k>if</span> <span class=s2>&quot;reason&quot;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>state</span><span class=p>:</span>
+            <span class=n>state</span><span class=p>[</span><span class=s2>&quot;reason&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=p>[]</span>
+        <span class=n>state</span><span class=p>[</span><span class=s2>&quot;reason&quot;</span><span class=p>]</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>evaluator_result</span><span class=p>[</span><span class=s2>&quot;reason&quot;</span><span class=p>])</span>
+
+    <span class=k>if</span> <span class=s2>&quot;num_of_iterations&quot;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>state</span><span class=p>:</span>
+        <span class=n>state</span><span class=p>[</span><span class=s2>&quot;num_of_iterations&quot;</span><span class=p>]</span> <span class=o>=</span> <span class=mi>0</span>
+
+    <span class=n>state</span><span class=p>[</span><span class=s2>&quot;num_of_iterations&quot;</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+    <span class=k>return</span> <span class=n>state</span>
+</code></pre></div> <p>Build the graph with a feedback loop</p> <div class=highlight><pre><span></span><code><span class=n>builder</span> <span class=o>=</span> <span class=n>StateGraph</span><span class=p>(</span><span class=n>State</span><span class=p>)</span>
+<span class=n>builder</span><span class=o>.</span><span class=n>add_node</span><span class=p>(</span><span class=s2>&quot;summarizer&quot;</span><span class=p>,</span> <span class=n>summarizer</span><span class=p>)</span>
+<span class=n>builder</span><span class=o>.</span><span class=n>add_node</span><span class=p>(</span><span class=s2>&quot;evaluator&quot;</span><span class=p>,</span> <span class=n>evaluator</span><span class=p>)</span>
+<span class=c1># summarizer -&gt; evaluator</span>
+<span class=n>builder</span><span class=o>.</span><span class=n>add_edge</span><span class=p>(</span><span class=s2>&quot;summarizer&quot;</span><span class=p>,</span> <span class=s2>&quot;evaluator&quot;</span><span class=p>)</span>
+
+<span class=k>def</span> <span class=nf>feedback_loop</span><span class=p>(</span><span class=n>state</span><span class=p>:</span> <span class=n>State</span><span class=p>)</span> <span class=o>-&gt;</span> <span class=n>Literal</span><span class=p>[</span><span class=s2>&quot;summarizer&quot;</span><span class=p>,</span> <span class=s2>&quot;__end__&quot;</span><span class=p>]:</span>
+    <span class=k>if</span> <span class=n>state</span><span class=p>[</span><span class=s2>&quot;is_faithful&quot;</span><span class=p>]</span> <span class=ow>is</span> <span class=kc>False</span><span class=p>:</span>
+        <span class=c1># in our case, we&#39;ll just stop after N plans</span>
+        <span class=k>if</span> <span class=n>state</span><span class=p>[</span><span class=s2>&quot;num_of_iterations&quot;</span><span class=p>]</span> <span class=o>&gt;=</span> <span class=n>MAX_ITERATIONS</span><span class=p>:</span>
+            <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;Going to end!&quot;</span><span class=p>)</span>
+            <span class=k>return</span> <span class=n>END</span>
+        <span class=k>return</span> <span class=s2>&quot;summarizer&quot;</span>
+    <span class=k>else</span><span class=p>:</span>
+        <span class=k>return</span> <span class=n>END</span>
+
+<span class=n>builder</span><span class=o>.</span><span class=n>add_conditional_edges</span><span class=p>(</span><span class=s2>&quot;evaluator&quot;</span><span class=p>,</span> <span class=n>feedback_loop</span><span class=p>)</span>
+<span class=n>builder</span><span class=o>.</span><span class=n>add_edge</span><span class=p>(</span><span class=n>START</span><span class=p>,</span> <span class=s2>&quot;summarizer&quot;</span><span class=p>)</span>
+<span class=n>graph</span> <span class=o>=</span> <span class=n>builder</span><span class=o>.</span><span class=n>compile</span><span class=p>()</span>
+</code></pre></div> <p>Save graph image as a file. It should be as the following:</p> <p><img alt=graph src=../assets/graph.png></p> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>IPython</span>
+
+<span class=k>try</span><span class=p>:</span>
+    <span class=n>IPython</span><span class=o>.</span><span class=n>display</span><span class=o>.</span><span class=n>display</span><span class=p>(</span><span class=n>IPython</span><span class=o>.</span><span class=n>display</span><span class=o>.</span><span class=n>Image</span><span class=p>(</span><span class=n>graph</span><span class=o>.</span><span class=n>get_graph</span><span class=p>()</span><span class=o>.</span><span class=n>draw_mermaid_png</span><span class=p>()))</span>
+<span class=k>except</span> <span class=ne>Exception</span><span class=p>:</span>
+    <span class=c1># This requires some extra dependencies and is optional</span>
+    <span class=k>pass</span>
+</code></pre></div> <p><img alt=jpeg src=../assets/graph.png></p> <p>You can also save the most up to date graph image using the following code.</p> <div class=highlight><pre><span></span><code><span class=c1># save graph image as a file</span>
+<span class=n>graph_path</span> <span class=o>=</span> <span class=s2>&quot;images/graph.png&quot;</span>
+<span class=n>graph_path</span> <span class=o>=</span> <span class=n>Path</span><span class=p>(</span><span class=n>graph_path</span><span class=p>)</span>
+<span class=n>image_data</span> <span class=o>=</span> <span class=n>io</span><span class=o>.</span><span class=n>BytesIO</span><span class=p>(</span><span class=n>graph</span><span class=o>.</span><span class=n>get_graph</span><span class=p>()</span><span class=o>.</span><span class=n>draw_mermaid_png</span><span class=p>())</span>
+<span class=n>image</span> <span class=o>=</span> <span class=n>Image</span><span class=o>.</span><span class=n>open</span><span class=p>(</span><span class=n>image_data</span><span class=p>)</span>
+<span class=n>image</span><span class=o>.</span><span class=n>save</span><span class=p>(</span><span class=n>graph_path</span><span class=p>)</span>
+</code></pre></div> <h3>3.2. Invoke the graph with an input document</h3> <p>The input document is an LLM-generated document, intentionally tricky to challenge the LLM's summarization abilities. Using the <code>anthropic.claude-3-haiku</code> model, this should fail in the fact-checker on the first attempt but should correct itself on the second attempt. You can also experiment with producing a failure output by setting <code>MAX_ITERATIONS = 1</code>, assuming it will fail on the first attempt.</p> <div class=highlight><pre><span></span><code><span class=n>doc_input</span> <span class=o>=</span> <span class=s2>&quot;&quot;&quot;</span>
+<span class=s2>The company&#39;s new product line, codenamed &quot;Project Aurora,&quot; has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we&#39;re excited to announce its launch next quarter. In fact, we&#39;ve already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there&#39;s more: Project Aurora was never actually a real project, and we&#39;ve just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that&#39;s been hiding in plain sight. Others claim that it&#39;s simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. </span>
+<span class=s2>&quot;&quot;&quot;</span>
+</code></pre></div> <div class=highlight><pre><span></span><code><span class=n>initial_state</span><span class=p>:</span> <span class=n>State</span> <span class=o>=</span> <span class=p>{</span>
+    <span class=s2>&quot;messages&quot;</span><span class=p>:</span> <span class=p>[],</span>
+    <span class=s2>&quot;doc_input&quot;</span><span class=p>:</span> <span class=n>doc_input</span><span class=p>,</span>
+<span class=p>}</span>
+
+<span class=n>event</span> <span class=o>=</span> <span class=n>graph</span><span class=o>.</span><span class=n>invoke</span><span class=p>(</span><span class=n>initial_state</span><span class=p>)</span>
+</code></pre></div> <pre><code>[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph] Entering Chain run with input:
+[0m{
+  "messages": [],
+  "doc_input": "\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n"
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:__start__] Entering Chain run with input:
+[0m{
+  "messages": [],
+  "doc_input": "\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n"
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:__start__] [0ms] Exiting Chain run with output:
+[0m{
+  "messages": [],
+  "doc_input": "\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n"
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:summarizer] Entering Chain run with input:
+[0m{
+  "messages": [],
+  "doc_input": "\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n"
+}
+summarizer() invoked
+[32;1m[1;3m[llm/start][0m [1m[chain:LangGraph &gt; chain:summarizer &gt; llm:ChatBedrockConverse] Entering LLM run with input:
+[0m{
+  "prompts": [
+    "Human: \nDocument to be summarized:\n\"\"\"\n\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n\n\"\"\"\n\nSummarize the provided document. Keep it clear and concise but do not skip any significant detail. \nIMPORTANT: Provide only the summary as the response, without any preamble."
+  ]
+}
+[36;1m[1;3m[llm/end][0m [1m[chain:LangGraph &gt; chain:summarizer &gt; llm:ChatBedrockConverse] [1.90s] Exiting LLM run with output:
+[0m{
+  "generations": [
+    [
+      {
+        "text": "The document describes a company's new product line, codenamed \"Project Aurora,\" which has been in development for several years. However, the company has decided to cancel Project Aurora and focus on other initiatives. Meanwhile, the team has been working to launch Project Aurora next quarter, and the company has already started taking pre-orders. However, it is revealed that Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes. There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems.",
+        "generation_info": null,
+        "type": "ChatGeneration",
+        "message": {
+          "lc": 1,
+          "type": "constructor",
+          "id": [
+            "langchain",
+            "schema",
+            "messages",
+            "AIMessage"
+          ],
+          "kwargs": {
+            "content": "The document describes a company's new product line, codenamed \"Project Aurora,\" which has been in development for several years. However, the company has decided to cancel Project Aurora and focus on other initiatives. Meanwhile, the team has been working to launch Project Aurora next quarter, and the company has already started taking pre-orders. However, it is revealed that Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes. There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems.",
+            "response_metadata": {
+              "ResponseMetadata": {
+                "RequestId": "aa56352d-b720-464a-9a29-8383bbbc4ea3",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                  "date": "Tue, 01 Oct 2024 21:29:05 GMT",
+                  "content-type": "application/json",
+                  "content-length": "945",
+                  "connection": "keep-alive",
+                  "x-amzn-requestid": "aa56352d-b720-464a-9a29-8383bbbc4ea3"
+                },
+                "RetryAttempts": 0
+              },
+              "stopReason": "end_turn",
+              "metrics": {
+                "latencyMs": 1797
+              }
+            },
+            "type": "ai",
+            "id": "run-50239eac-4aa8-415b-9ed2-86b2aa3daeff-0",
+            "usage_metadata": {
+              "input_tokens": 255,
+              "output_tokens": 147,
+              "total_tokens": 402
+            },
+            "tool_calls": [],
+            "invalid_tool_calls": []
+          }
+        }
+      }
+    ]
+  ],
+  "llm_output": null,
+  "run": null,
+  "type": "LLMResult"
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:summarizer &gt; chain:ChannelWrite&lt;summarizer,messages,doc_input,is_faithful,reason,num_of_iterations&gt;] Entering Chain run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:summarizer &gt; chain:ChannelWrite&lt;summarizer,messages,doc_input,is_faithful,reason,num_of_iterations&gt;] [0ms] Exiting Chain run with output:
+[0m[outputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:summarizer] [1.90s] Exiting Chain run with output:
+[0m[outputs]
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator] Entering Chain run with input:
+[0m[inputs]
+evaluator() invoked
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence] Entering Chain run with input:
+[0m{
+  "summary": "The document describes a company's new product line, codenamed \"Project Aurora,\" which has been in development for several years. However, the company has decided to cancel Project Aurora and focus on other initiatives. Meanwhile, the team has been working to launch Project Aurora next quarter, and the company has already started taking pre-orders. However, it is revealed that Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes. There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems."
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; prompt:PromptTemplate] Entering Prompt run with input:
+[0m{
+  "summary": "The document describes a company's new product line, codenamed \"Project Aurora,\" which has been in development for several years. However, the company has decided to cancel Project Aurora and focus on other initiatives. Meanwhile, the team has been working to launch Project Aurora next quarter, and the company has already started taking pre-orders. However, it is revealed that Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes. There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems."
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; prompt:PromptTemplate] [0ms] Exiting Prompt run with output:
+[0m[outputs]
+[32;1m[1;3m[llm/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; llm:ChatBedrockConverse] Entering LLM run with input:
+[0m{
+  "prompts": [
+    "Human: \nLLM-generated summary:\n\"\"\"\nThe document describes a company's new product line, codenamed \"Project Aurora,\" which has been in development for several years. However, the company has decided to cancel Project Aurora and focus on other initiatives. Meanwhile, the team has been working to launch Project Aurora next quarter, and the company has already started taking pre-orders. However, it is revealed that Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes. There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems.\n\"\"\"\nExtract all the claims from the provided summary. Extract every and every claim from the summary, never miss anything.\nEach claim should be atomic, containing only one distinct piece of information. \nThese claims will later be used to evaluate the factual accuracy of the LLM-provided summary compared to the original content. \nYour task is solely to extract the claims from the summary. \nPresent the output as a JSON list of strings, where each string represents one claim from the summary. \nRespond only with a valid JSON, nothing else, without any preamble."
+  ]
+}
+[36;1m[1;3m[llm/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; llm:ChatBedrockConverse] [1.96s] Exiting LLM run with output:
+[0m{
+  "generations": [
+    [
+      {
+        "text": "[\n  \"The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.\",\n  \"The company has decided to cancel Project Aurora and focus on other initiatives.\",\n  \"The team has been working to launch Project Aurora next quarter.\",\n  \"The company has already started taking pre-orders for Project Aurora.\",\n  \"Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.\",\n  \"There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.\",\n  \"Project Aurora is not what it seems.\"\n]",
+        "generation_info": null,
+        "type": "ChatGeneration",
+        "message": {
+          "lc": 1,
+          "type": "constructor",
+          "id": [
+            "langchain",
+            "schema",
+            "messages",
+            "AIMessage"
+          ],
+          "kwargs": {
+            "content": "[\n  \"The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.\",\n  \"The company has decided to cancel Project Aurora and focus on other initiatives.\",\n  \"The team has been working to launch Project Aurora next quarter.\",\n  \"The company has already started taking pre-orders for Project Aurora.\",\n  \"Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.\",\n  \"There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.\",\n  \"Project Aurora is not what it seems.\"\n]",
+            "response_metadata": {
+              "ResponseMetadata": {
+                "RequestId": "63c3588b-53c4-4b8d-85b9-7578b8ab8bf8",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                  "date": "Tue, 01 Oct 2024 21:29:07 GMT",
+                  "content-type": "application/json",
+                  "content-length": "941",
+                  "connection": "keep-alive",
+                  "x-amzn-requestid": "63c3588b-53c4-4b8d-85b9-7578b8ab8bf8"
+                },
+                "RetryAttempts": 0
+              },
+              "stopReason": "end_turn",
+              "metrics": {
+                "latencyMs": 1856
+              }
+            },
+            "type": "ai",
+            "id": "run-55ec5685-60a6-4ec9-a104-92a142d21584-0",
+            "usage_metadata": {
+              "input_tokens": 286,
+              "output_tokens": 159,
+              "total_tokens": 445
+            },
+            "tool_calls": [],
+            "invalid_tool_calls": []
+          }
+        }
+      }
+    ]
+  ],
+  "llm_output": null,
+  "run": null,
+  "type": "LLMResult"
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; parser:JsonOutputParser] Entering Parser run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; parser:JsonOutputParser] [0ms] Exiting Parser run with output:
+[0m{
+  "output": [
+    "The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.",
+    "The company has decided to cancel Project Aurora and focus on other initiatives.",
+    "The team has been working to launch Project Aurora next quarter.",
+    "The company has already started taking pre-orders for Project Aurora.",
+    "Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.",
+    "There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.",
+    "Project Aurora is not what it seems."
+  ]
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence] [1.96s] Exiting Chain run with output:
+[0m{
+  "output": [
+    "The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.",
+    "The company has decided to cancel Project Aurora and focus on other initiatives.",
+    "The team has been working to launch Project Aurora next quarter.",
+    "The company has already started taking pre-orders for Project Aurora.",
+    "Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.",
+    "There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.",
+    "Project Aurora is not what it seems."
+  ]
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence] Entering Chain run with input:
+[0m{
+  "doc_input": "\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n",
+  "claims_list": [
+    "The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.",
+    "The company has decided to cancel Project Aurora and focus on other initiatives.",
+    "The team has been working to launch Project Aurora next quarter.",
+    "The company has already started taking pre-orders for Project Aurora.",
+    "Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.",
+    "There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.",
+    "Project Aurora is not what it seems."
+  ]
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; prompt:PromptTemplate] Entering Prompt run with input:
+[0m{
+  "doc_input": "\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n",
+  "claims_list": [
+    "The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.",
+    "The company has decided to cancel Project Aurora and focus on other initiatives.",
+    "The team has been working to launch Project Aurora next quarter.",
+    "The company has already started taking pre-orders for Project Aurora.",
+    "Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.",
+    "There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.",
+    "Project Aurora is not what it seems."
+  ]
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; prompt:PromptTemplate] [0ms] Exiting Prompt run with output:
+[0m[outputs]
+[32;1m[1;3m[llm/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; llm:ChatBedrockConverse] Entering LLM run with input:
+[0m{
+  "prompts": [
+    "Human: \nYou are a Principal Editor at a prestigious publishing company. Your task is to evaluate whether an LLM-generated summary is faithful to the original document.\n\nYou will be presented with:\n1. The original document content\n2. Claims extracted from the LLM-generated summary\n\nInstructions:\n1. Carefully read the original document content.\n2. Examine each extracted claim from the summary individually.\n3. For each claim, determine if it is accurately represented in the original document. Express your thinking and reasoning.\n4. After evaluating all claims, provide a single JSON output with the following structure (markdown json formatting: triple backticks and \"json\"):\n```json\n{\n\"is_faithful\": boolean,\n\"reason\": \"string\" [Optional]\n}\n```\nImportant notes:\n- The \"is_faithful\" value should be true only if ALL extracted claims are accurately represented in the original document.\n- If even one claim is not faithful to the original content, set \"is_faithful\" to false.\n- When \"is_faithful\" is false, provide a clear explanation in the \"reason\" field, specifying which claim(s) are not faithful and why.\n- The \"reason\" field is optional when \"is_faithful\" is true.\n- The output should contain only one JSON output. This is how the software will parse your response. If you're responding with multiple JSON statements in your response, you're doing it wrong.\nThe original document (the source of truth):\n\"\"\"\n\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n\n\"\"\"\nExtracted claims from the LLM-generated summary:\n\"\"\"\n[\"The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.\", 'The company has decided to cancel Project Aurora and focus on other initiatives.', 'The team has been working to launch Project Aurora next quarter.', 'The company has already started taking pre-orders for Project Aurora.', 'Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.', \"There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.\", 'Project Aurora is not what it seems.']\n\"\"\"\nPlease proceed by explaining your evaluation for each claim based on the source content. Then finalize with a single JSON output in markdown json formatting (triple backticks and \"json\"). Think step by step."
+  ]
+}
+[36;1m[1;3m[llm/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; llm:ChatBedrockConverse] [7.72s] Exiting LLM run with output:
+[0m{
+  "generations": [
+    [
+      {
+        "text": "Okay, let's evaluate each claim from the LLM-generated summary against the original document content.\n\n1. \"The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.\"\nThis claim is accurate and supported by the original document, which states: \"The company's new product line, codenamed 'Project Aurora,' has been in development for several years.\"\n\n2. \"The company has decided to cancel Project Aurora and focus on other initiatives.\"\nThis claim is also accurate and supported by the original document, which states: \"However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives.\"\n\n3. \"The team has been working to launch Project Aurora next quarter.\"\nThis claim is not accurate. The original document states that the team has been working to bring Project Aurora to market, but it does not mention launching it next quarter.\n\n4. \"The company has already started taking pre-orders for Project Aurora.\"\nThis claim is accurate and supported by the original document, which states: \"In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry.\"\n\n5. \"Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.\"\nThis claim is partially accurate. The original document states that \"Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes.\" However, it also suggests that there may be more to Project Aurora than just a placeholder, as it states \"Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight.\"\n\n6. \"There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.\"\nThis claim is accurate and supported by the original document, which states: \"Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems.\"\n\n7. \"Project Aurora is not what it seems.\"\nThis claim is accurate and supported by the original document, which concludes with the statement: \"One thing is certain, though: Project Aurora is not what it seems.\"\n\nBased on the evaluation of the claims, I would say that the LLM-generated summary is not entirely faithful to the original document. While most of the claims are accurate, the third claim about launching Project Aurora next quarter is not supported by the original document. Additionally, the fifth claim about Project Aurora being a placeholder is only partially accurate, as the document suggests there may be more to it.\n\n```json\n{\n\"is_faithful\": false,\n\"reason\": \"The third claim about launching Project Aurora next quarter is not accurate, and the fifth claim about Project Aurora being a placeholder is only partially accurate.\"\n}\n```",
+        "generation_info": null,
+        "type": "ChatGeneration",
+        "message": {
+          "lc": 1,
+          "type": "constructor",
+          "id": [
+            "langchain",
+            "schema",
+            "messages",
+            "AIMessage"
+          ],
+          "kwargs": {
+            "content": "Okay, let's evaluate each claim from the LLM-generated summary against the original document content.\n\n1. \"The document describes a company's new product line, codenamed 'Project Aurora', which has been in development for several years.\"\nThis claim is accurate and supported by the original document, which states: \"The company's new product line, codenamed 'Project Aurora,' has been in development for several years.\"\n\n2. \"The company has decided to cancel Project Aurora and focus on other initiatives.\"\nThis claim is also accurate and supported by the original document, which states: \"However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives.\"\n\n3. \"The team has been working to launch Project Aurora next quarter.\"\nThis claim is not accurate. The original document states that the team has been working to bring Project Aurora to market, but it does not mention launching it next quarter.\n\n4. \"The company has already started taking pre-orders for Project Aurora.\"\nThis claim is accurate and supported by the original document, which states: \"In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry.\"\n\n5. \"Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes.\"\nThis claim is partially accurate. The original document states that \"Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes.\" However, it also suggests that there may be more to Project Aurora than just a placeholder, as it states \"Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight.\"\n\n6. \"There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line.\"\nThis claim is accurate and supported by the original document, which states: \"Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems.\"\n\n7. \"Project Aurora is not what it seems.\"\nThis claim is accurate and supported by the original document, which concludes with the statement: \"One thing is certain, though: Project Aurora is not what it seems.\"\n\nBased on the evaluation of the claims, I would say that the LLM-generated summary is not entirely faithful to the original document. While most of the claims are accurate, the third claim about launching Project Aurora next quarter is not supported by the original document. Additionally, the fifth claim about Project Aurora being a placeholder is only partially accurate, as the document suggests there may be more to it.\n\n```json\n{\n\"is_faithful\": false,\n\"reason\": \"The third claim about launching Project Aurora next quarter is not accurate, and the fifth claim about Project Aurora being a placeholder is only partially accurate.\"\n}\n```",
+            "response_metadata": {
+              "ResponseMetadata": {
+                "RequestId": "51c3c197-2c1a-4628-8296-ed3d8468a999",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                  "date": "Tue, 01 Oct 2024 21:29:15 GMT",
+                  "content-type": "application/json",
+                  "content-length": "3332",
+                  "connection": "keep-alive",
+                  "x-amzn-requestid": "51c3c197-2c1a-4628-8296-ed3d8468a999"
+                },
+                "RetryAttempts": 0
+              },
+              "stopReason": "end_turn",
+              "metrics": {
+                "latencyMs": 7621
+              }
+            },
+            "type": "ai",
+            "id": "run-885a4195-c80b-4bde-8986-f548df367b50-0",
+            "usage_metadata": {
+              "input_tokens": 737,
+              "output_tokens": 643,
+              "total_tokens": 1380
+            },
+            "tool_calls": [],
+            "invalid_tool_calls": []
+          }
+        }
+      }
+    ]
+  ],
+  "llm_output": null,
+  "run": null,
+  "type": "LLMResult"
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; parser:JsonOutputParser] Entering Parser run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; parser:JsonOutputParser] [43ms] Exiting Parser run with output:
+[0m{
+  "is_faithful": false,
+  "reason": "The third claim about launching Project Aurora next quarter is not accurate, and the fifth claim about Project Aurora being a placeholder is only partially accurate."
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence] [7.77s] Exiting Chain run with output:
+[0m{
+  "is_faithful": false,
+  "reason": "The third claim about launching Project Aurora next quarter is not accurate, and the fifth claim about Project Aurora being a placeholder is only partially accurate."
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:ChannelWrite&lt;evaluator,messages,doc_input,is_faithful,reason,num_of_iterations&gt;] Entering Chain run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:ChannelWrite&lt;evaluator,messages,doc_input,is_faithful,reason,num_of_iterations&gt;] [0ms] Exiting Chain run with output:
+[0m[outputs]
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:feedback_loop] Entering Chain run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:feedback_loop] [0ms] Exiting Chain run with output:
+[0m{
+  "output": "summarizer"
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator] [9.73s] Exiting Chain run with output:
+[0m[outputs]
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:summarizer] Entering Chain run with input:
+[0m[inputs]
+summarizer() invoked
+[32;1m[1;3m[llm/start][0m [1m[chain:LangGraph &gt; chain:summarizer &gt; llm:ChatBedrockConverse] Entering LLM run with input:
+[0m{
+  "prompts": [
+    "Human: \nDocument to be summarized:\n\"\"\"\n\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n\n\"\"\"\n\nSummarize the provided document. Keep it clear and concise but do not skip any significant detail. \nIMPORTANT: Provide only the summary as the response, without any preamble.\n\nAI: The document describes a company's new product line, codenamed \"Project Aurora,\" which has been in development for several years. However, the company has decided to cancel Project Aurora and focus on other initiatives. Meanwhile, the team has been working to launch Project Aurora next quarter, and the company has already started taking pre-orders. However, it is revealed that Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes. There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems.\nHuman: \nI gave your generated summary to our content review department, and they rejected it. Here is the feedback I received:\n\n\"\"\"\nThe generated summary is not faithful. Reason: The third claim about launching Project Aurora next quarter is not accurate, and the fifth claim about Project Aurora being a placeholder is only partially accurate.\n\"\"\"\n\nNow, please incorporate this feedback and regenerate the summary.\nIMPORTANT: Do not start with any preamble. Provide only the revised summary as your response."
+  ]
+}
+[36;1m[1;3m[llm/end][0m [1m[chain:LangGraph &gt; chain:summarizer &gt; llm:ChatBedrockConverse] [1.34s] Exiting LLM run with output:
+[0m{
+  "generations": [
+    [
+      {
+        "text": "The company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, the company has decided to cancel Project Aurora and focus on other initiatives. The document reveals conflicting information about the nature of Project Aurora, with some sources suggesting it is a highly classified initiative, while others claim it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems.",
+        "generation_info": null,
+        "type": "ChatGeneration",
+        "message": {
+          "lc": 1,
+          "type": "constructor",
+          "id": [
+            "langchain",
+            "schema",
+            "messages",
+            "AIMessage"
+          ],
+          "kwargs": {
+            "content": "The company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, the company has decided to cancel Project Aurora and focus on other initiatives. The document reveals conflicting information about the nature of Project Aurora, with some sources suggesting it is a highly classified initiative, while others claim it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems.",
+            "response_metadata": {
+              "ResponseMetadata": {
+                "RequestId": "e6d3ef86-1f77-4bf4-a7c9-41b6511c66b5",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                  "date": "Tue, 01 Oct 2024 21:29:16 GMT",
+                  "content-type": "application/json",
+                  "content-length": "703",
+                  "connection": "keep-alive",
+                  "x-amzn-requestid": "e6d3ef86-1f77-4bf4-a7c9-41b6511c66b5"
+                },
+                "RetryAttempts": 0
+              },
+              "stopReason": "end_turn",
+              "metrics": {
+                "latencyMs": 1232
+              }
+            },
+            "type": "ai",
+            "id": "run-c2b2ea1c-a2c9-4477-818f-2fbe57844c70-0",
+            "usage_metadata": {
+              "input_tokens": 509,
+              "output_tokens": 102,
+              "total_tokens": 611
+            },
+            "tool_calls": [],
+            "invalid_tool_calls": []
+          }
+        }
+      }
+    ]
+  ],
+  "llm_output": null,
+  "run": null,
+  "type": "LLMResult"
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:summarizer &gt; chain:ChannelWrite&lt;summarizer,messages,doc_input,is_faithful,reason,num_of_iterations&gt;] Entering Chain run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:summarizer &gt; chain:ChannelWrite&lt;summarizer,messages,doc_input,is_faithful,reason,num_of_iterations&gt;] [0ms] Exiting Chain run with output:
+[0m[outputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:summarizer] [1.34s] Exiting Chain run with output:
+[0m[outputs]
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator] Entering Chain run with input:
+[0m[inputs]
+evaluator() invoked
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence] Entering Chain run with input:
+[0m{
+  "summary": "The company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, the company has decided to cancel Project Aurora and focus on other initiatives. The document reveals conflicting information about the nature of Project Aurora, with some sources suggesting it is a highly classified initiative, while others claim it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems."
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; prompt:PromptTemplate] Entering Prompt run with input:
+[0m{
+  "summary": "The company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, the company has decided to cancel Project Aurora and focus on other initiatives. The document reveals conflicting information about the nature of Project Aurora, with some sources suggesting it is a highly classified initiative, while others claim it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems."
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; prompt:PromptTemplate] [0ms] Exiting Prompt run with output:
+[0m[outputs]
+[32;1m[1;3m[llm/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; llm:ChatBedrockConverse] Entering LLM run with input:
+[0m{
+  "prompts": [
+    "Human: \nLLM-generated summary:\n\"\"\"\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, the company has decided to cancel Project Aurora and focus on other initiatives. The document reveals conflicting information about the nature of Project Aurora, with some sources suggesting it is a highly classified initiative, while others claim it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems.\n\"\"\"\nExtract all the claims from the provided summary. Extract every and every claim from the summary, never miss anything.\nEach claim should be atomic, containing only one distinct piece of information. \nThese claims will later be used to evaluate the factual accuracy of the LLM-provided summary compared to the original content. \nYour task is solely to extract the claims from the summary. \nPresent the output as a JSON list of strings, where each string represents one claim from the summary. \nRespond only with a valid JSON, nothing else, without any preamble."
+  ]
+}
+[36;1m[1;3m[llm/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; llm:ChatBedrockConverse] [1.75s] Exiting LLM run with output:
+[0m{
+  "generations": [
+    [
+      {
+        "text": "[\n  \"The company has a new product line codenamed 'Project Aurora'\",\n  \"Project Aurora has been in development for several years\",\n  \"The company has decided to cancel Project Aurora\",\n  \"The company is focusing on other initiatives instead of Project Aurora\",\n  \"There is conflicting information about the nature of Project Aurora\",\n  \"Some sources suggest Project Aurora is a highly classified initiative\",\n  \"Other sources claim Project Aurora is a rebranding of the company's existing product line\",\n  \"Project Aurora is not what it seems\"\n]",
+        "generation_info": null,
+        "type": "ChatGeneration",
+        "message": {
+          "lc": 1,
+          "type": "constructor",
+          "id": [
+            "langchain",
+            "schema",
+            "messages",
+            "AIMessage"
+          ],
+          "kwargs": {
+            "content": "[\n  \"The company has a new product line codenamed 'Project Aurora'\",\n  \"Project Aurora has been in development for several years\",\n  \"The company has decided to cancel Project Aurora\",\n  \"The company is focusing on other initiatives instead of Project Aurora\",\n  \"There is conflicting information about the nature of Project Aurora\",\n  \"Some sources suggest Project Aurora is a highly classified initiative\",\n  \"Other sources claim Project Aurora is a rebranding of the company's existing product line\",\n  \"Project Aurora is not what it seems\"\n]",
+            "response_metadata": {
+              "ResponseMetadata": {
+                "RequestId": "98da9b9a-cdf6-4c9c-b8ea-e1597a60cd8d",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                  "date": "Tue, 01 Oct 2024 21:29:18 GMT",
+                  "content-type": "application/json",
+                  "content-length": "755",
+                  "connection": "keep-alive",
+                  "x-amzn-requestid": "98da9b9a-cdf6-4c9c-b8ea-e1597a60cd8d"
+                },
+                "RetryAttempts": 0
+              },
+              "stopReason": "end_turn",
+              "metrics": {
+                "latencyMs": 1644
+              }
+            },
+            "type": "ai",
+            "id": "run-5e7fff65-d3d7-40d4-83f0-06279f3e6333-0",
+            "usage_metadata": {
+              "input_tokens": 241,
+              "output_tokens": 126,
+              "total_tokens": 367
+            },
+            "tool_calls": [],
+            "invalid_tool_calls": []
+          }
+        }
+      }
+    ]
+  ],
+  "llm_output": null,
+  "run": null,
+  "type": "LLMResult"
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; parser:JsonOutputParser] Entering Parser run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; parser:JsonOutputParser] [1ms] Exiting Parser run with output:
+[0m{
+  "output": [
+    "The company has a new product line codenamed 'Project Aurora'",
+    "Project Aurora has been in development for several years",
+    "The company has decided to cancel Project Aurora",
+    "The company is focusing on other initiatives instead of Project Aurora",
+    "There is conflicting information about the nature of Project Aurora",
+    "Some sources suggest Project Aurora is a highly classified initiative",
+    "Other sources claim Project Aurora is a rebranding of the company's existing product line",
+    "Project Aurora is not what it seems"
+  ]
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence] [1.75s] Exiting Chain run with output:
+[0m{
+  "output": [
+    "The company has a new product line codenamed 'Project Aurora'",
+    "Project Aurora has been in development for several years",
+    "The company has decided to cancel Project Aurora",
+    "The company is focusing on other initiatives instead of Project Aurora",
+    "There is conflicting information about the nature of Project Aurora",
+    "Some sources suggest Project Aurora is a highly classified initiative",
+    "Other sources claim Project Aurora is a rebranding of the company's existing product line",
+    "Project Aurora is not what it seems"
+  ]
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence] Entering Chain run with input:
+[0m{
+  "doc_input": "\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n",
+  "claims_list": [
+    "The company has a new product line codenamed 'Project Aurora'",
+    "Project Aurora has been in development for several years",
+    "The company has decided to cancel Project Aurora",
+    "The company is focusing on other initiatives instead of Project Aurora",
+    "There is conflicting information about the nature of Project Aurora",
+    "Some sources suggest Project Aurora is a highly classified initiative",
+    "Other sources claim Project Aurora is a rebranding of the company's existing product line",
+    "Project Aurora is not what it seems"
+  ]
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; prompt:PromptTemplate] Entering Prompt run with input:
+[0m{
+  "doc_input": "\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n",
+  "claims_list": [
+    "The company has a new product line codenamed 'Project Aurora'",
+    "Project Aurora has been in development for several years",
+    "The company has decided to cancel Project Aurora",
+    "The company is focusing on other initiatives instead of Project Aurora",
+    "There is conflicting information about the nature of Project Aurora",
+    "Some sources suggest Project Aurora is a highly classified initiative",
+    "Other sources claim Project Aurora is a rebranding of the company's existing product line",
+    "Project Aurora is not what it seems"
+  ]
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; prompt:PromptTemplate] [0ms] Exiting Prompt run with output:
+[0m[outputs]
+[32;1m[1;3m[llm/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; llm:ChatBedrockConverse] Entering LLM run with input:
+[0m{
+  "prompts": [
+    "Human: \nYou are a Principal Editor at a prestigious publishing company. Your task is to evaluate whether an LLM-generated summary is faithful to the original document.\n\nYou will be presented with:\n1. The original document content\n2. Claims extracted from the LLM-generated summary\n\nInstructions:\n1. Carefully read the original document content.\n2. Examine each extracted claim from the summary individually.\n3. For each claim, determine if it is accurately represented in the original document. Express your thinking and reasoning.\n4. After evaluating all claims, provide a single JSON output with the following structure (markdown json formatting: triple backticks and \"json\"):\n```json\n{\n\"is_faithful\": boolean,\n\"reason\": \"string\" [Optional]\n}\n```\nImportant notes:\n- The \"is_faithful\" value should be true only if ALL extracted claims are accurately represented in the original document.\n- If even one claim is not faithful to the original content, set \"is_faithful\" to false.\n- When \"is_faithful\" is false, provide a clear explanation in the \"reason\" field, specifying which claim(s) are not faithful and why.\n- The \"reason\" field is optional when \"is_faithful\" is true.\n- The output should contain only one JSON output. This is how the software will parse your response. If you're responding with multiple JSON statements in your response, you're doing it wrong.\nThe original document (the source of truth):\n\"\"\"\n\nThe company's new product line, codenamed \"Project Aurora,\" has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we're excited to announce its launch next quarter. In fact, we've already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there's more: Project Aurora was never actually a real project, and we've just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight. Others claim that it's simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n\n\"\"\"\nExtracted claims from the LLM-generated summary:\n\"\"\"\n[\"The company has a new product line codenamed 'Project Aurora'\", 'Project Aurora has been in development for several years', 'The company has decided to cancel Project Aurora', 'The company is focusing on other initiatives instead of Project Aurora', 'There is conflicting information about the nature of Project Aurora', 'Some sources suggest Project Aurora is a highly classified initiative', \"Other sources claim Project Aurora is a rebranding of the company's existing product line\", 'Project Aurora is not what it seems']\n\"\"\"\nPlease proceed by explaining your evaluation for each claim based on the source content. Then finalize with a single JSON output in markdown json formatting (triple backticks and \"json\"). Think step by step."
+  ]
+}
+[36;1m[1;3m[llm/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; llm:ChatBedrockConverse] [5.27s] Exiting LLM run with output:
+[0m{
+  "generations": [
+    [
+      {
+        "text": "Okay, let's evaluate each of the extracted claims from the LLM-generated summary:\n\n1. \"The company has a new product line codenamed 'Project Aurora'\":\n   This claim is accurate and supported by the original document, which states that \"The company's new product line, codenamed 'Project Aurora,' has been in development for several years.\"\n\n2. \"Project Aurora has been in development for several years\":\n   This claim is also accurate and supported by the original document.\n\n3. \"The company has decided to cancel Project Aurora\":\n   This claim is partially accurate. The original document states that \"due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives.\" So the company has decided to cancel Project Aurora, but the reason is not specified.\n\n4. \"The company is focusing on other initiatives instead of Project Aurora\":\n   This claim is accurate and supported by the original document.\n\n5. \"There is conflicting information about the nature of Project Aurora\":\n   This claim is accurate and supported by the original document, which presents conflicting information about Project Aurora, such as it being a highly classified initiative or a rebranding of the company's existing product line.\n\n6. \"Some sources suggest Project Aurora is a highly classified initiative\":\n   This claim is accurate and supported by the original document, which states that \"some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight.\"\n\n7. \"Other sources claim Project Aurora is a rebranding of the company's existing product line\":\n   This claim is also accurate and supported by the original document, which states that \"Others claim that it's simply a rebranding of our existing product line.\"\n\n8. \"Project Aurora is not what it seems\":\n   This claim is accurate and supported by the original document, which concludes by stating that \"Project Aurora is not what it seems.\"\n\nBased on the evaluation of each claim, I can conclude that the LLM-generated summary is faithful to the original document. All the extracted claims are accurately represented in the source content.\n\n```json\n{\n\"is_faithful\": true,\n\"reason\": null\n}\n```",
+        "generation_info": null,
+        "type": "ChatGeneration",
+        "message": {
+          "lc": 1,
+          "type": "constructor",
+          "id": [
+            "langchain",
+            "schema",
+            "messages",
+            "AIMessage"
+          ],
+          "kwargs": {
+            "content": "Okay, let's evaluate each of the extracted claims from the LLM-generated summary:\n\n1. \"The company has a new product line codenamed 'Project Aurora'\":\n   This claim is accurate and supported by the original document, which states that \"The company's new product line, codenamed 'Project Aurora,' has been in development for several years.\"\n\n2. \"Project Aurora has been in development for several years\":\n   This claim is also accurate and supported by the original document.\n\n3. \"The company has decided to cancel Project Aurora\":\n   This claim is partially accurate. The original document states that \"due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives.\" So the company has decided to cancel Project Aurora, but the reason is not specified.\n\n4. \"The company is focusing on other initiatives instead of Project Aurora\":\n   This claim is accurate and supported by the original document.\n\n5. \"There is conflicting information about the nature of Project Aurora\":\n   This claim is accurate and supported by the original document, which presents conflicting information about Project Aurora, such as it being a highly classified initiative or a rebranding of the company's existing product line.\n\n6. \"Some sources suggest Project Aurora is a highly classified initiative\":\n   This claim is accurate and supported by the original document, which states that \"some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that's been hiding in plain sight.\"\n\n7. \"Other sources claim Project Aurora is a rebranding of the company's existing product line\":\n   This claim is also accurate and supported by the original document, which states that \"Others claim that it's simply a rebranding of our existing product line.\"\n\n8. \"Project Aurora is not what it seems\":\n   This claim is accurate and supported by the original document, which concludes by stating that \"Project Aurora is not what it seems.\"\n\nBased on the evaluation of each claim, I can conclude that the LLM-generated summary is faithful to the original document. All the extracted claims are accurately represented in the source content.\n\n```json\n{\n\"is_faithful\": true,\n\"reason\": null\n}\n```",
+            "response_metadata": {
+              "ResponseMetadata": {
+                "RequestId": "82b64878-e08e-4c85-a56e-3e22685fe522",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                  "date": "Tue, 01 Oct 2024 21:29:23 GMT",
+                  "content-type": "application/json",
+                  "content-length": "2491",
+                  "connection": "keep-alive",
+                  "x-amzn-requestid": "82b64878-e08e-4c85-a56e-3e22685fe522"
+                },
+                "RetryAttempts": 0
+              },
+              "stopReason": "end_turn",
+              "metrics": {
+                "latencyMs": 5166
+              }
+            },
+            "type": "ai",
+            "id": "run-d14a44bd-1849-4d6b-9444-6514cd8586be-0",
+            "usage_metadata": {
+              "input_tokens": 698,
+              "output_tokens": 479,
+              "total_tokens": 1177
+            },
+            "tool_calls": [],
+            "invalid_tool_calls": []
+          }
+        }
+      }
+    ]
+  ],
+  "llm_output": null,
+  "run": null,
+  "type": "LLMResult"
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; parser:JsonOutputParser] Entering Parser run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence &gt; parser:JsonOutputParser] [21ms] Exiting Parser run with output:
+[0m{
+  "is_faithful": true,
+  "reason": null
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:RunnableSequence] [5.29s] Exiting Chain run with output:
+[0m{
+  "is_faithful": true,
+  "reason": null
+}
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:ChannelWrite&lt;evaluator,messages,doc_input,is_faithful,reason,num_of_iterations&gt;] Entering Chain run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:ChannelWrite&lt;evaluator,messages,doc_input,is_faithful,reason,num_of_iterations&gt;] [0ms] Exiting Chain run with output:
+[0m[outputs]
+[32;1m[1;3m[chain/start][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:feedback_loop] Entering Chain run with input:
+[0m[inputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator &gt; chain:feedback_loop] [0ms] Exiting Chain run with output:
+[0m{
+  "output": "__end__"
+}
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph &gt; chain:evaluator] [7.04s] Exiting Chain run with output:
+[0m[outputs]
+[36;1m[1;3m[chain/end][0m [1m[chain:LangGraph] [20.02s] Exiting Chain run with output:
+[0m[outputs]
+</code></pre> <p>Print the resulting event state</p> <div class=highlight><pre><span></span><code><span class=nb>print</span><span class=p>(</span><span class=n>pprint</span><span class=o>.</span><span class=n>pp</span><span class=p>(</span><span class=n>event</span><span class=p>))</span>
+</code></pre></div> <pre><code>{'messages': [HumanMessage(content='\nDocument to be summarized:\n"""\n\nThe company\'s new product line, codenamed "Project Aurora," has been in development for several years. However, due to unforeseen circumstances, we have decided to cancel Project Aurora and focus on other initiatives. Meanwhile, our team has been working tirelessly to bring Project Aurora to market, and we\'re excited to announce its launch next quarter. In fact, we\'ve already begun taking pre-orders for the product, which is expected to revolutionize the industry. But wait, there\'s more: Project Aurora was never actually a real project, and we\'ve just been using it as a placeholder name for our internal testing purposes. Or have we? Some sources close to the company suggest that Project Aurora is, in fact, a highly classified initiative that\'s been hiding in plain sight. Others claim that it\'s simply a rebranding of our existing product line. One thing is certain, though: Project Aurora is not what it seems. \n\n"""\n\nSummarize the provided document. Keep it clear and concise but do not skip any significant detail. \nIMPORTANT: Provide only the summary as the response, without any preamble.\n', additional_kwargs={}, response_metadata={}, id='465dd7bc-1d25-4157-a57a-72547fb2f02c'),
+              AIMessage(content='The document describes a company\'s new product line, codenamed "Project Aurora," which has been in development for several years. However, the company has decided to cancel Project Aurora and focus on other initiatives. Meanwhile, the team has been working to launch Project Aurora next quarter, and the company has already started taking pre-orders. However, it is revealed that Project Aurora was never a real project and was only used as a placeholder name for internal testing purposes. There are conflicting reports about the nature of Project Aurora, with some suggesting it is a highly classified initiative and others claiming it is a rebranding of the company\'s existing product line. The document concludes that Project Aurora is not what it seems.', additional_kwargs={}, response_metadata={'ResponseMetadata': {'RequestId': 'aa56352d-b720-464a-9a29-8383bbbc4ea3', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Tue, 01 Oct 2024 21:29:05 GMT', 'content-type': 'application/json', 'content-length': '945', 'connection': 'keep-alive', 'x-amzn-requestid': 'aa56352d-b720-464a-9a29-8383bbbc4ea3'}, 'RetryAttempts': 0}, 'stopReason': 'end_turn', 'metrics': {'latencyMs': 1797}}, id='run-50239eac-4aa8-415b-9ed2-86b2aa3daeff-0', usage_metadata={'input_tokens': 255, 'output_tokens': 147, 'total_tokens': 402}),
+              HumanMessage(content='\nI gave your generated summary to our content review department, and they rejected it. Here is the feedback I received:\n\n"""\nThe generated summary is not faithful. Reason: The third claim about launching Project Aurora next quarter is not accurate, and the fifth claim about Project Aurora being a placeholder is only partially accurate.\n"""\n\nNow, please incorporate this feedback and regenerate the summary.\nIMPORTANT: Do not start with any preamble. Provide only the revised summary as your response.\n', additional_kwargs={}, response_metadata={}, id='c79bfaff-41dc-4b9f-ba5e-fabd6bf115d2'),
+              AIMessage(content='The company\'s new product line, codenamed "Project Aurora," has been in development for several years. However, due to unforeseen circumstances, the company has decided to cancel Project Aurora and focus on other initiatives. The document reveals conflicting information about the nature of Project Aurora, with some sources suggesting it is a highly classified initiative, while others claim it is a rebranding of the company\'s existing product line. The document concludes that Project Aurora is not what it seems.', additional_kwargs={}, response_metadata={'ResponseMetadata': {'RequestId': 'e6d3ef86-1f77-4bf4-a7c9-41b6511c66b5', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Tue, 01 Oct 2024 21:29:16 GMT', 'content-type': 'application/json', 'content-length': '703', 'connection': 'keep-alive', 'x-amzn-requestid': 'e6d3ef86-1f77-4bf4-a7c9-41b6511c66b5'}, 'RetryAttempts': 0}, 'stopReason': 'end_turn', 'metrics': {'latencyMs': 1232}}, id='run-c2b2ea1c-a2c9-4477-818f-2fbe57844c70-0', usage_metadata={'input_tokens': 509, 'output_tokens': 102, 'total_tokens': 611})],
+ 'doc_input': '\n'
+              'The company\'s new product line, codenamed "Project Aurora," '
+              'has been in development for several years. However, due to '
+              'unforeseen circumstances, we have decided to cancel Project '
+              'Aurora and focus on other initiatives. Meanwhile, our team has '
+              'been working tirelessly to bring Project Aurora to market, and '
+              "we're excited to announce its launch next quarter. In fact, "
+              "we've already begun taking pre-orders for the product, which is "
+              "expected to revolutionize the industry. But wait, there's more: "
+              "Project Aurora was never actually a real project, and we've "
+              'just been using it as a placeholder name for our internal '
+              'testing purposes. Or have we? Some sources close to the company '
+              'suggest that Project Aurora is, in fact, a highly classified '
+              "initiative that's been hiding in plain sight. Others claim that "
+              "it's simply a rebranding of our existing product line. One "
+              'thing is certain, though: Project Aurora is not what it '
+              'seems. \n',
+ 'is_faithful': True,
+ 'reason': ['The third claim about launching Project Aurora next quarter is '
+            'not accurate, and the fifth claim about Project Aurora being a '
+            'placeholder is only partially accurate.'],
+ 'num_of_iterations': 2}
+None
+</code></pre> <p>Show the final result</p> <div class=highlight><pre><span></span><code><span class=k>if</span> <span class=n>event</span><span class=p>[</span><span class=s2>&quot;is_faithful&quot;</span><span class=p>]:</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;The generated summary is faithful to the original document.&quot;</span><span class=p>)</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;The summary:&quot;</span><span class=p>)</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;====&quot;</span><span class=p>)</span>
+    <span class=nb>print</span><span class=p>(</span><span class=n>event</span><span class=p>[</span><span class=s2>&quot;messages&quot;</span><span class=p>][</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span><span class=o>.</span><span class=n>content</span><span class=p>)</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;====&quot;</span><span class=p>)</span>
+    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&quot;Number of iterations used: </span><span class=si>{</span><span class=n>event</span><span class=p>[</span><span class=s1>&#39;num_of_iterations&#39;</span><span class=p>]</span><span class=si>}</span><span class=s2>&quot;</span><span class=p>)</span>
+
+<span class=k>else</span><span class=p>:</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;The generated summary is not faithful to the original document.&quot;</span><span class=p>)</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;List of the reasons for the rejection:&quot;</span><span class=p>)</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;====&quot;</span><span class=p>)</span>
+    <span class=nb>print</span><span class=p>(</span><span class=n>event</span><span class=p>[</span><span class=s2>&quot;reason&quot;</span><span class=p>])</span>
+    <span class=nb>print</span><span class=p>(</span><span class=s2>&quot;====&quot;</span><span class=p>)</span>
+</code></pre></div> <pre><code>The generated summary is faithful to the original document.
+The summary:
+====
+The company's new product line, codenamed "Project Aurora," has been in development for several years. However, due to unforeseen circumstances, the company has decided to cancel Project Aurora and focus on other initiatives. The document reveals conflicting information about the nature of Project Aurora, with some sources suggesting it is a highly classified initiative, while others claim it is a rebranding of the company's existing product line. The document concludes that Project Aurora is not what it seems.
+====
+Number of iterations used: 2
+</code></pre> <h2>4. Conclusion</h2> <p>This notebook shows how to build a fact-checking system for AI summaries using LangGraph and Amazon Bedrock. It creates a loop that checks if a summary is accurate, and if not, tries to fix it. This helps make AI-generated content more reliable by catching and correcting mistakes. The system is useful for tasks where accuracy is important, like in business reports or legal documents. It demonstrates a practical way to improve AI summaries and make them more trustworthy.</p> <p>You can extend and adapt this method to your specific use cases, implementing a feedback-loop control mechanism to achieve more deterministic and trustworthy responses from LLMs</p> <h2>5. Cleanup</h2> <p>There is no clean up necessary for this notebook.</p> <form class=md-feedback name=feedback hidden> <fieldset> <legend class=md-feedback__title> Was this page helpful? </legend> <div class=md-feedback__inner> <div class=md-feedback__list> <button class="md-feedback__icon md-icon" type=submit title="This page was helpful" data-md-value=1> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M5 9v12H1V9zm4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21zm0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03z"/></svg> </button> <button class="md-feedback__icon md-icon" type=submit title="This page could be improved" data-md-value=0> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M19 15V3h4v12zM15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3zm0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97z"/></svg> </button> </div> <div class=md-feedback__note> <div data-md-value=1 hidden> Thanks for your feedback! </div> <div data-md-value=0 hidden> Thanks for your feedback! Help us improve this page by <a href="https://github.com/aws-samples/amazon-bedrock-samples/issues/new?title=[Online Feedback]: Short-Summary-of-Issue&body=Page URL: /agents-and-function-calling/open-source-agents/langgraph/langgraph-fact-checker-feedback-loop/" target=_blank rel=noopener>creating an issue</a>. </div> </div> </div> </fieldset> </form> </article> </div> <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../02_medibot_V3_agents/ class="md-footer__link md-footer__link--prev" aria-label="Previous: LangGraph Multi Agent For Medical Chatbot"> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg> </div> <div class=md-footer__title> <span class=md-footer__direction> Previous </span> <div class=md-ellipsis> LangGraph Multi Agent For Medical Chatbot </div> </div> </a> <a href=../langgraph-multi-agent-sql-tools/ class="md-footer__link md-footer__link--next" aria-label="Next: LangGraph Multi Agent Orchestration"> <div class=md-footer__title> <span class=md-footer__direction> Next </span> <div class=md-ellipsis> LangGraph Multi Agent Orchestration </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-copyright> <div class=md-copyright__highlight> Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. </div> </div> <div class=md-social> <a href=https://github.com/aws-samples/amazon-bedrock-samples/tree/main target=_blank rel=noopener title=github.com class=md-social__link> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 496 512"><!-- Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg> </a> </div> </div> </div> </footer> </div> <div class=md-dialog data-md-component=dialog> <div class="md-dialog__inner md-typeset"></div> </div> <script id=__config type=application/json>{"base": "../../../..", "features": ["tags", "toc.integrate", "content.code.copy", "content.code.select", "content.code.annotate", "navigation.footer", "search.highlight", "search.suggest"], "search": "../../../../assets/javascripts/workers/search.6ce7567c.min.js", "tags": {"Compatibility": "compat"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script> <script src=../../../../assets/javascripts/bundle.88dd0f4e.min.js></script> <script src=../../../../javascript/feedback.js></script> </body> </html>
