@@ -40,16 +40,17 @@ Your input JSONL file should contain one JSON object per line with the following
     "expected_output_tokens": 50,  // number of tokens expected in output
     "task_type": "Text-Generation",  // currently supports Text-Generation
     "model_id": "us.meta.llama3-1-70b-instruct-v1:0",  // model identifier
-    "inference_profile": "optimized"  // optimization setting
+    "region": "us-west-2", // region where you want to benchmark model latency metrics
+    "inference_profile": "optimized"  // optimization setting 
 }
 ```
 
 #### Example entries from the test dataset:
 
 ```json
-{"text_prompt": "Summarize the key features of cloud computing in one sentence.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.meta.llama3-1-70b-instruct-v1:0", "inference_profile": "optimized"}
-{"text_prompt": "Explain the concept of machine learning in simple terms.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.anthropic.claude-3-5-haiku-20241022-v1:0", "inference_profile": "optimized"}
-{"text_prompt": "Explain the concept of machine learning in simple terms.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.anthropic.claude-3-5-haiku-20241022-v1:0", "inference_profile": "standard"}
+{"text_prompt": "Summarize the key features of cloud computing in one sentence.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.meta.llama3-1-70b-instruct-v1:0", "region": "us-east-2", "inference_profile": "optimized"}
+{"text_prompt": "Explain the concept of machine learning in simple terms.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.anthropic.claude-3-5-haiku-20241022-v1:0", "region": "us-east-2", "inference_profile": "optimized"}
+{"text_prompt": "Explain the concept of machine learning in simple terms.", "expected_output_tokens": 50, "task_type": "Text-Generation", "model_id": "us.anthropic.claude-3-5-haiku-20241022-v1:0", "region": "us-east-2", "inference_profile": "standard"}
 ```
 
 ## Important notes
@@ -59,5 +60,4 @@ Your input JSONL file should contain one JSON object per line with the following
 - More test runs give more accurate results
 
 ## Need help?
-
-Check the comments in the code for more detailed information about each part of the framework.
+Check the comments in the code for more detailed information about each part of the framework or open an issue.
