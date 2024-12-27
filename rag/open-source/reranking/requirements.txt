@@ -1,0 +1,9 @@
+boto3==1.35.87
+opensearch-py==2.4.2
+langchain
+langchain-community
+langchain-core
+pypdf
+langchain-aws
+langchain-text-splitters
+requests_aws4auth
