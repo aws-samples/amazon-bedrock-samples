@@ -133,15 +133,15 @@ class KnowledgeBasesForAmazonBedrock:
                 valid_embeddings_str = str(valid_embedding_models)
                 raise ValueError(f"Invalid embedding model. Your embedding model should be one of {valid_embeddings_str}")
             # self.embedding_model = embedding_model
-            encryption_policy_name = f"{kb_name}-sp-{self.suffix}"
-            network_policy_name = f"{kb_name}-np-{self.suffix}"
-            access_policy_name = f'{kb_name}-ap-{self.suffix}'
-            kb_execution_role_name = f'AmazonBedrockExecutionRoleForKnowledgeBase_{self.suffix}'
-            fm_policy_name = f'AmazonBedrockFoundationModelPolicyForKnowledgeBase_{self.suffix}'
-            s3_policy_name = f'AmazonBedrockS3PolicyForKnowledgeBase_{self.suffix}'
-            oss_policy_name = f'AmazonBedrockOSSPolicyForKnowledgeBase_{self.suffix}'
-            vector_store_name = f'{kb_name}-{self.suffix}'
-            index_name = f"{kb_name}-index-{self.suffix}"
+            encryption_policy_name = f"{kb_name}-sp-{policy_suffix}"
+            network_policy_name = f"{kb_name}-np-{policy_suffix}"
+            access_policy_name = f'{kb_name}-ap-{policy_suffix}'
+            kb_execution_role_name = f'AmazonBedrockExecutionRoleForKnowledgeBase_{policy_suffix}'
+            fm_policy_name = f'AmazonBedrockFoundationModelPolicyForKnowledgeBase_{policy_suffix}'
+            s3_policy_name = f'AmazonBedrockS3PolicyForKnowledgeBase_{policy_suffix}'
+            oss_policy_name = f'AmazonBedrockOSSPolicyForKnowledgeBase_{policy_suffix}'
+            vector_store_name = f'{kb_name}-{self.suffix}-{policy_suffix}'
+            index_name = f"{kb_name}-index-{self.suffix}-{policy_suffix}"
             print("========================================================================================")
             print(f"Step 1 - Creating or retrieving {data_bucket_name} S3 bucket for Knowledge Base documents")
             self.create_s3_bucket(data_bucket_name)
