@@ -2,12 +2,16 @@ import boto3
 import random
 import time
 import json
+import os
 import uuid
+import logging
+from botocore.exceptions import ClientError
 
 suffix = random.randrange(200, 900)
 boto3_session = boto3.session.Session()
 region_name = boto3_session.region_name
 iam_client = boto3_session.client('iam')
+s3_client = boto3_session.client('s3')
 account_number = boto3.client('sts').get_caller_identity().get('Account')
 identity = boto3.client('sts').get_caller_identity()['Arn']
 
@@ -119,3 +123,163 @@ def ingest_documents_dla(
         request['clientToken'] = client_token
 
     return bedrock_agent_client.ingest_knowledge_base_documents(**request)
+
+
+def create_kedra_genai_index_role(kendra_role_name, bucket_name, account_id):
+    kendra_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "cloudwatch:PutMetricData"
+                ],
+                "Resource": "*",
+                "Condition": {
+                    "StringEquals": {
+                        "cloudwatch:namespace": "AWS/Kendra"
+                    }
+                }
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "logs:DescribeLogGroups"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "logs:CreateLogGroup"
+                ],
+                "Resource": [
+                    f"arn:aws:logs:{region_name}:{account_id}:log-group:/aws/kendra/*"
+                ]
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "logs:DescribeLogStreams",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                ],
+                "Resource": [
+                    f"arn:aws:logs:{region_name}:{account_id}:log-group:/aws/kendra/*:log-stream:*"
+                ]
+            }
+        ]
+    }
+
+    s3_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:GetObject",
+                    "s3:ListBucket"
+                ],
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}",
+                    f"arn:aws:s3:::{bucket_name}/*"
+                ],
+                "Condition": {
+                    "StringEquals": {
+                        "aws:ResourceAccount": f"{account_id}"
+                    }
+                }
+            }
+        ]
+    }
+
+    assume_role_policy_document = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "kendra.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+            }
+        ]
+    }
+
+    # create policies based on the policy documents
+    s3_policy = iam_client.create_policy(
+        PolicyName='s3_permissions',
+        PolicyDocument=json.dumps(s3_policy_document),
+        Description='Policy for kendra to access and write to s3 bucket'
+        )
+    
+    kendra_policy = iam_client.create_policy(
+        PolicyName='kendra_permissions',
+        PolicyDocument=json.dumps(kendra_policy_document),
+        Description='Policy for kendra to access and write to cloudwatch'
+        )
+
+    
+    # create Kendra Gen AI Index role
+    kendra_genai_index_role=iam_client.create_role(
+        RoleName=kendra_role_name,
+        AssumeRolePolicyDocument=json.dumps(assume_role_policy_document),
+        Description='Role for Kendra Gen AI Index',
+        MaxSessionDuration=3600
+        )
+
+    # fetch arn of the policies and role created above
+    kendra_genai_index_role_arn=kendra_genai_index_role['Role']['Arn']
+    s3_policy_arn=s3_policy['Policy']['Arn']
+    kendra_policy_arn=kendra_policy['Policy']['Arn']
+    
+
+    # attach policies to Kendra Gen AI Index role
+    iam_client.attach_role_policy(
+        RoleName=kendra_role_name,
+        PolicyArn=s3_policy_arn
+    )
+
+    iam_client.attach_role_policy(
+        RoleName=kendra_role_name,
+        PolicyArn=kendra_policy_arn
+    )
+
+    return kendra_genai_index_role
+
+# create s3 bucket
+
+def create_bucket(bucket_name, region=None):
+    """Create an S3 bucket in a specified region
+
+    If a region is not specified, the bucket is created in the S3 default
+    region (us-east-1).
+
+    :param bucket_name: Bucket to create
+    :param region: String region to create bucket in, e.g., 'us-west-2'
+    :return: True if bucket created, else False
+    """
+
+    # Create bucket
+    try:
+        if region is None:
+            s3_client = boto3.client('s3')
+            resp=s3_client.create_bucket(Bucket=bucket_name)
+        else:
+            s3_client = boto3.client('s3', region_name=region)
+            location = {'LocationConstraint': region}
+            s3_client.create_bucket(Bucket=bucket_name,
+                                    CreateBucketConfiguration=location)
+    except ClientError as e:
+        logging.error(e)
+        return False
+    return resp
+
+# upload data to s3
+
+def upload_to_s3(path, bucket_name):
+        for root,dirs,files in os.walk(path):
+            for file in files:
+                file_to_upload = os.path.join(root,file)
+                print(f"uploading file {file_to_upload} to {bucket_name}")
+                s3_client.upload_file(file_to_upload,bucket_name,file)
