@@ -58,3 +58,4 @@ agents-and-function-calling/bedrock-agents/agent-blueprint-templates/.cdk.stagin
 agents-and-function-calling/bedrock-agents/agent-blueprint-templates/.package-lock.json
 agents-and-function-calling/bedrock-agents/agent-blueprint-templates/yarn.lock
 
+config.py
