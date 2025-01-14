@@ -1,17 +1,28 @@
 # Build a simple RAG Application with Amazon Bedrock Flows 
 
-
-Bedrock Flows accelerates the creation, testing, and deployment of user-defined workflows for generative AI applications through an intuitive visual builder. Using Bedrock prompt flows, users can drag, drop and link Prompts, existing Agents, Knowledge Bases, Guardrails and other AWS services. This enables generative AI teams to build a business logic via workflow creations. 
+Amazon Bedrock Flows accelerates the creation, testing, and deployment of user-defined workflows for generative AI applications through an intuitive visual builder. Using Bedrock prompt flows, users can drag, drop and link Prompts, existing Agents, Knowledge Bases, Guardrails and other AWS services. This enables generative AI teams to build a business logic via workflow creations. 
 
 In this example, we will be building a simple RAG application. We will follow the following steps:
 
-1. We will be creating a RAG prompt. This prompt will be stored in Amazon Bedrock within the prompt management feature functionality. Prompt management on Bedrock simplifies the creation, evaluation, versioning, and sharing of prompts to help developers and prompt engineers get the best responses from foundation models (FMs) for their use cases. 
+## Overview
 
-1. Next, we will create a knowledge base, which will store sample information about AWS services. 
+This example focuses on building a basic **RAG (Retrieval-Augmented Generation)** application. The high-level steps are:
 
-1. We will create a prompt flow with the user provided prompt, retrieval of chunks from the knowledge base via a lambda function, followed by answering the user defined question. We will also introduce Guardrails and update our flow at the end.
+1. **Create a RAG prompt** and a **router prompt** and store it in **Bedrock prompt management**.  
+   - Bedrock prompt management simplifies the creation, evaluation, versioning, and sharing of prompts, ensuring you can easily reuse and maintain them.
+   - In this example we create two prompts, one for RAG and one as a router prompt. The router prompt is powered by an SLM (`haiku`) to route requests and figure
+   out whether a question is of one type versus another
+   
+1. **Apply a condition** via the router, to route requests to different Knowledge Bases based on different user questions.
 
-1. Lastly, we want to be able to access the prompt flow from an external application via an API or export it via a CloudFormation template. We will be doing so at the end. This helps developers to seamlessly access their RAG applications through a simple invocation.
+1. **Create two knowledge bases** that contains sample information about AWS services. One of the knowledge bases contains information about basic AWS services and the other contains information about specific generative AI services.
+
+3. **Create a prompt flow** that:
+   - Takes a user-provided question.
+   - Routes the request to the right KB based on the condition.
+   - Retrieve relevant chunks from the knowledge base.
+   - Sends the retrieved context and user question to a foundation model for an answer along with a RAG prompt stored in the prompt management library.
+   - Return the final output to the user.
 
 
 [Amazon Bedrock Prompt Management](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-management.html) streamlines the creation, evaluation, deployment, and sharing of prompts in the Amazon Bedrock console and via APIs in the SDK. This feature helps developers and business users obtain the best responses from foundation models for their specific use cases.
