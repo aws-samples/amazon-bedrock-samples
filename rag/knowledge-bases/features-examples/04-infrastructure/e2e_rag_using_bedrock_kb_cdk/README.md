@@ -13,7 +13,7 @@ Following resources will get created and deployed:
 ```
     -  git clone https://github.com/aws-samples/amazon-bedrock-samples.git
     
-    -  cd knowledge-bases/features-examples/04-infrastructure/e2e-rag-deployment-using-bedrock-kb-cdk
+    -  cd cd knowledge-bases/features-examples/04-infrastructure/e2e_rag_using_bedrock_kb_cdk
 
 ```
 This project is set up like a standard Python project.  The initialization
@@ -32,26 +32,26 @@ in requirements.txt.*
 To manually create a virtualenv on MacOS and Linux:
 
 ```
-$ python3 -m venv .venv
+python3 -m venv .venv
 ```
 
 After the init process completes and the virtualenv is created, you can use the following
 step to activate your virtualenv.
 
 ```
-$ source .venv/bin/activate
+source .venv/bin/activate
 ```
 
 If you are a Windows platform, you would activate the virtualenv like this:
 
 ```
-% .venv\Scripts\activate.bat
+.venv\Scripts\activate.bat
 ```
 
 Once the virtualenv is activated, you can install the required dependencies.
 
 ```
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### IMPORTANT : Update Config file 
@@ -88,27 +88,27 @@ cdk bootstrap
 
 
 ```
-$ cdk synth
+cdk synth
 ```
 
 As this deployment contains multiple stacks, you have to deploy them in a specific sequence. Deploy the stack(s) in following order
 
 ```
-$ cdk deploy KbRoleStack 
+cdk deploy KbRoleStack 
 ```
 
 ```
-$ cdk deploy OpenSearchServerlessInfraStack 
+cdk deploy OpenSearchServerlessInfraStack 
 ```
 
 ```
-$ cdk deploy KbInfraStack 
+cdk deploy KbInfraStack 
 ```
 
 To Destroy the stack(s)
 
 ```
-$ cdk destroy --all 
+cdk destroy --all 
 ```
 
 To add additional dependencies, for example other CDK libraries, just add
