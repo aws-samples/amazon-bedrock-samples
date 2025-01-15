@@ -7,7 +7,6 @@ from aws_cdk import (
     aws_sns as sns,
     aws_sns_subscriptions as subs,
     aws_ssm as ssm
-
 )
 import aws_cdk as cdk
 from config import EnvSettings, KbConfig, DsConfig
@@ -22,9 +21,10 @@ class KbRoleStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # The code that defines your stack goes here
+        # Get the partition dynamically - will be 'aws-us-gov' in GovCloud
+        partition = Stack.of(self).partition
 
-        # Create KB Role
+        # Create KB Role with partition-aware ARNs
         self.kbrole = iam.Role(
           self,
           "KB_Role",
@@ -33,7 +33,9 @@ class KbRoleStack(Stack):
               "bedrock.amazonaws.com",
               conditions={
                   "StringEquals": {"aws:SourceAccount": account_id},
-                  "ArnLike": {"aws:SourceArn": f"arn:aws:bedrock:{region}:{account_id}:knowledge-base/*"},
+                  "ArnLike": {
+                      "aws:SourceArn": f"arn:{partition}:bedrock:{region}:{account_id}:knowledge-base/*"
+                  },
               },
           ),
           inline_policies={
@@ -43,7 +45,7 @@ class KbRoleStack(Stack):
                           sid="BedrockInvokeModelStatement",
                           effect=iam.Effect.ALLOW,
                           actions=["bedrock:InvokeModel"],
-                          resources=[f"arn:aws:bedrock:{region}::foundation-model/*"],
+                          resources=[f"arn:{partition}:bedrock:{region}::foundation-model/*"],
                       )
                   ]
               ),
@@ -53,7 +55,7 @@ class KbRoleStack(Stack):
                           sid="OpenSearchServerlessAPIAccessAllStatement",
                           effect=iam.Effect.ALLOW,
                           actions=["aoss:APIAccessAll"],
-                          resources=[f"arn:aws:aoss:{region}:{account_id}:collection/*"],
+                          resources=[f"arn:{partition}:aoss:{region}:{account_id}:collection/*"],
                       )
                   ]
               ),
@@ -63,22 +65,20 @@ class KbRoleStack(Stack):
                           sid="S3ListBucketStatement",
                           effect=iam.Effect.ALLOW,
                           actions=["s3:ListBucket"],
-                          resources=[f"arn:aws:s3:::{bucket_name}"],
+                          resources=[f"arn:{partition}:s3:::{bucket_name}"],
                       ),
                       iam.PolicyStatement(
                           sid="S3GetObjectStatement",
                           effect=iam.Effect.ALLOW,
                           actions=["s3:GetObject"],
-                          resources=[f"arn:aws:s3:::{bucket_name}/*"],
+                          resources=[f"arn:{partition}:s3:::{bucket_name}/*"],
                       ),
                   ]
               ),
-              
           },
         )
         
-        # create an SSM parameters which store export values
+        # Create an SSM parameter which stores export values
         ssm.StringParameter(self, 'kbRoleArn',
-                            parameter_name="/e2e-rag/kbRoleArn",
-                            string_value=self.kbrole.role_arn)
-       
+                          parameter_name="/e2e-rag/kbRoleArn",
+                          string_value=self.kbrole.role_arn)
