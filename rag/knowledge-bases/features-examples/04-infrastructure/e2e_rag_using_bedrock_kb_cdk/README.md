@@ -13,7 +13,9 @@ Following resources will get created and deployed:
 ```
     -  git clone https://github.com/aws-samples/amazon-bedrock-samples.git
     
-    -  cd cd knowledge-bases/features-examples/04-infrastructure/e2e_rag_using_bedrock_kb_cdk
+reinvent-kb-features
+    -  cd knowledge-bases/features-examples/04-infrastructure/e2e_rag_using_bedrock_kb_cdk
+main
 
 ```
 This project is set up like a standard Python project.  The initialization
