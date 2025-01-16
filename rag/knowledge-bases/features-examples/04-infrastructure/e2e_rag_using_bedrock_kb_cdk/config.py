@@ -12,19 +12,19 @@ CHUNKING_STRATEGIES = {0:"Default chunking",1:"Fixed-size chunking", 2:"No chunk
 
 class EnvSettings:
     # General params
-    ACCOUNT_ID =  "<you-account-id>" # TODO: Change this to your account
-    ACCOUNT_REGION = "<aws-region>" # TODO: Change this to your region
-    RAG_PROJ_NAME = "e2e-rag" # TODO: Change this to any name of your choice
+    ACCOUNT_ID =  "102192972220" # TODO: Change this to your account
+    ACCOUNT_REGION = "us-gov-west-1" # TODO: Change this to your region
+    RAG_PROJ_NAME = "kb-stack" # TODO: Change this to any name of your choice
 
 class KbConfig:
     KB_ROLE_NAME = f"{EnvSettings.RAG_PROJ_NAME}-kb-role"
     EMBEDDING_MODEL_ID = EMBEDDING_MODEL_IDs[0]
-    CHUNKING_STRATEGY = CHUNKING_STRATEGIES[1] # TODO: Choose the Chunking option 0,1,2
+    CHUNKING_STRATEGY = CHUNKING_STRATEGIES[0] # TODO: Choose the Chunking option 0,1,2
     MAX_TOKENS = 512 # TODO: Change this value accordingly if you choose "FIXED_SIZE" chunk strategy
     OVERLAP_PERCENTAGE = 20 # TODO: Change this value accordingly
 
 class DsConfig:
-    S3_BUCKET_NAME = f"<change this to your bucket name>" # TODO: Change this to the S3 bucket where your data is stored
+    S3_BUCKET_NAME = f"kb-simple-bedrock" # TODO: Change this to the S3 bucket where your data is stored
 
 class OpenSearchServerlessConfig:
     COLLECTION_NAME = f"{EnvSettings.RAG_PROJ_NAME}-kb-collection"
