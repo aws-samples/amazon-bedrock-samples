@@ -1,0 +1,7 @@
+boto3
+opensearch-py
+botocore
+awscli
+retrying
+opensearch-py==2.3.1 
+pypdf
