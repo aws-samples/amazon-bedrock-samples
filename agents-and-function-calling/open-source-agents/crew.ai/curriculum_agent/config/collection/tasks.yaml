@@ -1,0 +1,103 @@
+task_local_demographics_research:
+  description: >
+    Do some cursory research on the demographics of {location} to understand cultural backgrounds,
+    socioeconomics, family structures, languages spoken, and political views.
+    Stop once you have enough information.
+  expected_output: >
+    A bulleted list with 5 points of the most relevant demographic information about {location}.
+    Formatted as markdown without '```'
+  agent: student_demographics
+  output_file: logs/tasks/outputs/collection/task_local_demographics_research/output.md
+
+task_grade_and_age:
+  description: >
+    Ask the human the number of students in their class, the general age range of the students and what 
+    grade of school they're teaching, if applicable.
+  expected_output: >
+    A report with a description of student count for the class, age ranges and grade level of the students
+    Formatted as markdown without '```'
+  agent: student_demographics
+  output_file: logs/tasks/outputs/collection/task_grade_and_age/output.md
+
+task_reading_level:
+  description: >
+    Work with the human to understand the reading level of the students with an age range of {age_range} in grade {grade}.
+    The teacher has {number_students} students in their class.
+  expected_output: >
+    A report with a description of the reading level of the students
+    Formatted as markdown without '```'
+  agent: student_demographics
+  output_file: logs/tasks/outputs/collection/task_reading_level/output.md
+
+task_special_needs:
+  description: >
+    Work with the human to understand any special needs of the students. Be sure to
+    understand exactly what the learning disabilities are and how they impact learning. 
+    Ask no more than 2 questions.
+    Here's 
+    some information they provided: 
+    {special_needs}
+  expected_output: >
+    A report with a description of the special needs of the students
+    Formatted as markdown without '```'
+  agent: classroom_environment_specialist
+  output_file: logs/tasks/outputs/collection/task_special_needs/output.md
+
+task_available_resources:
+  description: >
+    Work with the human to understand the available resources for the students, 
+    including staff, technology, tutoring, and other resources.
+    Be sure to understand exactly what the resources are and how they impact learning.
+    Think carefully about the human response.
+    If you need to ask another question to clarify, state your reasons why before asking.
+    Ask no more than 2 questions.
+  expected_output: >
+    A report no longer than 3 sentences describing the available resources for the students
+    Formatted as markdown without '```'
+  agent: classroom_environment_specialist
+  output_file: logs/tasks/outputs/collection/task_available_resources/output.md
+
+task_room_layout:
+  description: >
+    The teacher has a venue with the following details: {venue}.
+    Work with the human to understand further details like furniture, windows, or other quiet spaces. 
+    Be sure to understand exactly what the room layout is and how it impacts learning.
+    Think carefully about the human response.
+    If you need to ask another question to clarify, state your reasons why before asking.
+    Ask no more than 2 questions.
+  expected_output: >
+    A report no longer than 3 sentences describing the room layout for the students
+    Formatted as markdown without '```'
+  agent: classroom_environment_specialist
+  output_file: logs/tasks/outputs/collection/task_room_layout/output.md
+
+task_local_news:
+  description: >
+    Research any local news in {location} in the media as of {current_date} that may impact learning for the students. This can include
+    events their parents or friends may be talking about, or events that impact their community. 
+  expected_output: >
+    A summary report no longer than 3 sentences describing the most important local news for the students
+    Formatted as markdown without '```'
+  agent: community_liaison
+  output_file: logs/tasks/outputs/collection/task_local_news/output.md
+
+task_school_news:
+  description: >
+    Research any community news or upcoming events near {location} as of {current_date} that may impact learning for the students. 
+    These could be events that offer learning opportunities, or events that impact the school.
+  expected_output: >
+    A summary report no longer than 3 sentences describing the most important school news and upcoming events for the students
+    Formatted as markdown without '```'
+  agent: community_liaison
+  output_file: logs/tasks/outputs/collection/task_school_news/output.md
+
+task_national_news:
+  description: >
+    Research any national news for the country of {location} in the media as of {current_date} that may impact students emotionally or offer
+    a chance to teach something valuable.
+    These could be events that impact national sentiment or are on the minds of the students.
+  expected_output: >
+    A summary report no longer than 3 sentences describing the most important national news the students may be paying attention to.
+    Formatted as markdown without '```'
+  agent: community_liaison
+  output_file: logs/tasks/outputs/collection/task_national_news/output.md

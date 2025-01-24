@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+boto3 = "==1.36.0"
+botocore = "==1.36.0"
+crewai = "==0.98.0"
+ipython = "==8.31.0"
+langchain-community= "==0.3.15"
+
+[dev-packages]
+ipykernel = "*"
+
+[requires]
+python_version = "3.12.1"
