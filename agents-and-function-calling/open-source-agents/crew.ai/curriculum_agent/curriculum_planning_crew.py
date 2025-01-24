@@ -5,128 +5,152 @@ from crewai.memory.entity.entity_memory import EntityMemory
 import crew_helpers
 from proj_tools import ProjectTools
 from llm_config import MEMORY_EMBEDDER, LLMModels
-from logger import CustomLogger
+from logger import CustomLogger 
 
-logger = CustomLogger("info_collection_crew").get_logger()
-AGENTS_CONFIG_FILE = "config/collection/agents.yaml"
-TASKS_CONFIG_FILE = "config/collection/tasks.yaml"
+# variables
+AGENTS_CONFIG_FILE = "config/planning/agents.yaml"
+TASKS_CONFIG_FILE = "config/planning/tasks.yaml"
 TOOLS = ProjectTools()
+CREW_NAME = "Curriculum_planning_crew"
+
+# initialize logger
+logger = CustomLogger(CREW_NAME).get_logger()
 
 @CrewBase
-class InfoCollectionCrew():
-    crew_name = "information_collection_crew"
+class CurriculumPlanningCrew():
+    """Curriculum Planning Crew"""
+    crew_name = CREW_NAME
     data_dir = f"data_dir/{crew_name}"
     agents_config = AGENTS_CONFIG_FILE
     tasks_config = TASKS_CONFIG_FILE
-    
+
     def __init__(self):
         logger.info(f"Initializing {self.crew_name}")
         logger.info(f"Tasks config file: {self.tasks_config}")
     
     @agent
-    def student_demographics(self) -> Agent:
-        config = self.agents_config['student_demographics']
-        logger.info(f"Creating student_demographics agent with config: {config}")
+    def desired_results(self) -> Agent:
+        config = self.agents_config['desired_results']
         return Agent(
             config=config,
             verbose=True,
-            llm=LLMModels.get_claude_haiku(),
+            step_callback=crew_helpers._step_callback,
+            llm=LLMModels.get_claude_sonnet(),
             function_calling_llm=LLMModels.get_nova_pro(),
-            tools=[TOOLS.google_search],
-            memory=True
+            tools=[
+                TOOLS.google_search, 
+                ]
         )
     
-    @agent 
-    def classroom_environment_specialist(self) -> Agent:
-        config = self.agents_config['classroom_environment_specialist']
-        logger.info(f"Creating classroom_environment_specialist agent with config: {config}")
+    @agent
+    def evidence_and_assessment(self) -> Agent:
+        config = self.agents_config['evidence_and_assessment']
         return Agent(
             config=config,
             verbose=True,
-            llm=LLMModels.get_claude_haiku(),
+            step_callback=crew_helpers._step_callback,
+            llm=LLMModels.get_claude_sonnet(),
             function_calling_llm=LLMModels.get_nova_pro(),
-            tools=[TOOLS.ask_questions]
+            memory=True,
+            full_output=True,
+            tools=[
+                TOOLS.google_search, 
+                # TOOLS.student_demographics_search # doesn't support bedrock yet
+                ]
             )
     
     @agent
-    def community_liaison(self) -> Agent:
-        config = self.agents_config['community_liaison']
-        logger.info(f"Creating community_liaison agent with config: {config}")
+    def learning_plan(self) -> Agent:
+        config = self.agents_config['learning_plan']
         return Agent(
             config=config,
             verbose=True,
-            llm=LLMModels.get_claude_haiku(),
+            step_callback=crew_helpers._step_callback,
+            llm=LLMModels.get_claude_sonnet(),
             function_calling_llm=LLMModels.get_nova_pro(),
-            tools=[TOOLS.google_search, TOOLS.google_news_search, TOOLS.ask_questions]
+            memory=True,
+            full_output=True,
+            tools=[
+                TOOLS.google_search, 
+                # TOOLS.student_demographics_search # doesn't support bedrock yet
+                ]
         )
     
     @task
-    def research_local_demographics(self) -> Task:
-        task_name = 'task_local_demographics_research'
-        logger.info(f"Creating task: {task_name}")
+    def task_transfer_learning(self) -> Task:
+        task_name = 'task_transfer_learning'
         return Task(
             name=task_name,
             config=self.tasks_config[task_name]
         )
 
     @task
-    def evaluate_reading_level(self) -> Task:
-        task_name = 'task_reading_level'
-        logger.info(f"Creating task: {task_name}")
+    def task_understandings(self) -> Task:
+        task_name = 'task_understandings'
         return Task(
             name=task_name,
             config=self.tasks_config[task_name]
         )
 
     @task
-    def identify_special_needs(self) -> Task:
-        task_name = 'task_special_needs'
-        logger.info(f"Creating task: {task_name}")
+    def task_essential_questions(self) -> Task:
+        task_name = 'task_essential_questions'
         return Task(
             name=task_name,
             config=self.tasks_config[task_name]
         )
 
     @task
-    def get_available_resources(self) -> Task:
-        task_name = 'task_available_resources'
-        logger.info(f"Creating task: {task_name}")
+    def task_acquired_knowledge(self) -> Task:
+        task_name = 'task_acquired_knowledge'
         return Task(
             name=task_name,
             config=self.tasks_config[task_name]
         )
     
     @task
-    def get_room_layout(self) -> Task:
-        task_name = 'task_room_layout'
-        logger.info(f"Creating task: {task_name}")
+    def task_acquired_skills(self) -> Task:
+        task_name = 'task_acquired_skills'
         return Task(
             name=task_name,
             config=self.tasks_config[task_name]
         )
 
     @task
-    def task_local_news(self) -> Task:
-        task_name = 'task_local_news'
-        logger.info(f"Creating task: {task_name}")
+    def task_evaluative_criteria(self) -> Task:
+        task_name = 'task_evaluative_criteria'
         return Task(
             name=task_name,
             config=self.tasks_config[task_name]
         )
 
     @task
-    def task_school_news(self) -> Task:
-        task_name = 'task_school_news'
-        logger.info(f"Creating task: {task_name}")
+    def task_performance_tasks(self) -> Task:
+        task_name = 'task_performance_tasks'
         return Task(
             name=task_name,
             config=self.tasks_config[task_name]
         )
 
     @task
-    def task_national_news(self) -> Task:
-        task_name = 'task_national_news'
-        logger.info(f"Creating task: {task_name}")
+    def task_other_evidence(self) -> Task:
+        task_name = 'task_other_evidence'
+        return Task(
+            name=task_name,
+            config=self.tasks_config[task_name]
+        )
+    
+    @task
+    def task_learning_sequence(self) -> Task:
+        task_name = 'task_learning_sequence'
+        return Task(
+            name=task_name,
+            config=self.tasks_config[task_name]
+        )
+
+    @task
+    def task_instructional_strategies(self) -> Task:
+        task_name = 'task_instructional_strategies'
         return Task(
             name=task_name,
             config=self.tasks_config[task_name]
@@ -134,30 +158,30 @@ class InfoCollectionCrew():
     
     @crew
     def crew(self) -> Crew:
-        logger.info(f"Creating crew: {self.crew_name}")
         crew = Crew(
             name=self.crew_name,
             agents=[
-                self.student_demographics(),
-                self.classroom_environment_specialist(),
-                self.community_liaison(),
+                self.desired_results(),
+                self.evidence_and_assessment()
             ],
             tasks=[
-                self.research_local_demographics(),
-                self.evaluate_reading_level(),
-                self.identify_special_needs(),
-                self.get_available_resources(),
-                self.get_room_layout(),
-                self.task_local_news(),
-                self.task_school_news(),
-                self.task_national_news()
+                self.task_transfer_learning(),
+                self.task_understandings(),
+                self.task_essential_questions(),
+                self.task_acquired_knowledge(),
+                self.task_acquired_skills(),
+                self.task_evaluative_criteria(),
+                self.task_performance_tasks(),
+                self.task_other_evidence()
             ],
             process=Process.sequential,
+            # step_callback=crew_helpers._step_callback,
             max_rpm=crew_helpers.AGENT_RPM,
-            full_output=True,
             max_iter=2,
             cache=True,
+            # verbose=True,
             memory=True,
+            full_output=True,
             long_term_memory=LongTermMemory(path=crew_helpers.ensure_dir_path(f"{self.data_dir}/long_term_memory_storage/") + "lts.db"),
             short_term_memory=ShortTermMemory(
                 path=crew_helpers.ensure_dir_path(f"{self.data_dir}/short_term_memory_storage/"),
@@ -168,5 +192,5 @@ class InfoCollectionCrew():
                 embedder_config=MEMORY_EMBEDDER,
             ),
         )
-        logger.info("Crew created successfully")
+        logger.info(f"Successfully created crew: {self.crew_name}")
         return crew

@@ -5,12 +5,16 @@ from crewai.memory.entity.entity_memory import EntityMemory
 import crew_helpers
 from proj_tools import ProjectTools
 from llm_config import MEMORY_EMBEDDER, LLMModels
+from logger import CustomLogger 
 
 # variables
 AGENTS_CONFIG_FILE = "config/collection/agents.yaml"
 TASKS_CONFIG_FILE = "config/collection/tasks.yaml"
 TOOLS = ProjectTools()
+CREW_NAME = "information_collection_crew"
 
+# initialize logger
+logger = CustomLogger(CREW_NAME).get_logger()
 
 @CrewBase
 class InfoCollectionCrew():
@@ -19,6 +23,10 @@ class InfoCollectionCrew():
     data_dir = f"data_dir/{crew_name}"
     agents_config = AGENTS_CONFIG_FILE
     tasks_config = TASKS_CONFIG_FILE
+
+    def __init__(self):
+        logger.info(f"Initializing {self.crew_name}")
+        logger.info(f"Tasks config file: {self.tasks_config}")
 
     @agent
     def student_demographics(self) -> Agent:
@@ -127,7 +135,7 @@ class InfoCollectionCrew():
 
     @crew
     def crew(self) -> Crew:
-        return Crew(
+        crew = Crew(
             name=self.crew_name,
             agents=[
                 self.student_demographics(),
@@ -161,3 +169,5 @@ class InfoCollectionCrew():
                 embedder_config=MEMORY_EMBEDDER,
             ),
         )
+        logger.info(f"Successfully created crew: {self.crew_name}")
+        return crew

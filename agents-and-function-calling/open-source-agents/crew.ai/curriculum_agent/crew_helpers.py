@@ -102,7 +102,7 @@ def task_summary(crew_output: CrewOutput):
         # print("task name", task.name)
         # print("task description", task.description)
         # print("task expected output", task.raw)
-        combined_summary += "\n\n" + task.raw
+        combined_summary += "\n\n" + task.raw.replace('```','')
 
     return combined_summary
 
