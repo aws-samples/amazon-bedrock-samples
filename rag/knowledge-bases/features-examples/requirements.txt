@@ -11,3 +11,6 @@ langchain_aws
 langchain_community
 s3fs
 requests
+pypdf
+tqdm
+pandas
