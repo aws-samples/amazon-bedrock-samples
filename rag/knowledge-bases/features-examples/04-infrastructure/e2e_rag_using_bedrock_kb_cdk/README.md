@@ -5,7 +5,7 @@
 This is a complete setup for automatic deployment of end-to-end RAG workflow using Knowledge Bases for Amazon Bedrock. 
 Following resources will get created and deployed:
 - IAM role
-- Open Search Serverless Collection and Index
+- Open Search Serverless Collection and Index OR an Aurora PostgreSQL Provisioned Cluster
 - Set up Data Source (DS) and Knowledge Base (KB)
 
 ## Deployment steps
@@ -69,6 +69,8 @@ pip install -r requirements.txt
 
 **Save it!**
 
+### PREPARATION: Bootstrap and synthesize the CDK project
+
 At this point you can now prepare the code zip and synthesize the CloudFormation template for this code. 
 
 On your terminal, export your AWS credentials for a role/user in ACCOUNT_ID. The role needs to have all permissions necessary to do the operations in this repository:
@@ -93,24 +95,30 @@ cdk bootstrap
 cdk synth
 ```
 
-As this deployment contains multiple stacks, you have to deploy them in a specific sequence. Deploy the stack(s) in following order
+### DEPLOYMENT: Parameter for vector store selection
 
+This deployment contains multiple stacks. To deploy all the stacks in the proper sequence, use the 'cdk deploy --all' command
+
+This project offers the choice to deploy a vector store using pgVector in Aurora PostgreSQL or an OpenSearch Serverless Collection vector index. 
+
+Use the 'vectorStoreType' parameter to select your vector store type. The options are "OSS" or "Aurora". Any other selections will result in an error.  
+
+Deploy a Bedrock knowledge base using an Aurora PostgreSQL vector store:
 ```
-cdk deploy KbRoleStack 
+cdk deploy --all -c vectorStoreType=Aurora
 ```
 
+Deploy a Bedrock knowledge base using an OpenSearch Serverless Collection vector index:
 ```
-cdk deploy OpenSearchServerlessInfraStack 
+cdk deploy --all -c vectorStoreType=OSS
 ```
 
-```
-cdk deploy KbInfraStack 
-```
+### DELETION: Destroying the deployed infrastructure
 
 To Destroy the stack(s)
 
 ```
-cdk destroy --all 
+cdk destroy --all
 ```
 
 To add additional dependencies, for example other CDK libraries, just add
