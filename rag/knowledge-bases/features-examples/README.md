@@ -10,8 +10,7 @@ Contains following folders:
 - 05-responsible-ai
 - 06-multi-modal-rag
 - 07-structured-rag
-- 08-rag-evaluation
-- 09-managed-index
+- 08-managed-index
 
 ### 00-zero-setup-chat-with-your-document
 - [0_chat_with_document_kb.ipynb](./00-zero-setup-chat-with-your-document/chat_with_document_kb.ipynb) - Enables you to chat with your document without setting up any vector database. You can either upload the document or simply point to the document in your S3 location. 
