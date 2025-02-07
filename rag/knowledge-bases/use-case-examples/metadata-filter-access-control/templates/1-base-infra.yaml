@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Access Control with Knowledge Bases for Amazon Bedrock infrastructure.
+Description: Access Control with Amazon Bedrock Knowledge Bases infrastructure.
 
 Parameters:
   SolutionId:

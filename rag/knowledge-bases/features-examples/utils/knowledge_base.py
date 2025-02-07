@@ -42,6 +42,13 @@ def interactive_sleep(seconds: int):
         time.sleep(1)
 
 class BedrockKnowledgeBase:
+    """
+    Support class that allows for:
+        - creation (or retrieval) of a Knowledge Base for Amazon Bedrock with all its pre-requisites
+          (including OSS, IAM roles and Permissions and S3 bucket)
+        - Ingestion of data into the Knowledge Base
+        - Deletion of all resources created
+    """
     def __init__(
             self,
             kb_name=None,
@@ -57,6 +64,23 @@ class BedrockKnowledgeBase:
             chunking_strategy="FIXED_SIZE",
             suffix=None,
     ):
+        """
+        Class initializer
+        Args:
+            kb_name(str): The name of the Knowledge Base.
+            kb_description(str): The description of the Knowledge Base.
+            data_sources(list): The list of data source used for the Knowledge Base.
+            multi_modal(bool): Whether the Knowledge Base supports multi-modal data.
+            parser(str): The parser to be used for the Knowledge Base.
+            intermediate_bucket_name(str): The name of the intermediate S3 bucket to be used for custom chunking strategy.
+            lambda_function_name(str): The name of the Lambda function to be used for custom chunking strategy.
+            embedding_model(str): The embedding model to be used for the Knowledge Base.
+            generation_model(str): The generation model to be used for the Knowledge Base.
+            reranking_model(str): The reranking model to be used for the Knowledge Base.
+            chunking_strategy(str): The chunking strategy to be used for the Knowledge Base.
+            suffix(str): A suffix to be used for naming resources.
+        """
+
         boto3_session = boto3.session.Session()
         self.region_name = boto3_session.region_name
         self.iam_client = boto3_session.client('iam')
@@ -82,7 +106,7 @@ class BedrockKnowledgeBase:
         
         if multi_modal or chunking_strategy == "CUSTOM" :
             self.intermediate_bucket_name = intermediate_bucket_name or f"{self.kb_name}-intermediate-{self.suffix}"
-            self.lambda_function_name = lambda_function_name or f"{self.kb_name}-intermediate-{self.suffix}"
+            self.lambda_function_name = lambda_function_name or f"{self.kb_name}-lambda-{self.suffix}"
         else:
             self.intermediate_bucket_name = None
             self.lambda_function_name = None
@@ -288,6 +312,12 @@ class BedrockKnowledgeBase:
         return lambda_iam_role
 
     def create_bedrock_execution_role_multi_ds(self, bucket_names=None, secrets_arns=None):
+        """
+        Create Knowledge Base Execution IAM Role and its required policies.
+        If role and/or policies already exist, retrieve them
+        Returns:
+            IAM role
+        """
       
         bucket_names = self.bucket_names.copy()
         if self.intermediate_bucket_name:
@@ -313,26 +343,48 @@ class BedrockKnowledgeBase:
 
         # 2. Define policy documents for s3 bucket
         if bucket_names:
-            s3_policy_document = {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "s3:GetObject",
-                            "s3:ListBucket",
-                            "s3:PutObject",
-                            "s3:DeleteObject"
-                        ],
-                        "Resource": [item for sublist in [[f'arn:aws:s3:::{bucket}', f'arn:aws:s3:::{bucket}/*'] for bucket in bucket_names] for item in sublist],
-                        "Condition": {
-                            "StringEquals": {
-                                "aws:ResourceAccount": f"{self.account_number}"
+            if self.chunking_strategy == 'CUSTOM':
+                s3_policy_document = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:GetObject",
+                                "s3:ListBucket",
+                                "s3:PutObject",
+                                "s3:DeleteObject"
+                            ],
+                            "Resource": [item for sublist in [[f'arn:aws:s3:::{bucket}', f'arn:aws:s3:::{bucket}/*', f'arn:aws:s3:::{self.intermediate_bucket_name}', f'arn:aws:s3:::{self.intermediate_bucket_name}/*'] for bucket in bucket_names] for item in sublist],
+                            "Condition": {
+                                "StringEquals": {
+                                    "aws:ResourceAccount": f"{self.account_number}"
+                                }
                             }
-                        }
-                    }
-                ]
-            }  
+                        } 
+                    ]
+                }  
+            else:
+                s3_policy_document = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:GetObject",
+                                "s3:ListBucket",
+                                "s3:PutObject",
+                                "s3:DeleteObject"
+                            ],
+                            "Resource": [item for sublist in [[f'arn:aws:s3:::{bucket}', f'arn:aws:s3:::{bucket}/*'] for bucket in bucket_names] for item in sublist],
+                            "Condition": {
+                                "StringEquals": {
+                                    "aws:ResourceAccount": f"{self.account_number}"
+                                }
+                            }
+                        } 
+                    ]
+                }    
 
         # 3. Define policy documents for secrets manager
         if secrets_arns:
@@ -373,7 +425,31 @@ class BedrockKnowledgeBase:
             ]
         }
 
-        assume_role_policy_document = {
+        
+        # 5. Define policy documents for lambda
+        if self.chunking_strategy == "CUSTOM":
+            lambda_policy_document = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "LambdaInvokeFunctionStatement",
+                        "Effect": "Allow",
+                        "Action": [
+                            "lambda:InvokeFunction"
+                        ],
+                        "Resource": [
+                            f"arn:aws:lambda:{self.region_name}:{self.account_number}:function:{self.lambda_function_name}:*"
+                        ],
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:ResourceAccount": f"{self.account_number}"
+                            }
+                        }
+                    }
+                ]
+            }
+
+            assume_role_policy_document = {
             "Version": "2012-10-17",
             
             "Statement": [
@@ -396,6 +472,8 @@ class BedrockKnowledgeBase:
             policies.append((self.s3_policy_name, s3_policy_document, 'Policy for reading documents from s3'))
         if self.secrets_arns:
             policies.append((self.sm_policy_name, secrets_manager_policy_document, 'Policy for accessing secret manager'))
+        if self.chunking_strategy == 'CUSTOM':
+            policies.append((self.lambda_policy_name, lambda_policy_document, 'Policy for invoking lambda function'))
 
         # create bedrock execution role
         bedrock_kb_execution_role = self.iam_client.create_role(
@@ -420,6 +498,10 @@ class BedrockKnowledgeBase:
         return bedrock_kb_execution_role
 
     def create_policies_in_oss(self):
+        """
+        Create OpenSearch Serverless policy and attach it to the Knowledge Base Execution role.
+        If policy already exists, attaches it
+        """
         try:
             encryption_policy = self.aoss_client.create_security_policy(
                 name=self.encryption_policy_name,
@@ -495,6 +577,9 @@ class BedrockKnowledgeBase:
         return encryption_policy, network_policy, access_policy
 
     def create_oss(self):
+        """
+        Create OpenSearch Serverless Collection. If already existent, retrieve
+        """
         try:
             collection = self.aoss_client.create_collection(name=self.vector_store_name, type='VECTORSEARCH')
             collection_id = collection['createCollectionDetail']['id']
@@ -559,6 +644,9 @@ class BedrockKnowledgeBase:
         )
 
     def create_vector_index(self):
+        """
+        Create OpenSearch Serverless vector index. If existent, ignore
+        """
         body_json = {
             "settings": {
                 "index.knn": "true",
@@ -623,7 +711,7 @@ class BedrockKnowledgeBase:
                 "semanticChunkingConfiguration": {
                     "maxTokens": 300,
                     "bufferSize": 1,
-                    "breakThreshold": 95}
+                    "breakpointPercentileThreshold": 95}
                 }
             },
             "CUSTOM": {
@@ -651,6 +739,9 @@ class BedrockKnowledgeBase:
 
     @retry(wait_random_min=1000, wait_random_max=2000, stop_max_attempt_number=7)
     def create_knowledge_base(self, data_sources):
+        """
+        Create Knowledge Base and its Data Source. If existent, retrieve
+        """
         opensearch_serverless_configuration = {
             "collectionArn": self.collection_arn,
             "vectorIndexName": self.index_name,
@@ -914,6 +1005,9 @@ class BedrockKnowledgeBase:
         
 
     def start_ingestion_job(self):
+        """
+        Start an ingestion job to synchronize data from an S3 bucket to the Knowledge Base
+        """
 
         for idx, ds in enumerate(self.data_sources):
             try:
@@ -940,98 +1034,156 @@ class BedrockKnowledgeBase:
             
 
     def get_knowledge_base_id(self):
+        """
+        Get Knowledge Base Id
+        """
         pp.pprint(self.knowledge_base["knowledgeBaseId"])
         return self.knowledge_base["knowledgeBaseId"]
 
     def get_bucket_name(self):
+        """
+        Get the name of the bucket connected with the Knowledge Base Data Source
+        """
         pp.pprint(f"Bucket connected with KB: {self.bucket_name}")
         return self.bucket_name
 
     def delete_kb(self, delete_s3_bucket=False, delete_iam_roles_and_policies=True, delete_lambda_function=False):
+        """
+        Delete the Knowledge Base resources
+        Args:
+            delete_s3_bucket (bool): boolean to indicate if s3 bucket should also be deleted
+            delete_iam_roles_and_policies (bool): boolean to indicate if IAM roles and Policies should also be deleted
+            delete_lambda_function (bool): boolean to indicate if Lambda function should also be deleted
+        """
+        
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
-            
-            # delete data sources
-            ds_id_list = self.bedrock_agent_client.list_data_sources(
-                knowledgeBaseId=self.knowledge_base['knowledgeBaseId'],
-                maxResults=100
-            )['dataSourceSummaries']
-
-            for idx, ds in enumerate(ds_id_list):
-                try:
-                    self.bedrock_agent_client.delete_data_source(
-                        dataSourceId=ds_id_list[idx]["dataSourceId"],
-                        knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
-                    )
-                    print("======== Data source deleted =========")
-                except Exception as e:
-                    print(e)
-            
-            # delete KB
-            try:
-                self.bedrock_agent_client.delete_knowledge_base(
-                    knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
-                )
-                print("======== Knowledge base deleted =========")
-
-            except self.bedrock_agent_client.exceptions.ResourceNotFoundException as e:
-                print("Resource not found", e)
-            except Exception as e:
-                print(e)
-
-            time.sleep(20)
-
-            # delete oss colletion and policies
+            # delete vector index and collection from vector store
             try:
                 self.aoss_client.delete_collection(id=self.collection_id)
-                self.aoss_client.delete_access_policy(type="data", name=self.access_policy_name)
-                self.aoss_client.delete_security_policy(type="network", name=self.network_policy_name)
-                self.aoss_client.delete_security_policy(type="encryption", name=self.encryption_policy_name)
+                self.aoss_client.delete_access_policy(
+                    type="data",
+                    name=self.access_policy_name
+                )
+                self.aoss_client.delete_security_policy(
+                    type="network",
+                    name=self.network_policy_name
+                )
+                self.aoss_client.delete_security_policy(
+                    type="encryption",
+                    name=self.encryption_policy_name
+                )
                 print("======== Vector Index, collection and associated policies deleted =========")
             except Exception as e:
                 print(e)
-            
-            # delete role and policies
-            if delete_iam_roles_and_policies:
-                self.delete_iam_role_and_policies()
 
-            # delete lambda
-            if delete_lambda_function and self.lambda_function_name:
+            # delete knowledge base and vector store.
+            
+            try:
+                self.bedrock_agent_client.delete_data_source(
+                    dataSourceId=self.data_source["dataSourceId"],
+                    knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
+                )
+                self.bedrock_agent_client.delete_knowledge_base(
+                    knowledgeBaseId=self.knowledge_base['knowledgeBaseId']
+                )
+                print("======== Knowledge base and data source deleted =========")
+            except self.bedrock_agent_client.exceptions.ResourceNotFoundException as e:
+                print("Resource not found", e)
+                pass
+            except Exception as e:
+                print(e)
+
+            # delete s3 bucket
+            if delete_s3_bucket==True:
+                    self.delete_s3()
+                    
+            # delete IAM role and policies
+            if delete_iam_roles_and_policies:
+                self.delete_iam_roles_and_policies()
+            
+            if delete_lambda_function:
                 try:
-                    self.lambda_client.delete_function(FunctionName=self.lambda_function_name)
+                    self.delete_lambda_function()
                     print(f"Deleted Lambda function {self.lambda_function_name}")
                 except self.lambda_client.exceptions.ResourceNotFoundException:
                     print(f"Lambda function {self.lambda_function_name} not found.")
+                    
 
-            # delete s3 bucket
-            if delete_s3_bucket:
-                self.delete_s3()
-
-    def delete_iam_role_and_policies(self):
-        iam = boto3.resource('iam')
-        client = boto3.client('iam')
-
-        # Fetch attached policies
-        response = client.list_attached_role_policies(RoleName=self.bedrock_kb_execution_role_name)
-        policies_to_detach = response['AttachedPolicies']
-
-        for policy in policies_to_detach:
-            policy_name = policy['PolicyName']
-            policy_arn = policy['PolicyArn']
-
+    def delete_iam_roles_and_policies(self):
+        for role_name in self.roles:
+            print(f"Found role {role_name}")
             try:
-                self.iam_client.detach_role_policy(
-                    RoleName=self.kb_execution_role_name,
-                    PolicyArn=policy_arn
-                )
-                self.iam_client.delete_policy(PolicyArn=policy_arn)
+                self.iam_client.get_role(RoleName=role_name)
             except self.iam_client.exceptions.NoSuchEntityException:
-                print(f"Policy {policy_arn} not found")
-
-        try:
-            self.iam_client.delete_role(RoleName=self.kb_execution_role_name)
-        except self.iam_client.exceptions.NoSuchEntityException:
-            print(f"Role {self.kb_execution_role_name} not found")
-        
+                print(f"Role {role_name} does not exist") 
+                continue
+            attached_policies = self.iam_client.list_attached_role_policies(RoleName=role_name)["AttachedPolicies"]
+            print(f"======Attached policies with role {role_name}========\n", attached_policies)
+            for attached_policy in attached_policies:
+                policy_arn = attached_policy["PolicyArn"]
+                policy_name = attached_policy["PolicyName"]
+                self.iam_client.detach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
+                print(f"Detached policy {policy_name} from role {role_name}")
+                if str(policy_arn.split("/")[1]) == "service-role":
+                    print(f"Skipping deletion of service-linked role policy {policy_name}")
+                else: 
+                    self.iam_client.delete_policy(PolicyArn=policy_arn)
+                    print(f"Deleted policy {policy_name} from role {role_name}")
+                
+            self.iam_client.delete_role(RoleName=role_name)
+            print(f"Deleted role {role_name}")
         print("======== All IAM roles and policies deleted =========")
-    
+
+    def bucket_exists(bucket):
+        s3 = boto3.resource('s3')
+        return s3.Bucket(bucket) in s3.buckets.all()
+
+    def delete_s3(self):
+        """
+        Delete the objects contained in the Knowledge Base S3 bucket.
+        Once the bucket is empty, delete the bucket
+        """
+        s3 = boto3.resource('s3')
+        try:
+            objects = self.s3_client.list_objects(Bucket=self.bucket_name)
+            if 'Contents' in objects:
+                for obj in objects['Contents']:
+                    self.s3_client.delete_object(Bucket=self.bucket_name, Key=obj['Key'])
+            self.s3_client.delete_bucket(Bucket=self.bucket_name)
+            print("======== S3 data bucket deleted =========")
+        except Exception as e:
+            print(e)
+
+        if self.intermediate_bucket_name is not None:
+            bucket = s3.Bucket(self.intermediate_bucket_name)
+            print("intermediate bucket: ", bucket)
+            if bucket in s3.buckets.all():
+                print(f"Found intermediate bucket {self.intermediate_bucket_name}")
+                try:
+                    objects = self.s3_client.list_objects(Bucket=self.intermediate_bucket_name)
+                    if 'Contents' in objects:
+                        for obj in objects['Contents']:
+                            print(f"Deleting {obj['Key']}")
+                            self.s3_client.delete_object(Bucket=self.intermediate_bucket_name, Key=obj['Key'])
+                        print("======== Intermediate S3 bucket emptied - will wait for 20s before deleting bucket =========")
+                        interactive_sleep(20)
+                    self.s3_client.delete_bucket(Bucket=self.intermediate_bucket_name)
+                    print("======== Intermediate S3 bucket deleted =========")
+                except Exception as e:
+                    print(f"{self.intermediate_bucket_name} does not exist, therefore, will skip deleting")
+        else:
+            print("No intermediate bucket found")
+
+
+    def delete_lambda_function(self):
+        """
+        Delete the Knowledge Base Lambda function
+        Delete the IAM role used by the Knowledge Base Lambda function
+        """
+        # delete lambda function
+        try:
+            self.lambda_client.delete_function(FunctionName=self.lambda_function_name)
+            print(f"======== Lambda function {self.lambda_function_name} deleted =========")
+        except Exception as e:
+            print(e)

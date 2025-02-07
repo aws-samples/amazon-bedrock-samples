@@ -1,4 +1,4 @@
-# Knowledge Bases for Amazon Bedrock  - Code samples for building RAG applications
+# Amazon Bedrock Knowledge Bases  - Code samples for building robust and advanced RAG applications
 
 ## Contents
 Contains following folders: 
@@ -7,43 +7,73 @@ Contains following folders:
 - 02-optimizing-accuracy-retrieved-results
 - 03-advanced-concepts
 - 04-infrastructure
+- 05-responsible-ai
+- 06-multi-modal-rag
+- 07-structured-rag
+- 08-rag-evaluation
+- 09-managed-index
 
 ### 00-zero-setup-chat-with-your-document
-- [0_chat_with_document_kb.ipynb](./00-zero-setup-chat-with-your-document/0_chat_with_document_kb.ipynb) - Enables you to chat with your document without setting up any vector database. You can either upload the document or simply point to the document in your S3 location. 
+- [0_chat_with_document_kb.ipynb](./00-zero-setup-chat-with-your-document/chat_with_document_kb.ipynb) - Enables you to chat with your document without setting up any vector database. You can either upload the document or simply point to the document in your S3 location. 
 
 ### 01-rag-concepts
-- [01_create_ingest_documents_test_kb_multi_ds.ipynb](./01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb) - creates necessary role and policies required using the `utility.py` file. It uses the roles and policies to create Open Search Serverless vector index, knowledge base, data source, and then ingests the documents to the vector store. You can add multiple data sources to the knowledge base such as `Amazon S3, Confluence, Sharepoint, Salesforce, & Web crawler`. Once the documents are ingested it will then test the knowledge base using `RetrieveAndGenerate` API for question answering, and `Retrieve` API for fetching relevant documents. Finally, it deletes all the resources. If you want to continue with other notebooks, you can choose not to delete the resources and move to other notebooks. Please note, that if you do not delete the resources, you may be incurred cost of storing data in OpenSearch Serverless, even if you are not using it. Therefore, once you are done with trying out the sample code, make sure to delete all the resources. 
+- [01_create_ingest_documents_test_kb_multi_ds.ipynb](./01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb) - Use <b>BedrockKnowledgeBase</b> class from `utils/knowledge_base.py` file, which will create the roles and policies to create Open Search Serverless vector index, knowledge base, data source, and then ingests the documents to the vector store. You can add multiple data sources to the knowledge base such as `Amazon S3, Confluence, Sharepoint, Salesforce, & Web crawler`. Once the documents are ingested it will then test the knowledge base using `RetrieveAndGenerate` API for question answering, and `Retrieve` API for fetching relevant documents. Finally, it deletes all the resources. If you want to continue with other notebooks, you can choose not to delete the resources and move to other notebooks. Please note, that if you do not delete the resources, you may be incurred cost of storing data in OpenSearch Serverless, even if you are not using it. Therefore, once you are done with trying out the sample code, make sure to delete all the resources. 
 
-- [02_managed_rag_custom_prompting_and_no_of_results.ipynb](./01-rag-concepts/02_managed_rag_custom_prompting_and_no_of_results.ipynb) - Code sample for managed retrieval augmented generation (RAG) using `RetrieveAndGenerate` API from Knowledge Bases for Amazon Bedrock.
+- [02_managed_retreiveandgenerate_and_streamapi.ipynb](./01-rag-concepts/02_managed_retreiveandgenerate_and_streamapi.ipynb) - Code sample for managed retrieval augmented generation (RAG) using `RetrieveAndGenerate` API and `retrieve_and_generate_stream` API from Amazon Bedrock Knowledge Bases.
 
-- [03_customized-rag-retreive-api-hybrid-search-claude-3-sonnet-langchain.ipynb](./01-rag-concepts/03_customized-rag-retreive-api-hybrid-search-claude-3-sonnet-langchain.ipynb) - If you want to customize your RAG workflow, you can use the `retrieve` API provided by Knowledge Bases for Amazon Bedrock. You can either performa `semantic` or `hybrid` search over your vector store. This notebook, provides sample code for `hybrid` search using Claude 3 models as well as demonstrates LangChain integraion with Knowledge Bases for Amazon Bedrock.
+- [03_customized_rag_retreive_api_hybrid_search_langchain.ipynb](./01-rag-concepts/03_customized_rag_retreive_api_hybrid_search_langchain.ipynb) - If you want to customize your RAG workflow, you can use the `retrieve` API provided by Amazon Bedrock Knowledge Bases. You can either performa `semantic` or `hybrid` search over your vector store. This notebook, provides sample code for `hybrid` search using Claude 3 models as well as demonstrates LangChain integraion with Amazon Bedrock Knowledge Bases.
 
-- [04_customized-rag-retreive-api-langchain-claude-evaluation-ragas.ipynb](./01-rag-concepts/04_customized-rag-retreive-api-langchain-claude-evaluation-ragas.ipynb) - If you are interested in evaluating your RAG application, try this sample code for evaluating the response using RAGAS as assesment framework.
+- [04_customized_rag_retreive_api_langchain_evaluation_ragas.ipynb](./01-rag-concepts/04_customized_rag_retreive_api_langchain_evaluation_ragas.ipynb) - If you are interested in evaluating your RAG application, try this sample code for evaluating the response using RAGAS as assesment framework.
 
-- [05_observability-evaluation-langfuse-ragas.ipynb](./01-rag-concepts/05_observability-evaluation-langfuse-ragas.ipynb) - 
+- [05_document_level_kb_ingestion.ipynb](./01-rag-concepts/05_document_level_kb_ingestion.ipynb) - 
 
-    Langfuse aims to provide granular visibility into model invocation traces and metrics like accuracy, latency and cost per query. 
+    With Document Level API (DLA), customers can now efficiently and cost-effectively ingest, update, or delete data directly from Amazon Bedrock Knowledge Bases using a single API call, without the need to perform a full sync with the data source periodically or after every change. 
 
-    In this notebook, we will use RAGAS to run the evaluations and Langfuse for observability. This gives you better idea of how each call to RAG pipelines is performing. You can read more about the Langfuse [here](https://langfuse.com/docs/tracing/overview).
+    In this notebook, we will use  [ingest_knowledge_base_documents](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-agent/client/ingest_knowledge_base_documents.html) API to ingest the data into knowledge bases in near real-time.
 
+### 01a-kb-rag-evaluation
+- [01_qna_generation_from_pdf.ipynb](./01a-kb-rag-evaluation/01_qna_generation_from_pdf.ipynb) - This notebook automates the generation of synthetic question-answer pairs from PDF documents for evaluating Retrieval-Augmented Generation (RAG) systems. It uses LangChain with Amazon Bedrock's LLama2 model to achieve this.
 
-    ### Vidoe : Langfuse Dashboard and Traces view
-    
-    https://github.com/aws-samples/amazon-bedrock-samples/assets/136643863/3277e195-faa4-4c36-8acf-d7d967b20cb5
-
+- [02_knowledge_base_evaluation_job.ipynb](./01a-kb-rag-evaluation/02_knowledge_base_evaluation_job.ipynb) - This notebook demonstrates how to evaluate both retrieval and generation components of your RAG system using Amazon Bedrock APIs.
 
 ### 02-optimizing-accuracy-retrieved-results
-- [advanced_chunking_options.ipynb](./02-optimizing-accuracy-retrieved-results/advanced_chunking_options.ipynb) - This notebook provides sample code for various advance chunking strategies (Fixed, Semantic, & Hierarchical) offered Knowledge Bases for Amazon Bedrock for building optimum RAG applcation.
+- [advanced_chunking_options.ipynb](./02-optimizing-accuracy-retrieved-results/advanced_chunking_options.ipynb) - This notebook provides sample code for various advance chunking strategies (Fixed, Semantic, Hierarchical, & custom) offered Amazon Bedrock Knowledge Bases for building optimum RAG applcation.
+
+- [autogenerated_metadata_filters.ipynb](./02-optimizing-accuracy-retrieved-results/autogenerated_metadata_filters.ipynb) - This notebook demonstrates the **Autogenerated Filters** feature of Amazon Bedrock Knowledge Bases, which enhances search capabilities through automatic metadata filtering.
+
+- [csv_metadata_customization.ipynb](./02-optimizing-accuracy-retrieved-results/csv_metadata_customization.ipynb) - This notebook provides sample code walkthrough for 'CSV metadata customization' feature, a feautre from Amazon Bedrock Knowledge bases which enhances .csv file processing feature that separates content and metadata. .
+
+- [custom_chunking_with_haystack.ipynb](./02-optimizing-accuracy-retrieved-results/custom_chunking_with_haystack.ipynb) - This notebook provides sample code using haystack for the CUSTOM chunking option supported by Amazon Bedrock Knowledge Bases.
+
+- [metadata_filtering.ipynb](./02-optimizing-accuracy-retrieved-results/metadata_filtering.ipynb) - This notebook provides sample code walkthrough for 'metadata filtering' feature, for Amazon Bedrock Knowledge Bases.
 
 - [query_reformulation.ipynb](./02-optimizing-accuracy-retrieved-results/query_reformulation.ipynb) - This notebook provides sample code for query reformulation which takes a complex input query and break it into multiple sub-queries. These sub-queries will then separately go through their own retrieval steps to find relevant chunks. In this process, the subqueries having less semantic complexity might find more targeted chunks. These chunks will then be pooled and ranked together before passing them to the FM to generate a response.
 
+- [re-ranking_using_kb.ipynb](./02-optimizing-accuracy-retrieved-results/re-ranking_using_kb.ipynb) - This notebook demonstrates the use of **reranking model** with Amazon Bedrock Knowledge Bases, through the Rerank API which will help to further improve the accuracy and relevance of RAG applications.
+
 ### 03-advanced-concepts
 
-- Provides sample code that demonstrates advanced concepts that could be applied to improve retrieval quality/results for Knowledge Base on Amazon Bedrock..
+Provides sample code that demonstrates advanced concepts that could be applied to improve retrieval quality/results for Knowledge Base on Amazon Bedrock.
+
+- [dynamic_metadata_filtering_kb.ipynb](./03-advanced-concepts/dynamic-metadata-filtering/dynamic_metadata_filtering_kb.ipynb) This notebook demonstrates how to implement dynamic metadata filtering for `Amazon Bedrock Knowledge Bases` using the `tool use` (function calling) capability and `Pydantic` for data validation.
+
+- [02_kb_reranker.ipynb](./03-advanced-concepts/reranking/02_kb_reranker.ipynb) his notebook leverages a reranking model deployed behind a sagemaker endpoint for building a RAG application for a sample dataset. The notebook creates a knowledge bases for Bedrock with Amazon OpenSearch Serverless as the vector database, and uses the Bedrock Agent runtime API and SageMaker to orchestrate the RAG two stage retrieval process.
+
 
 ### 04-infrastructure
 - Provides sample code for creating knowledge base and associated data sources using AWS CloudFormation templates.
 
+### 05-responsible-ai
+- Provides sample code demonstrating how to combine Guardrails for Amazon Bedrock contextual grounding filter with the Amazon Bedrock Knowledge Bases
+
+### 06-multi-modal-rag
+- Provides sample code for building a Multimodal RAG using Amazon Bedrock Knowledge Bases.
+
+### 07-structured-rag
+- Provides sample code for building a Structured RAG using Amazon Bedrock Knowledgebases using Redshift.
+
+### 08-managed-index
+- Provides sample code for building a Knowledge base with an associated Kendra-GenAI index.
 ***
 
 ### Note

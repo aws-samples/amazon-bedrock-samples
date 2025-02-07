@@ -1,8 +1,8 @@
 
-# Deploy e2e RAG solution (using Knowledgebases for Amazon Bedrock) via CDK
+# Deploy e2e RAG solution (using Amazon Bedrock Knowledge Bases) via CDK
 <mark>By no means this deployment is production-ready deployment. Please adjust the IAM polies and permissions as per your organization policy)</mark>
 
-This is a complete setup for automatic deployment of end-to-end RAG workflow using Knowledge Bases for Amazon Bedrock. 
+This is a complete setup for automatic deployment of end-to-end RAG workflow using Amazon Bedrock Knowledge Bases. 
 Following resources will get created and deployed:
 - IAM role
 - Open Search Serverless Collection and Index
