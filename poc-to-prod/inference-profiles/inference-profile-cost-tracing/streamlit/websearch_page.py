@@ -16,6 +16,8 @@ def main():
     # Text input box
     user_input = st.text_input("Enter your text:")
 
+    #ADD TEXTBOX FOR EXTRA TAGS 
+    
     # Submit button
     if st.button("Submit"):
         if user_input:
@@ -25,25 +27,19 @@ def main():
             st.warning("Please enter some text")
 
 def invoke_api(user_input):
-    #Look for inference profile ID from config file 
+    #Look for inference profile ID from config setup file, this will be done in the Lambda Function
 
-    #Get the absolute path of the directory containing the streamlit page
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    #Get path of config file in relation to streamlit page
-    config_path = os.path.join(current_dir, "config.json")
-
-    #dynamically create inference profile name for search:
-    search_name = st.session_state.user_name+"-Websearch"
-    
-    with open(config_path, "r") as file:
-        config = json.load(file)
-        profile_id = next(item[search_name] for item in config["profile_ids"] if search_name in item)
-
-    url = "https://5kdzf9q1yf.execute-api.us-west-2.amazonaws.com/Prod"
+    url = "https://gidpxqz1o3.execute-api.us-west-2.amazonaws.com/Prod"
     payload = {
         "headers": {
-            "inference-profile-id": profile_id,
-            "region": "us-west-2"
+            "region": "us-west-2",
+            "tags": {
+            "CreatedBy": "Dev-Account",
+            "ApplicationID": "Web-Search-Bot",
+            "TenantID": st.session_state.user_name,
+            "CustomerAccountID": "123987456",
+            "ModelProvider": "Anthropic"
+            }
         },
         "body": [
             {
