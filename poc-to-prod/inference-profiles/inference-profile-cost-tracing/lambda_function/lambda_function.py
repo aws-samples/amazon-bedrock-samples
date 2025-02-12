@@ -3,9 +3,6 @@ import boto3
 from botocore.exceptions import ClientError
 import os
 
-os.environ['AWS_PROFILE'] = 'cost-tracing'
-
-
 def get_s3_file_content(bucket_name, object_key):
     """
     Retrieve the content of a file from an S3 bucket.
