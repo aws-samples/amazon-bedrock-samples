@@ -1,5 +1,3 @@
-Here's the exact draft README.md file for your project:
-
 # AWS Inference Profile Cost Tracing
 
 This project automates the process of creating and setting up AWS Inference Profiles with cost tracing and monitoring capabilities. It leverages tags and custom CloudWatch dashboards to allow customers to monitor their usage and costs associated with invoking large language models (LLMs) from Anthropic's Bedrock service.
