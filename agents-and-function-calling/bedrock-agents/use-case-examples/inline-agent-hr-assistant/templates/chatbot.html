@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Assistance Chatbot</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+/* Base Styles */
+body {
+    background-color: #f8f9fa;
+}
+
+/* Header & Banner Styles */
+.header {
+    background-color: #007bff;
+    padding: 20px;
+    color: #fff;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.subheader {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.welcome-banner {
+    background-color: #f8f9fa;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* User Info Styles */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: #007bff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.user-details {
+    line-height: 1.2;
+}
+
+.user-name {
+    font-weight: bold;
+    color: #333;
+}
+
+.user-id {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Button Styles */
+.logout-btn {
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    background-color: #f1f1f1;
+    color: #333;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background-color: #e1e1e1;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 12px 20px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-primary:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Chatbot Container Styles */
+.chatbot-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.chat-header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.chat-body {
+    height: 425px;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Chat Message Styles */
+.chat-message {
+    display: flex;
+    margin-bottom: 0;
+    margin-top: 8px;
+}
+
+.user-message {
+    justify-content: flex-end;
+}
+
+.bot-message {
+    justify-content: flex-start;
+}
+
+.message-bubble {
+    padding: 8px 15px;
+    border-radius: 20px;
+    max-width: 70%;
+    line-height: 1.4;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    display: inline-block;
+}
+
+.user-message .message-bubble {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.bot-message .message-bubble {
+    background-color: #f1f0f0;
+    color: #333;
+}
+
+/* Chat Footer Styles */
+.chat-footer {
+    padding: 15px;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+}
+
+.input-group {
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-control {
+    border: none;
+    padding: 12px 15px;
+    font-size: 14px;
+}
+
+/* Typing Indicator Styles */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    padding-left: 15px;
+    min-height: 24px;
+}
+
+.typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background-color: #007bff;
+    border-radius: 50%;
+    margin-right: 5px;
+    animation: typing 1.2s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+/* Thinking Bubble Styles */
+.thinking-bubble {
+    background-color: #f1f0f0;
+    min-width: 200px;
+}
+
+.thinking-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.thinking-text {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Trace Message Styles */
+.trace-message {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    padding: 4px 8px;
+    margin: 2px 0;
+    background: #f8f9fa;
+    border-radius: 4px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.trace-container {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.trace-message i {
+    margin-right: 6px;
+}
+
+/* Timing Info Styles */
+.timing-info {
+    font-size: 11px;
+    color: #666;
+    text-align: center;
+    margin: 5px 0;
+    font-style: italic;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Initial Loading Styles */
+.initial-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+    padding: 20px 0;
+}
+
+.initial-loading i {
+    margin-right: 8px;
+    animation: spin 1s infinite linear;
+}
+.persona-selector-container {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.form-select {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 14px;
+    cursor: pointer;
+}
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+.logout-container {
+    text-align: right;
+    margin-bottom: 35px;
+}
+.chat-column {
+    border-right: 1px solid #dee2e6;
+    padding-right: 40px;
+}
+
+.customize-sidebar {
+    padding-left: 40px;
+}
+
+.customize-header {
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.customize-section {
+    margin-bottom: 25px;
+}
+
+.customize-section label {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.tools-options {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.form-check {
+    margin-bottom: 10px;
+}
+
+.model-selector {
+    margin-bottom: 20px;
+    padding: 10px 0;
+}
+
+.model-selector select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.model-selector select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.end-session-btn {
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.end-session-btn:hover {
+    background-color: white;
+    color: #007bff;
+}
+
+.end-session-btn i {
+    margin-right: 5px;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#applyTools {
+    margin-top: 15px;
+}
+
+/* Animations */
+@keyframes typing {
+    0% {
+        opacity: 0.2;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
+    100% {
+        opacity: 0.2;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+    </style>
+</head>
+<body>
+    <div class="header">
+        Welcome to HR Assistance
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="welcome-banner">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar"></div>
+                        <div class="user-details">
+                            <div class="user-name" id="welcomeUserName"></div>
+                            <div class="user-id" id="employeeIdDisplay"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 logout-container">
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <!-- Main chat area -->
+            <div class="col-8 chat-column">
+                <div class="chatbot-container">
+                    <div class="chat-header">
+                        <div>
+                            <i class="fas fa-robot me-2"></i> HR Chatbot
+                        </div>
+                        <button class="end-session-btn" id="endSessionBtn">
+                            <i class="fas fa-sync"></i> Start New Session
+                        </button>
+                    </div>
+                    <div class="chat-body" id="chatBody">
+                        <!-- Chat messages will be dynamically added here -->
+                    </div>
+                    <div class="chat-footer">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="userInput" placeholder="Type your message..." disabled>
+                            <button class="btn btn-primary" type="button" id="sendButton" disabled>
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right sidebar for customization -->
+            <div class="col-4">
+                <div class="customize-sidebar">
+                    <h4 class="customize-header">Customize Agent</h4>
+                    <div class="customize-section">
+                        <label for="personaSelect">Select Persona</label>
+                        <select id="personaSelect" class="form-select">
+                            <option value="professional">Professional Assistant</option>
+                            <option value="casual">Casual Assistant</option>
+                            <option value="peachy">Enthusiast Assistant</option>
+                        </select>
+                    </div>
+                    <div class="customize-section model-selector">
+                        <label for="modelSelect">Select Foundation Model</label>
+                        <select id="modelSelect" class="form-select">
+                            <option value="amazon.nova-pro-v1:0">Nova Pro</option>
+                            <option value="amazon.nova-lite-v1:0">Nova Lite</option>
+                            <option value="amazon.nova-micro-v1:0">Nova Micro</option>
+                            <option value="us.anthropic.claude-3-5-sonnet-20241022-v2:0">Anthropic Sonnet 3.5 V2</option>
+                            <option value="anthropic.claude-3-5-sonnet-20240620-v1:0">Anthropic Sonnet 3.5 V1</option>
+                            <option value="us.anthropic.claude-3-5-haiku-20241022-v1:0">Anthropic Haiku 3.5</option>
+                            <option value="anthropic.claude-3-haiku-20240307-v1:0">Anthropic Haiku 3</option>
+                        </select>
+                    </div>
+                    <div class="customize-section">
+                        <br>
+                        <br>
+                        <h4>Tool Catalog</h4>
+                        <div class="tools-options">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="knowledge_base" id="toolKnowledgeBase" data-access="Employee,Manager">
+                                <label class="form-check-label" for="toolKnowledgeBase">
+                                    Search Company Policy
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="budget_tool" id="toolBudget" data-access="Employee,Manager">
+                                <label class="form-check-label" for="toolBudget">
+                                    Budget Approval
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="vacation_tool" id="toolVacation" data-access="Employee,Manager">
+                                <label class="form-check-label" for="toolVacation">
+                                    Vacation Approval
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="compensation" id="toolCompensation" data-access="Manager">
+                                <label class="form-check-label" for="toolCompensation">
+                                    Compensation
+                                </label>
+                            </div>
+                            <button id="applyTools" class="btn btn-primary btn-sm">Apply Tools</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+ <script>
+    // Constants
+const SHOW_RESPONSE_TIME = false;
+
+// DOM Elements
+const chatBody = document.getElementById('chatBody');
+const userInput = document.getElementById('userInput');
+const sendButton = document.getElementById('sendButton');
+
+// State Variables
+let isProcessing = false;
+
+// Event Listeners
+window.onload = () => {
+    checkAuth();
+    initializeUserDetails();
+    initializeSessionControl();
+    initializePersonaSelection();
+    initializeModelSelection();
+    initializeToolAccess();
+    startInitialInteraction();
+};
+
+sendButton.addEventListener('click', handleSendMessage);
+userInput.addEventListener('keypress', function(event) {
+    if (event.key === 'Enter' && !isProcessing) {
+        handleSendMessage();
+    }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = '/';
+});
+
+let selectedTools = [];
+
+document.querySelectorAll('.form-check-input').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        updateSelectedTools();
+    });
+});
+
+document.getElementById('applyTools').addEventListener('click', function() {
+    // Store selected tools in localStorage
+    localStorage.setItem('selectedTools', JSON.stringify(selectedTools));
+    displayTraceMessage(`Tools configuration updated: ${selectedTools.join(', ')}`, 'fa-tools');
+});
+
+function initializeSessionControl() {
+    const endSessionBtn = document.getElementById('endSessionBtn');
+    endSessionBtn.addEventListener('click', handleNewSession);
+}
+
+async function handleNewSession() {
+    if (!confirm('Start a new session? This will clear the current conversation.')) {
+        return;
+    }
+
+    try {
+        // Generate new UUID4 for session
+        const newSessionId = crypto.randomUUID();
+        
+        // Clear local storage session
+        localStorage.setItem('sessionId', newSessionId);
+        
+        // Clear chat history
+        chatBody.innerHTML = '';
+        
+        // Display new session message
+        displayTraceMessage('Starting new session...', 'fa-sync');
+        
+        // Start new interaction
+        setTimeout(() => {
+            startInitialInteraction();
+        }, 1000);
+
+    } catch (error) {
+        console.error('Error starting new session:', error);
+        displayTraceMessage('Error starting new session. Please try again.', 'fa-exclamation-circle');
+    }
+}
+
+function updateSelectedTools() {
+    selectedTools = Array.from(document.querySelectorAll('.form-check-input:checked'))
+        .map(checkbox => checkbox.value);
+}
+
+function initializeModelSelection() {
+    const modelSelect = document.getElementById('modelSelect');
+    const savedModel = localStorage.getItem('selectedModel') || 'amazon.nova-pro-v1:0';
+    
+    if (savedModel) {
+        modelSelect.value = savedModel;
+    }
+    
+    modelSelect.addEventListener('change', function() {
+        const selectedModelName = this.options[this.selectedIndex].text;
+        const selectedModelId = this.value;
+        localStorage.setItem('selectedModel', selectedModelId);
+        displayTraceMessage("AI Model changed to: " + selectedModelName + " (" + selectedModelId + ")", 'fa-microchip');
+    });
+}
+
+function initializePersonaSelection() {
+    const personaSelect = document.getElementById('personaSelect');
+    const savedPersona = localStorage.getItem('selectedPersona');
+    
+    if (savedPersona) {
+        personaSelect.value = savedPersona;
+    }
+    
+    personaSelect.addEventListener('change', function() {
+        localStorage.setItem('selectedPersona', this.value);
+        // Optionally notify the user that the persona has changed
+        displayTraceMessage(`AI Persona changed to: ${this.options[this.selectedIndex].text}`, 'fa-sync');
+    });
+}
+
+function initializeToolAccess() {
+    const userAccess = localStorage.getItem('access');
+    
+    document.querySelectorAll('.form-check-input').forEach(checkbox => {
+        const allowedRoles = checkbox.dataset.access.split(',');
+        if (!allowedRoles.includes(userAccess)) {
+            checkbox.closest('.form-check').style.display = 'none';
+        }
+    });
+}
+
+function checkAuth() {
+    const token = localStorage.getItem('hrToken');
+    if (!token) {
+        window.location.href = '/';
+        return;
+    }
+
+    try {
+        const tokenData = JSON.parse(atob(token));
+        if (tokenData.exp < Date.now()) {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+    } catch (e) {
+        localStorage.clear();
+        window.location.href = '/';
+    }
+}
+
+function displayMessage(message, sender, isHidden = false) {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('chat-message', `${sender}-message`);
+    if (isHidden) {
+        messageElement.classList.add('hidden');
+    }
+
+    // Add these styles for proper formatting
+    const messageStyles = `
+        .message-bubble pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-family: inherit;
+            color: inherit;
+        }
+    `;
+
+    // Add styles if not already present
+    if (!document.getElementById('message-styles')) {
+        const styleElement = document.createElement('style');
+        styleElement.id = 'message-styles';
+        styleElement.textContent = messageStyles;
+        document.head.appendChild(styleElement);
+    }
+
+    // Wrap the content in a pre tag to preserve formatting
+    messageElement.innerHTML = `
+        <div class="message-bubble">
+            <pre>${message}</pre>
+        </div>
+    `;
+    
+    chatBody.appendChild(messageElement);
+    chatBody.scrollTo({
+        top: chatBody.scrollHeight,
+        behavior: 'smooth'
+    });
+    return messageElement;
+}
+
+function displayTraceMessage(message, icon) {
+    const traceElement = document.createElement('div');
+    traceElement.classList.add('trace-message');
+    traceElement.innerHTML = `<i class="fas ${icon}"></i>${message}`;
+    chatBody.appendChild(traceElement);
+    chatBody.scrollTo({
+        top: chatBody.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+
+async function sendToAPI(message) {
+    try {
+        const token = localStorage.getItem('hrToken');
+        const currentSession = localStorage.getItem('sessionId') || '';
+        const selectedPersona = document.getElementById('personaSelect').value;
+        const selectedModel = document.getElementById('modelSelect').value;
+        const selectedTools = JSON.parse(localStorage.getItem('selectedTools') || '[]');
+        
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Session-ID': currentSession,
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+                message: message,
+                employeeId: localStorage.getItem('employeeId'),
+                userName: localStorage.getItem('userName'),
+                persona: selectedPersona,
+                model: selectedModel,
+                tools: selectedTools,
+                session: currentSession
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseSessionId = response.headers.get('Session-ID');
+        if (responseSessionId) {
+            localStorage.setItem('sessionId', responseSessionId);
+        }
+
+        const reader = response.body.getReader();
+        let botResponse = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const text = new TextDecoder().decode(value);
+            const events = text.split('\n').filter(line => line.trim());
+            
+            for (const event of events) {
+                try {
+                    const data = JSON.parse(event);
+                    if (data.type === 'session') {
+                        localStorage.setItem('sessionId', data.sessionId);
+                    } else if (data.type === 'trace' && data.trace) {
+                        handleTraceEvent(data.trace);
+                    } else if (data.type === 'response' && data.content) {
+                        botResponse = data.content;
+                    }
+                } catch (e) {
+                    console.error('Error parsing event:', e);
+                }
+            }
+        }
+        
+        return botResponse || 'Sorry, I encountered an error processing your request.';
+    } catch (error) {
+        console.error('Error:', error);
+        return 'Sorry, I encountered an error. Please try again later.';
+    }
+}
+
+function handleTraceEvent(trace) {
+    console.log(trace)
+    if (!trace.trace.trace.orchestrationTrace) return;
+    const orchestration = trace.trace.trace.orchestrationTrace;
+    console.log("orchestration")
+    console.log(orchestration)
+
+    if (orchestration.SDK_UNKNOWN_MEMBER?.name === 'modelInvocationOutput') {
+        displayTraceMessage("System is starting to look into your request", 'fa-brain');
+    }
+    
+    if (orchestration.rationale?.text) {
+        displayTraceMessage(`Reading: ${orchestration.rationale.text}`, 'fa-lightbulb');
+    }
+    
+    if (orchestration.invocationInput?.invocationType === 'KNOWLEDGE_BASE') {
+        displayTraceMessage("Passing info to knowledge base", 'fa-database');
+    }
+    
+    if (orchestration.invocationInput?.invocationType === 'ACTION_GROUP') {
+        displayTraceMessage("Seeing into backend systems and passing info", 'fa-cogs');
+    }
+    
+    if (orchestration.observation) {
+        if (orchestration.observation.knowledgeBaseLookupOutput && 
+            orchestration.observation.type === 'KNOWLEDGE_BASE') {
+            displayTraceMessage("Retrieving and analyzing the references", 'fa-search');
+        } 
+        if (orchestration.observation.type === 'ACTION_GROUP' && 
+            orchestration.observation.actionGroupInvocationOutput) {
+            displayTraceMessage("Got back the info from backend systems", 'fa-check-circle');
+        }
+        if (orchestration.observation.type === 'FINISH') {
+            displayTraceMessage("Showing final response", 'fa-flag-checkered');
+        }
+    }
+}
+
+async function handleSendMessage() {
+    if (isProcessing || !userInput.value.trim()) return;
+
+    isProcessing = true;
+    sendButton.disabled = true;
+    userInput.disabled = true;
+
+    const userMessage = userInput.value.trim();
+    displayMessage(userMessage, 'user');
+    userInput.value = '';
+
+    const startTime = performance.now();
+    displayTraceMessage('Starting to process your request...', 'fa-rocket');
+    
+    try {
+        const botResponse = await sendToAPI(userMessage);
+        const endTime = performance.now();
+        const seconds = ((endTime - startTime) / 1000).toFixed(2);
+        
+        setTimeout(() => {
+            displayMessage(botResponse, 'bot');
+            if (SHOW_RESPONSE_TIME) {
+                const timingElement = document.createElement('div');
+                timingElement.className = 'timing-info';
+                timingElement.textContent = `Response time: ${seconds} seconds`;
+                chatBody.appendChild(timingElement);
+            }
+            
+            chatBody.scrollTo({
+                top: chatBody.scrollHeight,
+                behavior: 'smooth'
+            });
+        }, 300);
+    } catch (error) {
+        displayMessage('Sorry, I encountered an error. Please try again later.', 'bot');
+    } finally {
+        isProcessing = false;
+        sendButton.disabled = false;
+        userInput.disabled = false;
+        userInput.focus();
+    }
+}
+
+async function startInitialInteraction() {
+    const userName = localStorage.getItem('userName');
+    const employeeId = localStorage.getItem('employeeId');
+    const selectedPersona = document.getElementById('personaSelect').value;
+    const access = localStorage.getItem('access');
+    const currentSessionId = localStorage.getItem('sessionId') || crypto.randomUUID();
+    
+    chatBody.innerHTML = `
+        <div class="initial-loading">
+            <i class="fas fa-spinner"></i>
+            Initializing chat with ${document.getElementById('personaSelect').options[document.getElementById('personaSelect').selectedIndex].text}...
+        </div>
+    `;
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    chatBody.innerHTML = '';
+    
+    const initialMessage = `Hi ${userName}, how can I help you today?`;
+    displayMessage(initialMessage, 'bot');
+    
+    const typingContainer = document.createElement('div');
+    typingContainer.classList.add('chat-message', 'bot-message', 'thinking-container');
+    typingContainer.innerHTML = `
+        <div class="message-bubble thinking-bubble">
+            <div class="thinking-content">
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span class="thinking-text">Getting ready...</span>
+            </div>
+        </div>
+    `;
+    chatBody.appendChild(typingContainer);
+    
+    const startTime = performance.now();
+    
+    try {
+        // const botResponse = await sendToAPI(initialMessage);
+        typingContainer.remove();
+        
+        const endTime = performance.now();
+        const seconds = ((endTime - startTime) / 1000).toFixed(2);
+        
+        setTimeout(() => {
+            displayMessage(botResponse, 'bot');
+            if (SHOW_RESPONSE_TIME) {
+                const timingElement = document.createElement('div');
+                timingElement.className = 'timing-info';
+                timingElement.textContent = `Initial response time: ${seconds} seconds`;
+                chatBody.appendChild(timingElement);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }, 300);
+    } catch (error) {
+        typingContainer.remove();
+        displayMessage('Sorry, I encountered an error. Please try again later.', 'bot');
+    } finally {
+        userInput.disabled = false;
+        sendButton.disabled = false;
+        userInput.focus();
+    }
+}
+
+function initializeUserDetails() {
+    const userName = localStorage.getItem('userName');
+    const employeeId = localStorage.getItem('employeeId');
+    const access = localStorage.getItem('access');
+    const userInitials = userName
+        .split(' ')
+        .map(name => name[0])
+        .join('')
+        .toUpperCase();
+    document.getElementById('userAvatar').textContent = userInitials;
+    document.getElementById('welcomeUserName').textContent = `Welcome, ${userName}`;
+    document.getElementById('employeeIdDisplay').innerHTML = 
+        `Employee ID: ${employeeId}<br>Access: ${access || 'Not Specified'}`;
+}
+ </script>
+
+</body>
+</html>

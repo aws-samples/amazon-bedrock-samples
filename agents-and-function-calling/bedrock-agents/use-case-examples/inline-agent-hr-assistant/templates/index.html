@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Portal Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            max-width: 400px;
+            width: 90%;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #007bff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="header">
+            <h1>HR Portal Login</h1>
+            <p>Please login to access the HR Assistant</p>
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-login">Login</button>
+            <div id="errorMessage" class="error-message text-center"></div>
+        </form>
+    </div>
+
+    <script>
+        // Mock user database
+        const users = {
+            'E1001': { password: 'password123', name: 'Employee1', access: 'Employee' },
+            'E1002': { password: 'password123', name: 'Employee2', access: 'Employee' },
+            'E1015': { password: 'password123', name: 'Employee15', access: 'Manager' }
+        };
+
+        // JWT token generation (mock version)
+        function generateToken(employeeId, name, access) {
+                const token = btoa(JSON.stringify({
+                    employeeId,
+                    name,
+                    access,
+                    exp: Date.now() + (60 * 60 * 1000) // 1 hour expiration
+                }));
+                return token;
+            }
+
+        // Update the login form to use Employee ID
+        document.querySelector('label[for="username"]').textContent = 'Employee ID';
+        document.getElementById('username').placeholder = 'Enter Employee ID (e.g., E1001)';
+
+        // Simplified login handler
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const employeeId = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            if (users[employeeId] && users[employeeId].password === password) {
+                const user = users[employeeId];
+                const token = generateToken(employeeId, user.name, user.access);
+                
+                // Store essential user info
+                localStorage.setItem('hrToken', token);
+                localStorage.setItem('userName', user.name);
+                localStorage.setItem('employeeId', employeeId);
+                localStorage.setItem('access', user.access);
+                
+                // Redirect to chatbot
+                window.location.href = '/chatbot';
+            } else {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Invalid Employee ID or password';
+            }
+        });
+    </script>
+</body>
+</html>

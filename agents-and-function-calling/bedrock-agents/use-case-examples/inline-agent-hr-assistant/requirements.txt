@@ -1,0 +1,4 @@
+flask-cors
+flask
+opensearch-py
+retrying
