@@ -22,7 +22,7 @@ class KbConfig:
     CHUNKING_STRATEGY = CHUNKING_STRATEGIES[1] # TODO: Choose the Chunking option 0,1,2
     MAX_TOKENS = 512 # TODO: Change this value accordingly if you choose "FIXED_SIZE" chunk strategy
     OVERLAP_PERCENTAGE = 20 # TODO: Change this value accordingly
-    VECTOR_STORE_TYPE = "OSS" # TODO: Change this value to either OSS or Aurora based on your vector store preference
+    VECTOR_STORE_TYPE = "OSS" # TODO: Change this value to either "OSS" or "Aurora" based on your vector store preference. 
 
 class DsConfig:
     S3_BUCKET_NAME = "" # TODO: Change this to the S3 bucket where your data is stored

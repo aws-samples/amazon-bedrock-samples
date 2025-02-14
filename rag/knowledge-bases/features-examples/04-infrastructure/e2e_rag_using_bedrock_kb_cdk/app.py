@@ -17,7 +17,7 @@ app = cdk.App()
 vector_store_type = KbConfig.VECTOR_STORE_TYPE
 
 if vector_store_type not in ["OSS", "Aurora"]:
-    raise ValueError("vectorStoreType must be either 'OSS' or 'Aurora'")
+    raise ValueError("VECTOR_STORE_TYPE in config.py must be either 'OSS' or 'Aurora'")
 
 # create IAM role for e2e RAG
 kbRole_stack = KbRoleStack(app, "KbRoleStack")

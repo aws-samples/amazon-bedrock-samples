@@ -5,7 +5,7 @@
 This is a complete setup for automatic deployment of end-to-end RAG workflow using Knowledge Bases for Amazon Bedrock. 
 Following resources will get created and deployed:
 - IAM role
-- Open Search Serverless Collection and Index OR an Aurora PostgreSQL Provisioned Cluster
+- Open Search Serverless Collection and Index OR an Aurora PostgreSQL Provisioned Cluster as a vector store
 - Set up Data Source (DS) and Knowledge Base (KB)
 
 ## Deployment steps
@@ -65,7 +65,7 @@ pip install -r requirements.txt
 - MAX_TOKENS
 - OVERLAP_PERCENTAGE
 - S3_BUCKET_NAME
-- VECTOR_STORE_TYPE
+- VECTOR_STORE_TYPE (Ensure you select either 'OSS' for an OpenSearch Serverless or 'Aurora' for an Aurora PostgreSQL vector store)
 
 
 **Save it!**
