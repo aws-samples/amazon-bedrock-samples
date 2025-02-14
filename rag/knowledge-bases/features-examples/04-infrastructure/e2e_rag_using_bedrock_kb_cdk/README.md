@@ -1,5 +1,5 @@
 
-# Deploy e2e RAG solution (using Knowledgebases for Amazon Bedrock) via CDK
+# Deploy e2e RAG solution (using Amazon Bedrock Knowledge Bases) via CDK
 <mark>By no means this deployment is production-ready deployment. Please adjust the IAM polies and permissions as per your organization policy)</mark>
 
 This is a complete setup for automatic deployment of end-to-end RAG workflow using Knowledge Bases for Amazon Bedrock. 
@@ -57,7 +57,7 @@ pip install -r requirements.txt
 ```
 
 ### IMPORTANT : Update Config file 
-**Open `config.py` and adjust the below parmaters as per your application configuration**:
+**Open `config.py` and adjust the below parameters as per your application configuration**:
 - ACCOUNT_ID
 - ACCOUNT_REGION
 - RAG_PROJ_NAME
@@ -65,6 +65,7 @@ pip install -r requirements.txt
 - MAX_TOKENS
 - OVERLAP_PERCENTAGE
 - S3_BUCKET_NAME
+- VECTOR_STORE_TYPE
 
 
 **Save it!**
@@ -95,22 +96,12 @@ cdk bootstrap
 cdk synth
 ```
 
-### DEPLOYMENT: Parameter for vector store selection
+### DEPLOYMENT: Deploy all stacks
 
-This deployment contains multiple stacks. To deploy all the stacks in the proper sequence, use the 'cdk deploy --all' command
+This deployment contains multiple stacks (IAM role, vector store, and knowledge base). To deploy all the stacks in the proper sequence, use the 'cdk deploy --all' command.
 
-This project offers the choice to deploy a vector store using pgVector in Aurora PostgreSQL or an OpenSearch Serverless Collection vector index. 
-
-Use the 'vectorStoreType' parameter to select your vector store type. The options are "OSS" or "Aurora". Any other selections will result in an error.  
-
-Deploy a Bedrock knowledge base using an Aurora PostgreSQL vector store:
 ```
-cdk deploy --all -c vectorStoreType=Aurora
-```
-
-Deploy a Bedrock knowledge base using an OpenSearch Serverless Collection vector index:
-```
-cdk deploy --all -c vectorStoreType=OSS
+cdk deploy --all
 ```
 
 ### DELETION: Destroying the deployed infrastructure

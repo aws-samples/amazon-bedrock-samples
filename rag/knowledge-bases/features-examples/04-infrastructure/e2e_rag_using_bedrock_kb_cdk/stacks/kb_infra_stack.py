@@ -26,6 +26,8 @@ from config import EnvSettings, KbConfig, DsConfig, OpenSearchServerlessConfig
 region = EnvSettings.ACCOUNT_REGION
 account_id = EnvSettings.ACCOUNT_ID
 
+vector_store_type = KbConfig.VECTOR_STORE_TYPE
+
 collectionName = OpenSearchServerlessConfig.COLLECTION_NAME
 indexName = OpenSearchServerlessConfig.INDEX_NAME
 
@@ -37,7 +39,7 @@ overlap_percentage = KbConfig.OVERLAP_PERCENTAGE
 
 class KbInfraStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, infra_type: str) -> None:
+    def __init__(self, scope: Construct, construct_id: str) -> None:
         super().__init__(scope, construct_id)
         
         # Get the partition dynamically
@@ -58,8 +60,8 @@ class KbInfraStack(Stack):
         # initialize knowledge base with default value
         self.knowledge_base = None
         
-        # depending on user selection, create knowledge base from OSS or Aurora
-        if infra_type =='OSS':
+        # depending on user selection in config.py, create knowledge base from OSS or Aurora
+        if vector_store_type =='OSS':
             
             self.collectionArn = ssm.StringParameter.from_string_parameter_attributes(
                 self, 
@@ -68,9 +70,8 @@ class KbInfraStack(Stack):
             ).string_value
             
             self.knowledge_base = self.create_knowledge_base_oss()
-
             
-        elif infra_type =='Aurora':
+        elif vector_store_type =='Aurora':
             
             self.secretArn = ssm.StringParameter.from_string_parameter_attributes(
                 self, "secretArn",
