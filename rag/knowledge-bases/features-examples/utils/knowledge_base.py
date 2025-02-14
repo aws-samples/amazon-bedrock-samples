@@ -1054,4 +1054,3 @@ class BedrockKnowledgeBase:
             print(f"Role {self.kb_execution_role_name} not found")
         
         print("======== All IAM roles and policies deleted =========")
-    
