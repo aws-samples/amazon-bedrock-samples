@@ -198,6 +198,7 @@ class BedrockKnowledgeBase:
                     Bucket=bucket_name,
                     CreateBucketConfiguration={'LocationConstraint': self.region_name}
                 )
+        self.new_bucket_names = buckets_to_create.copy()
 
     def create_lambda(self):
         lambda_iam_role = self.create_lambda_role()
@@ -724,6 +725,10 @@ class BedrockKnowledgeBase:
                         }
                 }
             
+            custom_data_source_congiguration = {
+                "type": "CUSTOM"
+            }
+            
             confluence_data_source_congiguration = {
                 "confluenceConfiguration": {
                     "sourceConfiguration": {
@@ -884,7 +889,11 @@ class BedrockKnowledgeBase:
                 webcrawler_data_source_congiguration['webConfiguration']['crawlerConfiguration']['exclusionFilters'] = ds['exclusionFilters']
                 # print(webcrawler_data_source_congiguration)
                 data_source_configuration = webcrawler_data_source_congiguration
-                
+
+            if ds['type'] == "CUSTOM":
+                print(f'{idx +1 } data source: CUSTOM')
+                ds_name = f'{kb_id}-custom'
+                data_source_configuration = custom_data_source_congiguration                
 
             # Create a DataSource in KnowledgeBase 
             vector_ingestion_configuration = { "chunkingConfiguration": chunking_strategy_configuration['chunkingConfiguration']}
@@ -1006,6 +1015,17 @@ class BedrockKnowledgeBase:
             # delete s3 bucket
             if delete_s3_bucket:
                 self.delete_s3()
+
+    def delete_s3(self):
+        s3 = boto3.resource('s3')
+        for bucket_name in self.new_bucket_names:
+            try:
+                bucket = s3.Bucket(bucket_name)
+                bucket.objects.all().delete()
+                bucket.delete()
+                print(f"Deleted S3 bucket {bucket_name}")
+            except s3.meta.client.exceptions.NoSuchBucket:
+                print(f"S3 bucket {bucket_name} not found.")
 
     def delete_iam_role_and_policies(self):
         iam = boto3.resource('iam')
