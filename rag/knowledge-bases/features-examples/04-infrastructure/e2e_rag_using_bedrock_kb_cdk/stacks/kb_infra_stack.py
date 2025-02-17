@@ -26,11 +26,14 @@ from config import EnvSettings, KbConfig, DsConfig, OpenSearchServerlessConfig
 region = EnvSettings.ACCOUNT_REGION
 account_id = EnvSettings.ACCOUNT_ID
 
+vector_store_type = KbConfig.VECTOR_STORE_TYPE
+
 collectionName = OpenSearchServerlessConfig.COLLECTION_NAME
 indexName = OpenSearchServerlessConfig.INDEX_NAME
 
 import json 
 embeddingModelId = KbConfig.EMBEDDING_MODEL_ID
+
 max_tokens = KbConfig.MAX_TOKENS
 overlap_percentage = KbConfig.OVERLAP_PERCENTAGE
 
@@ -38,7 +41,7 @@ class KbInfraStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str) -> None:
         super().__init__(scope, construct_id)
-
+        
         # Get the partition dynamically
         partition = Stack.of(self).partition
 
@@ -51,18 +54,40 @@ class KbInfraStack(Stack):
             "kbRoleArn",
             parameter_name="/e2e-rag/kbRoleArn"
         ).string_value
-        
-        self.collectionArn = ssm.StringParameter.from_string_parameter_attributes(
-            self, 
-            "collectionArn",
-            parameter_name="/e2e-rag/collectionArn"
-        ).string_value
-
+                        
         # Create Knowledgebase
-        self.knowledge_base = self.create_knowledge_base()
+        
+        # initialize knowledge base with default value
+        self.knowledge_base = None
+        
+        # depending on user selection in config.py, create knowledge base from OSS or Aurora
+        if vector_store_type =='OSS':
+            
+            self.collectionArn = ssm.StringParameter.from_string_parameter_attributes(
+                self, 
+                "collectionArn",
+                parameter_name="/e2e-rag/collectionArn"
+            ).string_value
+            
+            self.knowledge_base = self.create_knowledge_base_oss()
+            
+        elif vector_store_type =='Aurora':
+            
+            self.secretArn = ssm.StringParameter.from_string_parameter_attributes(
+                self, "secretArn",
+                parameter_name="/e2e-rag/secretArn"
+            ).string_value
+                            
+            self.dbArn = ssm.StringParameter.from_string_parameter_attributes(
+                self, "dbArn",
+                parameter_name="/e2e-rag/dbArn"
+            ).string_value
+            
+            self.knowledge_base = self.create_knowledge_base_aurora()
+
         self.data_source = self.create_data_source(self.knowledge_base)
     
-    def create_knowledge_base(self) -> CfnKnowledgeBase:
+    def create_knowledge_base_oss(self) -> CfnKnowledgeBase:
         return CfnKnowledgeBase(
             self, 
             'e2eRagKB',
@@ -72,9 +97,9 @@ class KbInfraStack(Stack):
                     embedding_model_arn=self.embedding_model_arn
                 )
             ),
-            name='docKnowledgeBase',
+            name='docKnowledgeBaseOSS',
             role_arn=self.kbRoleArn,
-            description='e2eRAG Knowledge base',
+            description='e2eRAG Knowledge base with OSS',
             storage_configuration=CfnKnowledgeBase.StorageConfigurationProperty(
                 type="OPENSEARCH_SERVERLESS",
                 opensearch_serverless_configuration=bedrock.CfnKnowledgeBase.OpenSearchServerlessConfigurationProperty(
@@ -88,6 +113,39 @@ class KbInfraStack(Stack):
                 )
             )
         )
+    
+    def create_knowledge_base_aurora(self) -> CfnKnowledgeBase:
+        return CfnKnowledgeBase(
+            self, 
+            'RagKB',
+            knowledge_base_configuration=CfnKnowledgeBase.KnowledgeBaseConfigurationProperty(
+            type="VECTOR",
+            vector_knowledge_base_configuration=CfnKnowledgeBase.VectorKnowledgeBaseConfigurationProperty(
+                embedding_model_arn=self.embedding_model_arn
+            )
+            ),
+            name='docKnowledgeBaseAurora',
+            role_arn=self.kbRoleArn,
+            # the properties below are optional
+            description='e2eRAG Knowledge base with Aurora PostgreSQL',
+            storage_configuration=CfnKnowledgeBase.StorageConfigurationProperty(
+              type="RDS",
+              # the properties below are optional
+                rds_configuration=bedrock.CfnKnowledgeBase.RdsConfigurationProperty(
+                credentials_secret_arn=self.secretArn,
+                database_name="MyAuroraDB",
+                field_mapping=bedrock.CfnKnowledgeBase.RdsFieldMappingProperty(
+                    metadata_field="metadata",
+                    primary_key_field="id",
+                    text_field="chunks",
+                    vector_field="embedding"
+                ),
+                resource_arn=self.dbArn,
+                table_name="kb_vector_store"
+            )
+            )
+          )    
+    
   
     def create_data_source(self, knowledge_base) -> CfnDataSource:
         kbid = knowledge_base.attr_knowledge_base_id
