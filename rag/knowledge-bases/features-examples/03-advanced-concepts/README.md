@@ -1,4 +1,4 @@
-# Knowledge Bases for Amazon Bedrock - Advanced Topics
+# Amazon Bedrock Knowledge Bases - Advanced Topics
 
 ## Contents
 Contains following folders: 

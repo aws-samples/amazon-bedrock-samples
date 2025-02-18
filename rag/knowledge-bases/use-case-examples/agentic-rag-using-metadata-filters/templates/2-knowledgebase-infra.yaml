@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Template for creating Knowledge Bases for Amazon Bedrock 
+Description: Template for creating Amazon Bedrock Knowledge Bases 
 
 Parameters:
     SolutionId:

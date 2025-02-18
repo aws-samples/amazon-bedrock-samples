@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: end-to-end RAG deployment template using Knowledge Bases for Amazon Bedrock
+Description: end-to-end RAG deployment template using Amazon Bedrock Knowledge Bases
 Parameters:
   Q01pInputBucketName:
     Type: String
