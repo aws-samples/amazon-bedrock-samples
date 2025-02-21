@@ -1,11 +1,11 @@
 
-# Deploy e2e RAG solution (using Knowledgebases for Amazon Bedrock) via CDK
+# Deploy e2e RAG solution (using Amazon Bedrock Knowledge Bases) via CDK
 <mark>By no means this deployment is production-ready deployment. Please adjust the IAM polies and permissions as per your organization policy)</mark>
 
-This is a complete setup for automatic deployment of end-to-end RAG workflow using Knowledge Bases for Amazon Bedrock. 
+This is a complete setup for automatic deployment of end-to-end RAG workflow using Amazon Bedrock Knowledge Bases. 
 Following resources will get created and deployed:
 - IAM role
-- Open Search Serverless Collection and Index
+- Open Search Serverless Collection and Index OR an Aurora PostgreSQL Provisioned Cluster as a vector store
 - Set up Data Source (DS) and Knowledge Base (KB)
 
 ## Deployment steps
@@ -57,7 +57,7 @@ pip install -r requirements.txt
 ```
 
 ### IMPORTANT : Update Config file 
-**Open `config.py` and adjust the below parmaters as per your application configuration**:
+**Open `config.py` and adjust the below parameters as per your application configuration**:
 - ACCOUNT_ID
 - ACCOUNT_REGION
 - RAG_PROJ_NAME
@@ -65,9 +65,12 @@ pip install -r requirements.txt
 - MAX_TOKENS
 - OVERLAP_PERCENTAGE
 - S3_BUCKET_NAME
+- VECTOR_STORE_TYPE (Ensure you select either 'OSS' for an OpenSearch Serverless or 'Aurora' for an Aurora PostgreSQL vector store)
 
 
 **Save it!**
+
+### PREPARATION: Bootstrap and synthesize the CDK project
 
 At this point you can now prepare the code zip and synthesize the CloudFormation template for this code. 
 
@@ -93,24 +96,20 @@ cdk bootstrap
 cdk synth
 ```
 
-As this deployment contains multiple stacks, you have to deploy them in a specific sequence. Deploy the stack(s) in following order
+### DEPLOYMENT: Deploy all stacks
+
+This deployment contains multiple stacks (IAM role, vector store, and knowledge base). To deploy all the stacks in the proper sequence, use the 'cdk deploy --all' command.
 
 ```
-cdk deploy KbRoleStack 
+cdk deploy --all
 ```
 
-```
-cdk deploy OpenSearchServerlessInfraStack 
-```
-
-```
-cdk deploy KbInfraStack 
-```
+### DELETION: Destroying the deployed infrastructure
 
 To Destroy the stack(s)
 
 ```
-cdk destroy --all 
+cdk destroy --all
 ```
 
 To add additional dependencies, for example other CDK libraries, just add

@@ -75,6 +75,28 @@ class KbRoleStack(Stack):
                       ),
                   ]
               ),
+              "RDSDataPolicy": iam.PolicyDocument(
+                  statements=[
+                      iam.PolicyStatement(
+                          sid="RDSDataPolicyStatement",
+                          effect=iam.Effect.ALLOW,
+                          actions=["rds-data:ExecuteStatement"],
+                          resources=["*"],
+                      ),
+                      iam.PolicyStatement(
+                          sid="RDSPolicyStatement",
+                          effect=iam.Effect.ALLOW,
+                          actions=["rds:*"],
+                          resources=["*"],
+                      ),
+                      iam.PolicyStatement(
+                          sid="SecretsPolicyStatement",
+                          effect=iam.Effect.ALLOW,
+                          actions=["secretsmanager:*"],
+                          resources=["*"],
+                      ),
+                  ]
+              ),
           },
         )
         
