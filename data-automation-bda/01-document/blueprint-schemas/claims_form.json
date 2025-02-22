@@ -1,0 +1,248 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "documentClass": "CMS 1500 Claim Form",
+    "description": "A standard medical claim form used by healthcare providers in the US to bill health insurance companies for medical services.",
+    "definitions": {
+        "Procedure_Service_Supplies": {
+            "properties": {
+                "service_start_date": {
+                    "type": "string",
+                    "inferenceType": "extractive",
+                    "description": "The service start date from item 24A in YYYY-MM-DD format"
+                },
+                "service_end_date": {
+                    "type": "string",
+                    "inferenceType": "extractive",
+                    "description": "The service end date from item 24A in YYYY-MM-DD format"
+                },
+                "place_of_service": {
+                    "type": "string",
+                    "description": "The place the service was provided"
+                },
+                "type_of_service": {
+                    "type": "string",
+                    "description": "The type of medical service"
+                },
+                "procedure_modifier": {
+                    "type": "string",
+                    "inferenceType": "extractive",
+                    "description": "The procedure modifier from item 24D"
+                },
+                "diagnosis_code": {
+                    "type": "string",
+                    "inferenceType": "extractive",
+                    "description": "The diagnosis code from item 24E"
+                },
+                "procedure_code": {
+                    "type": "string",
+                    "description": "The procedure code"
+                },
+                "charge_amount": {
+                    "type": "number",
+                    "description": "The charge amount for the procedure"
+                }
+            }
+        }
+    },
+    "properties": {
+        "insurance_program": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insurance program from item 1: Medicare, Medicaid, CHAMPUS, CHAMPVA, Group Health Plan"
+        },
+        "insured_id_number": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's ID number from item 1a"
+        },
+        "patient_name": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The patient's name from item 2 in Last Name, First Name, Middle Initial format"
+        },
+        "patient_date_of_birth": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The patient's date of birth from item 3 in YYYY-MM-DD format"
+        },
+        "insured_name": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's name from item 4 in Last Name, First Name, Middle Initial format"
+        },
+        "patient_address": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The patient's address from item 5"
+        },
+        "patient_relationship_to_insured": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The patient's relationship to insured from item 6"
+        },
+        "insured_address": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's address from item 7 including No.,Street, City, State, Zip Code"
+        },
+        "insured_phone_number": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's phone number, including area code from item 7 "
+        },
+        "patient_sex": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The patient's address from item 8"
+        },
+        "patient_marital_status": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The patient's address from item 8"
+        },
+        "patient_condition_related_to": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "Whether the patient's condition is related to employment, auto accident, or other accident from item 10"
+        },
+        "insured_policy_feca_number": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's policy group or FECA number from item 11"
+        },
+        "insured_date_of_birth": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's policy or group number from item 11a"
+        },
+        "insured_employer_or_school": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's employer or school 11b"
+        },
+        "insured_insurance_plan_name": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's plan name or program name from item 11c"
+        },
+        "another_health_benefit_plan_indicator": {
+            "type": "boolean",
+            "inferenceType": "extractive",
+            "description": "d. IS THERE ANOTHER HEALTH BENEFIT PLAN? Yes or No from item 11d"
+        },
+        "patient_signed_date": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "patient's or authorized person's signature date from item 12"
+        },
+        "insured_signed_date": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The insured's or authorized person's signed date from item 13"
+        },
+        "illness_injury_date": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The date of current illness, injury, or pregnancy from item 14 in YYYY-MM-DD format"
+        },
+        "previous_illness_date": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The date of a previous similar illness from item 15 in YYYY-MM-DD format"
+        },
+        "unable_to_work_start_date": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The dates the patient was unable to work from item 16"
+        },
+        "unable_to_work_end_date": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The dates the patient was unable to work until item 16"
+        },
+        "referring_physician": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The name of the referring physician from item 17"
+        },
+        "referring_physician_id": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The ID number of the referring physician from item 17a"
+        },
+        "hospitalization_start_date": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The hospitalization start date related to current services from item 18"
+        },
+        "hospitalization_end_date": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The hospitalization end date related to current services from item 18"
+        },
+        "is_outside_lab_indicator": {
+            "type": "boolean",
+            "inferenceType": "extractive",
+            "description": "Are there outside lab charges? from item 20"
+        },
+        "outside_lab_charges": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "Whether outside lab was used and charges from item 20"
+        },
+        "diagnosis_1": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The diagnosis or nature of illness or injury from item 21.1"
+        },
+        "diagnosis_2": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The diagnosis or nature of illness or injury from item 21.2"
+        },
+        "diagnosis_3": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The diagnosis or nature of illness or injury from item 21.3"
+        },
+        "diagnosis_4": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The diagnosis or nature of illness or injury from item 21.4"
+        },
+        "medicaid_resubmission_number": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "MEDICAID RESUBMISSION NUMBER from item 22"
+        },
+        "medicaid_original_ref_number": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "Medicaid - Original ref no. from item 22"
+        },
+        "prior_authorization_number": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The prior authorization number from item 23"
+        },
+        "medical_procedures": {
+            "type": "array",
+            "description": "The list of medical procedures from the table in item 24",
+            "items": {
+                "$ref": "#/definitions/Procedure_Service_Supplies"
+            }
+        },
+        "tax_id_type": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The tax ID type (SSN or EIN) from item 25"
+        },
+        "tax_id_number": {
+            "type": "string",
+            "inferenceType": "extractive",
+            "description": "The federal tax ID number (SSN or EIN) from item 25"
+        },
+        "total_charges": {"type": "number","inferenceType": "extractive","description": "The total charges in dollars from item 28"},
+        "amount_paid": {"type": "number","inferenceType": "extractive","description": "The amount paid in dollars from item 29"}
+    }
+}

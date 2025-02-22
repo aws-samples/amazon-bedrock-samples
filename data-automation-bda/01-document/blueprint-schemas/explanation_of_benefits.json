@@ -1,0 +1,232 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"description": "A blueprint for a Remittance Advice (RA) or Explanation of Benefits (EOB), which is a standard document sent by insurance companies to detail how a medical claim was processed showing breakdown of charges, what the insurance paid, any discounts and amount due",
+	"documentClass": "Explanation of Benefits",
+	"type": "object",
+	"definitions": {
+		"PaymentDetail": {
+			"type": "object",
+			"properties": {
+				"paid_to": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Who the payment was made to"
+				},
+				"check_number": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "The check number"
+				},
+				"amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "The payment amount"
+				}
+			}
+		},
+		"payment_details": {
+			"type": "object",
+			"properties": {
+				"paid_to": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Who the payment was made to"
+				},
+				"check_number": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "The check number"
+				},
+				"amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "The payment amount"
+				}
+			}
+		},
+		"claim_summary": {
+			"type": "object",
+			"properties": {
+				"claim_number": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "The claim number"
+				},
+				"patient_name": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "The Patient Name associated with the claim"
+				},
+				"billed_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Billed Amount"
+				},
+				"provider_discount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Provider Discount"
+				},
+				"ucr_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "UCR amount in dollars"
+				},
+				"ineligible_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Ineligible Amount in dollars"
+				},
+				"deductible_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Deductible Amount in dollars"
+				},
+				"copay_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "the copay amount in dollars"
+				},
+				"payment_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Payment Amount"
+				}
+			}
+		},
+		"claim_details": {
+			"type": "object",
+			"properties": {
+				"dates_of_services": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Dates of Services"
+				},
+				"procedure_code": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Procedure Code"
+				},
+				"billed_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Billed Amount in Dollars"
+				},
+				"provider_discount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Provider Discount in Dollars"
+				},
+				"max_plan_allowable": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Maximum Plan Allowable in Dollars"
+				},
+				"ineligible_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Ineligible Amount in Dollars"
+				},
+				"remark_code": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Remark Code"
+				},
+				"deductible_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Deductible Amount in Dollars"
+				},
+				"copay_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Copay Amount in Dollars"
+				},
+				"paid_at": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Paid at (percentage)"
+				},
+				"payment_amount": {
+					"type": "number",
+					"inferenceType": "extractive",
+					"description": "Payment Amount in Dollars"
+				}
+			}
+		}
+	},
+	"properties": {
+		"employer": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "The employer name"
+		},
+		"group_number": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "The group number"
+		},
+		"date": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "The date"
+		},
+		"check_number": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "The check number"
+		},
+		"claim_number": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "The claim number"
+		},
+		"patient_name": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "The patient name"
+		},
+		"member_id": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "The member ID"
+		},
+		"patient_responsibility": {
+			"type": "number",
+			"inferenceType": "extractive",
+			"description": "The patient's responsibility amount"
+		},
+		"other_credits_or_adjustments": {
+			"type": "number",
+			"inferenceType": "extractive",
+			"description": "Any other credits or adjustments amount"
+		},
+		"total_payment": {
+			"type": "number",
+			"inferenceType": "extractive",
+			"description": "The total payment amount"
+		},
+		"paid_to": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "Who the payment was made to"
+		},
+		"payment_details": {
+			"type": "array",
+			"description": "The payment details table",
+			"items": {
+				"$ref": "#/definitions/payment_details"
+			}
+		},
+		"claim_details": {
+			"type": "array",
+			"description": "details of services that form the part of the claim",
+			"items": {
+				"$ref": "#/definitions/claim_details"
+			}
+		},
+		"claim_summary": {
+			"$ref": "#/definitions/claim_summary"
+		}
+	}
+}
