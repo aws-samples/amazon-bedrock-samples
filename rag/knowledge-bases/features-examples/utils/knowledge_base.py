@@ -222,7 +222,6 @@ class BedrockKnowledgeBase:
                     Bucket=bucket_name,
                     CreateBucketConfiguration={'LocationConstraint': self.region_name}
                 )
-        self.new_bucket_names = buckets_to_create.copy()
 
     def create_lambda(self):
         lambda_iam_role = self.create_lambda_role()
@@ -450,7 +449,7 @@ class BedrockKnowledgeBase:
                 ]
             }
 
-            assume_role_policy_document = {
+        assume_role_policy_document = {
             "Version": "2012-10-17",
             
             "Statement": [
