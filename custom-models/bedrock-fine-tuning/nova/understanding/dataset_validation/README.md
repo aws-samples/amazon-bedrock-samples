@@ -1,5 +1,5 @@
 ## Dataset Validation for Fine-tuning Nova Understanding models
-Before you create a fine-tuning job in the Amazon Bedrock console, utilize the provided script to validate your dataset first. This would allow you to identify formatting errors (if any) faster and save costs.
+Before you create a fine-tuning job in the Amazon Bedrock console or using API, utilize the provided script to validate your dataset first. This would allow you to identify formatting errors (if any) faster and save costs.
 
 ### Usage
 
