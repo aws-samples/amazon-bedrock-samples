@@ -1,0 +1,102 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"description": "A standard discharge summary report used by hospital containing details of the patient, medical provider and key facts on visit, medical assessment and a summary of discharge.",
+	"documentClass": "Hospital Discharge Summary",
+	"type": "object",
+	"definitions": {
+		"VisitDetails": {
+			"type": "object",
+			"properties": {
+				"admitted_date": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Date of admission in MM-DD-YYYY format"
+				},
+				"discharged_date": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Date of discharge in MM-DD-YYYY format"
+				},
+				"discharged_to": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Where the patient was discharged to"
+				}
+			}
+		},
+		"PatientDetails": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Name of the patient"
+				},
+				"gender": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Gender of the patient"
+				},
+				"patient_id": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Unique id of the patient"
+				}
+			}
+		},
+		"ProviderDetails": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Name of the provider"
+				},
+				"provider_id": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Unique id of the provider"
+				}
+			}
+		},
+		"AssessmentDetails": {
+			"type": "object",
+			"properties": {
+				"reported_symptoms": {
+					"type": "string",
+					"inferenceType": "extractive",
+					"description": "Reported symptoms and history of present illness"
+				}
+			}
+		}
+	},
+	"properties": {
+		"hospital_name": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "Name of the hospital"
+		},
+		"hospital_contact": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "Contact details of the hospital"
+		},
+		"visit_details": {
+			"$ref": "#/definitions/VisitDetails"
+		},
+		"patient_details": {
+			"$ref": "#/definitions/PatientDetails"
+		},
+		"provider_details": {
+			"$ref": "#/definitions/ProviderDetails"
+		},
+		"assessment_details": {
+			"$ref": "#/definitions/AssessmentDetails"
+		},
+		"discharge_summary": {
+			"type": "string",
+			"inferenceType": "extractive",
+			"description": "Summary of discharge instructions"
+		}
+	}
+}

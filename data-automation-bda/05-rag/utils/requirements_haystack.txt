@@ -1,0 +1,8 @@
+boto3
+opensearch-py
+botocore
+awscli
+retrying
+haystack-ai
+ipywidgets
+iprogress
