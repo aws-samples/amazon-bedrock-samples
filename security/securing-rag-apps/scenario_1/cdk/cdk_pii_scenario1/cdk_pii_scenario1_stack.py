@@ -30,17 +30,19 @@ class PiiRedactionStack(Stack):
         source_bucket = s3.Bucket(
             self,
             "SourceBucket",
-            bucket_name=f"pii-scenario1-{account}",
+            bucket_name=f"scenario1-{account}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
         )
         safe_bucket = s3.Bucket(
             self,
             "PIISafeBucket",
-            bucket_name=f"pii-scenario1-safedata-{account}",
+            bucket_name=f"scenario1-redacted-{account}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
         )
         safe_bucket.node.add_dependency(source_bucket)
@@ -516,6 +518,7 @@ class PiiRedactionStack(Stack):
             sign_in_aliases={"email": True},
             auto_verify={"email": True},
             standard_attributes={"email": {"required": True, "mutable": True}},
+            removal_policy=RemovalPolicy.DESTROY,
         )
 
         # Create User Pool Client
@@ -532,7 +535,7 @@ class PiiRedactionStack(Stack):
             "AdminGroup",
             user_pool_id=user_pool.user_pool_id,
             group_name="Admins",
-            description="Administrator group",
+            description="Administrator group"
         )
         admin_group.node.add_dependency(user_pool)
 

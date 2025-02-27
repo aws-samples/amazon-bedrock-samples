@@ -276,11 +276,11 @@ while true; do
     sleep 60
 done
 
-echo "Invoking Macie Lambda again to process findings and move files..."
-aws lambda invoke \
-    --function-name $MACIE_LAMBDA \
-    response_macie.json
-check_command "Macie Lambda invocation"
+# echo "Invoking Macie Lambda again to process findings and move files..."
+# aws lambda invoke \
+#     --function-name $MACIE_LAMBDA \
+#     response_macie.json
+# check_command "Macie Lambda invocation"
 
 
 echo "KnowledgeBase data ingestion..."
@@ -320,7 +320,6 @@ while true; do
     fi
     sleep 1
 done
-
 
 
 # Verify streamlit app directory exists

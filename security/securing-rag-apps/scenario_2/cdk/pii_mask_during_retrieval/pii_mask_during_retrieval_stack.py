@@ -1,15 +1,10 @@
-from aws_cdk import (
-    aws_lambda as _lambda,
-    aws_apigateway as apigw,
-    aws_cognito as cognito,
-    aws_s3 as s3,
-    RemovalPolicy,
-    aws_bedrock,
-    aws_iam as iam,
-    CfnOutput,
-    Stack,
-    Duration,
-)
+from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
+from aws_cdk import aws_apigateway as apigw
+from aws_cdk import aws_bedrock
+from aws_cdk import aws_cognito as cognito
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_s3 as s3
 from cdklabs.generative_ai_cdk_constructs import bedrock
 from constructs import Construct
 
@@ -40,7 +35,7 @@ def handler(event, context):
 
         cfn_client = boto3.client('cloudformation')
         response = cfn_client.describe_stacks(StackName="PiiMaskDuringRetrievalStack")
-        
+
         # Create a dictionary of all outputs
         outputs = {}
         if 'Stacks' in response and len(response['Stacks']) > 0:
@@ -67,8 +62,8 @@ def handler(event, context):
                             'guardrailId': guardrailID,
                             'guardrailVersion': 'DRAFT'
                         },
-                        "inferenceConfig": { 
-                            "textInferenceConfig": { 
+                        "inferenceConfig": {
+                            "textInferenceConfig": {
                                 "temperature": body["temperature"],
                                 "topP": body["topP"]
                             }
@@ -91,7 +86,7 @@ def handler(event, context):
             'statusCode': 200,
             'body': response['output']['text']
         }
-    
+
     except Exception as e:
         # Handle any other unexpected errors
         error_message = f"An unexpected error occurred: {str(e)}"
@@ -114,6 +109,7 @@ def handler(event, context):
             sign_in_aliases={"email": True},
             auto_verify={"email": True},
             standard_attributes={"email": {"required": True, "mutable": True}},
+            removal_policy=RemovalPolicy.DESTROY
         )
 
         # Create Admin Group
