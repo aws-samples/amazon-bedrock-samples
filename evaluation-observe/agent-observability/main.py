@@ -1,4 +1,5 @@
 import time
+import uuid
 import boto3
 import json
 import logging
@@ -152,28 +153,26 @@ def invoke_bedrock_agent(inputText: str, agentId: str, agentAliasId: str, sessio
 
 if __name__ == "__main__":
     try:
-        agentId='9PTHV5JJKB'
-        agentAliasId='NOWNRUYNSN'
-        sessionId='default-session1'
-        trace_collector="arize_cloud"
+        agentId='your-agent-id'
+        agentAliasId='your-agent-alias-'
+        trace_collector="arize_cloud" # langfuse or arize_local
         userId = "Somename"
-
-        questions = [
-            "Hi, how are you?",
-            "What is the price of AMZN stock?",
-            "What is the employee bonus policy?",
-            "i like the day"
-        ]
-        for question in questions:
-            invoke_bedrock_agent(
+        question = "what is the temperature in seattle right now?"
+        sessionId= str(uuid.uuid4())
+        project_name = f"Agent-Observability-{agentId}-{agentAliasId}"
+        invoke_bedrock_agent(
                 inputText=question,
                 agentId=agentId,
                 agentAliasId=agentAliasId,
                 sessionId=sessionId,
                 provider=trace_collector,
                 show_traces=True,  # Control whether to print trace events in the logs or not
-                userId=userId
+                userId=userId,
+                project_name=project_name,  # Pass the custom project name,
+                streamingConfigurations={
+                    "applyGuardrailInterval": 1,
+                    "streamFinalResponse": True
+                }
             )
-            time.sleep(20) # gosh to avoid throttling
     except Exception as e:
         logger.error(f"Error invoking agent: {str(e)}")
