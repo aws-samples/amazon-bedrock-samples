@@ -17,7 +17,23 @@ An OpenTelemetry instrumentation framework for AWS Bedrock Agents using OpenInfe
 pip install -r requirements.txt
 ```
 
-2. Modify main.py:
+2. Decorate your invoke_agent api call:
+```python
+@instrument_agent_invocation
+def invoke_bedrock_agent(inputText: str, agentId: str, agentAliasId: str, sessionId: str):
+    bedrock_rt_client = boto3.client('bedrock-agent-runtime')
+    response = bedrock_rt_client.invoke_agent(
+        inputText=inputText,
+        agentId=agentId,
+        agentAliasId=agentAliasId,
+        sessionId=sessionId,
+        enableTrace=True
+    )
+    return response
+```
+
+
+3. Modify main.py:
 ```python
 if __name__ == "__main__":
     try:
