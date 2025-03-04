@@ -60,7 +60,7 @@ Before running this notebook, ensure you have:
 1. Access to Amazon Bedrock and appropriate permissions
 2. Required Python packages installed (boto3, json, IPython.display)
 
-![BDA video and audio with KB Architecture](/static/bda_kb_integration.png)
+![BDA video and audio with KB Architecture](../static/bda_kb_integration.png)
 
 ## Try it out
 ### At an AWS Event
