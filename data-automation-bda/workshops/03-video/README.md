@@ -1,6 +1,6 @@
 # Video extraction and analysis using BDA
 
-![video introduction](/static/400-video.png)
+![video introduction](../static/400-video.png)
 
 BDA offers a set of standard outputs to process and generate insights for videos. 
 

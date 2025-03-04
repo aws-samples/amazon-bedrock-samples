@@ -1,6 +1,6 @@
 # Image extraction and analysis using BDA
 
-![Image instroduction](/static/300-image.png)
+![Image instroduction](../static/300-image.png)
 
 BDA provides a comprehensive set of standard outputs for image processing to generate insights from your images. It also offers customizable features via blueprints, allowing users to flexibly extend the analysis outputs.
 
