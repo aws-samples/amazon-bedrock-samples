@@ -21,15 +21,76 @@ if ! command -v aws &>/dev/null; then
     exit 1
 fi
 
+# Set CDK environment variables
+echo "Setting up CDK environment..."
+export CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+export CDK_DEFAULT_REGION=$(aws configure get region)
+export JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1
+
+echo "Using AWS Account: $CDK_DEFAULT_ACCOUNT"
+echo "Using AWS Region: $CDK_DEFAULT_REGION"
+
+
+# Check if CDK is installed
+if ! command -v cdk &>/dev/null; then
+    echo "Error: AWS CDK is not installed"
+    exit 1
+fi
+
+# Check if Docker is running
+if ! docker info >/dev/null 2>&1; then
+    echo "Error: Docker is not running. Please start Docker and try again."
+    exit 1
+fi
+
+# Check if Macie is enabled
+MACIE_STATUS=$(aws macie2 get-macie-session --query "status" --output text 2>/dev/null || echo "DISABLED")
+if [[ "$MACIE_STATUS" == "DISABLED" ]]; then
+    echo "Error: Amazon Macie is not enabled. Please enable Macie before running this script."
+    echo "Refer to https://docs.aws.amazon.com/macie/latest/user/getting-started.html for instructions."
+    exit 1
+fi
+
 # Check if Streamlit is installed
 if ! command -v streamlit &>/dev/null; then
     echo "Error: Streamlit is not installed"
     exit 1
 fi
 
-# Verify stack exists first
-aws cloudformation describe-stacks --stack-name $STACK_NAME >/dev/null 2>&1 || {
-    echo "Error: Stack $STACK_NAME not found"
+# Navigate to CDK directory
+echo "Navigating to cdk/ directory..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/cdk" || {
+    echo "Error: CDK directory not found"
+    exit 1
+}
+
+# Bootstrap CDK
+echo "Bootstrapping CDK..."
+cdk bootstrap || {
+    echo "CDK bootstrap failed. Attempting to clean up and retry..."
+    echo "Checking if CDKToolkit stack exists..."
+    if aws cloudformation describe-stacks --stack-name CDKToolkit >/dev/null 2>&1; then
+        echo "Deleting existing CDKToolkit stack..."
+        aws cloudformation delete-stack --stack-name CDKToolkit
+        echo "Waiting for stack deletion to complete..."
+        aws cloudformation wait stack-delete-complete --stack-name CDKToolkit
+        echo "Sleeping for 60s..."
+        sleep 60
+    fi
+    echo "Retrying CDK bootstrap..."
+    cdk bootstrap
+    check_command "CDK bootstrap"
+}
+
+# Synthesize and deploy CDK app
+echo "Synthesizing and deploying CDK app..."
+cdk synth --quiet && cdk deploy --require-approval never
+check_command "CDK deployment"
+
+# Return to the main directory
+cd "$SCRIPT_DIR" || {
+    echo "Error: Failed to navigate back to script directory"
     exit 1
 }
 

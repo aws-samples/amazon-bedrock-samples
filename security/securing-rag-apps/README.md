@@ -10,9 +10,42 @@ Both scenarios come with an [AWS Cloud Development Kit (CDK)](https://aws.amazon
 
 ## Pre-requisites
 
-Python version >= 3.10.16
+Please ensure you have Python version == 3.10.16
 
-Create and activate venv
+**NOTE:** This project assumes you have python v3.10.16 installed. If you want to use a later version, you may have to make changes to the dependency versions in [`requirements.txt`](./requirements.txt).
+
+### Clone the repository
+
+clone the [amazon-bedrock-samples](https://github.com/aws-samples/amazon-bedrock-samples.git) repository and switch to `securing-rag-apps` directory
+
+```shell
+git clone https://github.com/aws-samples/amazon-bedrock-samples.git
+
+cd amazon-bedrock-samples/security/securing-rag-apps
+```
+
+### Install `aws-cdk` CLI tool
+
+To deploy the CDK application stack we need to install `aws-cdk` cli tool.
+
+Refer to [AWS CDK CLI reference](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) for info and help on using the CDK cli.
+
+If you already have cdk cli version installed you can check the current installed version with the below command.
+
+```shell
+cdk --version
+# 2.1002.0 (build 09ef5a0)
+```
+
+**NOTE:** This application was tested with `aws-cdk` cli version == `2.1002.0 (build 09ef5a0)`.\
+
+```shell
+npm install -g aws-cdk@2.1002.0
+```
+
+### Create and activate python virtual environment
+
+Create and activate python venv
 
 ```shell
 python -m venv .venv
@@ -26,13 +59,15 @@ pip install -U pip
 pip install -r requirements.txt
 ```
 
-### Amazon Bedrock Model Access
+### Enabled model access in Amazon Bedrock
 
-Ensure you have access to Anthropic Claude models in Amazon Bedrock. Refer to [getting started](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html) guide for more info.
+**IMPORTANT**: Ensure you have access to Anthropic Claude models in Amazon Bedrock.
+Refer to [bedrock getting started](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html) user guide for more info.
 
 ## Synthetic Data Generation Tool
 
-For testing each scenario with sensitive data, we use [`synthetic_data.py`](./synthetic_data.py) data generation script.\
+For testing each scenario with sensitive data, we use [`synthetic_data.py`](./synthetic_data.py) script to generate synthetic data.
+
 The script generates synthetic healthcare and financial data for testing purposes. \
 The data generated is completely fictional and does not contain any real Personal Identifiable Information (PII).
 
@@ -43,6 +78,10 @@ python synthetic_data.py --seed 123 generate -n 10
 ```
 
 Data files will be available under a new `data/` directory.
+
+Next, Refer to relevant README.md files referenced below for deploying each Scenario
+
+---
 
 ## Scenario 1 (Data identification and redaction before Ingestion to KnowledgeBase)
 

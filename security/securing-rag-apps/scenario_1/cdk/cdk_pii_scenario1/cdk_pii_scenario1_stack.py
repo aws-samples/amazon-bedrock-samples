@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid4
 
 # from aws_cdk import aws_s3_deployment as s3deploy
 from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
@@ -19,18 +20,17 @@ from constructs import Construct
 class PiiRedactionStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-
-        # region = Stack.of(self).region
+        region = Stack.of(self).region
         account = Stack.of(self).account
-
+        self.suffix = f"{str(uuid4())[:5]}"
         # Retrieve and log the stack properties
-        print(f"Stack Name: {self.stack_name}")
+        # print(f"Stack Name: {self.stack_name}")
 
         # Step 1: Create S3 buckets
         source_bucket = s3.Bucket(
             self,
             "SourceBucket",
-            bucket_name=f"scenario1-{account}",
+            bucket_name=f"scenario1-{region}-{account}-{self.suffix}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
@@ -39,7 +39,7 @@ class PiiRedactionStack(Stack):
         safe_bucket = s3.Bucket(
             self,
             "PIISafeBucket",
-            bucket_name=f"scenario1-redacted-{account}",
+            bucket_name=f"scenario1-redacted-{region}-{account}-{self.suffix}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
@@ -51,7 +51,7 @@ class PiiRedactionStack(Stack):
         job_table = dynamodb.Table(
             self,
             "JobTrackingTable",
-            table_name="pii_scenario1_tracking",
+            table_name=f"pii_scenario1_tracking_{self.suffix}",
             partition_key=dynamodb.Attribute(
                 name="comprehend_job_id", type=dynamodb.AttributeType.STRING
             ),
@@ -61,7 +61,7 @@ class PiiRedactionStack(Stack):
         job_table.node.add_dependency(safe_bucket)
 
         # Create IAM role for Lambda function
-        comprehend_role = self.create_comprehed_iam_role(source_bucket)
+        comprehend_role = self.create_comprehend_iam_role(source_bucket)
 
         # Create Comprehend Processing Lambda
         processing_lambda = self.create_processing_lambda(
@@ -326,10 +326,10 @@ class PiiRedactionStack(Stack):
         macie_rule.add_target(targets.LambdaFunction(macie_lambda))
         macie_rule.node.add_dependency(macie_lambda)
 
-    def create_comprehed_iam_role(self, source_bucket):
+    def create_comprehend_iam_role(self, source_bucket):
         # Create Comprehend IAM Role
         comprehend_role_name = (
-            f"ComprehendPIIRole-{datetime.today().strftime('%d%b%Y')}"
+            f"ComprehendPIIRole-{self.suffix}"
         )
 
         # Create Comprehend IAM role
@@ -429,10 +429,11 @@ class PiiRedactionStack(Stack):
 
     def create_bedrock_guardrails(self):
         # Ref: https://github.com/awslabs/generative-ai-cdk-constructs/blob/f6f1e37b3d4c102da720ea53b619a7a31093e071/src/cdk-lib/bedrock/README.md#bedrock-guardrails
+        account = Stack.of(self).account
         guardrail = bedrock.Guardrail(
             self,
             "MyGuardrail",
-            name="PIIGuardrail",
+            name=f"PIIGuardrail-{account}-{self.suffix}",
             description="Guardrail to protect sensitive data",
         )
         # PII Filter: Entities to Mask
