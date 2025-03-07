@@ -8,10 +8,10 @@ import boto3
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-cfn_client = boto3.client("cloudformation")
-bedrock_client = boto3.client("bedrock-agent-runtime")
+region = os.environ["AWS_REGION"]
+cfn_client = boto3.client("cloudformation", region_name=region)
+bedrock_client = boto3.client("bedrock-agent-runtime", region_name=region)
 stack_name = os.getenv("CFN_STACK_NAME")
-region = "us-west-2"
 
 
 def handler(event, context):
@@ -23,16 +23,20 @@ def handler(event, context):
             else event["body"]
         )
 
+        # account_id = event["requestContext"]["accountId"]
+
+        # logger.info(f"Region: {region}; Account ID: {account_id}; Model ID: {model_id}")
+
         # Validate required fields
         if not all(
             key in body for key in ["prompt", "modelID", "temperature", "top_p"]
         ):
-            logger.debug(f"Missing required fields: {body}")
+            # logger.debug(f"Missing required fields: {body}")
             return {
                 "statusCode": 400,
                 "body": json.dumps({"error": "Missing required fields"}),
             }
-        logger.info(f"Received body: {body}")  # Debug log
+        # logger.info(f"Received body: {body}")  # Debug log
 
         response = cfn_client.describe_stacks(StackName=stack_name)
 
@@ -43,7 +47,11 @@ def handler(event, context):
                     outputs[output["OutputKey"]] = output["OutputValue"]
 
         guardrailID = outputs["GuardrailsId"]
-        model_arn = f"arn:aws:bedrock:{region}::foundation-model/{body['modelID']}"
+        # model_arn = f"arn:aws:bedrock:{region}::foundation-model/{body['modelID']}"
+        # model_arn = (
+        #     f"arn:aws:bedrock:{region}:{account_id}:inference-profile/us.{model_id}"
+        # )
+        # logger.info(f"Inference Profile ARN: {model_arn}")
 
         # Extract parameters with type conversion
         inference_config = {
@@ -54,6 +62,9 @@ def handler(event, context):
             }
         }
         logger.debug(f"Received inference_config: {inference_config}")
+
+        # Retrieve modelID from the body
+        model_id = body["modelID"]
 
         response = bedrock_client.retrieve_and_generate(
             input={"text": body["prompt"]},
@@ -67,7 +78,7 @@ def handler(event, context):
                         "inferenceConfig": inference_config,
                     },
                     "knowledgeBaseId": outputs["BedrockKBId"],
-                    "modelArn": model_arn,
+                    "modelArn": model_id,
                     "retrievalConfiguration": {
                         "vectorSearchConfiguration": {
                             "numberOfResults": 10,
@@ -77,7 +88,6 @@ def handler(event, context):
                 "type": "KNOWLEDGE_BASE",
             },
         )
-        # logger.info(f"Received response: {response['output']['text']}")  # Debug log
         return {"statusCode": 200, "body": response["output"]["text"]}
 
     except Exception as e:

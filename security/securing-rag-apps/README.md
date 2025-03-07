@@ -61,8 +61,13 @@ pip install -r requirements.txt
 
 ### Enabled model access in Amazon Bedrock
 
-**IMPORTANT**: Ensure you have access to Anthropic Claude models in Amazon Bedrock.
-Refer to [bedrock getting started](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html) user guide for more info.
+>**IMPORTANT**: Ensure `Access status` shows as `Access granted` for the below models under `Model Access` Amazon Bedrock console.
+
+- All Anthropic Claude (Text and Text & Vision generation models)
+- Amazon Titan Text Embedding V2 (Embedding Model)
+
+1. Refer to [Model support by AWS Region in Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html) for list of supported regions by model.
+2. Refer to [bedrock getting started](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html) user guide for info on how to request access to models in Amazon Bedrock.
 
 ## Synthetic Data Generation Tool
 
@@ -85,8 +90,8 @@ Next, Refer to relevant README.md files referenced below for deploying each Scen
 
 ## Scenario 1 (Data identification and redaction before Ingestion to KnowledgeBase)
 
-Refer to [Scenario 1 README.md](./scenario_1/README.md)
+To deploy Scenario 1 refer to [Scenario 1 README.md](./scenario_1/README.md#usage)
 
 ## Scenario 2 (Role-Based access to PII data during retrieval)
 
-Refer to [Scenario 2 README.md](./scenario_2/README.md)
+To deploy Scenario 2 refer to[Scenario 2 README.md](./scenario_2/README.md#usage)

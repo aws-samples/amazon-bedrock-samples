@@ -30,7 +30,7 @@ class PiiRedactionStack(Stack):
         source_bucket = s3.Bucket(
             self,
             "SourceBucket",
-            bucket_name=f"scenario1-{region}-{account}-{self.suffix}",
+            bucket_name=f"scenario1-{region}-{account}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
@@ -39,7 +39,7 @@ class PiiRedactionStack(Stack):
         safe_bucket = s3.Bucket(
             self,
             "PIISafeBucket",
-            bucket_name=f"scenario1-redacted-{region}-{account}-{self.suffix}",
+            bucket_name=f"scenario1-redacted-{region}-{account}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
@@ -411,6 +411,7 @@ class PiiRedactionStack(Stack):
         kb = bedrock.KnowledgeBase(
             self,
             "BedrockPIIKnowledgeBase",
+            name=f"CDKScenario1KB-{self.suffix}",
             embeddings_model=bedrock.BedrockFoundationModel.TITAN_EMBED_TEXT_V2_512,
             instruction="Bedrock Knowledge Base for testing PII data",
         )
@@ -593,14 +594,17 @@ class PiiRedactionStack(Stack):
                 "bedrock:Retrieve",
                 "bedrock:GetKnowledgeBase",
                 "cloudformation:DescribeStacks",
-                "bedrock:InvokeModel",
+                "bedrock:InvokeModel*",
                 "bedrock:ApplyGuardrail",
+                "bedrock:GetInferenceProfile",
             ],
             resources=[
                 f"arn:aws:bedrock:{region}:{account}:knowledge-base/{kb_id}",
                 Stack.of(self).stack_id,
-                f"arn:aws:bedrock:{region}::foundation-model/*",
                 f"arn:aws:bedrock:{region}:{account}:guardrail/{guardrail_id}",
+                "arn:aws:bedrock:*::foundation-model/*",
+                "arn:aws:bedrock:*:*:inference-profile/*",
+                "arn:aws:bedrock:*:*:application-inference-profile/*",
             ],
         )
 

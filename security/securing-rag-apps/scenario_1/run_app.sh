@@ -214,7 +214,7 @@ echo "Upload test data to S3 bucket"
 aws s3 cp ../data/ s3://$INPUT_BUCKET/inputs/ --recursive --exclude "*" --include "*.txt"
 check_command "S3 upload"
 
-echo "Invoke Comprehend Lambda"
+echo "Invoking Comprehend Lambda"
 aws lambda invoke \
     --function-name $COMPREHEND_LAMBDA \
     response_comprehend.json
@@ -336,13 +336,6 @@ while true; do
     echo "Waiting for Macie job completion (next check in 60s)..."
     sleep 60
 done
-
-# echo "Invoking Macie Lambda again to process findings and move files..."
-# aws lambda invoke \
-#     --function-name $MACIE_LAMBDA \
-#     response_macie.json
-# check_command "Macie Lambda invocation"
-
 
 echo "KnowledgeBase data ingestion..."
 SYNC_JOB_ID=$(aws bedrock-agent start-ingestion-job \

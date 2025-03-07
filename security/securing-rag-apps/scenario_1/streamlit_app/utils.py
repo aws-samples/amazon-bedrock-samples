@@ -23,55 +23,11 @@ if not client_id or not api_endpoint:
     print(f"Usage: {sys.argv[0]} <cognito_client_id> <api_endpoint>")
     sys.exit(1)
 
-jwt_instance = JWT()
-
-
-def get_bedrock_model_ids(
-    provider: str = "Anthropic",
-    output_modality: str = "TEXT",
-    region: str = "us-west-2",
-) -> List[str]:
-    """
-    Fetch model IDs from AWS Bedrock for specified provider and output modality.
-
-    Args:
-    provider (str): The provider of the model.
-    output_modality (str): The output modality of the model.
-
-    Returns:
-    list: A list of model IDs that match the criteria.
-    """
-    try:
-        bedrock_client = boto3.client("bedrock", region_name=region)
-        models = bedrock_client.list_foundation_models()["modelSummaries"]
-        model_ids = [
-            model["modelId"]
-            for model in models
-            if model["providerName"] == provider
-            and model["outputModalities"] == [output_modality]
-        ]
-        if provider == "Anthropic":
-            model_ids = [
-                model
-                for model in model_ids
-                if "claude-3-5" in model and ":0:" not in model
-            ]
-        elif provider == "Amazon":
-            model_ids = [model for model in model_ids if "nova" in model]
-    except NoCredentialsError:
-        st.error("AWS credentials not available.")
-        logger.error("AWS credentials not properly configured.")
-        model_ids = []
-    except Exception as e:
-        logger.error(f"Error fetching model IDs: {e}")
-        model_ids = []
-    return model_ids
-
 
 def authenticate_user(username, password):
     """Authenticate user"""
     try:
-        client = boto3.client("cognito-idp", region_name="us-west-2")
+        client = boto3.client("cognito-idp")
 
         auth_params = {"USERNAME": username, "PASSWORD": password}
 
@@ -84,9 +40,12 @@ def authenticate_user(username, password):
         token = response["AuthenticationResult"]["IdToken"]
 
         st.session_state.token = token
+
+        jwt_instance = JWT()
+
         decoded = jwt_instance.decode(
             token,
-            do_verify=False,
+            do_verify=False,  # Skip verification for demonstration
         )
         return {"success": True, "data": decoded}
     except ClientError as e:
@@ -126,11 +85,11 @@ def query_KB(prompt: str, model_id: str, temp: float, top_p: float):
         "max_tokens": 2048,
     }
 
-    logger.debug(f"Request data: {data}")
+    # logger.debug(f"Request data: {data}")
     try:
         # logger.debug(f"{api_endpoint}bedrock")
         response = requests.post(f"{api_endpoint}bedrock", headers=headers, json=data)
-        logger.info(response)
+        logger.debug(response)
 
         response.raise_for_status()
 
@@ -153,3 +112,39 @@ def query_KB(prompt: str, model_id: str, temp: float, top_p: float):
                 e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR
             ),
         }
+
+
+def get_bedrock_model_ids(
+    provider: str = "Anthropic", output_modality: str = "TEXT"
+) -> List[str]:
+    """
+    Fetch model IDs from AWS Bedrock for specified provider and output modality.
+
+    Args:
+    provider (str): The provider of the model.
+    output_modality (str): The output modality of the model.
+
+    Returns:
+    list: A list of model IDs that match the criteria.
+    """
+    try:
+        bedrock_client = boto3.client("bedrock")
+        if provider == "Anthropic":
+            models = bedrock_client.list_inference_profiles(
+                typeEquals="SYSTEM_DEFINED"
+            )["inferenceProfileSummaries"]
+            model_ids = [
+                model["inferenceProfileId"]
+                for model in models
+                if provider in model["inferenceProfileName"]
+                and "claude-3-5" in model["inferenceProfileId"]
+            ]
+    except NoCredentialsError:
+        st.error("AWS credentials not available.")
+        logger.error("AWS credentials not properly configured.")
+        model_ids = []
+    except Exception as e:
+        st.error(f"{e}")
+        logger.error(f"Error fetching model IDs: {e}")
+        model_ids = []
+    return model_ids

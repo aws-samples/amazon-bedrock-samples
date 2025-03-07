@@ -35,23 +35,25 @@ In Scenario 1, documents flow through a series of carefully orchestrated steps:
 
 ![Augmented Retrieval Flow](../images/scenario1_augmented%20retrieval_flow.png)
 
+---
+
 ## Usage
 
-### Step 1: Deploying CDK stack
+### Deploying CDK stack
 
-#### Prerequisites
+Before running the next step:
 
 - Ensure you have completed all steps listed in the [Pre-requisites](../README.md#pre-requisites) section of the main [README.md](../README.md) file.
-- **IMPORTANT:** Ensure [`synthetic_data.py`](./synthetic_data.py) script is run before this step. Refer to [Synthetic Data Generation Tool](../README.md#synthetic-data-generation-tool) section for info.
+- **IMPORTANT:** Ensure [`synthetic_data.py`](./synthetic_data.py) script is run before this step. Refer to [Synthetic Data Generation Tool](../README.md#synthetic-data-generation-tool) section for info on running this script.
 - Ensure Amazon Macie is enabled. Refer to [getting-started](https://docs.aws.amazon.com/macie/latest/user/getting-started.html) guide for more info.
 - Install Docker desktop for custom CDK constructs.
   - [Install Docker desktop for windows](https://docs.docker.com/desktop/setup/install/windows-install/)
   - [Install Docker desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
   - [Install Docker desktop for Linux](https://docs.docker.com/desktop/setup/install/linux/)
 
-### Run shell script to deploy CDK app
+#### Run shell script to deploy CDK app
 
-Execute the `run_app.sh` script by switching into `scenario_1/` directory as root.
+Execute the [`run_app.sh`](./run_app.sh) bash script by switching into `scenario_1/` directory.
 
 ```shell
 cd scenario_1/
@@ -66,19 +68,21 @@ Wait for the script to complete. After the script completes it should automatica
 - Optionally, set model params like `temperature` and `top_p` values.
 - Ask questions based on your data files in [data](../data/) folder.
 
-Here are a few sample questions:
+Here are a few sample questions to use as prompts:
 
-- What medications were recommended for _Chronic migraines_
-- Typically what are recommended medications for _shortness of breath_
-- List all patients with _Obesity_ as Symptom and the recommended medications
-- What is the home address of _Nikhil Jayashankar_
-- List all patients under _Institution Flores Group Medical Center_
+```text
+- What medications were recommended for Chronic migraines
+- Typically what are recommended medications for shortness of breath
+- List all patients with Obesity as Symptom and the recommended medications
+- What is the home address of Nikhil Jayashankar
+- List all patients under Institution Flores Group Medical Center
+```
 
 >**NOTE:** The above questions are just for reference your datafiles may or may not contain information on the questions. Check your datafiles in [data](../data/) folder.
 
-## Cleanup (Scenario 1)
+### Scenario1 Cleanup
 
-Delete the stack.
+Delete all cdk deployed resources.
 
 >**NOTE:** The below command deletes all deployed resources including S3 buckets.
 

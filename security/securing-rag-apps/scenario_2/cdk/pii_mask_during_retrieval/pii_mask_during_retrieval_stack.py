@@ -130,7 +130,7 @@ def handler(event, context):
             group_name="Users",
             description="Regular users group",
         )
-        admin_group.node.add_dependency(user_pool)
+        users_group.node.add_dependency(user_pool)
 
         # Create Admin user
         admin_user = cognito.CfnUserPoolUser(
@@ -160,7 +160,7 @@ def handler(event, context):
                 {"name": "email_verified", "value": "true"},
             ],
         )
-        admin_user.node.add_dependency(users_group)
+        nonadmin_user.node.add_dependency(users_group)
 
         # Add Admin User to Admin Group
         admin_user_to_group = cognito.CfnUserPoolUserToGroupAttachment(
@@ -220,7 +220,7 @@ def handler(event, context):
         docBucket = s3.Bucket(
             self,
             "PIITestDataBucket",
-            bucket_name=f"pii-scenario2-{account}",
+            bucket_name=f"pii-scenario2-{region}-{account}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             enforce_ssl=True,
@@ -350,8 +350,8 @@ def handler(event, context):
             resources=[
                 f"arn:aws:bedrock:{region}:{account}:knowledge-base/{kb.knowledge_base_id}",
                 Stack.of(self).stack_id,
-                f"arn:aws:bedrock:{region}::foundation-model/*",
-                f"arn:aws:bedrock:*:{account}:inference-profile/*",
+                f"arn:aws:bedrock:*::foundation-model/*",
+                f"arn:aws:bedrock:*:*:inference-profile/*",
                 f"arn:aws:bedrock:{region}:{account}:guardrail/{admin_guardrail.attr_guardrail_id}",
                 f"arn:aws:bedrock:{region}:{account}:guardrail/{nonadmin_guardrail.attr_guardrail_id}",
             ],

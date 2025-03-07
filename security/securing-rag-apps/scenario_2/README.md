@@ -5,7 +5,7 @@
 ## Architecture break-down
 
 * Authentication Flow (Steps 1-3)
-  * User initiates request by obtaining authorization token from Cognito User Pool  
+  * User initiates request by obtaining authorization token from Cognito User Pool
   * API call is made with authentication token to API Gateway
   * API Gateway forwards claims to AWS Lambda for processing
 * Access Control Validation (Step 4)
@@ -29,60 +29,55 @@
       * Admin users receive full information
       * Non-admin users receive PII-masked information
 
-### Usage
+---
 
-Step 1:
+## Usage
 
-set environment variables and run bootsrap. Replace `ACCOUNT_ID` with your AWS ACCOUNT_ID.
+### Deploying CDK stack
+
+Before running the next step:
+
+- Ensure you have completed all steps listed in the [Pre-requisites](../README.md#pre-requisites) section of the main [README.md](../README.md) file.
+- **IMPORTANT:** Ensure [`synthetic_data.py`](./synthetic_data.py) script is run before this step. Refer to [Synthetic Data Generation Tool](../README.md#synthetic-data-generation-tool) section for info.
+- Install Docker desktop for custom CDK constructs.
+  - [Install Docker desktop for windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+  - [Install Docker desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
+  - [Install Docker desktop for Linux](https://docs.docker.com/desktop/setup/install/linux/)
+
+#### Run shell script to deploy CDK app
+
+Execute the [`run_app.sh`](./run_app.sh) bash script by switching into `scenario_2/` directory.
 
 ```shell
 [ "${PWD##*/}" = "scenario_1" ] && cd ..
-cd scenario_2/cdk
-
-export CDK_DEFAULT_ACCOUNT=ACCOUNT_ID && export CDK_DEFAULT_REGION=us-west-2 && \
-  export JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1
-```
-
-At this point you can now synthesize the CloudFormation template for this code.
-
->**NOTE:** Before running the below command ensure docker desktop is running.
-
-```shell
-cdk bootstrap && cdk synth && cdk deploy
-```
-
-wait for the deployment to complete.
-
-Step 2:
-
-Execute the run_app.sh script under Scenario_2 folder
-
-```shell
-cd ..
+cd scenario_2/
 chmod +x run_app.sh
 ./run_app.sh
 ```
 
-This script will prompt you to enter a new password for the test logins.
-Once the passwords are reset, it will upload test data to S3, sync the KnowledgeBase.
+Wait for the script to complete. After the script completes it should automatically launch the streamlit app at <http://localhost:8501/>
 
-After the script completes it should automatically launch the streamlit app at <http://localhost:8501/>
-
-* Login using `jane@example.com` or `john@example.com` with reset password earlier.
-* From the sidebar, select a model from the drop-down.
-* Optionally, set model params like `temperature` and `top_p` values.
-* Ask questions based on your data files in [data](../data/) folder.
+- Login using `jane@example.com` for Admin access or `john@example.com` for Non-Admin access with password reset earlier.
+- From the sidebar, select a model from the drop-down.
+- Optionally, set model params like `temperature` and `top_p` values.
+- Ask questions based on your data files in [data](../data/) folder.
 
 Here are a few sample questions:
 
-* List all patients with Obesity as Symptom and the recommended medications
-* List all patients under Institution Flores Group Medical Center
-* Which patients are currently taking Furosemide and Atorvastatin medications
-* Generate a list of all patient names and a summary of their symptoms
+```text
+- List all patients with Obesity as Symptom and the recommended medications
+- Which patients are currently taking Furosemide and Atorvastatin medications
+- Generate a list of all patient names and a summary of their symptoms
+- List all patients under Institution Flores Group Medical Center
+```
 
 >**NOTE:** The above questions are just for reference your datafiles may or may not contain information on the questions. Check your datafiles in [data](../data/) folder.
 
-### Cleanup (Scenario 2)
+### Scenario 2 Cleanup
+
+Delete all cdk deployed resources.
+
+>**NOTE:** The below command deletes all deployed resources including S3 buckets.
 
 ```shell
 cd cdk

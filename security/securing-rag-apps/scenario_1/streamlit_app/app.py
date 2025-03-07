@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import utils
 from loguru import logger
@@ -5,7 +7,6 @@ from utils import get_bedrock_model_ids
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-
 
 def login_page():
     """Login page"""
@@ -90,11 +91,10 @@ def home_page():
         # Display user message
         with st.chat_message("user", avatar=USER_AVATAR):
             st.markdown(prompt)
-
-        kb_response = utils.query_KB(
-            prompt, llm_model_name, temp=temperature, top_p=top_p
-        )
-
+        with st.spinner("Processing request..."):
+            kb_response = utils.query_KB(
+                prompt, llm_model_name, temp=temperature, top_p=top_p
+            )
         if kb_response:
             with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
                 st.write(kb_response)

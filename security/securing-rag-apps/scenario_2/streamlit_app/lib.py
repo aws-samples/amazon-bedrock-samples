@@ -14,7 +14,7 @@ api_endpoint = sys.argv[2]
 
 def authenticate_user(username, password):
     try:
-        client = boto3.client("cognito-idp", region_name="us-west-2")
+        client = boto3.client("cognito-idp")
 
         auth_params = {"USERNAME": username, "PASSWORD": password}
 
@@ -31,8 +31,7 @@ def authenticate_user(username, password):
         jwt_instance = JWT()
 
         decoded = jwt_instance.decode(
-            token,
-            do_verify=False,  # Skip verification for demonstration
+            token, do_verify=False  # Skip verification for demonstration
         )
 
         return {"success": True, "data": decoded}
@@ -60,9 +59,7 @@ def query_KB(prompt, modelID, temp, topP):
 
 
 def get_bedrock_model_ids(
-    provider: str = "Anthropic",
-    output_modality: str = "TEXT",
-    region: str = "us-west-2",
+    provider: str = "Anthropic", output_modality: str = "TEXT"
 ) -> List[str]:
     """
     Fetch model IDs from AWS Bedrock for specified provider and output modality.
@@ -75,22 +72,16 @@ def get_bedrock_model_ids(
     list: A list of model IDs that match the criteria.
     """
     try:
-        bedrock_client = boto3.client("bedrock", region_name=region)
-        models = bedrock_client.list_foundation_models()["modelSummaries"]
-        model_ids = [
-            model["modelId"]
-            for model in models
-            if model["providerName"] == provider
-            and model["outputModalities"] == [output_modality]
+        bedrock_client = boto3.client("bedrock")
+        models = bedrock_client.list_inference_profiles(typeEquals="SYSTEM_DEFINED")[
+            "inferenceProfileSummaries"
         ]
-        if provider == "Anthropic":
-            model_ids = [
-                model
-                for model in model_ids
-                if "claude-3-5" in model and ":0:" not in model
-            ]
-        elif provider == "Amazon":
-            model_ids = [model for model in model_ids if "nova" in model]
+        model_ids = [
+            model["inferenceProfileId"]
+            for model in models
+            if provider in model["inferenceProfileName"]
+            and "claude-3-5" in model["inferenceProfileId"]
+        ]
     except NoCredentialsError:
         st.error("AWS credentials not available.")
         logger.error("AWS credentials not properly configured.")
