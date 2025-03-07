@@ -62,7 +62,8 @@ To grant Bedrock access to your identity, you can:
                 "bedrock:GetBlueprintRecommendation",
                 "bedrock:InvokeBlueprintRecommendationAsync",
                 "bedrock:ListBlueprints",
-                "bedrock:CreateBlueprint"
+                "bedrock:CreateBlueprint",
+                "bedrock:UpdateBlueprint"
             ],
             "Resource": "*"
         }
