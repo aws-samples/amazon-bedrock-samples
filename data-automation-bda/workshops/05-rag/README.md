@@ -4,13 +4,9 @@ title: Lab - Amazon Bedrock Data Automation (BDA) Parser for Document, Image Aud
 weight: 20
 ---
 
-In this module, you'll learn how to use Amazon Bedrock Data Automation (BDA) to parse document, image, audio and video content and create a Multimodal Retrieval-Augmented Generation (RAG) Application with Amazon Bedrock Knowledge Bases. This module contains:
-
-1. Overview
-2. Pre-requisites
-3. How to process document, image, audio and video content with BDA
-3. How to create a knowledge base with BDA outputs for audio and video content
-4. How to query and analyze document, audio and video content
+In this module, you'll learn how to use Amazon Bedrock Data Automation (BDA) to parse document, image, audio and video content and create a Multimodal Retrieval-Augmented Generation (RAG) Application with Amazon Bedrock Knowledge Bases. 
+![BDA video and audio with KB Architecture](../static/bda_kb_integration.png)
+This module contains:
 
 ## Overview
 The module is designed to analyze and generate insights from multi-modalal data, including textual, visual, video and audio data. By incorporating contextual information from your own data sources with BDA, you can create highly accurate embedding for multi-modal data with Bedrock Knowledge Bases and secure intelligent search Generative AI applications.
@@ -54,19 +50,3 @@ The extracted audio, video and document information is stored in a knowledge bas
 #### Notes:
 
 - Please make sure to enable Anthropic Claude 3 Sonnet and  Titan Text Embeddings V2 model access in Amazon Bedrock Console before running this notebook. 
-
-## Pre-requisites
-Before running this notebook, ensure you have:
-1. Access to Amazon Bedrock and appropriate permissions
-2. Required Python packages installed (boto3, json, IPython.display)
-
-![BDA video and audio with KB Architecture](../static/bda_kb_integration.png)
-
-## Try it out
-### At an AWS Event
-If you are following the workshop via workshop studio, go to your `SageMaker Studio Domain` and navigate to `SageMaker Studio Classic` under the `sagemakeruser` user.
-
-In the SageMaker Studio Classic UI navigate to `knowledge-bases-for-bedrock-workshop/bda_kb/bda_kb.ipynb`
-
-### Self-paced
-You can access the notebook directly from our GitHub repository: [BDA Knowledge Base Notebook](https://github.com/aws-samples/rag-workshop-amazon-bedrock-knowledge-bases/blob/main/bda_kb/bda_kb.ipynb).
