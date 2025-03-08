@@ -24,32 +24,37 @@ To grant Bedrock access to your identity, you can:
     "Version": "2012-10-17",
     "Statement": [
         {
+            "Sid": "BdaAccess",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:InvokeDataAutomationAsync",
+                "bedrock:CreateDataAutomationProject",
+                "bedrock:DeleteDataAutomationProject",
+                "bedrock:GetDataAutomationProject",
+                "bedrock:GetDataAutomationStatus",
+                "bedrock:ListDataAutomationProjects",
+                "bedrock:UpdateDataAutomationProject",
+                "bedrock:GetBlueprint",
+                "bedrock:GetBlueprintRecommendation",
+                "bedrock:InvokeBlueprintRecommendationAsync",
+                "bedrock:ListBlueprints",
+                "bedrock:CreateBlueprint",
+                "bedrock:DeleteBlueprint",
+                "bedrock:UpdateBlueprint"
+            ],
+            "Resource": "*"
+        },
+        {
             "Sid": "SagemakerGetDefaultS3",
             "Effect": "Allow",
             "Action": "sagemaker:ListNotebookInstanceLifecycleConfigs",
             "Resource": "*"
         },
         {
-            "Sid": "Kb",
+            "Sid": "KnowledgeBasesCreateRole",
             "Effect": "Allow",
             "Action": [
-                "iam:CreateRole",
-                "iam:CreatePolicy",
-                "iam:AttachRolePolicy",
-                "iam:GetRolePolicy",
-                "iam:PutRolePolicy",
-                "iam:CreateRole",
-                "iam:DeleteRole",
-                "iam:CreatePolicy",
-                "iam:AttachRolePolicy",
-                "iam:CreateServiceLinkedRole",
-                "iam:DeleteRole",
-                "iam:DeletePolicy",
-                "iam:PassRole",
-                "iam:GetPolicy",
-                "iam:DetachRolePolicy",
-                "iam:DeleteRolePolicy",
-                "iam:ListAttachedRolePolicies"
+                "iam:*"
             ],
             "Resource": "*"
         },
@@ -60,24 +65,14 @@ To grant Bedrock access to your identity, you can:
                 "s3:DeleteObject",
                 "s3:PutObject",
                 "s3:GetObject",
-                "s3:PutObject"
-            ],
-            "Resource": [
-                "arn:aws:s3:::sagemaker*",
-                "arn:aws:s3:::bedrock*"
-            ]
-        },
-        {
-            "Sid": "S3CreateListBucket",
-            "Effect": "Allow",
-            "Action": [
+                "s3:PutObject",
                 "s3:CreateBucket",
                 "s3:ListBucket"
             ],
-            "Resource": "*"
+            "Resource": "*",
         },
         {
-            "Sid": "BedrockKbAccess",
+            "Sid": "BedrockKnowledgeBasesAccess",
             "Effect": "Allow",
             "Action": [
                 "bedrock:CreateKnowledgeBase",
@@ -95,27 +90,6 @@ To grant Bedrock access to your identity, you can:
                 "bedrock:DeleteDataSource",
                 "bedrock:GetKnowledgeBase",
                 "bedrock:DeleteKnowledgeBase"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "BdaAccessWithCrossRegionInference",
-            "Effect": "Allow",
-            "Action": [
-                "bedrock:InvokeDataAutomationAsync",
-                "bedrock:CreateDataAutomationProject",
-                "bedrock:DeleteDataAutomationProject",
-                "bedrock:GetDataAutomationProject",
-                "bedrock:GetDataAutomationStatus",
-                "bedrock:ListDataAutomationProjects",
-                "bedrock:UpdateDataAutomationProject",
-                "bedrock:GetBlueprint",
-                "bedrock:GetBlueprintRecommendation",
-                "bedrock:InvokeBlueprintRecommendationAsync",
-                "bedrock:ListBlueprints",
-                "bedrock:CreateBlueprint",
-                "bedrock:DeleteBlueprint",
-                "bedrock:UpdateBlueprint"
             ],
             "Resource": "*"
         },
@@ -142,7 +116,7 @@ To grant Bedrock access to your identity, you can:
 }
 ```
 
-> ⚠️ **Note 1:** With Amazon SageMaker, your notebook execution role will typically be *separate* from the user or role that you log in to the AWS Console with. If you'd like to explore the AWS Console for Amazon Bedrock, you'll need to grant permissions to your Console user/role too.
+> ⚠️ **Note 1:** With Amazon SageMaker AI, your notebook execution role will typically be *separate* from the user or role that you log in to the AWS Console with. If you'd like to explore the AWS Console for Amazon Bedrock, you'll need to grant permissions to your Console user/role too.
 
 > ⚠️ **Note 2:** For top level folder changes, please reach out to the GitHub maintainers.
 
