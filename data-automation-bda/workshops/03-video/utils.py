@@ -4,9 +4,8 @@ from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
 import io, base64
 from IPython.display import display, HTML
-import logging
+import sys, os
 
-logging.getLogger('moviepy').setLevel(logging.WARNING)
 
 def read_json_on_s3(s3_uri, s3_client):
     # Parse s3 bucket and key from s3 uri
@@ -40,6 +39,14 @@ def delete_s3_folder(bucket_name, folder_prefix, s3_client):
         print(f"No objects found in folder: {folder_prefix}")
 
 def plot_text(sample_video_movie, result_data, chapter_index):
+    # Save the original stdout and stderr
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    
+    # Suppress stdout and stderr
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+    
     # plot all frames with boundingbox in the given scene
     width = result_data["metadata"]["frame_width"]
     height = result_data["metadata"]["frame_height"]
@@ -55,6 +62,8 @@ def plot_text(sample_video_movie, result_data, chapter_index):
                     bboxes = []
                     if frame.get("text_lines"):
                         for tl in frame["text_lines"]:
+                            if tl["confidence"] < 0.5:
+                                continue
                             for l in tl["locations"]:
                                 bbox = l["bounding_box"]
                                 if bbox:
@@ -83,8 +92,19 @@ def plot_text(sample_video_movie, result_data, chapter_index):
                         plt.title(f"At {timestamp} s, logo: {','.join(txts)}")
                         plt.axis("off")
                         plt.show()
+    # Restore the original stdout and stderr
+    sys.stdout = original_stdout
+    sys.stderr = original_stderr
 
 def plot_logo(sample_video_movie, result_data, chapter_index):
+    # Save the original stdout and stderr
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    
+    # Suppress stdout and stderr
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+
     width = result_data["metadata"]["frame_width"]
     height = result_data["metadata"]["frame_height"]
     
@@ -127,8 +147,47 @@ def plot_logo(sample_video_movie, result_data, chapter_index):
                         plt.title(f"At {timestamp} s, logo: {','.join(txts)}")
                         plt.axis("off")
                         plt.show()
+    # Restore the original stdout and stderr
+    sys.stdout = original_stdout
+    sys.stderr = original_stderr
+
+def plot_content_moderation(sample_video_path, result_data, chapter_index):
+    # Save the original stdout and stderr
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    
+    # Suppress stdout and stderr
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+
+    with VideoFileClip(sample_video_path) as video_clip:
+        for chapter in result_data["chapters"]:
+            for frame in chapter["frames"]:
+                if frame.get("content_moderation"):
+                    for cm in frame["content_moderation"]:
+                        timestamp = frame["timestamp_millis"]/1000
+                        img_frame = video_clip.get_frame(timestamp)  
+                        frame_image = Image.fromarray(img_frame)
+        
+                        plt.figure(figsize=(10, 6))
+                        plt.imshow(frame_image)
+                        plt.title(f"Frame at {timestamp} seconds, {cm['category']}  ({cm['confidence']*100}%) ")
+                        plt.axis("off")
+                        plt.show()
+                    
+    # Restore the original stdout and stderr
+    sys.stdout = original_stdout
+    sys.stderr = original_stderr
 
 def generate_shot_images(sample_video_movie, result_data, image_width = 120):
+    # Save the original stdout and stderr
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    
+    # Suppress stdout and stderr
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+
     # Generate shot images
     width = result_data["metadata"]["frame_width"]
     height = result_data["metadata"]["frame_height"]
@@ -160,6 +219,10 @@ def generate_shot_images(sample_video_movie, result_data, image_width = 120):
                 "shot": f'shot {shot["shot_index"]}',
                 "chapter": "" if ci is None else f"chapter {ci['chapter_index']}"
             })
+    # Restore the original stdout and stderr
+    sys.stdout = original_stdout
+    sys.stderr = original_stderr
+
     return images
 
 def plot_shots(images):
