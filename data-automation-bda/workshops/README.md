@@ -30,25 +30,76 @@ To grant Bedrock access to your identity, you can:
             "Resource": "*"
         },
         {
+            "Sid": "Kb",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateRole",
+                "iam:CreatePolicy",
+                "iam:AttachRolePolicy",
+                "iam:GetRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:CreatePolicy",
+                "iam:AttachRolePolicy",
+                "iam:CreateServiceLinkedRole",
+                "iam:DeleteRole",
+                "iam:DeletePolicy",
+                "iam:PassRole",
+                "iam:GetPolicy",
+                "iam:DetachRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:ListAttachedRolePolicies"
+            ],
+            "Resource": "*"
+        },
+        {
             "Sid": "S3Access",
             "Effect": "Allow",
             "Action": [
                 "s3:DeleteObject",
                 "s3:PutObject",
-                "s3:GetObject"
+                "s3:GetObject",
+                "s3:PutObject"
             ],
-            "Resource": "arn:aws:s3:::<YOUR-S3-BUCKET>"
+            "Resource": [
+                "arn:aws:s3:::sagemaker*",
+                "arn:aws:s3:::bedrock*"
+            ]
         },
         {
-            "Sid": "S3ListBucket",
+            "Sid": "S3CreateListBucket",
             "Effect": "Allow",
             "Action": [
+                "s3:CreateBucket",
                 "s3:ListBucket"
             ],
             "Resource": "*"
         },
         {
-            "Sid": "BdaAccess",
+            "Sid": "BedrockKbAccess",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:CreateKnowledgeBase",
+                "bedrock:UpdateKnowledgeBase",
+                "bedrock:ListKnowledgeBases",
+                "bedrock:Retrieve",
+                "bedrock:RetrieveAndGenerate",
+                "bedrock:ListDataSources",
+                "bedrock:ListIngestionJobs",
+                "bedrock:GetDataSource",
+                "bedrock:StartIngestionJob",
+                "bedrock:InvokeModel",
+                "bedrock:CreateDataSource",
+                "bedrock:GetIngestionJob",
+                "bedrock:DeleteDataSource",
+                "bedrock:GetKnowledgeBase",
+                "bedrock:DeleteKnowledgeBase"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "BdaAccessWithCrossRegionInference",
             "Effect": "Allow",
             "Action": [
                 "bedrock:InvokeDataAutomationAsync",
@@ -63,7 +114,27 @@ To grant Bedrock access to your identity, you can:
                 "bedrock:InvokeBlueprintRecommendationAsync",
                 "bedrock:ListBlueprints",
                 "bedrock:CreateBlueprint",
+                "bedrock:DeleteBlueprint",
                 "bedrock:UpdateBlueprint"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "OpenSearchAccessForKb",
+            "Effect": "Allow",
+            "Action": [
+                "aoss:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "LambdaForKbDeployment",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:AddPermission",
+                "lambda:CreateFunction",
+                "lambda:DeleteFunction",
+                "lambda:GetFunction"
             ],
             "Resource": "*"
         }

@@ -53,8 +53,8 @@ def plot_text(sample_video_movie, result_data, chapter_index):
             if chapter["chapter_index"] == chapter_index:
                 for frame in chapter["frames"]:
                     bboxes = []
-                    if frame.get("logos"):
-                        for tl in frame["logos"]:
+                    if frame.get("text_lines"):
+                        for tl in frame["text_lines"]:
                             for l in tl["locations"]:
                                 bbox = l["bounding_box"]
                                 if bbox:
@@ -65,7 +65,7 @@ def plot_text(sample_video_movie, result_data, chapter_index):
                                                     width * (bbox["width"]+bbox["left"]), 
                                                     height * (bbox["height"] + bbox["top"])
                                                 ),
-                                         "text": f"{tl['name']}"})
+                                         "text": f"{tl['text']}"})
                     if bboxes:
                         timestamp = frame["timestamp_millis"]/1000
                         frame = video_clip.get_frame(timestamp)  
