@@ -1,0 +1,6 @@
+pip install arize-phoenix
+pip install arize-phoenix-otel
+pip install openinference-semantic-conventions 
+pip install opentelemetry-api 
+pip install opentelemetry-sdk
+pip install boto3 --upgrade
