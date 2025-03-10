@@ -3,32 +3,20 @@
 ## Description
 This repository demonstrates how to perform fine-tuning with the Amazon Nova models for tool usage using Amazon Bedrock. 
 
-## Installation
-Please install dependencies using the requirements.txt file
-`pip install -r requirements.txt`
+## Contents
 
-## Usage
-There are three notebooks:
+There are four noteboooks which wlak you trough tool calling using Amazon Bedrock APIs with and without fine-tuning.
 
-1. 01_toolcall_nova_bedrock_invokeAPI_and_converseAPI_.ipynb : Playground to use bedrock invoke and converse api for tool use with predefined set of tools. This notebook shows how the tool config, prompt and messages API should look like to align with bedrock converse API and bedrock invoke API. You can check how they work by using different input questions.
+- [01_toolcall_nova_bedrock_invokeAPI_and_converseAPI.ipynb](./tooluse_finetuner_main/notebooks/01\_toolcall_nova_bedrock_invokeAPI_and_converseAPI.ipynb) - In this notebook we use Amazon Bedrock invoke and converse api for tool use with predefined set of tools. We show how the tool config, prompt and messages API should look like to align with Bedrock converse API and Bedrock invoke API. You can check how they work by using different input questions.
 
-2. 02_script_tool_dataset_to_bedrock_nova_ft.ipynb: This script  converts the dataset originally intended for Llama ft with huggingface, to dataset format to align with the format required by Amazon Nova for finetuning using Amazon Bedrock invoke api. 
+- [02_prepare_toolcall_dataset_for_bedrock_nova_ft.ipynb](./tooluse_finetuner_main/notebooks/02\_prepare_toolcall_dataset_for_bedrock_nova_ft.ipynb) - In this notebook we convert the dataset  to a format required by Amazon Nova for finetuning through Amazon Bedrock invoke api or Amazon Bedrock console. 
 
-3. 03_toolcall_fullfinetune_nova_bedrock.ipynb: Script to setup the IAM roles with the s3 bucket with data and creating a new finetuning job with Amazon Nova using bedrock API. Note that finetuning can be done directly from Amazon Bedrocj console as well.
+- [03_toolcall_fullfinetune_nova_bedrock.ipynb](./tooluse_finetuner_main/notebooks/03\_toolcall_fullfinetune_nova_bedrock.ipynb) - In this notebook we setup the IAM roles with the s3 bucket which has the formatted tran and test tooluse dataset. Then we create and start a new finetuning job with Amazon Nova using Bedrock API. Note that finetuning can be done directly from Amazon Bedrock console as well. 
 
-4. 04_toolcall_test_inference_finetuned_nova_bedrock.ipynb: Inference script to deploy your finetuned model using provisioned throughput, load your finetuned model and run inference with it. The script also calculates the accuracy metrics on validation set for both tool usage and args calling. 
+- [04_toolcall_test_inference_finetuned_nova_bedrock.ipynb](./tooluse_finetuner_main/notebooks/04\_toolcall_test_inference_finetuned_nova_bedrock.ipynb) - In this notebook we show you how to deploy your finetuned model using provisioned throughput and run inference with it. We  also calculate the accuracy metrics on validation set for both tool usage and args calling.
 
-## Support
-Reach out to baishch@
-
-## Roadmap
-
+We also have eight python files corresponding to the tools that we will be using in this dataset.
 
 ## Contributing
-Contributions are welcome! Reach out to baishch@
 
-## Authors and acknowledgment
-baishch@
-
-## License
-MIT-0
+We welcome community contributions! Please ensure your sample aligns with AWS [best practices](https://aws.amazon.com/architecture/well-architected/), and please update the **Contents** section of this README file with a link to your sample, along with a description.
