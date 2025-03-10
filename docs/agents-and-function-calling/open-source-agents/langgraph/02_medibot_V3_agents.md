@@ -1,25 +1,13 @@
-```python
-import warnings
-import boto3
-from dotenv import load_dotenv
-import os
-from botocore.config import Config
+## Introduction:
 
-warnings.filterwarnings('ignore')
-load_dotenv()
+In this notebook we will review and walk through the details of how to create multi-agent turn by turn conversation. The `Agents` will colloborate with each other to figutre out the steps needed and also determine when to return the results back to the user. We will at the end dive into the some of the best practices for this approach.
 
-my_config = Config(
-    region_name = 'us-west-2',
-    signature_version = 'v4',
-    retries = {
-        'max_attempts': 10,
-        'mode': 'standard'
-    }
-)
-```
+The use-case we will mimic will be a virtual doctor clinic. The clinic will be having the following functionality.
+- Ability to book, cancel, re-schedule appointments
+- Chat with your cirtual doctor where we will have either a fine tuned model using the doctor's research, notes and papers published
+- Chat with your medical records where we will use `RAG` to determine and asnwer question pertaining to your history
 
-## Set up: Introduction to ChatBedrock and prompt templates
-
+We will set up a retriever and other sets of tools to allow for this use-case to proceed. We will use the ChatBedrock class which :
 **Supports the following**
 1. Multiple Models from Bedrock 
 2. Converse API
@@ -40,6 +28,7 @@ my_config = Config(
 #     "langchain-aws>=0.1.17"
 #%pip install -U --no-cache-dir boto3
 #%pip install grandalf==3.1.2
+#%pip install dateparser
 ```
 
 ### Set up classes
@@ -63,6 +52,15 @@ import boto3
 from botocore.config import Config
 
 warnings.filterwarnings('ignore')
+import warnings
+import boto3
+from dotenv import load_dotenv
+import os
+from botocore.config import Config
+
+warnings.filterwarnings('ignore')
+#load_dotenv()
+
 
 def print_ww(*args, width: int = 100, **kwargs):
     """Like print(), but wraps output to `width` characters (default 100)"""
@@ -195,9 +193,11 @@ from langchain_aws import ChatBedrock
 # from langchain_community.chat_models import BedrockChaat
 from langchain_core.messages import HumanMessage, SystemMessage
 
-llm = ChatBedrock(client=boto3_bedrock, #credentials_profile_name='~/.aws/credentials',
-                  model_id="anthropic.claude-3-haiku-20240307-v1:0",
-                  model_kwargs=dict(temperature=0))
+llm = ChatBedrock(
+    client=boto3_bedrock, #credentials_profile_name='~/.aws/credentials',
+    model_id="anthropic.claude-3-haiku-20240307-v1:0",
+    model_kwargs=dict(temperature=0)
+)
 ```
 
 
@@ -213,7 +213,7 @@ ai_msg
 
 ## Naive inferencing: The root challenge in creating Chatbots and Virtual Assistants and the Agentic solution:
 
-As seen in previous tutorials, LLM conversational interfaces such as chatbots or virtual assistants can be used to enhance the user experience of customers. These can be improved even more by giving them context from related sources such as chat history, documents, websites, social media platforms, and / or messaging apps, this is called RAG (Retrieval Augmented Generation) and is a fundamental backbone of designing robust AI solutions. 
+As seen in previous tutorials which are at [Medibots](../LangChain), LLM conversational interfaces such as chatbots or virtual assistants can be used to enhance the user experience of customers. These can be improved even more by giving them context from related sources such as chat history, documents, websites, social media platforms, and / or messaging apps, this is called RAG (Retrieval Augmented Generation) and is a fundamental backbone of designing robust AI solutions. 
 
 One persistent bottleneck however is the inability of LLMs to assess whether data extracted and or its response, based on said data, is accurate and fully encapsulates a user requests (hallucinating). A way to mitigate this risk brought up by naive, inferencing with RAG is through the use of Agents. Agents are defined as a workflow that uses data, tools, and its own inferences to check that the response provided is accurate and meets users goals.
 
@@ -257,6 +257,9 @@ import warnings
 from io import StringIO
 import sys
 import textwrap
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
 warnings.filterwarnings('ignore')
 
@@ -264,7 +267,7 @@ warnings.filterwarnings('ignore')
 ```
 
 ### Build the retriever chain to be used with LangGraph
-1. Create `create_retriever_pain` which is used when the solution requires data retrieval from our documents
+1. Create `create_retriever` which is used when the solution requires data retrieval from our documents
 2. Define the system prompt to enforce the correct use of context retrieved, it also ensures that the agent does not hallucinate
 3. Define the vectorstore using FAISS, a light weight in-memory vector DB and our documents stored in _'medi_history.csv'_
 4. Define the sessions persistent memory store for the agents use
@@ -358,6 +361,8 @@ In this module we will create an agent responsible for booking and canceling doc
 3. _reject_appointment_: If an appointment cannot be booked due to inability or invalid date or time the agent will use this tool to reject the users request.
 4. _need_more_info_: Returns the earliest date and time needed for the booking an appointment back to the agent as well as informing the agent that it should request further details from the user.
 
+AgentExecutor is deprecated and here we arte using it to test our agents. These will run as nodes on the LangGraph and that uses a different construct
+
 
 
 ```python
@@ -420,7 +425,7 @@ def create_book_cancel_agent():
         print(booking_id)
         status = any(app == booking_id for app in appointments)
         if not status:
-            booking_id = "ERROR: No ID for given booking found. Please provide valid id"
+            return {"status" : status, "booking_id": "ERROR: No ID for given booking found. Please provide valid id"}
         appointments.remove(booking_id)
         return {"status" : status, "booking_id": booking_id}
 
@@ -456,15 +461,19 @@ def create_book_cancel_agent():
     tools_list_book = [book_appointment, cancel_appointment, need_more_info, reject_appointment]
 
     # Construct the Tools agent
-    book_cancel_agent_t = create_tool_calling_agent(chat_bedrock_appointment, 
-                                                    tools_list_book, 
-                                                    chat_prompt_template)
-    
-    agent_executor_t = AgentExecutor(agent=book_cancel_agent_t, 
-                                     tools=tools_list_book, 
-                                     verbose=True, 
-                                     max_iterations=5, 
-                                     return_intermediate_steps=True)
+    book_cancel_agent_t = create_tool_calling_agent(
+        chat_bedrock_appointment, 
+        tools_list_book, 
+        chat_prompt_template
+    )
+    #-  only for testing
+    agent_executor_t = AgentExecutor(
+        agent=book_cancel_agent_t, 
+        tools=tools_list_book, 
+        verbose=True, # to help in the debug
+        max_iterations=5, # - to ensure we do not run in-definetly
+        return_intermediate_steps=True # - for viewing the Agents Tracing
+    )
     return agent_executor_t
 
 ```
@@ -520,6 +529,10 @@ agent_executor_book_cancel.invoke({"input": "can you cancel my appointment with 
 ### An AI doctor: Medical advice agent based on conversations with the patient
 This function will be the backbone of the language agent responsible for giving medical advice given the historical interactions the user had with the Chatbot. This model will use its knowledge of the medical field along with the conversations with the patient to give well founded advice.
 
+The model here can be replaced with your own fine tuned model and imported into Bedrock as described here [Custom Model Import](https://docs.aws.amazon.com/bedrock/latest/userguide/model-customization-import-model.html)
+
+You can refer to a few blogs like [this](https://aws.amazon.com/blogs/machine-learning/import-a-question-answering-fine-tuned-model-into-amazon-bedrock-as-a-custom-model/) to get started 
+
 
 ```python
 from langchain_aws.chat_models.bedrock import ChatBedrock
@@ -534,7 +547,7 @@ def extract_chat_history(chat_history):
 
 
 def ask_doctor_advice(boto3_bedrock, chat_history):
-    modelId = "anthropic.claude-3-sonnet-20240229-v1:0" 
+    modelId = "anthropic.claude-3-sonnet-20240229-v1:0"  # this can be replaced with your own fine tuned model
     response = boto3_bedrock.converse(
         messages=chat_history,
         modelId=modelId,
@@ -788,6 +801,35 @@ graph = workflow.compile()
 graph.get_graph().print_ascii()
 ```
 
+                                                        +-----------+                                           
+                                                        | __start__ |                                           
+                                                        +-----------+                                           
+                                                              *                                                 
+                                                              *                                                 
+                                                              *                                                 
+                                                       +------------+                                           
+                                                       | init_input |                                           
+                                                       +------------+                                           
+                                                              *                                                 
+                                                              *                                                 
+                                                              *                                                 
+                                                       +------------+                                           
+                                                   ....| supervisor |.....                                      
+                                           ........    +------------+.    ........                              
+                                   ........           ..              ...         ........                      
+                           ........                ...                   ...              ........              
+                      .....                      ..                         ..                    ........      
+    +-------------------+           +-------------------+           +----------------------+              ..... 
+    | ask_doctor_advice |**         | book_cancel_agent |           | pain_retriever_chain |      ........      
+    +-------------------+  *********+-------------------+           +----------------------+......              
+                                    ********          **              ***       .........                       
+                                            *********   ***        ***  ........                                
+                                                     ***** **    **.....                                        
+                                                         +---------+                                            
+                                                         | __end__ |                                            
+                                                         +---------+                                            
+
+
 
 ```python
 graph.invoke(
@@ -835,12 +877,15 @@ graph.invoke(
 )
 ```
 
+### We can see we have no appointments which shows the Agents was able to successfulyl delete the appointments
+
 
 ```python
 appointments
 ```
 
+#### Next steps:
 
-```python
 
-```
+
+This is a simple example which shows how to leverage multi agents in conversations
