@@ -16,6 +16,7 @@ There are four noteboooks which wlak you trough tool calling using Amazon Bedroc
 - [04_toolcall_test_inference_finetuned_nova_bedrock.ipynb](./tooluse_finetuner_main/notebooks/04\_toolcall_test_inference_finetuned_nova_bedrock.ipynb) - In this notebook we show you how to deploy your finetuned model using provisioned throughput and run inference with it. We  also calculate the accuracy metrics on validation set for both tool usage and args calling.
 
 We also have eight python files corresponding to the tools that we will be using in this dataset.
+The dataset for tooluse is in  - [./tooluse_finetuner_main/assets/](./tooluse_finetuner_main/assets/)
 
 ## Contributing
 
