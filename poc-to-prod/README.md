@@ -9,5 +9,7 @@ This folder includes resources and examples to assist organizations in transitio
   2. **Invoke Models with Inference Profiles**: Validate model invocation with real-time response streaming.
   3. **Operationalize Tagging and Cleanup**: Implement organized tagging for resource management and automate profile cleanup as needed.
 
+- **[Bedrock Batch Orchestrator](./bedrock-batch-orchestrator/README.md)**: This CDK stack helps facilitate large-scale [batch inference](https://docs.aws.amazon.com/bedrock/latest/userguide/batch-inference.html) tasks by automating end-to-end processing with Step Functions and EventBridge.
+
 ## Contributing
 We welcome community contributions! Please ensure that your sample aligns with AWS best practices. Update the **Contents** section of this README file with a link to your sample, along with a brief description.
