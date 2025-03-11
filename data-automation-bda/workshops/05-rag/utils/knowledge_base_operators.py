@@ -622,21 +622,21 @@ def get_video_from_metadata(bucket, key):
                     Bucket=video_bucket,
                     Key=video_key
                 )
-                
-                # Read the video content
-                video_content = video_response['Body'].read()
-                
-                # Encode to base64
-                video_base64 = base64.b64encode(video_content).decode()
-                
-                # Create the video player HTML with base64 data
+
+                # Get and display video
+                url = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': video_bucket, 'Key': video_key},
+                    ExpiresIn=3600  # URL valid for 1 hour
+                )
+
                 video_player = HTML(f"""
                 <video width="800" height="600" controls>
-                    <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+                    <source src="{url}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 """)
-                
+                                
                 display(video_player)
                 return True
             

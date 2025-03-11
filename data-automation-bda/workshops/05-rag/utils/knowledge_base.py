@@ -960,6 +960,94 @@ class BedrockKnowledgeBase:
         pp.pprint(f"Bucket connected with KB: {self.bucket_name}")
         return self.bucket_name
 
+    def delete_s3(self):
+        """
+        Delete all contents and the S3 buckets associated with the knowledge base
+        """
+        try:
+            s3_client = boto3.client('s3')
+            
+            # Collect all buckets to delete
+            buckets_to_delete = self.bucket_names.copy()
+            if self.intermediate_bucket_name:
+                buckets_to_delete.append(self.intermediate_bucket_name)
+                
+            for bucket_name in buckets_to_delete:
+                try:
+                    # First, delete all objects in the bucket
+                    paginator = s3_client.get_paginator('list_objects_v2')
+                    objects_to_delete = []
+                    
+                    # List all objects in the bucket
+                    for page in paginator.paginate(Bucket=bucket_name):
+                        if 'Contents' in page:
+                            objects_to_delete.extend([
+                                {'Key': obj['Key']} 
+                                for obj in page['Contents']
+                            ])
+                    
+                    # Delete objects in chunks of 1000 (S3 limit)
+                    if objects_to_delete:
+                        chunk_size = 1000
+                        for i in range(0, len(objects_to_delete), chunk_size):
+                            chunk = objects_to_delete[i:i + chunk_size]
+                            s3_client.delete_objects(
+                                Bucket=bucket_name,
+                                Delete={
+                                    'Objects': chunk,
+                                    'Quiet': True
+                                }
+                            )
+                    
+                    # Delete bucket versions if bucket is versioned
+                    try:
+                        paginator = s3_client.get_paginator('list_object_versions')
+                        objects_to_delete = []
+                        
+                        for page in paginator.paginate(Bucket=bucket_name):
+                            # Handle versions
+                            if 'Versions' in page:
+                                objects_to_delete.extend([
+                                    {'Key': v['Key'], 'VersionId': v['VersionId']}
+                                    for v in page['Versions']
+                                ])
+                            # Handle delete markers
+                            if 'DeleteMarkers' in page:
+                                objects_to_delete.extend([
+                                    {'Key': dm['Key'], 'VersionId': dm['VersionId']}
+                                    for dm in page['DeleteMarkers']
+                                ])
+                                
+                        if objects_to_delete:
+                            for i in range(0, len(objects_to_delete), chunk_size):
+                                chunk = objects_to_delete[i:i + chunk_size]
+                                s3_client.delete_objects(
+                                    Bucket=bucket_name,
+                                    Delete={
+                                        'Objects': chunk,
+                                        'Quiet': True
+                                    }
+                                )
+                    except ClientError:
+                        # Bucket might not be versioned
+                        pass
+                    
+                    # Finally delete the empty bucket
+                    s3_client.delete_bucket(Bucket=bucket_name)
+                    print(f"Successfully deleted bucket: {bucket_name}")
+                    
+                except ClientError as e:
+                    error_code = e.response['Error']['Code']
+                    if error_code == 'NoSuchBucket':
+                        print(f"Bucket {bucket_name} does not exist")
+                    else:
+                        print(f"Error deleting bucket {bucket_name}: {e}")
+                        
+        except Exception as e:
+            print(f"Error in delete_s3: {e}")
+            raise
+
+
     def delete_kb(self, delete_s3_bucket=False, delete_iam_roles_and_policies=True, delete_lambda_function=False):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
