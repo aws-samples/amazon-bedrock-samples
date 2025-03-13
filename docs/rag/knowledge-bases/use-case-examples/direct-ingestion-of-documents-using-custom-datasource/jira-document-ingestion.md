@@ -4,102 +4,12 @@ With Document Level API (DLA), customers can now efficiently and cost-effectivel
 
 To read more about DLA, see the [documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-direct-ingestion-add.html)
 
-In this example, we pull JIRA issues via an API then store these issues as documents in our knowledge base using DLA.
+In this example, we pull JIRA issues via an API then ingest these issues as documents in our knowledge base using DLA.
 
 # Pre-requisites
-- You will need to create a knowledge base with a custom data source.  You can do this via the AWS console or follow the instructions in this notebook.  [01_create_ingest_documents_test_kb_multi_ds.ipynb](/knowledge-bases/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb).  Please note the knowledge base id and the data source id.
-- You will need a JIRA account with an API key and some sample data.  See below for details.
-
-
-
-# JIRA Setup
-
-Follow the next steps to create a free JIRA account and get an API Key
-
-1/ Go to www.atlassian.com and click sign-in
-
-
-![step 1](images/Jira-step-01.png)
-
-2/ Create an account
-
-![step 2](images/Jira-step-02.png)
-
-3/ Enter your email and click sign up
-
-![step](images/Jira-step-03.png)
-
-4/ Check your email then enter the verification code
-
-![step 4](images/Jira-step-04.png)
-
-5/ Create your username and password
-
-![step 5](images/Jira-step-05.png)
-
-6/ Select the JIRA trial
-
-![step 6](images/Jira-step-06.png)
-
-7/ Select the free trial
-
-![step 7](images/Jira-step-07.png)
-
-8/ Create a site.  Note the name of the site for later.
-
-![step 8](images/Jira-step-08.png)
-
-9/ Create a project
-
-![step 9](images/Jira-step-09.png)
-
-10/ Select the software development template and then choose Scrum
-
-![step 10](images/Jira-step-10.png)
-
-11/  Select Use Template 
-
-![step 11](images/Jira-step-11.png)
-
-12/ Select Team Managed Project
-
-![step 12](images/Jira-step-12.png)
-
-13/ Give your project a name and create it.
-
-![step 13](images/Jira-step-13.png)
-
-14/ Create an issue for your project
-
-![step 14](images/Jira-step-14.png)
-
-15/ Fill in the details and click create.
-
-![step 15](images/Jira-step-15.png)
-
-16/ Switch to the list view to see the issue you just created.
-
-![step 16](images/Jira-step-16.png)
-
-17/ Now we need to create an api key.  Click on your user profile then select 'manage account'
-
-![step 17](images/Jira-step-17.png)
-
-18/ On the security tab select 'create and manage api tokens'
-
-![step 18](images/Jira-step-18.png)
-
-19/ Click Create
-
-![step 19](images/Jira-step-19.png)
-
-20/ Give your token a name and click create.
-
-![step 20](images/Jira-step-20.png)
-
-21/ Copy your API token, you will need this later.
-
-![step 21](images/Jira-step-21.png)
+- You will need to create a knowledge base with a custom data source.  You can do this via the AWS console or follow the instructions in this notebook found in this repo at:   amazon-bedrock-samples/rag/knowledge-bases/features-examples/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb
+- Please note the knowledge base id and the data source id.
+- You will need a JIRA account with an API key and some sample data.  Instructions on how to do this are in this [pdf](./JIRA-API-Access.pdf).  Note: It's possible that these instructions may change as they refer to a third party product.
 
 
 
@@ -137,7 +47,9 @@ print(sys.path)
 ```
 
 # Setup the environment
-Open the file 'example_dot_env' and fill in the appropriate values.  Rename it to .env so the python interpreter will pick it up.
+<div class="alert alert-block alert-info">
+Open the file 'example_dot_env' and fill in the appropriate values.<br/>  Rename it to .env so the python interpreter will pick it up.
+</div>
 
 
 ```python
@@ -151,6 +63,15 @@ email = os.environ.get("JIRA_EMAIL")
 api_token = os.environ.get("JIRA_API_TOKEN")
 kb_id = os.environ.get("KNOWLEDGE_BASE_ID")
 ds_id = os.environ.get("DOCUMENT_STORE_ID")
+
+# if you don't want to use environment variables you can hardcode
+# the values below and uncomment the code.
+# jira_server = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+# email = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+# api_token = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+# kb_id = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+# ds_id = "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
 
 ```
 
@@ -174,32 +95,13 @@ projects = jira.projects()
 
 ```
 
-# Generate documents for the knowledge base.
-We loop through each JIRA project and create a 'document' for each jira issue.  We store the project and the reporter as metadata for each document.  This allows for filtering when we use the Retrieve and Generate API.
+# Generate document configs for the knowledge base.
+We loop through each JIRA project and create a 'document config' for each jira issue.  We store the project as metadata for each document.  This allows for filtering when we use the Retrieve API or the Retrieve and Generate API.
 
 
 ```python
-from utils.knowledge_base_operators import create_document_config, ingest_documents_dla
+from utilities import build_document_config
 import json
-
-def build_document_config(document_id, document_content, project_name, reporter_name):
-    
-    metadata_project = {'key': 'project', 'value': { 'stringValue': project_name, 'type': 'STRING'}}
-    metadata_reporter = {'key': 'reporter', 'value': { 'stringValue': reporter_name, 'type': 'STRING'}}
-    metadata_list =[metadata_project, metadata_reporter]
-
-
-    custom_inline_text_inline_metadata = create_document_config(
-            data_source_type='CUSTOM',
-            document_id=document_id,
-            inline_content={
-                'type': 'TEXT',
-                'data': json.dumps(document_content)
-            },
-            metadata= metadata_list
-    )
-
-    return custom_inline_text_inline_metadata
 
 documents = []
 
@@ -209,17 +111,19 @@ for project in projects:
     print(project)
     issues = jira.search_issues(f"project={project}")
     for issue in issues:
-        document_config = build_document_config(issue.key, issue.fields.description, project_name, issue.fields.reporter.displayName)
+        document_config = build_document_config(issue.key, issue.fields.description, project_name)
         documents.append(document_config)
 
 print(f"Total number of documents: {len(documents)}")
 
 ```
 
-# Load documents directly to the knowledge base
+# Ingest documents directly to the knowledge base using DAL.
+Note:  In this example we aren't considering queing or retry logic as we ingest documents.  
 
 
 ```python
+from utils.knowledge_base_operators import ingest_documents_dla
 # there is a limit of 10 documents per request, so we split the document into chunks.
 for i in range(0, len(documents), 10):
     chunk = documents[i:i + 10]
@@ -248,8 +152,60 @@ response = bedrock_agent_client.list_knowledge_base_documents(
 pprint.pprint(response)
 ```
 
-# Query the knowledge base
-Here we query the knowledge base for issues involving security.  Notice the use of metadata to filter by project name.  
+# Query the knowledge base using the Retrieve API
+
+
+```python
+query = 'Do I have any security issues?'  # change this query to reflect the content of your jira issues.  
+region = 'us-east-1'
+
+bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime') 
+
+response_ret = bedrock_agent_runtime_client.retrieve(
+    knowledgeBaseId=kb_id, 
+    nextToken='string',
+    retrievalConfiguration={
+        "vectorSearchConfiguration": {
+            "numberOfResults":5,
+        } 
+    },
+    retrievalQuery={
+        "text": query
+    }
+)
+
+def response_print(retrieve_resp):
+#structure 'retrievalResults': list of contents. Each list has content, location, score, metadata
+    for num,chunk in enumerate(response_ret['retrievalResults'],1):
+        print(f'Chunk {num}: ',chunk['content']['text'],end='\n'*2)
+        print(f'Chunk {num} Location: ',chunk['location'],end='\n'*2)
+        print(f'Chunk {num} Score: ',chunk['score'],end='\n'*2)
+        print(f'Chunk {num} Metadata: ',chunk['metadata'],end='\n'*2)
+
+response_print(response_ret)
+```
+
+## Below you can see examples of chunks pulled from the knowledge base using the retrieve API.  
+
+Chunk 4:  "\nThe \"MFA on Root Account\" Trusted Advisor check has flagged that multi-factor authentication (MFA) is not enabled on the root user account for our AWS account. This poses a security risk.\n\nResources affected:\n- XXXXXXXXXXXXXXXXXXX  \n\nTo resolve this, we need to log in to the root account and activate an MFA device. AWS supports various MFA options like virtual authenticator apps or hardware security keys. Enabling MFA adds an extra layer of security by requiring a one-time code in addition to the root user password when logging in.\n"
+
+Chunk 4 Location:  {'customDocumentLocation': {'id': 'KAN-67'}, 'type': 'CUSTOM'}
+
+Chunk 4 Score:  0.38354945
+
+Chunk 4 Metadata:  {'x-amz-bedrock-kb-source-uri': 'KAN-67', 'source': 'Acme Software', 'x-amz-bedrock-kb-chunk-id': '1%3A0%3AfMBwQ5UBv38PVEjahusy', 'x-amz-bedrock-kb-data-source-id': 'MXVGTRJ9JX'}
+
+Chunk 5:  "\nAffected Resources: AWS::::Account:XXXXXXXXXX\n\nEnabling multi-factor authentication (MFA) for the root user account is a recommended security best practice. AWS Trusted Advisor flags this as a red alert if MFA is not enabled on the root account. \n\nMFA adds an extra layer of security by requiring a unique authentication code from a hardware or virtual device in addition to the account password when accessing the AWS Management Console and associated websites.\n\nTo resolve this:\n\n1. Sign in to the AWS Management Console as the root user\n2. Go to the IAM console\n3. In the navigation pane, choose Users\n4. Choose your root user entry\n5. On the Security Credentials tab, choose Multi-factor authentication (MFA)\n6. Follow the wizard to assign an MFA device\n"
+
+Chunk 5 Location:  {'customDocumentLocation': {'id': 'KAN-57'}, 'type': 'CUSTOM'}
+
+Chunk 5 Score:  0.38347003
+
+Chunk 5 Metadata:  {'x-amz-bedrock-kb-source-uri': 'KAN-57', 'source': 'Acme Software', 'x-amz-bedrock-kb-chunk-id': '1%3A0%3AgsBwQ5UBv38PVEjanOuQ', 'x-amz-bedrock-kb-data-source-id': 'MXVGTRJ9JX'}
+
+
+# Query the knowledge base and pass results to the foundation model using the Retrieve and Generate API
+Here we query the knowledge base for issues involving security.  Notice the use of metadata to filter. The foundation model provides a nicely formatted response. 
 
 
 ```python
@@ -275,10 +231,10 @@ result = bedrock_agent_runtime_client.retrieve_and_generate(
                     "numberOfResults":5,
                     "filter": {
                         "equals": {
-                        "key": "project",
+                        "key": "source",
                         "value": "Acme Software"
+                        }
                     }
-        }
                 } 
             }
 
@@ -291,7 +247,7 @@ if result:
     for citation in result['citations']:
         for ref in citation['retrievedReferences']:
             metadata = ref['metadata']
-            print(metadata['x-amz-bedrock-kb-source-uri'], metadata['reporter'])
+            print(metadata['x-amz-bedrock-kb-source-uri'], metadata['source'])
 
 
 ```
