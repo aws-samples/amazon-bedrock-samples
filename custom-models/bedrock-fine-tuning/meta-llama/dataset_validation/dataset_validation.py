@@ -1,54 +1,25 @@
 import argparse
 import json
+from jsonschema import validate, ValidationError
 
-from constants import *
-from model_config.models_registry import MODELS
-from model_config.input_type import InputType
-from exceptions.invalid_row_exception import InvalidRowException
-from exceptions.missing_key_exception import MissingKeyException
-from exceptions.invalid_type_exception import InvalidTypeException
-
-
-def validate_system_prompt(row, index):
-    """
-    Validates the 'system' prompt of a given dataset row.
-
-    Checks whether the 'system' key exists and its value contains exactly one element.
-
-    Args:
-        row (dict): The dataset row to validate.
-        index (int): The index of the row in the dataset.
-
-    Raises:
-        InvalidRowException: If the 'system' array has more than one item.
-        MissingKeyException: If the 'system' key or any necessary subkey is missing.
-    """
-    try:
-        if Keys.SYSTEM in row and len(row[Keys.SYSTEM]) > 1:
-            row[Keys.SYSTEM][0][Keys.TEXT]
-            raise InvalidRowException(
-                "The system array should not contain more than 1 element.", index
-            )
-
-    except KeyError as e:
-        raise MissingKeyException(e, index)
-    except TypeError:
-        raise InvalidTypeException(index)
+from utils.constants import *
+from utils.model_config.models_registry import MODELS
+from utils.model_config.input_type import InputType
+from utils.exceptions.invalid_row_exception import InvalidRowException
+from utils.schema import Schema
 
 
 def validate_record_count(record_count, dataset_type):
     """
-    Validates the record count of the dataset based on its type.
-
-    Train datasets must contain less than or equal to 10k rows.
-    Validation datasets must contain less than or equal to 1k rows.
+    Validates that the dataset size does not exceed the maximum allowed records.
 
     Args:
-        record_count (int): The total number of records in the dataset.
-        dataset_type (str): The type of the dataset, either TRAIN or VALIDATION.
+        record_count (int): The number of records in the dataset
+        dataset_type (str): Type of dataset ('train' or 'validation')
 
     Raises:
-        Exception: If the record count exceeds the maximum allowed for the specific dataset type.
+        Exception: If the record count exceeds MAX_TRAIN_RECORDS for training datasets
+                  or MAX_VALIDATION_RECORDS for validation datasets
     """
     if dataset_type == TRAIN and record_count > MAX_TRAIN_RECORDS:
         raise Exception(
@@ -63,27 +34,30 @@ def validate_record_count(record_count, dataset_type):
 
 def validate_converse(row, index):
     """
-    Validates the 'messages' within a given dataset row.
+    Validates a single row of conversational data against the Converse schema.
 
-    Checks for supported roles and ensures that each row's structure fits the expected pattern for a conversational input.
+    Checks for:
+    - Compliance with Schema.Converse JSON schema
+    - Valid message roles
+    - Proper image handling (assistants cannot include images)
 
     Args:
-        row (dict): The dataset row to validate.
-        index (int): The index of the row in the dataset.
+        row (dict): A dictionary containing the conversation data
+        index (int): The row index in the dataset for error reporting
 
     Raises:
-        InvalidRowException: If there are invalid roles, images where they shouldn't be, or multiple images in a single row.
-        MissingKeyException: If required keys are missing in the data structure.
+        InvalidRowException: If the row fails validation, with details about the error
+        ValidationError: If the JSON schema validation fails
     """
     try:
+        validate(row, Schema.Converse)
         dialogue = row[Keys.MESSAGES]
-
         for message in dialogue:
             role = message[Keys.ROLE]
             supported_roles = [member.value for member in list(Roles)]
             if role not in supported_roles:
                 raise InvalidRowException(
-                    f"The role '{role}' is not supported. Supported roles are: {supported_roles}.",
+                    f"The role '{role}' is not supported. Supported roles are: {supported_roles}. ",
                     index,
                 )
 
@@ -91,27 +65,30 @@ def validate_converse(row, index):
                 if Keys.IMAGE in content:
                     if role == Roles.ASSISTANT:
                         raise InvalidRowException(
-                            f"A message with the role '{Roles.ASSISTANT}' should not contain any images.",
+                            f"A message with the role '{Roles.ASSISTANT}' should not contain any images. ",
                             index,
                         )
-                    content[Keys.IMAGE][Keys.SOURCE][Keys.S3_LOCATION][Keys.URI]
-                else:
-                    content[Keys.TEXT]
-
-    except KeyError as e:
-        raise MissingKeyException(e, index)
-    except TypeError:
-        raise InvalidTypeException(index)
+    except ValidationError as e:
+        raise InvalidRowException(f"{e}\n\n", index)
 
 
 def validate_prompt_completion(row, index):
+    """
+    Validates a single row of prompt-completion data against the PROMPT_COMPLETION schema.
+
+    Args:
+        row (dict): A dictionary containing the prompt-completion data
+        index (int): The row index in the dataset for error reporting
+
+    Raises:
+        InvalidRowException: If the row fails validation, with details about the error
+        ValidationError: If the JSON schema validation fails
+
+    """
     try:
-        row[Keys.PROMPT]
-        row[Keys.COMPLETION]
-    except KeyError as e:
-        raise MissingKeyException(e, index)
-    except TypeError:
-        raise InvalidTypeException(index)
+        validate(row, Schema.PROMPT_COMPLETION)
+    except ValidationError as e:
+        raise InvalidRowException(f"{e}\n\n", index)
 
 
 def main():
@@ -149,12 +126,10 @@ def main():
 
     model = MODELS[model_name]
 
-    with open(file_path, "r") as dataset:
-        validate_record_count(sum(1 for _ in dataset), dataset_type)
-        dataset.seek(0)
-        for index, object in enumerate(dataset):
-            row = json.loads(object)
-            validate_system_prompt(row, index)
+    with open(file_path, "r") as file:
+        dataset = [json.loads(line) for line in file]
+        validate_record_count(len(dataset), dataset_type)
+        for index, row in enumerate(dataset):
             if model.input_type == InputType.CONVERSE:
                 validate_converse(row, index)
             if model.input_type == InputType.PROMPT_COMPLETION:
