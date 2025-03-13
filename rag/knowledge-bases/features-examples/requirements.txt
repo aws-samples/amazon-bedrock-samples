@@ -8,6 +8,7 @@ ipywidgets
 iprogress
 langchain
 langchain_aws
+langchain-core
 langchain_community
 s3fs
 requests
@@ -15,3 +16,4 @@ pypdf
 tqdm
 pandas
 haystack-ai
+datasets
