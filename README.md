@@ -52,7 +52,7 @@ To grant Bedrock access to your identity, you can:
 
 > ⚠️ **Note 2:** For top level folder changes, please reach out to the GitHub mainterners.
 
-For more information on the fine-grained action and resource permissions in Bedrock, check out the Bedrock Developer Guide.
+For more information on fine-grained action and resource permissions in Bedrock, check out the Bedrock Developer Guide.
 
 ## Contributing
 
