@@ -33,7 +33,7 @@ In Scenario 1, documents flow through a series of carefully orchestrated steps:
 
 ## Augmented Retrieval Flow
 
-![Augmented Retrieval Flow](../images/scenario1_augmented%20retrieval_flow.png)
+![Augmented Retrieval Flow](../images/scenario1_augmented_retrieval_flow.png)
 
 ---
 
@@ -50,10 +50,13 @@ Before running the next step:
   - [Install Docker desktop for windows](https://docs.docker.com/desktop/setup/install/windows-install/)
   - [Install Docker desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
   - [Install Docker desktop for Linux](https://docs.docker.com/desktop/setup/install/linux/)
+- Ensure Docker desktop is up and running.
 
 #### Run shell script to deploy CDK app
 
 Execute the [`run_app.sh`](./run_app.sh) bash script by switching into `scenario_1/` directory.
+
+>**IMPORTANT:** Script will pause execution and asks to set password for cognito user `jane@example.com`
 
 ```shell
 cd scenario_1/
@@ -61,12 +64,16 @@ chmod +x run_app.sh
 ./run_app.sh
 ```
 
-Wait for the script to complete. After the script completes it should automatically launch the streamlit app at <http://localhost:8501/>
+Wait for the script to complete.
+
+>**IMPORTANT:** The script can take anywhere between 30-35 minutes for deploying the stack,triggering lambdas and monitoring Amazon Comprehend and Amazon Macie job completions.
+
+Once the script completes successfully, it automatically launches the streamlit app at <http://localhost:8501/>
 
 - Login using `jane@example.com` with password reset earlier.
 - From the sidebar, select a model from the drop-down.
 - Optionally, set model params like `temperature` and `top_p` values.
-- Ask questions based on your data files in [data](../data/) folder.
+- Ask questions based on your data files in `../data/` folder.
 
 Here are a few sample questions to use as prompts:
 
@@ -78,7 +85,7 @@ Here are a few sample questions to use as prompts:
 - List all patients under Institution Flores Group Medical Center
 ```
 
->**NOTE:** The above questions are just for reference your datafiles may or may not contain information on the questions. Check your datafiles in [data](../data/) folder.
+>**NOTE:** The above questions are just for reference your datafiles may or may not contain information on the questions. Check your datafiles in the `../data/` folder.
 
 ### Scenario1 Cleanup
 

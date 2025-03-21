@@ -82,10 +82,10 @@ def handler(event, context):
             }
         )
 
-        return {
-            'statusCode': 200,
-            'body': response['output']['text']
-        }
+        response_json = dict()
+        response_json["response"] = response["output"]["text"]
+        response_json["guardrail_action"] = response["guardrailAction"]
+        return {"statusCode": 200, "body": json.dumps(response_json)}
 
     except Exception as e:
         # Handle any other unexpected errors

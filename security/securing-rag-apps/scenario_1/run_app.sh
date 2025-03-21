@@ -113,6 +113,16 @@ export INPUT_BUCKET=$(aws cloudformation describe-stacks --stack-name $STACK_NAM
 }
 echo "INPUT_BUCKET = $INPUT_BUCKET"
 
+# REDACTED_BUCKET
+export REDACTED_BUCKET=$(aws cloudformation describe-stacks --stack-name $STACK_NAME \
+    --query 'Stacks[0].Outputs[?OutputKey==`SafeBucketName`].OutputValue' \
+    --output text)
+[ -z "$REDACTED_BUCKET" ] && {
+    echo "Error: Failed to get SafeBucketName"
+    exit 1
+}
+echo "REDACTED_BUCKET = $REDACTED_BUCKET"
+
 # JOB_TRACKING_TABLE
 export JOB_TRACKING_TABLE=$(aws cloudformation describe-stacks --stack-name $STACK_NAME \
     --query 'Stacks[0].Outputs[?OutputKey==`DynamoDBTrackingTable`].OutputValue' \
@@ -164,14 +174,23 @@ export DATASOURCE_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NA
 echo "DATASOURCE_ID = $DATASOURCE_ID"
 
 # GUARDRAILS_ID
-export GUARDRAILS_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME \
-    --query 'Stacks[0].Outputs[?OutputKey==`GuardrailsId`].OutputValue' \
+export INPUT_GUARDRAILS_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME \
+    --query 'Stacks[0].Outputs[?OutputKey==`InputGuardrailsID`].OutputValue' \
     --output text)
-[ -z "$GUARDRAILS_ID" ] && {
-    echo "Error: Failed to get GuardrailsId"
+[ -z "$INPUT_GUARDRAILS_ID" ] && {
+    echo "Error: Failed to get InputGuardrailsID"
     exit 1
 }
-echo "GUARDRAILS_ID = $GUARDRAILS_ID"
+echo "INPUT_GUARDRAILS_ID = $INPUT_GUARDRAILS_ID"
+
+export OUTPUT_GUARDRAILS_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME \
+    --query 'Stacks[0].Outputs[?OutputKey==`OutputGuardrailsID`].OutputValue' \
+    --output text)
+[ -z "$OUTPUT_GUARDRAILS_ID" ] && {
+    echo "Error: Failed to get OutputGuardrailsID"
+    exit 1
+}
+echo "OUTPUT_GUARDRAILS_ID = $OUTPUT_GUARDRAILS_ID"
 
 # USER_POOL_ID
 export USER_POOL_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME \
@@ -327,6 +346,7 @@ while true; do
         --output text)
 
     if [ "$MACIE_STATUS" == "COMPLETE" ]; then
+        sleep 60
         echo "Macie sensitive data detection job completed successfully"
         break
     elif [ "$MACIE_STATUS" == "FAILED" ]; then
@@ -336,6 +356,30 @@ while true; do
     echo "Waiting for Macie job completion (next check in 60s)..."
     sleep 60
 done
+
+echo "Checking for redacted files in the safe bucket..."
+MAX_WAIT_TIME_FILES=900 # 15 minutes
+START_TIME=$(date +%s)
+
+while true; do
+    CURRENT_TIME=$(date +%s)
+    if [ $((CURRENT_TIME - START_TIME)) -gt $MAX_WAIT_TIME_FILES ]; then
+        echo "Error: Timed out waiting for redacted files to appear in $REDACTED_BUCKET"
+        exit 1
+    fi
+
+    # Check if there are any files in the bucket
+    FILE_COUNT=$(aws s3 ls s3://$REDACTED_BUCKET/ --recursive | wc -l)
+
+    if [ $FILE_COUNT -gt 1 ]; then
+        echo "Found $FILE_COUNT redacted files in the safe bucket"
+        break
+    fi
+
+    echo "Waiting for redacted files to appear in the safe bucket (next check in 60s)..."
+    sleep 60
+done
+
 
 echo "KnowledgeBase data ingestion..."
 SYNC_JOB_ID=$(aws bedrock-agent start-ingestion-job \

@@ -152,7 +152,7 @@ def get_macie_findings(job_id):
 def process_findings(findings):
     """Process Macie findings and return files to quarantine"""
     files_to_quarantine = set()
-    logger.debug(f"Inside process_findings fn. Findings:\n{findings}")
+    logger.info(f"Inside process_findings fn. Findings:\n{findings}")
 
     for finding in findings:
         if "resourcesAffected" in finding:
@@ -183,18 +183,8 @@ def move_files(files_to_quarantine):
                     CopySource={"Bucket": SOURCE_BUCKET, "Key": file_key},
                     Key=new_key,
                 )
-            else:
-                logger.info(f"Moving file {file_name} to safe bucket")
-                # Move to safe bucket
-                s3.copy_object(
-                    Bucket=SAFE_BUCKET,
-                    CopySource={"Bucket": SOURCE_BUCKET, "Key": file_key},
-                    Key=file_name,
-                )
-
             # Delete original file
             s3.delete_object(Bucket=SOURCE_BUCKET, Key=file_key)
-
     except ClientError as e:
         logger.error(f"Error moving files: {str(e)}")
         raise
@@ -212,7 +202,7 @@ def check_running_jobs():
         },
     )
     if response.get("Items"):
-        logger.info(f"Found a job to scan: {response['Items']}")
+        # logger.info(f"Found a job to scan: {response['Items']}")
         return response.get("Items")[0]
 
     return {}
@@ -273,7 +263,7 @@ def handler(event, context):
             if macie_job_status == "RUNNING" and macie_scan_status == "NO":
                 macie_job_status = check_macie_status(job_id=macie_job_id)
                 log_message = (
-                    f"Macie job {macie_job_id} is still {macie_job_status}. Skipping."
+                    f"Macie job ID={macie_job_id} is still {macie_job_status}. Skipping."
                 )
                 if macie_job_status == "COMPLETE":
                     update_job_status(
@@ -295,9 +285,6 @@ def handler(event, context):
 
             if macie_job_status == "COMPLETE" and macie_scan_status == "NO":
                 logger.info(f"Macie job {macie_job_id} completed successfully")
-                update_job_status(
-                    comprehend_job_id, macie_job_id, macie_job_status, "YES"
-                )
 
                 # Get and process findings
                 logger.info("Getting and processing macie findings")
@@ -332,7 +319,7 @@ def handler(event, context):
                         s3.put_object(Bucket=SAFE_BUCKET, Key=f"{folder_prefix}/.temp")
                         for file_key in files_to_safe_bucket:
                             file_name = file_key.split("/")[-1]
-
+                            logger.info(f"Moving file : {file_name} to {SAFE_BUCKET}/{folder_prefix}")
                             # Move to quarantine folder
                             new_key = f"{folder_prefix}/{file_name}"
                             s3.copy_object(
@@ -340,11 +327,19 @@ def handler(event, context):
                                 CopySource={"Bucket": SOURCE_BUCKET, "Key": file_key},
                                 Key=new_key,
                             )
+                            # Delete original file
+                            logger.info(f"Deleting file: {SOURCE_BUCKET}/{file_key}")
+                            s3.delete_object(Bucket=SOURCE_BUCKET, Key=file_key)
+
                         # Start KnowledgeBase ingestion
+                        logger.info("Starting knowledgebase ingestion job")
                         kb_response = start_kb_ingestion(
                             KNOWLEDGE_BASE_ID, DATASOURCE_ID
                         )
-                        logger.info(f"{kb_response}")
+                        logger.info(f"ingestion job status: {kb_response}")
+                        update_job_status(
+                            comprehend_job_id, macie_job_id, macie_job_status, "YES"
+                        )
                     return {
                         "statusCode": 200,
                         "body": json.dumps(
@@ -357,7 +352,7 @@ def handler(event, context):
                     }
 
         if not items:
-            logger.info(f"No jobs to start. No items found in DDB {JOB_TABLE_NAME} ")
+            logger.info(f"No jobs to start. No items found in DynamoDB Tracking Table={JOB_TABLE_NAME} ")
             return {
                 "statusCode": 200,
                 "body": json.dumps(

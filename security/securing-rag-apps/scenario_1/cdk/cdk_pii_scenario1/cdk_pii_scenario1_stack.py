@@ -69,12 +69,12 @@ class PiiRedactionStack(Stack):
         )
         processing_lambda.node.add_dependency(comprehend_role)
 
-        # Create Amazon Bedrock Guardrail
-        guardrails = self.create_bedrock_guardrails()
+        # Create INPUT and OUTPUT Guardrails
+        input_guardrail, output_guardrail = self.create_bedrock_guardrails()
 
         # Create Amazon Bedrock KnowledgeBase
         knowledge_base, data_source = self.create_bedrock_kb(safe_bucket)
-        knowledge_base.node.add_dependency(guardrails)
+        knowledge_base.node.add_dependency(output_guardrail)
 
         # Create Macie Processing Lambda
         macie_lambda = self.create_macie_lambda(
@@ -88,7 +88,9 @@ class PiiRedactionStack(Stack):
 
         # Create Authorization layer. APIGW, Cognito
         bedrock_lambda, apigw, user_pool, client = self.create_authz_layer(
-            knowledge_base.knowledge_base_id, guardrails.guardrail_id
+            knowledge_base.knowledge_base_id,
+            input_guardrail.guardrail_id,
+            output_guardrail.guardrail_id,
         )
         bedrock_lambda.node.add_dependency(knowledge_base)
 
@@ -138,10 +140,17 @@ class PiiRedactionStack(Stack):
 
         CfnOutput(
             self,
-            "GuardrailsId",
-            value=guardrails.guardrail_id,
-            description="Amazon Bedrock Guardrails ID",
-            export_name="GuardrailsID",
+            "InputGuardrailsID",
+            value=input_guardrail.guardrail_id,
+            description="INPUT Guardrails ID",
+            export_name="InputGuardrailsID",
+        )
+        CfnOutput(
+            self,
+            "OutputGuardrailsID",
+            value=output_guardrail.guardrail_id,
+            description="OUTPUT Guardrails ID",
+            export_name="OutputGuardrailsID",
         )
 
         CfnOutput(
@@ -312,7 +321,7 @@ class PiiRedactionStack(Stack):
         processing_rule = events.Rule(
             self,
             "PIIComprehendScheduleRule",
-            schedule=events.Schedule.rate(Duration.minutes(5)),
+            schedule=events.Schedule.rate(Duration.minutes(3)),
         )
         processing_rule.add_target(targets.LambdaFunction(processing_lambda))
         processing_rule.node.add_dependency(processing_lambda)
@@ -321,16 +330,14 @@ class PiiRedactionStack(Stack):
         macie_rule = events.Rule(
             self,
             "PIIMacieScheduleRule",
-            schedule=events.Schedule.rate(Duration.minutes(5)),
+            schedule=events.Schedule.rate(Duration.minutes(3)),
         )
         macie_rule.add_target(targets.LambdaFunction(macie_lambda))
         macie_rule.node.add_dependency(macie_lambda)
 
     def create_comprehend_iam_role(self, source_bucket):
         # Create Comprehend IAM Role
-        comprehend_role_name = (
-            f"ComprehendPIIRole-{self.suffix}"
-        )
+        comprehend_role_name = f"ComprehendPIIRole-{self.suffix}"
 
         # Create Comprehend IAM role
         comprehend_role = iam.Role(
@@ -431,70 +438,101 @@ class PiiRedactionStack(Stack):
     def create_bedrock_guardrails(self):
         # Ref: https://github.com/awslabs/generative-ai-cdk-constructs/blob/f6f1e37b3d4c102da720ea53b619a7a31093e071/src/cdk-lib/bedrock/README.md#bedrock-guardrails
         account = Stack.of(self).account
-        guardrail = bedrock.Guardrail(
+        input_guardrail = bedrock.Guardrail(
             self,
-            "MyGuardrail",
-            name=f"PIIGuardrail-{account}-{self.suffix}",
-            description="Guardrail to protect sensitive data",
+            "InputGuardrail",
+            name=f"PII_InputGuardrail-{account}-{self.suffix}",
+            description="Input Guardrail",
         )
-        # PII Filter: Entities to Mask
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.NAME, action=bedrock.GuardrailAction.ANONYMIZE
+        # For Input Guardrails we apply Prompt Attacks + Content filter, and Denied Topics filter
+        input_guardrail.add_content_filter(
+            type=bedrock.ContentFilterType.HATE,
+            input_strength=bedrock.ContentFilterStrength.HIGH,
+            output_strength=bedrock.ContentFilterStrength.HIGH,
         )
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.AGE, action=bedrock.GuardrailAction.ANONYMIZE
+        input_guardrail.add_content_filter(
+            type=bedrock.ContentFilterType.VIOLENCE,
+            input_strength=bedrock.ContentFilterStrength.HIGH,
+            output_strength=bedrock.ContentFilterStrength.HIGH,
         )
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.EMAIL,
-            action=bedrock.GuardrailAction.ANONYMIZE,
+        input_guardrail.add_content_filter(
+            type=bedrock.ContentFilterType.INSULTS,
+            input_strength=bedrock.ContentFilterStrength.HIGH,
+            output_strength=bedrock.ContentFilterStrength.HIGH,
         )
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.PHONE,
-            action=bedrock.GuardrailAction.ANONYMIZE,
+        input_guardrail.add_content_filter(
+            type=bedrock.ContentFilterType.MISCONDUCT,
+            input_strength=bedrock.ContentFilterStrength.HIGH,
+            output_strength=bedrock.ContentFilterStrength.HIGH,
         )
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.DRIVER_ID,
-            action=bedrock.GuardrailAction.ANONYMIZE,
+        input_guardrail.add_content_filter(
+            type=bedrock.ContentFilterType.SEXUAL,
+            input_strength=bedrock.ContentFilterStrength.HIGH,
+            output_strength=bedrock.ContentFilterStrength.HIGH,
         )
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.LICENSE_PLATE,
-            action=bedrock.GuardrailAction.ANONYMIZE,
+        # Enable Prompt attack filter
+        input_guardrail.add_content_filter(
+            type=bedrock.ContentFilterType.PROMPT_ATTACK,
+            input_strength=bedrock.ContentFilterStrength.HIGH,
+            output_strength=bedrock.ContentFilterStrength.NONE,
         )
-        # PII Filter: Entities to Block
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.ADDRESS, action=bedrock.GuardrailAction.BLOCK
-        )
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.USERNAME, action=bedrock.GuardrailAction.BLOCK
-        )
-        guardrail.add_pii_filter(
-            type=bedrock.pii_type.General.PASSWORD, action=bedrock.GuardrailAction.BLOCK
-        )
-
-        # Add contextual grounding
-        guardrail.add_contextual_grounding_filter(
-            type=bedrock.ContextualGroundingFilterType.GROUNDING,
-            threshold=0.75,
-        )
-
         # Add denied topic filter
-        guardrail.add_denied_topic_filter(
+        input_guardrail.add_denied_topic_filter(
             bedrock.Topic.custom(
                 name="PII_Extraction",
-                definition="Requesting PII information unless it's about a Person's name.",
+                definition="Deny PII information request.",
                 examples=[
                     "What is the email address of John Doe?",
                     "Get me home address for Johnny Appleseed.",
+                    "List patients that are treated by Flores Institute",
+                    "What is the Patients email address",
+                    "What is the MRN for customer Johnny",
                 ],
             )
         )
 
-        # Add profanity filter
-        guardrail.add_managed_word_list_filter(bedrock.ManagedWordFilterType.PROFANITY)
+        # Create Output Guardrail
+        output_guardrail = bedrock.Guardrail(
+            self,
+            "OutputGuardrail",
+            name=f"PII_OutputGuardrail-{account}-{self.suffix}",
+            description="Output Guardrail - Applied to LLM response",
+        )
+        # PII Entities to Anonymize in the output
+        output_guardrail.add_pii_filter(
+            type=bedrock.pii_type.General.NAME,
+            action=bedrock.GuardrailAction.ANONYMIZE,
+        )
+        output_guardrail.add_pii_filter(
+            type=bedrock.pii_type.General.AGE,
+            action=bedrock.GuardrailAction.ANONYMIZE,
+        )
+        output_guardrail.add_pii_filter(
+            type=bedrock.pii_type.General.EMAIL,
+            action=bedrock.GuardrailAction.ANONYMIZE,
+        )
+        output_guardrail.add_pii_filter(
+            type=bedrock.pii_type.General.PHONE,
+            action=bedrock.GuardrailAction.ANONYMIZE,
+        )
+        output_guardrail.add_pii_filter(
+            type=bedrock.pii_type.General.LICENSE_PLATE,
+            action=bedrock.GuardrailAction.ANONYMIZE,
+        )
+        # PII entities to Block on the output
+        output_guardrail.add_pii_filter(
+            type=bedrock.pii_type.General.ADDRESS, action=bedrock.GuardrailAction.BLOCK
+        )
+        output_guardrail.add_pii_filter(
+            type=bedrock.pii_type.General.USERNAME, action=bedrock.GuardrailAction.BLOCK
+        )
+        output_guardrail.add_pii_filter(
+            type=bedrock.pii_type.General.PASSWORD, action=bedrock.GuardrailAction.BLOCK
+        )
 
-        return guardrail
+        return input_guardrail, output_guardrail
 
-    def create_authz_layer(self, kb_id, guardrail_id):
+    def create_authz_layer(self, kb_id, in_guardrail_id, out_guardrail_id):
         region = Stack.of(self).region
         account = Stack.of(self).account
 
@@ -537,7 +575,7 @@ class PiiRedactionStack(Stack):
             "AdminGroup",
             user_pool_id=user_pool.user_pool_id,
             group_name="Admins",
-            description="Administrator group"
+            description="Administrator group",
         )
         admin_group.node.add_dependency(user_pool)
 
@@ -601,7 +639,8 @@ class PiiRedactionStack(Stack):
             resources=[
                 f"arn:aws:bedrock:{region}:{account}:knowledge-base/{kb_id}",
                 Stack.of(self).stack_id,
-                f"arn:aws:bedrock:{region}:{account}:guardrail/{guardrail_id}",
+                f"arn:aws:bedrock:{region}:{account}:guardrail/{in_guardrail_id}",
+                f"arn:aws:bedrock:{region}:{account}:guardrail/{out_guardrail_id}",
                 "arn:aws:bedrock:*::foundation-model/*",
                 "arn:aws:bedrock:*:*:inference-profile/*",
                 "arn:aws:bedrock:*:*:application-inference-profile/*",

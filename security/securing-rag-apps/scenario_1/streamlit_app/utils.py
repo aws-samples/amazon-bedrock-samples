@@ -1,7 +1,8 @@
+import json
 import os
 import sys
 from http import HTTPStatus
-from typing import List
+from typing import Dict, List, Literal
 
 import boto3
 import requests
@@ -89,11 +90,13 @@ def query_KB(prompt: str, model_id: str, temp: float, top_p: float):
     try:
         # logger.debug(f"{api_endpoint}bedrock")
         response = requests.post(f"{api_endpoint}bedrock", headers=headers, json=data)
-        logger.debug(response)
-
+        response_dict = json.loads(response.text)
+        # logger.debug(response_dict)
+        generated_response = response_dict.get('response')
+        guardrail_action = response_dict.get("guardrail_action", 'NONE')
         response.raise_for_status()
 
-        return response.text
+        return generated_response, guardrail_action
 
     except requests.exceptions.Timeout:
         logger.error("Request timed out")
@@ -114,37 +117,29 @@ def query_KB(prompt: str, model_id: str, temp: float, top_p: float):
         }
 
 
-def get_bedrock_model_ids(
-    provider: str = "Anthropic", output_modality: str = "TEXT"
-) -> List[str]:
-    """
-    Fetch model IDs from AWS Bedrock for specified provider and output modality.
-
-    Args:
-    provider (str): The provider of the model.
-    output_modality (str): The output modality of the model.
-
-    Returns:
-    list: A list of model IDs that match the criteria.
-    """
+def get_inference_profiles(
+    provider: str,
+    type: Literal["SYSTEM_DEFINED", "APPLICATION"] = "SYSTEM_DEFINED",
+) -> Dict[str, str]:
+    bedrock_client = boto3.client("bedrock")
     try:
-        bedrock_client = boto3.client("bedrock")
-        if provider == "Anthropic":
-            models = bedrock_client.list_inference_profiles(
-                typeEquals="SYSTEM_DEFINED"
-            )["inferenceProfileSummaries"]
-            model_ids = [
-                model["inferenceProfileId"]
-                for model in models
-                if provider in model["inferenceProfileName"]
-                and "claude-3-5" in model["inferenceProfileId"]
-            ]
+        response = bedrock_client.list_inference_profiles(typeEquals=type)
+        profiles = response["inferenceProfileSummaries"]
+        filtered_profiles = [
+            profile
+            for profile in profiles
+            if provider.strip().lower() in profile["inferenceProfileId"]
+        ]
+        inf_profiles_map = {
+            profile["inferenceProfileName"]: profile["inferenceProfileArn"]
+            for profile in filtered_profiles
+            if profile["status"] == "ACTIVE"
+        }
+        # logger.debug(inf_profiles_map)
+        return inf_profiles_map
     except NoCredentialsError:
-        st.error("AWS credentials not available.")
         logger.error("AWS credentials not properly configured.")
-        model_ids = []
+        return {}
     except Exception as e:
-        st.error(f"{e}")
-        logger.error(f"Error fetching model IDs: {e}")
-        model_ids = []
-    return model_ids
+        logger.error(f"Error fetching inference profiles: {e}")
+        return {}
