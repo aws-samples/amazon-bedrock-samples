@@ -330,13 +330,7 @@ def handler(event, context):
                             # Delete original file
                             logger.info(f"Deleting file: {SOURCE_BUCKET}/{file_key}")
                             s3.delete_object(Bucket=SOURCE_BUCKET, Key=file_key)
-
-                        # Start KnowledgeBase ingestion
-                        logger.info("Starting knowledgebase ingestion job")
-                        kb_response = start_kb_ingestion(
-                            KNOWLEDGE_BASE_ID, DATASOURCE_ID
-                        )
-                        logger.info(f"ingestion job status: {kb_response}")
+                        # Update macie scan status to YES in DDB Tracking table
                         update_job_status(
                             comprehend_job_id, macie_job_id, macie_job_status, "YES"
                         )

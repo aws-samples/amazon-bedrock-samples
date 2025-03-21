@@ -128,22 +128,17 @@ def home_page():
         # Display user message
         with st.chat_message("user", avatar=USER_AVATAR):
             st.markdown(prompt)
+        # Process the request
         with st.spinner("Processing request..."):
             kb_response, guardrail_action = utils.query_KB(
                 prompt, st.session_state.model_id, temp=temperature, top_p=top_p
             )
         if kb_response:
-            with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
-                # Display guardrail intervention notice if applicable
-                guardrail_intervened = guardrail_action in [
-                    "INTERVENED",
-                    "GUARDRAIL_INTERVENED",
-                ]
-                if guardrail_intervened:
-                    logger.debug("Guardrail Intervened")
-                    st.markdown("🛡️ **Guardrail Intervened** 🛡️")
-                st.markdown(kb_response)
-
+            # Display guardrail intervention notice if applicable
+            guardrail_intervened = guardrail_action in [
+                "INTERVENED",
+                "GUARDRAIL_INTERVENED",
+            ]
             # Store the message with guardrail intervention status
             st.session_state.messages.append(
                 {
@@ -152,6 +147,11 @@ def home_page():
                     "guardrail_intervened": guardrail_intervened,
                 }
             )
+            # Display assistant message
+            with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
+                if guardrail_intervened:
+                    st.markdown("🛡️ **Guardrail Intervened** 🛡️")
+                st.markdown(kb_response)
         else:
             st.error("Failed to get a response from the API.")
 

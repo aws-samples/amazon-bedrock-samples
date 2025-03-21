@@ -111,29 +111,47 @@ def home_page():
     for msg in st.session_state.messages:
         avatar = ASSISTANT_AVATAR if msg["role"] == "assistant" else USER_AVATAR
         with st.chat_message(msg["role"], avatar=avatar):
+            # Check if this message had a guardrail intervention
+            if msg["role"] == "assistant" and msg.get("guardrail_intervened", False):
+                st.markdown("🛡️ **Guardrail Intervened** 🛡️")
             st.write(msg["content"])
 
     prompt = st.chat_input("Type your message here...")
     if prompt:
+        # Add user message to history
         st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display user message
         with st.chat_message("user", avatar=USER_AVATAR):
             st.write(prompt)
+
+        # Process the request
         with st.spinner("Processing your request..."):
             response, guardrail_action = lib.query_KB(
                 prompt, st.session_state.model_id, temperature, top_p
             )
+        # Display assistant response if available
         if response:
+            guardrail_intervened = guardrail_action in [
+                "INTERVENED",
+                "GUARDRAIL_INTERVENED",
+            ]
+            # Store the message with guardrail intervention status
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": response,
+                    "guardrail_intervened": guardrail_intervened,
+                }
+            )
+            # Display assistant message
             with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
-                if guardrail_action == "INTERVENED":
-                    logger.debug("Guardrail Intervened")
+                if guardrail_intervened:
                     st.markdown("🛡️ **Guardrail Intervened** 🛡️")
                 st.markdown(response)
-            st.session_state.messages.append(
-                {"role": "assistant", "content": response}
-            )
         else:
             st.error("Failed to get a response from the API.")
 
+        st.rerun()
 
 def main():
     if st.session_state.logged_in:

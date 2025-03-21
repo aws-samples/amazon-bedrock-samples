@@ -34,10 +34,10 @@ If you already have cdk cli version installed you can check the current installe
 
 ```shell
 cdk --version
-# 2.1002.0 (build 09ef5a0)
+# 2.1005.0 (build be378de)
 ```
 
-**NOTE:** This application was tested with `aws-cdk` cli version == `2.1002.0 (build 09ef5a0)`.\
+**NOTE:** This application was tested with `aws-cdk` cli version == `2.1005.0 (build be378de)`.\
 
 ```shell
 npm install -g aws-cdk@2.1002.0

@@ -109,8 +109,8 @@ class PiiRedactionStack(Stack):
         CfnOutput(
             self,
             "SafeBucketName",
-            value=source_bucket.bucket_name,
-            description="Source Bucket name for dropping sensitive data files",
+            value=safe_bucket.bucket_name,
+            description="Final Bucket name for dropping redacted sensitive data files",
             export_name="piiSafeBucket",
         )
 
