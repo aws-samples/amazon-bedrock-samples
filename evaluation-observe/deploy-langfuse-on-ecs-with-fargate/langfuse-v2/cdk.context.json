@@ -1,0 +1,14 @@
+{
+  "db_cluster_name": "langfuse-db",
+  "ecs_cluster_name": "langfuse-cluster",
+  "ecs_service_name": "langfuse-alb-service",
+  "image_version": "2",
+  "langfuse_env": {
+    "NODE_ENV": "production",
+    "NEXTAUTH_SECRET": "secret (generate by running 'openssl rand -base64 32')",
+    "SALT": "salt (generate by running 'openssl rand -base64 32')",
+    "TELEMETRY_ENABLED": "true",
+    "NEXT_PUBLIC_SIGN_UP_DISABLED": "false",
+    "LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES": "true"
+  }
+}
