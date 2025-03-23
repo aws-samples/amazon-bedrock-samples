@@ -43,6 +43,7 @@ Before running the next step:
   - [Install Docker desktop for windows](https://docs.docker.com/desktop/setup/install/windows-install/)
   - [Install Docker desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
   - [Install Docker desktop for Linux](https://docs.docker.com/desktop/setup/install/linux/)
+- Ensure Docker desktop is up and running.
 
 #### Run shell script to deploy CDK app
 

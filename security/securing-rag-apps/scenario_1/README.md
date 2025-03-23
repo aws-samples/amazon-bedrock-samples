@@ -1,4 +1,4 @@
-# Scenario 1 - Data identification and redaction before Ingestion to KnowledgeBase
+# Scenario 1 - Data identification and redaction before ingestion to Amazon Bedrock knowledge base
 
 ![Scenario 1 - Ingestion Flow](../images/scenario1_ingestion_flow.png)
 
@@ -8,9 +8,9 @@ In Scenario 1, documents flow through a series of carefully orchestrated steps:
     - Users upload source documents containing sensitive data to an S3 bucket's "_inputs/_" folder
     - This triggers an automated data identification and redaction pipeline
 2. Comprehend PII Redaction Process (Step 2):
-    - ComprehendLambda, triggered by an EventBridge rule every 5 minutes:
-      - Scans for new files in the "_inputs/_" folder
-      - Moves detected files to a "processing/" folder
+    - ComprehendLambda, triggered by an EventBridge rule every 5 minutes (configurable):
+      - Scans for new files landing in the "_inputs/_" folder
+      - Moves landed files in "_inputs/_" folder to "_processing/_" folder
       - Initiates an async _Comprehend PII redaction analysis job_
       - Records the job ID and status in a DynamoDB JobTracking table
     - Comprehend automatically redacts sensitive elements like:
@@ -18,17 +18,17 @@ In Scenario 1, documents flow through a series of carefully orchestrated steps:
       - Social security numbers, driver's license IDs
       - Banking information and credit card details
       - Comprehend replaces identified PlI entities with placeholder tokens (e.g., [NAME], [SSN])
-      - Once complete, redacted files move to "for_macie_scan/" folder
+      - Once comprehend job completes, redacted files are moved to "_for_macie_scan/_" folder
 3. Secondary Verification with Amazon Macie - Sensitive Data Detection (Step 3):
-    - MacieLambda monitors Comprehend job completion
+    - MacieLambda function monitors Comprehend job completion
     - Upon successful completion, triggers a Macie one-time sensitive data detection job
-    - Macie scans all files in the "for_macie_scan/" folder
+    - Macie sensitive data detection job scans files in the "_for_macie_scan/_" folder and generates findings with severity
     - Based on Macie findings:
        - Files with severity >= 3 (HIGH) move to "quarantine/" folder for human review
-       - Files with severity < 3 (LOW) transfer to a "safe" bucket
-4. Amazon Bedrock Knowledge Base Integration (Step 4):
-   - Files in the "safe" bucket trigger an Amazon Bedrock knowledge base data ingestion job
-   - Documents are securely indexed in the vector store
+       - Files with severity < 3 (LOW) transfer to a "_redacted_" bucket (created during CDK app creation)
+4. Amazon Bedrock knowledge base Integration (Step 4):
+   - Amazon Bedrock knowledge base data ingestion job is triggered with files in the "_redacted_" bucket as the data source for ingestion
+   - Amazon Bedrock Knowledge Base chunks, stores and indexes the documents securely to the Amazon OpenSearch vector store
    - Ready for use in RAG applications
 
 ## Augmented Retrieval Flow
@@ -85,7 +85,7 @@ Here are a few sample questions to use as prompts:
 - List all patients under Institution Flores Group Medical Center
 ```
 
->**NOTE:** The above questions are just for reference your datafiles may or may not contain information on the questions. Check your datafiles in the `../data/` folder.
+>**NOTE:** The above prompts are examples that only use patient medical notes generated during the app setup.Your datafiles may or may not work with the exact prompts as the synthetic data generated is random. Ensure to check your datafiles in the `../data/` folder to customize your prompts.
 
 ### Scenario1 Cleanup
 

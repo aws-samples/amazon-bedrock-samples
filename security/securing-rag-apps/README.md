@@ -40,7 +40,7 @@ cdk --version
 **NOTE:** This application was tested with `aws-cdk` cli version == `2.1005.0 (build be378de)`.\
 
 ```shell
-npm install -g aws-cdk@2.1002.0
+npm install -g aws-cdk@2.1005.0
 ```
 
 ### Create and activate python virtual environment
@@ -73,7 +73,7 @@ pip install -r requirements.txt
 
 For testing each scenario with sensitive data, we use [`synthetic_data.py`](./synthetic_data.py) script to generate synthetic data.
 
-The script generates synthetic healthcare and financial data for testing purposes. \
+The script generates synthetic healthcare data (patient medical notes) and financial data (meeting notes) for testing purposes. \
 The data generated is completely fictional and does not contain any real Personal Identifiable Information (PII).
 
 Run [`synthetic_data.py`](./synthetic_data.py) script to generate sample data for the demo.
@@ -88,7 +88,7 @@ Next, Refer to relevant README.md files referenced below for deploying each Scen
 
 ---
 
-## Scenario 1 (Data identification and redaction before Ingestion to KnowledgeBase)
+## Scenario 1 (Data identification and redaction before Ingestion to Knowledge Base)
 
 To deploy Scenario 1 refer to [Scenario 1 README.md](./scenario_1/README.md#usage)
 
