@@ -1,4 +1,4 @@
-boto3
+boto3==1.37.18
 opensearch-py
 botocore
 awscli
