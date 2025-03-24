@@ -11,8 +11,8 @@ JANE_AVATAR = "https://api.dicebear.com/9.x/lorelei/svg?seed=Sophia"
 
 # App configuration and branding
 st.set_page_config(
-    page_title="Secure Healthcare Assistant",
-    page_icon="🏥",
+    page_title="Secure Chatbot Assistant",
+    page_icon="💬",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -167,6 +167,9 @@ def home_page():
 - Which patients are currently taking Furosemide and Atorvastatin medications
 - Generate a list of all patient names and a summary of their symptoms grouped by symptoms. Output in markdown table format.
 - List all patients under _Institution Flores Group Medical Center_
+- Tell me more about Mr. Smith and the reason PMD is needed (Will work for Admins only)
+
+*Note: For this demo, only some of the fields (Name, Address, Age, Email, Phone, DoB) were masked or denied for non-admin users. You can add or remove fields to the masked or deny topics by modifying the guardrails*
 """
             )
 
@@ -308,7 +311,6 @@ def home_page():
 
         # Force a rerun to refresh UI
         st.rerun()
-
 
 def main():
     if st.session_state.logged_in:

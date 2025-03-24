@@ -260,6 +260,14 @@ def handler(event, context):
                     aws_bedrock.CfnGuardrail.PiiEntityConfigProperty(
                         action="ANONYMIZE", type="PHONE"
                     ),
+                ],
+                regexes_config=[
+                    aws_bedrock.CfnGuardrail.RegexConfigProperty(
+                        name="DateOfBirth",
+                        action="ANONYMIZE",
+                        pattern=r"(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])/([12]\d{3})",
+                        description="Date of Birth"
+                    )
                 ]
             ),
             content_policy_config=aws_bedrock.CfnGuardrail.ContentPolicyConfigProperty(
@@ -293,6 +301,22 @@ def handler(event, context):
                     )
                 ]
             ),
+            topic_policy_config=aws_bedrock.CfnGuardrail.TopicPolicyConfigProperty(
+                topics_config=[
+                    aws_bedrock.CfnGuardrail.TopicConfigProperty(
+                        definition="Date of birth, birth date, DOB information for any individual",
+                        name="DateOfBirth",
+                        type="DENY",
+                        examples=[
+                            "What is their date of birth?",
+                            "Tell me John's DOB",
+                            "What's his birth date?",
+                            "Could you tell me Mary's date of birth?",
+                            "I need to know when they were born"
+                        ]
+                    )
+                ]
+            )            
         )
 
         # Create Guardrail for admins

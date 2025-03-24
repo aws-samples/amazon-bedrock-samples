@@ -37,13 +37,13 @@
 
 Before running the next step:
 
-- Ensure you have completed all steps listed in the [Pre-requisites](../README.md#pre-requisites) section of the main [README.md](../README.md) file.
-- **IMPORTANT:** Ensure [`synthetic_data.py`](./synthetic_data.py) script is run before this step. Refer to [Synthetic Data Generation Tool](../README.md#synthetic-data-generation-tool) section for info.
-- Install Docker desktop for custom CDK constructs.
-  - [Install Docker desktop for windows](https://docs.docker.com/desktop/setup/install/windows-install/)
-  - [Install Docker desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
-  - [Install Docker desktop for Linux](https://docs.docker.com/desktop/setup/install/linux/)
-- Ensure Docker desktop is up and running.
+* Ensure you have completed all steps listed in the [Pre-requisites](../README.md#pre-requisites) section of the main [README.md](../README.md) file.
+* **IMPORTANT:** Ensure [`synthetic_data.py`](./synthetic_data.py) script is run before this step. Refer to [Synthetic Data Generation Tool](../README.md#synthetic-data-generation-tool) section for info.
+* Install Docker desktop for custom CDK constructs.
+  * [Install Docker desktop for windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+  * [Install Docker desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
+  * [Install Docker desktop for Linux](https://docs.docker.com/desktop/setup/install/linux/)
+* Ensure Docker desktop is up and running.
 
 #### Run shell script to deploy CDK app
 
@@ -58,21 +58,24 @@ chmod +x run_app.sh
 
 Wait for the script to complete. After the script completes it should automatically launch the streamlit app at <http://localhost:8501/>
 
-- Login using `jane@example.com` for Admin access or `john@example.com` for Non-Admin access with password reset earlier.
-- From the sidebar, select a model from the drop-down.
-- Optionally, set model params like `temperature` and `top_p` values.
-- Ask questions based on your data files in [data](../data/) folder.
+* Login using `jane@example.com` for Admin access or `john@example.com` for Non-Admin access with password reset earlier.
+* From the sidebar, select a model from the drop-down.
+* Optionally, set model params like `temperature` and `top_p` values.
+* Ask questions based on your data files in `../data/` folder.
 
 Here are a few sample questions:
 
 ```text
 - List all patients with Obesity as Symptom and the recommended medications
 - Which patients are currently taking Furosemide and Atorvastatin medications
-- Generate a list of all patient names and a summary of their symptoms
+- Generate a list of all patient names and a summary of their symptoms grouped by symptoms. Output in markdown table format.
 - List all patients under Institution Flores Group Medical Center
+- Tell me more about Mr. Smith and the reason PMD is needed (Will work for Admins only)
 ```
 
 >**NOTE:** The above questions are just for reference your datafiles may or may not contain information on the questions. Check your datafiles in [data](../data/) folder.
+
+>For this demo, only some of the fields (Name, Address, Age, Email, Phone DoB) were masked or denied for non-admin users. You can add or remove fields to the masked or deny topics by modifying the guardrails
 
 ### Scenario 2 Cleanup
 
