@@ -1,0 +1,60 @@
+# Ignore python notebook checkpoints
+.ipynb_checkpoints
+
+# Ignore python venv folder
+.venv
+
+# Ignore .DS_Store files
+.DS_Store
+
+# Ignore build output folders
+
+build/
+dist/
+
+# Ignore node_modules folder
+node_modules/
+
+# Ignore log files and databases
+*.log
+*.sql
+*.sqlite
+
+# Ignore OS generated files
+.DS_Store
+
+.idea
+
+.vscode
+.vscode/**
+
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Ignore python notebook checkpoints
+/.ipynb_checkpoints/
+
+# ignore maven builds
+**generative-ai-solutions/java-connection/my-app/target
+
+# multimodal
+multimodal/rag/data/
+multimodal/rag/listings/
+multimodal/rag/*.csv
+multimodal/rag/LICENSE-CC-BY-4.0.txt
+multimodal/rag/listings.json
+multimodal/rag/*.tar
+multimodal/rag/__pycache__/
+
+
+# ignore cdk-related directories
+dist
+cdk.out
+.cdk.staging
+.package-lock.json
+yarn.lock
+
+config.py
