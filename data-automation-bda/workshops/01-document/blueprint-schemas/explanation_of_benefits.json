@@ -1,0 +1,232 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"description": "A blueprint for a Remittance Advice (RA) or Explanation of Benefits (EOB), which is a standard document sent by insurance companies to detail how a medical claim was processed showing breakdown of charges, what the insurance paid, any discounts and amount due",
+	"class": "Explanation of Benefits",
+	"type": "object",
+	"definitions": {
+		"PaymentDetail": {
+			"type": "object",
+			"properties": {
+				"paid_to": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "Who the payment was made to"
+				},
+				"check_number": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The check number"
+				},
+				"amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "The payment amount"
+				}
+			}
+		},
+		"payment_details": {
+			"type": "object",
+			"properties": {
+				"paid_to": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "Who the payment was made to"
+				},
+				"check_number": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The check number"
+				},
+				"amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "The payment amount"
+				}
+			}
+		},
+		"claim_summary": {
+			"type": "object",
+			"properties": {
+				"claim_number": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "The claim number"
+				},
+				"patient_name": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The Patient Name associated with the claim"
+				},
+				"billed_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Billed Amount"
+				},
+				"provider_discount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Provider Discount"
+				},
+				"ucr_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "UCR amount in dollars"
+				},
+				"ineligible_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Ineligible Amount in dollars"
+				},
+				"deductible_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Deductible Amount in dollars"
+				},
+				"copay_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "the copay amount in dollars"
+				},
+				"payment_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Payment Amount"
+				}
+			}
+		},
+		"claim_details": {
+			"type": "object",
+			"properties": {
+				"dates_of_services": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "Dates of Services"
+				},
+				"procedure_code": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "Procedure Code"
+				},
+				"billed_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Billed Amount in Dollars"
+				},
+				"provider_discount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Provider Discount in Dollars"
+				},
+				"max_plan_allowable": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Maximum Plan Allowable in Dollars"
+				},
+				"ineligible_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Ineligible Amount in Dollars"
+				},
+				"remark_code": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "Remark Code"
+				},
+				"deductible_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Deductible Amount in Dollars"
+				},
+				"copay_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Copay Amount in Dollars"
+				},
+				"paid_at": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Paid at (percentage)"
+				},
+				"payment_amount": {
+					"type": "number",
+					"inferenceType": "explicit",
+					"instruction": "Payment Amount in Dollars"
+				}
+			}
+		}
+	},
+	"properties": {
+		"employer": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "The employer name"
+		},
+		"group_number": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "The group number"
+		},
+		"date": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "The date"
+		},
+		"check_number": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "The check number"
+		},
+		"claim_number": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "The claim number"
+		},
+		"patient_name": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "The patient name"
+		},
+		"member_id": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "The member ID"
+		},
+		"patient_responsibility": {
+			"type": "number",
+			"inferenceType": "explicit",
+			"instruction": "The patient's responsibility amount"
+		},
+		"other_credits_or_adjustments": {
+			"type": "number",
+			"inferenceType": "explicit",
+			"instruction": "Any other credits or adjustments amount"
+		},
+		"total_payment": {
+			"type": "number",
+			"inferenceType": "explicit",
+			"instruction": "The total payment amount"
+		},
+		"paid_to": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "Who the payment was made to"
+		},
+		"payment_details": {
+			"type": "array",
+			"instruction": "The payment details table",
+			"items": {
+				"$ref": "#/definitions/payment_details"
+			}
+		},
+		"claim_details": {
+			"type": "array",
+			"instruction": "details of services that form the part of the claim",
+			"items": {
+				"$ref": "#/definitions/claim_details"
+			}
+		},
+		"claim_summary": {
+			"$ref": "#/definitions/claim_summary"
+		}
+	}
+}

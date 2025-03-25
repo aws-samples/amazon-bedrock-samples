@@ -1,5 +1,7 @@
 import boto3
 import pprint
+import time
+import pandas as pd
 from botocore.client import Config
 from langchain_aws.chat_models.bedrock import ChatBedrock
 from langchain_aws.embeddings.bedrock import BedrockEmbeddings
@@ -60,4 +62,42 @@ class KnowledgeBasesEvaluations:
                                            llm=self.llm_for_evaluation,
                                            embeddings=self.bedrock_embeddings)
         return self.evaluation_results.to_pandas()
+
+    
         
+    def evaluate_individual_sample(self, delay=10):
+        
+        dataset = self.prepare_evaluation_dataset()
+
+        results = pd.DataFrame()
+        for idx, item in enumerate(dataset):
+            # Get response and context
+            question = item['question']
+            response = item['answer']
+            contexts = item['contexts']
+            ground_truth = item['ground_truth']
+            
+            try:
+                # Evaluate
+                result = evaluate(
+                    dataset = dataset, 
+                    metrics=self.evaluation_metrics,
+                    llm=self.llm_for_evaluation,
+                    embeddings=self.bedrock_embeddings,
+                )
+        
+                results = pd.concat([results, result.to_pandas()], ignore_index=True)
+                
+                # Add delay to avoid rate limiting
+                time.sleep(delay)
+                
+                # Print progress
+                print(f"Evaluated {idx + 1}/{len(self.questions)}")
+                print("-" * 50)
+                
+            except Exception as e:
+                print(f"Error processing question: {question}")
+                print(f"Error details: {str(e)}")
+        return results
+
+   

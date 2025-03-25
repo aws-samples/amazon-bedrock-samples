@@ -61,8 +61,10 @@ class BedrockKnowledgeBase:
             embedding_model="amazon.titan-embed-text-v2:0",
             generation_model="anthropic.claude-3-sonnet-20240229-v1:0",
             reranking_model="cohere.rerank-v3-5:0",
+            graph_model="anthropic.claude-3-haiku-20240307-v1:0",
             chunking_strategy="FIXED_SIZE",
             suffix=None,
+            vector_store="OPENSEARCH_SERVERLESS" # can be OPENSEARCH_SERVERLESS or NEPTUNE_ANALYTICS
     ):
         """
         Class initializer
@@ -89,14 +91,17 @@ class BedrockKnowledgeBase:
         self.suffix = suffix or f'{self.region_name}-{self.account_number}'
         self.identity = boto3.client('sts').get_caller_identity()['Arn']
         self.aoss_client = boto3_session.client('opensearchserverless')
+        self.neptune_client = boto3.client('neptune-graph')
         self.s3_client = boto3.client('s3')
         self.bedrock_agent_client = boto3.client('bedrock-agent')
         credentials = boto3.Session().get_credentials()
         self.awsauth = AWSV4SignerAuth(credentials, self.region_name, 'aoss')
 
         self.kb_name = kb_name or f"default-knowledge-base-{self.suffix}"
+        self.vector_store = vector_store
+        self.graph_name = self.kb_name
         self.kb_description = kb_description or "Default Knowledge Base"
-
+        
         self.data_sources = data_sources
         self.bucket_names=[d["bucket_name"] for d in self.data_sources if d['type']== 'S3']
         self.secrets_arns = [d["credentialsSecretArn"] for d in self.data_sources if d['type']== 'CONFLUENCE'or d['type']=='SHAREPOINT' or d['type']=='SALESFORCE']
@@ -114,6 +119,7 @@ class BedrockKnowledgeBase:
         self.embedding_model = embedding_model
         self.generation_model = generation_model
         self.reranking_model = reranking_model
+        self.graph_model = graph_model
         
         self._validate_models()
         
@@ -128,11 +134,13 @@ class BedrockKnowledgeBase:
         self.oss_policy_name = f'AmazonBedrockOSSPolicyForKnowledgeBase_{self.suffix}'
         self.lambda_policy_name = f'AmazonBedrockLambdaPolicyForKnowledgeBase_{self.suffix}'
         self.bda_policy_name = f'AmazonBedrockBDAPolicyForKnowledgeBase_{self.suffix}'
+        self.neptune_policy_name = f'AmazonBedrockNeptunePolicyForKnowledgeBase_{self.suffix}'
         self.lambda_arn = None
         self.roles = [self.kb_execution_role_name]
 
         self.vector_store_name = f'bedrock-sample-rag-{self.suffix}'
         self.index_name = f"bedrock-sample-rag-index-{self.suffix}"
+        self.graph_id = None
 
         self._setup_resources()
 
@@ -153,29 +161,36 @@ class BedrockKnowledgeBase:
         print(f"Step 2 - Creating Knowledge Base Execution Role ({self.kb_execution_role_name}) and Policies")
         self.bedrock_kb_execution_role = self.create_bedrock_execution_role_multi_ds(self.bucket_names, self.secrets_arns)
         self.bedrock_kb_execution_role_name = self.bedrock_kb_execution_role['Role']['RoleName']
-        
+
+        if self.vector_store == "OPENSEARCH_SERVERLESS":
+            print("========================================================================================")
+            print(f"Step 3a - Creating OSS encryption, network and data access policies")
+            self.encryption_policy, self.network_policy, self.access_policy = self.create_policies_in_oss()
+            
+            print("========================================================================================")
+            print(f"Step 3b - Creating OSS Collection (this step takes a couple of minutes to complete)")
+            self.host, self.collection, self.collection_id, self.collection_arn = self.create_oss()
+            self.oss_client = OpenSearch(
+                hosts=[{'host': self.host, 'port': 443}],
+                http_auth=self.awsauth,
+                use_ssl=True,
+                verify_certs=True,
+                connection_class=RequestsHttpConnection,
+                timeout=300
+            )
+            
+            print("========================================================================================")
+            print(f"Step 3c - Creating OSS Vector Index")
+            self.create_vector_index()
+        else:
+            print("========================================================================================")
+            print(f"Step 3 - Creating Neptune Analytics Graph Index: might take upto 5-7 minutes")
+            self.graph_id = self.create_neptune()
+            
+            
+            
         print("========================================================================================")
-        print(f"Step 3 - Creating OSS encryption, network and data access policies")
-        self.encryption_policy, self.network_policy, self.access_policy = self.create_policies_in_oss()
-        
-        print("========================================================================================")
-        print(f"Step 4 - Creating OSS Collection (this step takes a couple of minutes to complete)")
-        self.host, self.collection, self.collection_id, self.collection_arn = self.create_oss()
-        self.oss_client = OpenSearch(
-            hosts=[{'host': self.host, 'port': 443}],
-            http_auth=self.awsauth,
-            use_ssl=True,
-            verify_certs=True,
-            connection_class=RequestsHttpConnection,
-            timeout=300
-        )
-        
-        print("========================================================================================")
-        print(f"Step 5 - Creating OSS Vector Index")
-        self.create_vector_index()
-        
-        print("========================================================================================")
-        print(f"Step 6 - Will create Lambda Function if chunking strategy selected as CUSTOM")
+        print(f"Step 4 - Will create Lambda Function if chunking strategy selected as CUSTOM")
         if self.chunking_strategy == "CUSTOM":
             print(f"Creating lambda function... as chunking strategy is {self.chunking_strategy}")
             response = self.create_lambda()
@@ -186,10 +201,10 @@ class BedrockKnowledgeBase:
             print(f"Not creating lambda function as chunking strategy is {self.chunking_strategy}")
         
         print("========================================================================================")
-        print(f"Step 7 - Creating Knowledge Base")
+        print(f"Step 5 - Creating Knowledge Base")
         self.knowledge_base, self.data_source = self.create_knowledge_base(self.data_sources)
         print("========================================================================================")
-
+        
     def create_s3_bucket(self, multi_modal=False):
 
         buckets_to_check = self.bucket_names.copy()
@@ -344,7 +359,8 @@ class BedrockKnowledgeBase:
                     "Resource": [
                         f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.embedding_model}",
                         f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.generation_model}",
-                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.reranking_model}"
+                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.reranking_model}",
+                        f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.graph_model}"
                     ]
                 }
             ]
@@ -372,7 +388,21 @@ class BedrockKnowledgeBase:
                     } 
                 ]
             }   
-
+        if self.vector_store == "NEPTUNE_ANALYTICS":
+            neptune_policy_name = {
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Sid": "NeptuneAnalyticsAccess",
+            "Effect": "Allow",
+            "Action": [
+                "*"
+            ],
+            "Resource": f"arn:aws:neptune-graph:{self.region_name}:{self.account_number}:graph/*"
+            }
+                     ]
+            }
+            
+            
         # 3. Define policy documents for secrets manager
         if secrets_arns:
             secrets_manager_policy_document = {
@@ -411,7 +441,7 @@ class BedrockKnowledgeBase:
                 }
             ]
         }
-
+        
         
         # 5. Define policy documents for lambda
         if self.chunking_strategy == "CUSTOM":
@@ -478,7 +508,9 @@ class BedrockKnowledgeBase:
             policies.append((self.lambda_policy_name, lambda_policy_document, 'Policy for invoking lambda function'))
         if self.multi_modal:
             policies.append((self.bda_policy_name, bda_policy_document, 'Policy for accessing BDA'))
-
+        if self.vector_store == "NEPTUNE_ANALYTICS":
+            policies.append((self.neptune_policy_name, neptune_policy_name, 'Policy for Neptune Vector Store'))
+            
         # create bedrock execution role
         bedrock_kb_execution_role = self.iam_client.create_role(
             RoleName=self.kb_execution_role_name,
@@ -500,6 +532,35 @@ class BedrockKnowledgeBase:
             )
 
         return bedrock_kb_execution_role
+
+    def create_neptune(self):
+        response = self.neptune_client.create_graph(
+                graphName=self.graph_name,
+                tags={
+                    'usecase': 'graphRAG'
+                },
+                publicConnectivity=True,
+                vectorSearchConfiguration={
+                    'dimension': embedding_context_dimensions[self.embedding_model]
+                },
+                replicaCount=1,
+                deletionProtection=True,
+                provisionedMemory=16
+            )
+        graph_id = response["id"]
+
+        self.neptune_client.get_graph(graphIdentifier=graph_id)["status"]
+        try:
+            while self.neptune_client.get_graph(graphIdentifier=graph_id)["status"] == "CREATING":
+                print("Graph is getting creating...")
+                time.sleep(90)
+                if response["status"] == "CREATED":
+                    print("Graph created successfully")
+        except KeyError as e:
+            print(f"Error: 'status' key not found in response dictionary: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+        return graph_id
 
     def create_policies_in_oss(self):
         """
@@ -688,6 +749,19 @@ class BedrockKnowledgeBase:
 
     def create_chunking_strategy_config(self, strategy):
         configs = {
+           
+            "GRAPH": {
+                "contextEnrichmentConfiguration": { 
+                        "bedrockFoundationModelConfiguration": { 
+                            "enrichmentStrategyConfiguration": { 
+                                "method": "CHUNK_ENTITY_EXTRACTION"
+                            },
+                            "modelArn": f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.graph_model}"
+                        },
+                        "type": "BEDROCK_FOUNDATION_MODEL"
+                }
+            },
+                    
             "NONE": {
                 "chunkingConfiguration": {"chunkingStrategy": "NONE"}
             },
@@ -746,15 +820,30 @@ class BedrockKnowledgeBase:
         """
         Create Knowledge Base and its Data Source. If existent, retrieve
         """
-        opensearch_serverless_configuration = {
-            "collectionArn": self.collection_arn,
-            "vectorIndexName": self.index_name,
-            "fieldMapping": {
-                "vectorField": "vector",
-                "textField": "text",
-                "metadataField": "text-metadata"
+        if self.graph_id: 
+            storage_configuration = {
+            "type": "NEPTUNE_ANALYTICS",
+            "neptuneAnalyticsConfiguration": {
+                "graphArn": f"arn:aws:neptune-graph:{self.region_name}:{self.account_number}:graph/{self.graph_id}",
+                "fieldMapping": {
+                    "textField": "text",
+                    "metadataField": "text-metadata"
+                }
             }
         }
+        else:
+            storage_configuration = {
+            "type": "OPENSEARCH_SERVERLESS",
+            "opensearchServerlessConfiguration": {
+                "collectionArn": self.collection_arn,
+                "vectorIndexName": self.index_name,
+                "fieldMapping": {
+                    "vectorField": "vector",
+                    "textField": "text",
+                    "metadataField": "text-metadata"
+                }
+            }
+            }
 
         # create Knowledge Bases
         embedding_model_arn = f"arn:aws:bedrock:{self.region_name}::foundation-model/{self.embedding_model}"
@@ -770,10 +859,7 @@ class BedrockKnowledgeBase:
                 description=self.kb_description,
                 roleArn=self.bedrock_kb_execution_role['Role']['Arn'],
                 knowledgeBaseConfiguration=knowledgebase_configuration,
-                storageConfiguration={
-                    "type": "OPENSEARCH_SERVERLESS",
-                    "opensearchServerlessConfiguration": opensearch_serverless_configuration
-                }
+                storageConfiguration=storage_configuration,
             )
             kb = create_kb_response["knowledgeBase"]
             pp.pprint(kb)
@@ -1111,23 +1197,39 @@ class BedrockKnowledgeBase:
                     print(f"Lambda function {self.lambda_function_name} not found.")
 
             # delete vector index and collection from vector store
-            try:
-                self.aoss_client.delete_collection(id=self.collection_id)
-                self.aoss_client.delete_access_policy(
-                    type="data",
-                    name=self.access_policy_name
-                )
-                self.aoss_client.delete_security_policy(
-                    type="network",
-                    name=self.network_policy_name
-                )
-                self.aoss_client.delete_security_policy(
-                    type="encryption",
-                    name=self.encryption_policy_name
-                )
-                print("======== Vector Index, collection and associated policies deleted =========")
-            except Exception as e:
-                print(e)
+            if self.vector_store=="OPENSEARCH_SERVERLESS":
+                try:
+                    self.aoss_client.delete_collection(id=self.collection_id)
+                    self.aoss_client.delete_access_policy(
+                        type="data",
+                        name=self.access_policy_name
+                    )
+                    self.aoss_client.delete_security_policy(
+                        type="network",
+                        name=self.network_policy_name
+                    )
+                    self.aoss_client.delete_security_policy(
+                        type="encryption",
+                        name=self.encryption_policy_name
+                    )
+                    print("======== Vector Index, collection and associated policies deleted =========")
+                except Exception as e:
+                    print(e)
+            else: 
+                try: 
+                    # disable delete protection
+                    response = self.neptune_client.update_graph(
+                        graphIdentifier=self.graph_id,
+                        deletionProtection=False)
+                    print("======= Delete protection disabled before deleting the graph: ", response['deletionProtection'])
+
+                    # delete the graph
+                    self.neptune_client.delete_graph(
+                        graphIdentifier=self.graph_id,
+                        skipSnapshot=True)
+                    print("========= Neptune Analytics Graph Deleted =================================")
+                except Exception as e:
+                    print(e)
 
             
     def delete_iam_roles_and_policies(self):

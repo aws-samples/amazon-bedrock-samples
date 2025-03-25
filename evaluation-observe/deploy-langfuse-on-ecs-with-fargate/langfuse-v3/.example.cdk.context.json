@@ -1,0 +1,44 @@
+{
+  "private_dns_namespace_name": "langfuse.local",
+  "db_cluster_name": "langfuse-db",
+  "ecr": [
+    {
+      "repository_name": "langfuse-web",
+      "docker_image_name": "langfuse/langfuse",
+      "tag": "3"
+    },
+    {
+      "repository_name": "langfuse-worker",
+      "docker_image_name": "langfuse/langfuse-worker",
+      "tag": "3"
+    },
+    {
+      "repository_name": "clickhouse",
+      "docker_image_name": "clickhouse",
+      "tag": "24.12.3.47"
+    }
+  ],
+  "ecs_cluster_name": "langfuse",
+  "langfuse_worker_desired_count": 1,
+  "langfuse_worker_env": {
+    "NODE_ENV": "production",
+    "SALT": "salt (generate by running 'openssl rand -base64 32')",
+    "ENCRYPTION_KEY": "encryption key (generate by running 'openssl rand -hex 32')",
+    "TELEMETRY_ENABLED": "true",
+    "LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES": "true"
+  },
+  "langfuse_web_env": {
+    "NODE_ENV": "production",
+    "NEXTAUTH_SECRET": "secret (generate by running 'openssl rand -base64 32')",
+    "SALT": "salt (generate by running 'openssl rand -base64 32')",
+    "ENCRYPTION_KEY": "encryption key (generate by running 'openssl rand -hex 32')",
+    "HOSTNAME": "0.0.0.0",
+    "LANGFUSE_S3_MEDIA_DOWNLOAD_URL_EXPIRY_SECONDS": "604800",
+    "TELEMETRY_ENABLED": "true",
+    "LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES": "true",
+    "LANGFUSE_SDK_CI_SYNC_PROCESSING_ENABLED": "false",
+    "LANGFUSE_READ_FROM_POSTGRES_ONLY": "false",
+    "LANGFUSE_READ_FROM_CLICKHOUSE_ONLY": "true",
+    "LANGFUSE_RETURN_FROM_CLICKHOUSE": "true"
+  }
+}

@@ -7,6 +7,11 @@ import os
 import uuid
 import logging
 from botocore.exceptions import ClientError
+from IPython.display import HTML
+from base64 import b64encode
+from IPython.display import Audio, display
+import io
+import re
 
 suffix = random.randrange(200, 900)
 boto3_session = boto3.session.Session()
@@ -318,3 +323,323 @@ def upload_to_s3(path, bucket_name):
                 file_to_upload = os.path.join(root,file)
                 print(f"uploading file {file_to_upload} to {bucket_name}")
                 s3_client.upload_file(file_to_upload,bucket_name,file)
+#check if bucket exist
+def bucket_exists(bucket_name):
+    try:
+        s3_client.head_bucket(Bucket=bucket_name)
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            return False
+        else:
+            raise e  # Raise other unexpected errors
+
+def play(filename):
+    html = ''
+    video = open(filename,'rb').read()
+    src = 'data:video/mp4;base64,' + b64encode(video).decode()
+    html += '<video width=1000 controls autoplay loop><source src="%s" type="video/mp4"></video>' % src 
+    return HTML(html)
+
+def extract_audio_path_and_timestamps(response):
+    timestamps = []
+    audio_s3_info = None
+    
+    try:
+        if 'citations' in response:
+            for citation in response['citations']:
+                if 'retrievedReferences' in citation:
+                    for ref in citation['retrievedReferences']:
+                        # Check for the new metadata structure
+                        if 'metadata' in ref:
+                            metadata = ref['metadata']
+                            if 'x-amz-bedrock-kb-source-uri' in metadata:
+                                s3_uri = metadata['x-amz-bedrock-kb-source-uri']
+                                # Parse s3 URI to get bucket and key
+                                if s3_uri.startswith('s3://'):
+                                    parts = s3_uri[5:].split('/', 1)
+                                    if len(parts) == 2:
+                                        audio_s3_info = {
+                                            'bucket': parts[0],
+                                            'key': parts[1]
+                                        }
+                        # Extract timestamps if present in content
+                        if 'content' in ref and 'text' in ref['content']:
+                            content_text = ref['content']['text']
+                            # Check if this content contains timestamp information
+                            if '"start_timestamp_millis"' in content_text:
+                                try:
+                                    # Extract timestamp information using regex
+                                    timestamp_pattern = r'"start_timestamp_millis":\s*(\d+),\s*"end_timestamp_millis":\s*(\d+),\s*"segment_index":\s*(\d+)'
+                                    text_pattern = r'"text":\s*"([^"]+)"'
+                                    speaker_pattern = r'"speaker_label":\s*"([^"]+)"'
+                                    
+                                    # Find all matches
+                                    time_matches = re.findall(timestamp_pattern, content_text)
+                                    text_matches = re.findall(text_pattern, content_text)
+                                    speaker_matches = re.findall(speaker_pattern, content_text)
+                                    
+                                    # Process matches
+                                    for i in range(len(time_matches)):
+                                        if i < len(text_matches) and i < len(speaker_matches):
+                                            start, end, index = time_matches[i]
+                                            timestamps.append({
+                                                'start': int(start),
+                                                'end': int(end),
+                                                'segment_index': int(index),
+                                                'text': text_matches[i],
+                                                'speaker': speaker_matches[i]
+                                            })
+                                            
+                                except Exception as e:
+                                    print(f"Error processing timestamps: {e}")
+                                    
+    except Exception as e:
+        print(f"Error in main processing: {e}")
+    
+    # Sort timestamps by segment_index
+    timestamps.sort(key=lambda x: x['segment_index'])
+    
+    return audio_s3_info, timestamps
+
+def play_audio_segment(audio_s3_info, start_ms, end_ms=None):
+    """
+    Play the audio segment using IPython.display.Audio from S3:
+    1. First fetch the JSON file containing metadata
+    2. Extract the actual MP3 file location from the JSON
+    3. Fetch and play the MP3 file
+    """
+    if not audio_s3_info:
+        print("No audio file information found in response")
+        return
+    
+    try:
+        # 1. First get the JSON file from S3
+        s3_client = boto3.client('s3')
+        json_response = s3_client.get_object(
+            Bucket=audio_s3_info['bucket'],
+            Key=audio_s3_info['key']
+        )
+        json_content = json.loads(json_response['Body'].read().decode('utf-8'))
+        
+        # 2. Extract the actual MP3 file location from JSON metadata
+        metadata = json_content.get('metadata', {})  # Get the metadata dictionary
+        mp3_bucket = metadata.get('s3_bucket')
+        mp3_key = metadata.get('s3_key')
+        
+        if not mp3_bucket or not mp3_key:
+            print("MP3 file information not found in JSON metadata")
+            return
+        
+        # 3. Get the actual MP3 file from S3
+        if not hasattr(play_audio_segment, 'audio_data'):
+            try:
+                mp3_response = s3_client.get_object(
+                    Bucket=mp3_bucket,
+                    Key=mp3_key
+                )
+                play_audio_segment.audio_data = mp3_response['Body'].read()
+            except Exception as e:
+                print(f"Error fetching MP3 from S3: {e}")
+                return
+        
+        # Create audio object without autoplay
+        audio = Audio(
+            data=play_audio_segment.audio_data,
+            autoplay=False,
+            rate=metadata.get('sample_rate', 44100)  # Use sample rate from metadata
+        )
+        
+        display(audio)
+        
+    except Exception as e:
+        print(f"Error processing audio: {e}")
+        return
+
+def parse_response_and_get_s3_info(response):
+    video_info = {
+        's3_uri': None,
+        'timestamps': [],
+        'summary': None,
+        'transcript': None
+    }
+    
+    try:
+        # Parse citations
+        if 'citations' in response:
+            for citation in response['citations']:
+                if 'retrievedReferences' in citation:
+                    for ref in citation['retrievedReferences']:
+                        try:
+                            # Get S3 URI from metadata
+                            if 'metadata' in ref:
+                                s3_uri = ref['metadata'].get('x-amz-bedrock-kb-source-uri')
+                                if s3_uri and not video_info['s3_uri']:
+                                    parts = s3_uri.replace('s3://', '').split('/', 1)
+                                    if len(parts) == 2:
+                                        video_info['s3_uri'] = {
+                                            'bucket': parts[0],
+                                            'key': parts[1]
+                                        }
+                            
+                            # Get content information
+                            if 'content' in ref:
+                                content = ref['content']
+                                content_text = content.get('text', '')
+                                
+                                # First try to find complete shots array
+                                if '"shots": [' in content_text:
+                                    try:
+                                        shots_start = content_text.find('"shots": [')
+                                        shots_start = content_text.find('[', shots_start)
+                                        if shots_start >= 0:
+                                            # Find matching closing bracket
+                                            bracket_count = 1
+                                            shots_end = shots_start + 1
+                                            while bracket_count > 0 and shots_end < len(content_text):
+                                                if content_text[shots_end] == '[':
+                                                    bracket_count += 1
+                                                elif content_text[shots_end] == ']':
+                                                    bracket_count -= 1
+                                                shots_end += 1
+                                            
+                                            if bracket_count == 0:
+                                                shots_text = content_text[shots_start:shots_end]
+                                                try:
+                                                    shots_array = json.loads(shots_text)
+                                                    for shot in shots_array:
+                                                        if isinstance(shot, dict) and 'shot_index' in shot:
+                                                            timestamp = {
+                                                                'shot_index': shot.get('shot_index'),
+                                                                'start_time': shot.get('start_timestamp_millis'),
+                                                                'end_time': shot.get('end_timestamp_millis'),
+                                                                'start_timecode': shot.get('start_timecode_smpte'),
+                                                                'end_timecode': shot.get('end_timecode_smpte'),
+                                                                'duration': shot.get('duration_millis')
+                                                            }
+                                                            if timestamp['start_time'] is not None:
+                                                                video_info['timestamps'].append(timestamp)
+                                                except json.JSONDecodeError:
+                                                    print(f"Failed to parse shots array: {shots_text[:200]}")
+                                    except Exception as e:
+                                        print(f"Error processing shots array: {e}")
+                                
+                                # Also look for individual shot objects
+                                if 'shot_index' in content_text and 'start_timestamp_millis' in content_text:
+                                    try:
+                                        # Find the complete shot object
+                                        start_idx = content_text.find('{')
+                                        end_idx = content_text.find('}', start_idx) + 1
+                                        if start_idx >= 0 and end_idx > 0:
+                                            shot_text = content_text[start_idx:end_idx]
+                                            shot_json = json.loads(shot_text)
+                                            
+                                            if 'shot_index' in shot_json and 'start_timestamp_millis' in shot_json:
+                                                timestamp = {
+                                                    'shot_index': shot_json.get('shot_index'),
+                                                    'start_time': shot_json.get('start_timestamp_millis'),
+                                                    'end_time': shot_json.get('end_timestamp_millis'),
+                                                    'start_timecode': shot_json.get('start_timecode_smpte'),
+                                                    'end_timecode': shot_json.get('end_timecode_smpte'),
+                                                    'duration': shot_json.get('duration_millis')
+                                                }
+                                                # Only add if we don't already have this shot_index
+                                                if timestamp['start_time'] is not None and not any(
+                                                    ts['shot_index'] == timestamp['shot_index'] for ts in video_info['timestamps']
+                                                ):
+                                                    video_info['timestamps'].append(timestamp)
+                                    except json.JSONDecodeError:
+                                        pass
+                                
+                                # Look for summary
+                                if 'summary' in content_text:
+                                    try:
+                                        summary_start = content_text.find('"summary": "')
+                                        if summary_start >= 0:
+                                            summary_start += len('"summary": "')
+                                            summary_end = content_text.find('"', summary_start)
+                                            if summary_end >= 0:
+                                                summary = content_text[summary_start:summary_end]
+                                                if not video_info['summary']:
+                                                    video_info['summary'] = summary
+                                    except Exception:
+                                        pass
+                                
+                                # Look for transcript
+                                if '[spk_0]' in content_text:
+                                    try:
+                                        transcript_start = content_text.find('[spk_0]')
+                                        transcript_end = content_text.find('"', transcript_start)
+                                        if transcript_start >= 0 and transcript_end >= 0:
+                                            transcript = content_text[transcript_start:transcript_end]
+                                            if not video_info['transcript']:
+                                                video_info['transcript'] = transcript
+                                    except Exception:
+                                        pass
+                                        
+                        except Exception as e:
+                            print(f"Error processing reference: {e}")
+                            continue
+        
+        # Sort timestamps by start time
+        if video_info['timestamps']:
+            video_info['timestamps'].sort(key=lambda x: x['start_time'])
+            
+        return video_info
+        
+    except Exception as e:
+        print(f"Error parsing response: {e}")
+        return video_info
+
+
+def get_video_from_metadata(bucket, key):
+    try:
+        # Create S3 client
+        s3_client = boto3.client('s3')
+        
+        # First get the JSON file from S3
+        json_response = s3_client.get_object(
+            Bucket=bucket,
+            Key=key
+        )
+        
+        # Read and parse the JSON content
+        json_content = json.loads(json_response['Body'].read().decode('utf-8'))
+        
+        # Extract the video S3 location from metadata
+        if 'metadata' in json_content:
+            metadata = json_content['metadata']
+            video_bucket = metadata.get('s3_bucket')
+            video_key = metadata.get('s3_key')
+            
+            if video_bucket and video_key:
+                # Get the video file directly from S3
+                video_response = s3_client.get_object(
+                    Bucket=video_bucket,
+                    Key=video_key
+                )
+                
+                # Read the video content
+                video_content = video_response['Body'].read()
+                
+                # Encode to base64
+                video_base64 = base64.b64encode(video_content).decode()
+                
+                # Create the video player HTML with base64 data
+                video_player = HTML(f"""
+                <video width="800" height="600" controls>
+                    <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                """)
+                
+                display(video_player)
+                return True
+            
+        print("Could not find video S3 location in metadata")
+        return False
+            
+    except Exception as e:
+        print(f"Error playing video: {str(e)}")
+        return False
+
