@@ -55,7 +55,7 @@ if "logged_in" not in st.session_state:
 def store_widget_state(key):
     """Store widget state to session state."""
     st.session_state[key] = st.session_state["_" + key]
-    logger.debug(f"Selected {key}: {st.session_state[key]}")
+    # logger.debug(f"Selected {key}: {st.session_state[key]}")
 
 
 def format_model_names(model_id):
@@ -70,7 +70,10 @@ def init_session_state():
         st.session_state.model_id = None
     if "conversation_start_time" not in st.session_state:
         st.session_state.conversation_start_time = time.time()
-
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
 def login_page():
     """Login page"""
@@ -252,6 +255,7 @@ def home_page():
 
     # Handle user input
     if prompt := st.chat_input("Type your message here..."):
+        logger.debug(f"Selected Model: {st.session_state._llm_model_name}")
         st.session_state.messages.append({"role": "user", "content": prompt})
         # Display user message
         with st.chat_message("user", avatar=USER_AVATAR):
@@ -289,6 +293,9 @@ def home_page():
 
 
 def main():
+    # Initialize session state at the start
+    init_session_state()
+
     if st.session_state.logged_in:
         home_page()
     else:

@@ -57,7 +57,7 @@ st.markdown(
 def store_widget_state(key):
     """Store widget state to session state."""
     st.session_state[key] = st.session_state["_" + key]
-    logger.debug(f"Selected {key}: {st.session_state[key]}")
+    # logger.debug(f"Selected {key}: {st.session_state[key]}")
 
 
 def format_model_names(model_id):
@@ -72,11 +72,11 @@ def init_session_state():
         st.session_state.model_id = None
     if "conversation_start_time" not in st.session_state:
         st.session_state.conversation_start_time = time.time()
-
-# Initialize session state for login status
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-
+    # Initialize session state for login status
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
 def login_page():
     """Login page"""
@@ -262,6 +262,7 @@ def home_page():
             st.write(msg["content"])
 
     prompt = st.chat_input("Type your message here...")
+    logger.debug(f"Selected Model: {st.session_state._llm_model_name}")
     if prompt:
         # Add user message to history
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -313,6 +314,10 @@ def home_page():
         st.rerun()
 
 def main():
+
+    # Initialize session state at the start
+    init_session_state()
+
     if st.session_state.logged_in:
         home_page()
     else:
