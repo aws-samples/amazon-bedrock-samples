@@ -1,0 +1,20 @@
+{
+    "langfuse": {
+        "project_name" : "",
+        "environment" : "",
+        "langfuse_public_key": "",
+        "langfuse_secret_key" : "",
+        "langfuse_api_url" : "https://us.cloud.langfuse.com/api/public/otel" // or docker container URL 
+    },
+    "agent": {
+        "agentId" : "", 
+        "agentAliasId" : ""
+    },
+    "user": {
+        "userId" : "",
+        "agent_model_id" : ""
+    },
+    "question": {
+        "question" : ""
+    }
+}
