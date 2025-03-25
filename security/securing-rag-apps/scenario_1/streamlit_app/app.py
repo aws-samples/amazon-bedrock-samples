@@ -43,6 +43,23 @@ st.markdown(
         color: #708090;
         font-size: 0.8rem;
     }
+    .top-disclaimer {
+        color: #D32F2F;
+        background-color: #FFEBEE;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        border-left: 4px solid #D32F2F;
+    }
+    .disclaimer {
+        font-size: 0.85rem;
+        color: #555;
+        background-color: #f8f9fa;
+        border-left: 3px solid #ff9800;
+        padding: 10px;
+        margin-top: 10px;
+    }
 </style>
 """,
     unsafe_allow_html=True,
@@ -74,6 +91,7 @@ def init_session_state():
         st.session_state.logged_in = False
     if "messages" not in st.session_state:
         st.session_state.messages = []
+
 
 def login_page():
     """Login page"""
@@ -153,6 +171,16 @@ def home_page():
     st.markdown("<h1 class='app-header'>Chatbot Assistant 💬</h1>", unsafe_allow_html=True)
     st.markdown("<p class='app-subheader'>AI-powered knowledge base assistant with advanced security guardrails</p>", unsafe_allow_html=True)
 
+    # Add shortened disclaimer at the top of chat window
+    st.markdown(
+        """
+        <div class="top-disclaimer">
+        <strong>⚠️ PII Detection Disclaimer:</strong> This solution demonstrates PII detection and redaction but is not exhaustive.Customers are responsible for implementing appropriate PII detection and redaction methods. The configured patterns are examples only and do not cover all possible PII variations. The regular expressions configured in Bedrock Guardrails within this solution serve as examples and do not cover all possible variations for detecting PII types. For instance, date of birth formats can vary widely. Ensure that you configure Bedrock Guardrails and policies to accurately detect the PII types relevant to your specific use case. Refer to <a href='https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html'>Bedrock Guardrails sensitive information filters</a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     welcome_container = st.container()
     with welcome_container:
         with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
@@ -213,6 +241,21 @@ def home_page():
                 help="Controls diversity via nucleus sampling",
             )
 
+        # Guardrail information
+        st.divider()
+        st.subheader("Guardrail Information")
+
+        # PII Disclaimer
+        with st.expander("⚠️ PII Detection Disclaimer", expanded=False):
+            st.markdown(
+                """
+                <div class="disclaimer">
+                It's important to note that while our solution demonstrates the use of PII detection and redaction techniques, it does not provide an exhaustive list of all PII types or detection methods. As a customer, you bear the responsibility for implementing the appropriate PII detection types and redaction methods using AWS services, including Bedrock Guardrails and other open-source libraries. The regular expressions configured in Bedrock Guardrails within this solution serve as examples and do not cover all possible variations for detecting PII types. For instance, date of birth formats can vary widely. Therefore, it falls to you to configure Bedrock Guardrails and policies to accurately detect the PII types relevant to your specific use case. Refer to <a href='https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html'>Bedrock Guardrails sensitive information filters</a>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
         # Session information
         st.divider()
         st.subheader("Session Information")
@@ -222,24 +265,6 @@ def home_page():
             [m for m in st.session_state.get("messages", []) if m["role"] == "user"]
         )
         st.write(f"💬 Messages sent: {message_count}")
-
-        # Guardrail information
-        st.divider()
-        st.subheader("Guardrail Information")
-        st.info(
-            """
-        This application uses Amazon Bedrock Guardrails to:
-
-        1. Filter sensitive input requests
-        2. Redact PII from responses
-        3. Block inappropriate content
-        4. Ensure healthcare compliance
-        """
-        )
-
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
 
     # Display chat history
     for msg in st.session_state.messages:

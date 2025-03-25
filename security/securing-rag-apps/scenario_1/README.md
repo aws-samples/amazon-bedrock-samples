@@ -87,6 +87,8 @@ Here are a few sample questions to use as prompts:
 
 >**NOTE:** The above prompts are examples that only use patient medical notes generated during the app setup.Your datafiles may or may not work with the exact prompts as the synthetic data generated is random. Ensure to check your datafiles in the `../data/` folder to customize your prompts.
 
+>**IMPORTANT:** PII Detection Disclaimer: This solution demonstrates PII detection and redaction but is not exhaustive.Customers are responsible for implementing appropriate PII detection and redaction methods. The configured patterns are examples only and do not cover all possible PII variations. The regular expressions configured in Bedrock Guardrails within this solution serve as examples and do not cover all possible variations for detecting PII types. For instance, date of birth formats can vary widely. Ensure that you configure Bedrock Guardrails and policies to accurately detect the PII types relevant to your specific use case. Refer to [Bedrock Guardrails sensitive information filters](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html)
+
 ### Scenario1 Cleanup
 
 Delete all cdk deployed resources.
