@@ -235,7 +235,7 @@ def process_s3_path(path, is_invocation_logs):
 
 def validate_prompts_in_parallel(prompts, file_path, is_invocation_logs):
     """Validates the given prompts in parallel"""
-    max_workers = os.process_cpu_count()
+    max_workers = os.cpu_count()
 
     # Create a thread pool to process chunks in parallel
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
