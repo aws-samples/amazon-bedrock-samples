@@ -86,9 +86,10 @@ export class ECRRepoAndDockerImage extends Construct {
       ),
     });
 
+    const stack = cdk.Stack.of(this);
     NagSuppressions.addResourceSuppressionsByPath(
-      cdk.Stack.of(this),
-      `/${cdk.Stack.of(this).stackName}/Custom::CDKECRDeploymentbd07c930edb94112a20f03f096f53666512MiB/ServiceRole/Resource`,
+      stack,
+      `${stack.node.path}/Custom::CDKECRDeploymentbd07c930edb94112a20f03f096f53666512MiB/ServiceRole/Resource`,
       [
         {
           id: "AwsSolutions-IAM4",
@@ -98,8 +99,8 @@ export class ECRRepoAndDockerImage extends Construct {
       ],
     );
     NagSuppressions.addResourceSuppressionsByPath(
-      cdk.Stack.of(this),
-      `/${cdk.Stack.of(this).stackName}/Custom::CDKECRDeploymentbd07c930edb94112a20f03f096f53666512MiB/ServiceRole/DefaultPolicy/Resource`,
+      stack,
+      `${stack.node.path}/Custom::CDKECRDeploymentbd07c930edb94112a20f03f096f53666512MiB/ServiceRole/DefaultPolicy/Resource`,
       [
         {
           id: "AwsSolutions-IAM5",

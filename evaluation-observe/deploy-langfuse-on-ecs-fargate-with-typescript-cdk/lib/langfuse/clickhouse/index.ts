@@ -45,6 +45,10 @@ export interface IClickHouseDeploymentProps {
    */
   cpu?: number;
   /**
+   * Extra environment variables to configure on the service's containers
+   */
+  environment?: { [key: string]: string };
+  /**
    * ECS Fargate CPU allocation for the ClickHouse container.
    *
    * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html#fargate-tasks-size
@@ -345,6 +349,7 @@ export class ClickHouseDeployment extends Construct {
         deployedImage.imageTag,
       ),
       cpu,
+      environment: props.environment,
       memoryLimitMiB,
       secrets: {
         CLICKHOUSE_DB: ecs.Secret.fromSecretsManager(this.secret, "database"),

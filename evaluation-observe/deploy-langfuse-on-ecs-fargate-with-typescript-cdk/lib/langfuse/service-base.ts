@@ -80,6 +80,10 @@ export interface ILangfuseServiceSharedProps {
    */
   enableLangfuseExperimentalFeatures?: boolean;
   /**
+   * Extra environment variables to configure on the service's containers
+   */
+  environment?: { [key: string]: string };
+  /**
    * Source container image tag (version) for the service
    *
    * @default '3'
@@ -135,10 +139,6 @@ export interface ILangfuseServiceBaseProps extends ILangfuseServiceSharedProps {
    * Source container image name for the service
    */
   imageName: string;
-  /**
-   * Extra environment variables required for this particular service's containers
-   */
-  environment?: { [key: string]: string };
   /**
    * Port mappings required for this service
    */

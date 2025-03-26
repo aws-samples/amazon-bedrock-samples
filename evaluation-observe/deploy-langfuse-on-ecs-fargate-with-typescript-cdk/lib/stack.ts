@@ -2,7 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 
 // Local Dependencies:
-import { LangfuseDeployment, VpcInfra } from "./langfuse";
+import { LangfuseDeployment, LangfuseVpcInfra } from "./langfuse";
 
 export class LangfuseDemoStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -10,7 +10,7 @@ export class LangfuseDemoStack extends cdk.Stack {
 
     const tags = [new cdk.Tag("project", "langfuse-demo")];
 
-    const vpcInfra = new VpcInfra(this, "VpcInfra", { tags });
+    const vpcInfra = new LangfuseVpcInfra(this, "VpcInfra", { tags });
 
     // The code that defines your stack goes here
     const langfuse = new LangfuseDeployment(this, "Langfuse", {

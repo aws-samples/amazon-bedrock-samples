@@ -52,6 +52,7 @@ export class LangfuseWebService extends LangfuseServiceBase {
         NEXTAUTH_URL: props.loadBalancer
           ? props.loadBalancer.url
           : `http://0.0.0.0:${LANGFUSE_WEB_PORT}`,
+        ...(props.environment || {}),
       },
       healthCheck: {
         command: [
@@ -82,9 +83,9 @@ export class LangfuseWebService extends LangfuseServiceBase {
     const securityGroup = new ec2.SecurityGroup(this, "WebSG", {
       vpc: props.vpc,
       allowAllOutbound: false,
-      description: `Langfuse web container tasks`,
+      description: "Langfuse web container tasks",
     });
-    cdk.Tags.of(securityGroup).add("Name", `langfuse-web`);
+    cdk.Tags.of(securityGroup).add("Name", "langfuse-web");
     if (props.tags) {
       props.tags.forEach((tag) =>
         cdk.Tags.of(securityGroup).add(tag.key, tag.value),

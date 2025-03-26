@@ -49,6 +49,10 @@ export interface ILangfuseDeploymentProps {
    */
   clickHouseCpu?: number;
   /**
+   * Extra environment variables to configure on ClickHouse services' containers
+   */
+  clickHouseEnvironment?: { [key: string]: string };
+  /**
    * Memory allocation for the ECS Fargate container running Langfuse's (ClickHouse) OLAP RDBMS
    *
    * @see https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html#fargate-tasks-size
@@ -65,6 +69,10 @@ export interface ILangfuseDeploymentProps {
    * @default "r6g.large"
    */
   dbNodeType?: ec2.InstanceType;
+  /**
+   * Extra environment variables to configure on Langfuse services' containers
+   */
+  langfuseEnvironment?: { [key: string]: string };
   /**
    * Name to use for the private DNS namespace created for service discovery
    *
@@ -224,6 +232,7 @@ export class LangfuseDeployment extends Construct {
       cluster: this.ecsCluster,
       cloudMapService: clickHouseService,
       cpu: props.clickHouseCpu,
+      environment: props.clickHouseEnvironment,
       memoryLimitMiB: props.clickHouseMemoryMiB,
       vpc: props.vpc,
       tags: props.tags,
@@ -316,6 +325,7 @@ export class LangfuseDeployment extends Construct {
       cluster: this.ecsCluster,
       cpu: props.workerCpu,
       encryptionKeySecret,
+      environment: props.langfuseEnvironment,
       memoryLimitMiB: props.workerMemoryMiB,
       oltpDb,
       s3Bucket: bucket,
@@ -331,6 +341,7 @@ export class LangfuseDeployment extends Construct {
       cluster: this.ecsCluster,
       cpu: props.webServiceCpu,
       encryptionKeySecret,
+      environment: props.langfuseEnvironment,
       loadBalancer: this.loadBalancer,
       memoryLimitMiB: props.webServiceMemoryMiB,
       nextAuthSecret,

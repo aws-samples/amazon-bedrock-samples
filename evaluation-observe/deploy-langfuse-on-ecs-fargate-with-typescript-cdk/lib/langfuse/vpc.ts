@@ -7,7 +7,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import { Construct } from "constructs";
 
-export class IVpcInfraProps {
+export interface ILangfuseVpcInfraProps {
   /**
    * Optional AWS Tags to apply to created resources
    */
@@ -23,12 +23,16 @@ export class IVpcInfraProps {
  * Note: VPC Flow Logging is not a hard requirement for the Langfuse solution, but is enabled as a
  * security best-practice for cdk-nag: https://github.com/cdklabs/cdk-nag
  */
-export class VpcInfra extends Construct {
+export class LangfuseVpcInfra extends Construct {
   public vpc: ec2.IVpc;
   public vpcFlowLog: ec2.FlowLog;
   public vpcFlowLogGroup: logs.ILogGroup;
 
-  constructor(scope: Construct, id: string, props: IVpcInfraProps = {}) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: ILangfuseVpcInfraProps = {},
+  ) {
     super(scope, id);
 
     // maxAzs parameter is not specified.
