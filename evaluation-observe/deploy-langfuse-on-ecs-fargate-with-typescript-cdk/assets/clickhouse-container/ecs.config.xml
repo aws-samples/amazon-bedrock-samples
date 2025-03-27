@@ -1,0 +1,8 @@
+<clickhouse>
+    <!-- ClickHouse configuration overrides for running in Amazon ECS -->
+    <logger>
+        <level>information</level>
+        <!-- Send logs to console (therefore CloudWatch) rather than saving local files -->
+        <console>true</console>
+    </logger>
+</clickhouse>

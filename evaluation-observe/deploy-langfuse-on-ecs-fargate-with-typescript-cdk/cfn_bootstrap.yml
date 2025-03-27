@@ -1,0 +1,469 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |-
+  Quick-start CloudFormation template to deploy the CDK-based infrastructure sample via AWS
+  CodeBuild - with no local CDK/Docker/Python/etc developer setup required.
+
+  This stack sets up an AWS CodeBuild Project to deploy the main solution and triggers the build
+  once (via AWS Lambda) on stack create, plus again whenever the CodeBuildTrigger resource is
+  updated. On deletion, it triggers another CodeBuild job to attempt to destroy the CDK stack.
+  Grants broad permissions to CodeBuild - not recommended for use in production environments.
+
+Parameters:
+  CodeRepo:
+    Type: String
+    Default: https://github.com/aws-samples/amazon-bedrock-samples
+    Description: >-
+      The CDK code to be deployed: A git clone-able URL, public .zip archive URL, or s3:// URI to a
+      zip archive.
+
+  CodeRepoBranch:
+    Type: String
+    Default: main
+    Description: >-
+      Branch (or commit hash) of the repository to deploy from. Ignored if CodeRepo is not a git URL
+  
+  CodeRepoFolder:
+    Type: String
+    Default: evaluation-observe/deploy-langfuse-on-ecs-fargate-with-typescript-cdk
+    Description: >-
+      Subfolder in the repository containing the deployable CDK app. Leading slash optional. Set
+      '/' (not empty) for root folder.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Source Code Location
+        Parameters:
+          - CodeRepo
+          - CodeRepoBranch
+          - CodeRepoFolder
+
+Resources:
+  CodeBuildServiceRole:
+    Type: "AWS::IAM::Role"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "Not recommended for use in production environments: Grants CodeBuild broad access to deploy/destroy the CDK solution without scoping down individual required services & resources"
+          - id: W44
+            reason: "Not recommended for use in production environments: Grants CodeBuild broad access to deploy/destroy the CDK solution without scoping down individual required services & resources"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: StackDeploymentPerms
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # The solution makes extensive use of IAM Roles, so we need broad permissions to
+              # deploy/update/destroy those... But we should have no need to touch certain
+              # other types of resource like Users, Groups, etc: So can still enforce some control
+              # points:
+              - Sid: IAMUnscoped
+                Effect: Allow
+                Action:
+                  - "iam:ListOrganizationsFeatures"
+                  - "iam:ListPolicies"
+                  - "iam:ListRoles"
+                  - "iam:ListSTSRegionalEndpointsStatus"
+                Resource:
+                  - "*"
+              - Sid: IAMPolicies
+                Effect: Allow
+                Action:
+                  - "iam:CreatePolicy"
+                  - "iam:CreatePolicyVersion"
+                  - "iam:DeletePolicy"
+                  - "iam:DeletePolicyVersion"
+                  - "iam:GetPolicy"
+                  - "iam:GetPolicyVersion"
+                  - "iam:ListEntitiesForPolicy"
+                  - "iam:ListPolicyTags"
+                  - "iam:ListPolicyVersions"
+                  - "iam:SetDefaultPolicyVersion"
+                  - "iam:TagPolicy"
+                  - "iam:UntagPolicy"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/*"
+              - Sid: IAMRoles
+                Effect: Allow
+                Action:
+                  - "iam:AttachRolePolicy"
+                  - "iam:CreateRole"
+                  - "iam:CreateServiceLinkedRole"
+                  - "iam:DeleteRole"
+                  # EXCLUDE DeleteRolePermissionsBoundary
+                  - "iam:DeleteRolePolicy"
+                  - "iam:DeleteServiceLinkedRole"
+                  - "iam:DetachRolePolicy"
+                  - "iam:GetContextKeysForPrincipalPolicy"
+                  - "iam:GetRole"
+                  - "iam:GetRolePolicy"
+                  - "iam:GetServiceLinkedRoleDeletionStatus"
+                  - "iam:ListAttachedRolePolicies"
+                  - "iam:ListInstanceProfilesForRole"
+                  - "iam:ListPoliciesGrantingServiceAccess"
+                  - "iam:ListRolePolicies"
+                  - "iam:ListRoleTags"
+                  - "iam:PassRole"
+                  # EXCLUDE PutRolePermissionsBoundary
+                  - "iam:PutRolePolicy"
+                  - "iam:TagRole"
+                  - "iam:UntagRole"
+                  - "iam:UpdateAssumeRolePolicy"
+                  - "iam:UpdateRole"
+                  - "iam:UpdateRoleDescription"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/PowerUserAccess"
+
+  CodeBuildProject:
+    Type: "AWS::CodeBuild::Project"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W32
+            reason: "Use default S3 encryption - no actual artifacts being created"
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      ConcurrentBuildLimit: 1
+      Description: "CDK stack deployer"
+      Environment:
+        ComputeType: BUILD_GENERAL1_LARGE
+        EnvironmentVariables:
+          # Pass CFn stack parameters through to the deploy job:
+          - Name: PUBLIC_REPO
+            Type: PLAINTEXT
+            Value: !Ref CodeRepo
+          - Name: PUBLIC_REPO_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref CodeRepoBranch
+          - Name: PUBLIC_REPO_FOLDER
+            Type: PLAINTEXT
+            Value: !Ref CodeRepoFolder
+        Image: "aws/codebuild/standard:7.0"
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true # Need to build container images within the project
+        Type: LINUX_CONTAINER
+      QueuedTimeoutInMinutes: 80
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        BuildSpec: |
+          version: 0.2
+          env:
+            shell: bash
+          phases:
+            pre_build:
+              commands:
+                - set -ex
+                # Up-front install to fail early (but we reinst later in case it's overwritten):
+                - pip3 install "requests>=2.27,<3"
+            build:
+              commands:
+                - set -ex
+                # Fetch the source code via either S3 CLI, curl (if PUBLIC_REPO ends with '.zip')
+                # or else git:
+                - |
+                  case "$PUBLIC_REPO" in
+                    s3://*)
+                      aws s3 cp "$PUBLIC_REPO" code.zip && unzip -oq code.zip -d code
+                      export PUBLIC_REPO_IS_ARCHIVE=true
+                      ;;
+                    *.zip)
+                      curl "$PUBLIC_REPO" -o code.zip && unzip -oq code.zip -d code
+                      export PUBLIC_REPO_IS_ARCHIVE=true
+                      ;;
+                    *)
+                      git clone --single-branch -b $PUBLIC_REPO_BRANCH --depth 1 $PUBLIC_REPO code
+                      export PUBLIC_REPO_IS_ARCHIVE=false
+                      ;;
+                  esac
+                - cd code
+                # Handle potential folder nesting if source code was extracted from a zip/archive:
+                - |
+                  if [ "$PUBLIC_REPO_IS_ARCHIVE" = "true" ]; then
+                    N_EXTRACTED_SUBFOLDERS="$(find . -type d -mindepth 1 -maxdepth 1 | wc -l)"
+                    N_EXTRACTED_SUBFILES="$(find . -type f -mindepth 1 -maxdepth 1 | wc -l)"
+                    if [ \( $N_EXTRACTED_SUBFOLDERS -eq "1" \) -a \( $N_EXTRACTED_SUBFILES -eq "0" \) ]; then
+                      echo "Zip extracted one top-level folder. Treating that as code root"
+                      cd "$(ls -d */|head -n 1)"
+                    fi
+                  fi
+                # Move to the subfolder if needed
+                # ('#/' parameter expansion ignores leading slash if present)
+                - cd "./${PUBLIC_REPO_FOLDER#/}" && pwd
+                # Actual deploy/destroy instructions for this repository:
+                - npm install
+                - npx cdk bootstrap
+                - if [ "$CFN_EVENT_TYPE" = "Delete" ]; then npx cdk destroy --all --force; else npx cdk deploy --all --concurrency 8 --require-approval never; fi
+              finally:
+                # Re-install requests in case it got overwritten:
+                - pip3 install "requests>=2.27,<3"
+                - |
+                  cat <<EOS | python3 -
+                  import json
+                  import os
+                  import requests  # (You'll need to install this!)
+                  resp_url = os.environ.get("CFN_EVENT_RESPONSE_URL")
+                  if not resp_url:
+                      print("No CloudFormation response URL provided")
+                      exit(0)
+                  try:
+                      data = json.loads(os.environ["CFN_EVENT_DATA"])
+                      data["Status"] = "SUCCESS" if int(os.environ["CODEBUILD_BUILD_SUCCEEDING"]) else "FAILED"
+                      build_arn = os.environ["CODEBUILD_BUILD_ARN"]
+                      data["PhysicalResourceId"] = build_arn
+                      log_stream = f"/aws/codebuild/{build_arn.partition('/')[2]}"
+                      data["Reason"] = "See details in " + (
+                          f"CloudWatch Log Stream {log_stream}" if log_stream else f"AWS CodeBuild {build_arn}"
+                      )
+                      response = requests.put(resp_url, data=json.dumps(data))
+                      print(f"Notified CloudFormation of {data['Status']}")
+                  except Exception as e:
+                      print(f"Failed to send response to CloudFormation event handler")
+                      raise e
+                  EOS
+        SourceIdentifier: coderepo
+        Type: NO_SOURCE
+      TimeoutInMinutes: 60
+
+  # Creating a CodeBuild project in CloudFormation doesn't automatically start a build, so below we
+  # set up an AWS Lambda Function based Custom Resource to trigger the build whenever the stack is
+  # created or updated:
+
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole' # (CloudWatch Logs)
+      Policies:
+        - PolicyName: RunCodeBuildProject
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: RunCodeBuild
+                Effect: Allow
+                Action:
+                  - "codebuild:StartBuild"
+                Resource:
+                  - !GetAtt CodeBuildProject.Arn
+
+  CodeBuildTriggerFunction:
+    Type: "AWS::Lambda::Function"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: "IAM will authorize access to this rarely-used function: No need to put in VPC"
+          - id: W92
+            reason: "Only to be invoked by CREATE/UPDATE/DELETE CFN events for this stack: no reserved concurrency required"
+    Properties:
+      Description: "CloudFormation custom resource implementation for running CodeBuild project"
+      Code:
+        ZipFile: |
+          # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+          """Custom CloudFormation Resource to kick off CodeBuild project builds
+
+          CFn Properties
+          --------------
+          ProjectName : string
+              Name of the AWS CodeBuild project to run
+          BuildOnDelete : Optional[bool]
+              Set `True` to also run a build on CloudFormation `Delete` events (i.e. if your CodeBuild
+              script will detect that `CFN_EVENT_TYPE` is `Delete` and destroy its resources)
+          CodeBuildCallback : Optional[bool]
+              Set `True` if your CodeBuild project will handle the CloudFormation CR callback, or leave
+              default (False) to report success as soon as the build is triggered.
+          IgnoreUpdate : Optional[bool]
+              Set `True` to only trigger a build on initial `Create` events and ignore subsequent `Update`s
+
+          CodeBuild Env Var Overrides
+          ---------------------------
+          CFN_EVENT_TYPE : Union["Create", "Update", "Delete"]
+              Type of CloudFormation event that triggered the build
+          CFN_EVENT_DATA : str
+              JSON object containing LogicalResourceId, RequestId, StackId, NoEcho, and (empty) Data that
+              your CodeBuild should post back to CloudFormation on completion/failure (when provided). Note
+              your build project will need to add the `Status`, `Reason`, and `PhysicalResourceId` fields.
+          CFN_EVENT_RESPONSE_URL : str
+              URL to which the CloudFormation response data should be `PUT` (if provided)
+          """
+
+          # Python Built-Ins:
+          import json
+          import logging
+          import traceback
+
+          # External Dependencies:
+          import boto3
+          import cfnresponse
+
+          codebuild = boto3.client("codebuild")
+
+          def lambda_handler(event, context):
+              try:
+                  request_type = event["RequestType"]
+                  if request_type == "Create":
+                      handle_create(event, context)
+                  elif request_type == "Update":
+                      handle_update(event, context)
+                  elif request_type == "Delete":
+                      handle_delete(event, context)
+                  else:
+                      cfnresponse.send(
+                          event,
+                          context,
+                          cfnresponse.FAILED,
+                          { "Reason": f"Unsupported CFN RequestType '{request_type}'" },
+                      )
+              except Exception as e:
+                  logging.error("Uncaught exception in CFN custom resource handler - reporting failure")
+                  traceback.print_exc()
+                  cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.FAILED,
+                      { "Reason": str(e) },
+                  )
+                  raise e
+
+
+          def get_cfn_env_var_overrides(event):
+              res_config = event.get("ResourceProperties", {})
+              result = [
+                  {"name": "CFN_EVENT_TYPE", "type": "PLAINTEXT", "value": event["RequestType"]},
+              ]
+              if res_config.get("CodeBuildCallback"):
+                  result += [
+                      {
+                          "name": "CFN_EVENT_DATA",
+                          "type": "PLAINTEXT",
+                          "value": json.dumps({
+                              "LogicalResourceId": event["LogicalResourceId"],
+                              "RequestId": event["RequestId"],
+                              "StackId": event["StackId"],
+                              "NoEcho": event["ResourceProperties"].get("NoEcho", False),
+                              "Data": {},
+                          }),
+                      },
+                      {
+                          "name": "CFN_EVENT_RESPONSE_URL",
+                          "type": "PLAINTEXT",
+                          "value": event["ResponseURL"],
+                      },
+                  ]
+              return result
+
+
+          def handle_create(event, context):
+              logging.info("**Received create request - running CodeBuild job")
+              res_config = event["ResourceProperties"]
+              codebuild_env_vars = get_cfn_env_var_overrides(event)
+              result = codebuild.start_build(
+                  projectName=res_config["ProjectName"],
+                  environmentVariablesOverride=codebuild_env_vars,
+              )
+              if not res_config.get("CodeBuildCallback"):
+                  cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.SUCCESS,
+                      { "Reason": f"Started CodeBuild #{result['build']['buildNumber']}" },
+                      physicalResourceId=result["build"]["arn"],
+                  )
+
+          def handle_delete(event, context):
+              logging.info("**Received delete event - no-op")
+              res_config = event.get("ResourceProperties", {})
+              build_on_delete = res_config.get("BuildOnDelete", False)
+              if build_on_delete:
+                  codebuild_env_vars = get_cfn_env_var_overrides(event)
+                  codebuild.start_build(
+                      projectName=res_config["ProjectName"],
+                      environmentVariablesOverride=codebuild_env_vars,
+                  )
+                  reason = "Deletion build initiated"
+              else:
+                  reason = "Delete is a no-op"
+              if not (build_on_delete and res_config.get("CodeBuildCallback")):
+                  cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.SUCCESS,
+                      { "Reason": reason },
+                      physicalResourceId=event["PhysicalResourceId"],
+                  )
+
+          def handle_update(event, context):
+              logging.info("**Received update event - re-running build")
+              res_config = event.get("ResourceProperties", {})
+              ignore_update = res_config.get("IgnoreUpdate", False)
+              if ignore_update:
+                  reason = "Update is a no-op"
+              else:
+                  codebuild_env_vars = get_cfn_env_var_overrides(event)
+                  result = codebuild.start_build(
+                      projectName=res_config["ProjectName"],
+                      environmentVariablesOverride=codebuild_env_vars,
+                  )
+                  if res_config.get("CodeBuildCalback"):
+                      reason = None
+                  else:
+                      reason = f"Started CodeBuild #{result['build']['buildNumber']}"
+              if reason is not None:
+                  cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.SUCCESS,
+                      { "Reason": reason },
+                      physicalResourceId=event["PhysicalResourceId"],
+                  )
+
+      Handler: "index.lambda_handler"
+      MemorySize: 128
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.10
+      Timeout: 900
+
+  SampleDeployment:
+    Type: "Custom::CodeBuildTrigger"
+    Properties:
+      ServiceToken: !GetAtt CodeBuildTriggerFunction.Arn
+      ProjectName: !Ref CodeBuildProject
+      BuildOnDelete: true
+      # NOTE: If CDK deployment takes longer than 1 hour, this CodeBuild-based callback to
+      # CloudFormation *will not work* because CFn will time out. In that case can comment out /
+      # unset `CodeBuildCallback`, and the ATTP stack will "succeed" as soon as the CodeBuild job
+      # is triggered, without waiting for it to complete.
+      CodeBuildCallback: true
+
+Outputs:
+  CodeBuildProjectArn:
+    Description: ARN of the AWS CodeBuild project created to deploy the solution
+    Value: !GetAtt CodeBuildProject.Arn
+  CodeBuildProjectName:
+    Description: Name of the AWS CodeBuild project created to deploy the solution
+    Value: !Ref CodeBuildProject
+  CodeBuildConsoleLink:
+    Description: Link to project in AWS CodeBuild Console
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/codesuite/codebuild/${AWS::AccountId}/projects/${CodeBuildProject}"

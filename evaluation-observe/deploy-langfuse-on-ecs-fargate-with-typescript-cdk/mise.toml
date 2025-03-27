@@ -1,0 +1,4 @@
+[tools]
+dotnet = "8"
+maven = "3"
+node = "22"
