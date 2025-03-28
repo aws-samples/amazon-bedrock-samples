@@ -3,8 +3,6 @@ import json
 import os
 from scripts.utils import get_s3_file_content
 
-os.environ['AWS_PROFILE'] = 'cost-tracing'
-
 
 def main():
     # Load configuration
