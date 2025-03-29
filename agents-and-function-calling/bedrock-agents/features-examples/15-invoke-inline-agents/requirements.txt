@@ -3,3 +3,6 @@ opensearch-py
 botocore
 awscli
 retrying
+termcolor
+rich
+ipywidgets
