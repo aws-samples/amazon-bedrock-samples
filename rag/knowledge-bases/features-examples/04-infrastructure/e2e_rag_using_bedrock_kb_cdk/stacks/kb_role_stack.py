@@ -15,6 +15,8 @@ region = EnvSettings.ACCOUNT_REGION
 account_id = EnvSettings.ACCOUNT_ID
 kb_role_name = KbConfig.KB_ROLE_NAME
 bucket_name = DsConfig.S3_BUCKET_NAME
+interim_bucket_name = DsConfig.MM_STORAGE_S3
+multi_modal = bool(KbConfig.MULTI_MODAL and KbConfig.OVERLAP_PERCENTAGE)
 
 class KbRoleStack(Stack):
 
@@ -65,13 +67,58 @@ class KbRoleStack(Stack):
                           sid="S3ListBucketStatement",
                           effect=iam.Effect.ALLOW,
                           actions=["s3:ListBucket"],
-                          resources=[f"arn:{partition}:s3:::{bucket_name}"],
+                          resources=[f"arn:{partition}:s3:::{bucket_name}", f"arn:{partition}:s3:::{interim_bucket_name}"],
                       ),
                       iam.PolicyStatement(
                           sid="S3GetObjectStatement",
                           effect=iam.Effect.ALLOW,
                           actions=["s3:GetObject"],
-                          resources=[f"arn:{partition}:s3:::{bucket_name}/*"],
+                          resources=[f"arn:{partition}:s3:::{bucket_name}", f"arn:{partition}:s3:::{bucket_name}/*", f"arn:{partition}:s3:::{interim_bucket_name}", f"arn:{partition}:s3:::{interim_bucket_name}/*" ],
+                      ),
+                       iam.PolicyStatement(
+                          sid="S3PutObjectStatement",
+                          effect=iam.Effect.ALLOW,
+                          actions=["s3:PutObject"],
+                          resources=[f"arn:{partition}:s3:::{interim_bucket_name}/*" ],
+                      ),
+                      iam.PolicyStatement(
+                          sid="S3DeleteObjectStatement",
+                          effect=iam.Effect.ALLOW,
+                          actions=["s3:DeleteObject"],
+                          resources=[f"arn:{partition}:s3:::{interim_bucket_name}/*" ],
+                      ),
+                  ]
+              ),
+            #   "interimS3Policy": iam.PolicyDocument(
+            #       statements=[
+            #           iam.PolicyStatement(
+            #               sid="S3BucketStatement",
+            #               effect=iam.Effect.ALLOW,
+            #               actions=["s3:GetObject",
+            #                         "s3:ListBucket",
+            #                         "s3:PutObject",
+            #                         "s3:DeleteObject"],
+            #               resources=[f"arn:{partition}:s3:::{interim_bucket_name}", f"arn:{partition}:s3:::{interim_bucket_name}/*"],
+            #           )
+            #       ]
+            #   ),
+              "BDAPolicy": iam.PolicyDocument(
+                  statements=[
+                      iam.PolicyStatement(
+                          sid="BDAGetStatement",
+                          effect=iam.Effect.ALLOW,
+                          actions=["bedrock:GetDataAutomationStatus"],
+                          resources=[f"arn:{partition}:bedrock:{region}:{account_id}:data-automation-invocation/*"]
+                      ),
+                      iam.PolicyStatement(
+                          sid="BDAInvokeStatement",
+                          effect=iam.Effect.ALLOW,
+                          actions=["bedrock:InvokeDataAutomationAsync"],
+                          resources=[f"arn:{partition}:bedrock:{region}:aws:data-automation-project/public-rag-default",
+                                     f"arn:{partition}:bedrock:us-east-1:017444429555:data-automation-profile/us.data-automation-v1",
+                                     f"arn:{partition}:bedrock:us-east-2:017444429555:data-automation-profile/us.data-automation-v1",
+                                     f"arn:{partition}:bedrock:us-west-1:017444429555:data-automation-profile/us.data-automation-v1",
+                                     f"arn:{partition}:bedrock:us-west-2:017444429555:data-automation-profile/us.data-automation-v1"]
                       ),
                   ]
               ),

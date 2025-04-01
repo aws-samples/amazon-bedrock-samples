@@ -1,6 +1,6 @@
 
 # Deploy e2e RAG solution (using Amazon Bedrock Knowledge Bases) via CDK
-<mark>By no means this deployment is production-ready deployment. Please adjust the IAM polies and permissions as per your organization policy)</mark>
+<mark>By NO means this deployment is production-ready deployment. Please adjust the IAM polies and permissions as per your organization policy)</mark>
 
 This is a complete setup for automatic deployment of end-to-end RAG workflow using Amazon Bedrock Knowledge Bases. 
 Following resources will get created and deployed:
@@ -55,6 +55,10 @@ Once the virtualenv is activated, you can install the required dependencies.
 ```
 pip install -r requirements.txt
 ```
+Upgrade aws-cdk-lib 
+```
+pip install --upgrade aws-cdk-lib
+```
 
 ### IMPORTANT : Update Config file 
 **Open `config.py` and adjust the below parameters as per your application configuration**:
@@ -66,6 +70,9 @@ pip install -r requirements.txt
 - OVERLAP_PERCENTAGE
 - S3_BUCKET_NAME
 - VECTOR_STORE_TYPE (Ensure you select either 'OSS' for an OpenSearch Serverless or 'Aurora' for an Aurora PostgreSQL vector store)
+- MULTI_MODAL (Set to true if building multi-modal RAG)
+- PARSING_STRATEGY - Choose Parsing Strategy  'BEDROCK_DATA_AUTOMATION' or'BEDROCK_FOUNDATION_MODEL (if MULTI_MODAL is set to true)
+- MM_STORAGE_S3 - S3 bucket for multimodal storage destination (if MULTI_MODAL is set to true)
 
 
 **Save it!**
