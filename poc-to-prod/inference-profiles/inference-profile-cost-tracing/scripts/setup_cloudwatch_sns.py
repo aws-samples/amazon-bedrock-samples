@@ -3,8 +3,6 @@ import json
 import os
 from scripts.utils import get_s3_file_content
 
-os.environ['AWS_PROFILE'] = 'cost-tracing'
-
 
 def main():
     # Load configuration
@@ -15,6 +13,11 @@ def main():
     config = json.loads(config_file)
 
     region = config['aws_region']
+    tenant_ids = []
+    for profile in config['profiles']:
+        for tag in profile['tags']:
+            if tag['key'] == "TenantID":
+                tenant_ids.append(tag['value'])
 
     dashboard_name = config['dashboard_name']
     cost_threshold = config['cost_alarm_threshold']
@@ -284,6 +287,33 @@ def main():
             "period": 60
         }
     }
+    metrics = []
+    for tenant_id in tenant_ids:
+        metrics.append(
+            [
+                {
+        "expression": "SEARCH('{BedrockInvocationTracing,InferenceProfile} MetricName=\"TENANT_ID\"','Sum',60)".replace("TENANT_ID", tenant_id),
+        "id": "itc", "label": "Request per Minute", "color": "#FFA500"
+                }
+            ]
+        )
+
+
+    all_tenants_usage_widget = {
+        "type": "metric",
+        "x": 0,
+        "y": 18,
+        "width": 8,
+        "height": 6,
+        "properties": {
+            "metrics": metrics,
+            "view": "bar",
+            "stacked": True,
+            "region": region,
+            "title": "All Tenants Request Count (bar)",
+            "period": 60
+        }
+    }
 
     dashboard_body = json.dumps({
         "variables": variables,
@@ -297,7 +327,8 @@ def main():
             daily_requests_widget,
             all_profiles_cost_widget,
             all_profiles_rpm_widget,
-            all_profiles_tpm_widget
+            all_profiles_tpm_widget,
+            all_tenants_usage_widget
         ]
     })
 

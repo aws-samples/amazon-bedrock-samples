@@ -3,7 +3,6 @@ import subprocess
 from botocore.exceptions import ClientError
 import os
 
-os.environ['AWS_PROFILE'] = 'cost-tracing'
 
 
 def deploy_layer(region):
