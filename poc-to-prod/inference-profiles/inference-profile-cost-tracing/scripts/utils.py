@@ -1,4 +1,5 @@
 import boto3
+import botocore
 import subprocess
 from botocore.exceptions import ClientError
 import os
@@ -97,3 +98,32 @@ def get_s3_file_content(bucket_name, object_key):
             raise Exception(f"An error occurred: {e}")
     except Exception as e:
         raise Exception(f"An unexpected error occurred: {e}")
+
+
+def get_current_username():
+    """
+    Get the current IAM username using boto3.
+
+    Returns:
+        str: The current IAM username or None if not an IAM user
+    """
+    try:
+        sts_client = boto3.client('sts')
+        caller_identity = sts_client.get_caller_identity()
+
+        # Get the ARN from the response
+        arn = caller_identity['Arn']
+
+        # Check if this is an IAM user (ARN contains "user/")
+        if ':user/' in arn:
+            # Extract username from ARN (format: arn:aws:iam::account-id:user/username)
+            username = arn.split(':user/')[1]
+            return username
+        else:
+            # This might be a role or another identity type, not a user
+            print("Current identity is not an IAM user.")
+            return None
+
+    except botocore.exceptions.ClientError as e:
+        print(f"Error getting caller identity: {e}")
+        return None

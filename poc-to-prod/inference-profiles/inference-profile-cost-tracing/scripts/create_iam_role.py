@@ -2,10 +2,9 @@ import boto3
 import json
 import botocore.exceptions
 import os
-from scripts.deploy_lambda import config
 from scripts.utils import get_s3_file_content
 from scripts.upload_to_s3 import upload_file_to_s3
-from scripts import s3_bucket_name, s3_config_file
+from scripts import s3_config_file
 
 
 
@@ -21,7 +20,9 @@ MANAGED_POLICIES = [
     "arn:aws:iam::aws:policy/AmazonBedrockFullAccess",
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
     "arn:aws:iam::aws:policy/AWSLambda_FullAccess",
-    "arn:aws:iam::aws:policy/CloudWatchFullAccess"
+    "arn:aws:iam::aws:policy/CloudWatchFullAccess",
+    "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator"
+
 ]
 
 def delete_iam_role_if_exists(role_name):
@@ -72,19 +73,19 @@ def create_iam_role(role_name):
 
     return role_arn
 
-def update_json_with_arn(role_arn, _config):
+def update_json_with_arn(role_arn, _config, bucket_name):
     _config['lambda_role_arn'] = role_arn
     with open(CONFIG_JSON, "w") as outfile:
-        json.dump(config, outfile)
-    upload_file_to_s3(CONFIG_JSON, 'inference-cost-tracing', "config")
-    print(f"Updated {config} with Lambda Role ARN.")
+        json.dump(_config, outfile)
+    upload_file_to_s3(CONFIG_JSON, bucket_name, "config")
+    print(f"Updated {_config} with Lambda Role ARN.")
 
 
-def main():
+def main(s3_bucket_name):
     role_name = "LambdaCostInferenceInvocationRole"
     role_arn = create_iam_role(role_name)
     config_ = json.loads(get_s3_file_content(s3_bucket_name, s3_config_file))
-    update_json_with_arn(role_arn, config_)
+    update_json_with_arn(role_arn, config_, s3_bucket_name)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

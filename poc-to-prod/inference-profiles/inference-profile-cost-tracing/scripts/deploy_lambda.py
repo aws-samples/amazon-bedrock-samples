@@ -4,13 +4,13 @@ import io
 import json
 import os
 from scripts.utils import get_s3_file_content, deploy_layer
-from scripts import s3_bucket_name, s3_config_file
+from scripts import s3_config_file
 
 
 ROOT_PATH = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 LAMBDA_PATH = os.path.join(ROOT_PATH, "lambda_function")
 
-config = json.loads(get_s3_file_content(s3_bucket_name, s3_config_file))
+
 
 
 def package_lambda_function(lambda_directory):
@@ -26,7 +26,8 @@ def package_lambda_function(lambda_directory):
     return zip_buffer.read()
 
 
-def main():
+def main(s3_bucket_name):
+    config = json.loads(get_s3_file_content(s3_bucket_name, s3_config_file))
     print("####################SUBPROCESS: DEPLOY LAMBDA LAYER####################")
     _, lambda_arn= deploy_layer(config['aws_region'])
 
