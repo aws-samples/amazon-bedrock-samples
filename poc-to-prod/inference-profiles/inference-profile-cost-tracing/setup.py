@@ -3,7 +3,6 @@ import json
 from scripts import utils
 from scripts import create_iam_role, create_interence_profiles, setup_cloudwatch_sns, deploy_lambda, setup_api_gateway
 
-os.environ['AWS_PROFILE'] = 'cost-tracing'
 
 def create_directory(directory_path):
     """
