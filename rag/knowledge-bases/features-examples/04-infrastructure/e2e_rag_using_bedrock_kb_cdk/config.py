@@ -84,12 +84,12 @@ class KbConfig:
     MAX_TOKENS = 512 # TODO: Change this value accordingly if you choose "FIXED_SIZE" chunk strategy
     OVERLAP_PERCENTAGE = 20 # TODO: Change this value accordingly
     VECTOR_STORE_TYPE = "OSS" # TODO: Change this value to either "OSS" or "Aurora" based on your vector store preference. 
-    MULTI_MODAL= True # TODO: Change this value to True if you need multi-modal RAG,
+    MULTI_MODAL= False # TODO: Change this value to True if you need multi-modal RAG,
     PARSING_STRATEGY = "BEDROCK_FOUNDATION_MODEL" # TODO: Change this value to 'BEDROCK_FOUNDATION_MODEL' for FM parser, or  BEDROCK_DATA_AUTOMATION for BDA Parser
     
 class DsConfig:
     S3_BUCKET_NAME = "<<s3-bucket-name>>" # TODO: Change this to the S3 bucket where your data is stored
-    MM_STORAGE_S3 = "<<mm-storage-s3-bucket-name>>" # TODO: Change this to the S3 bucket as your multimodal storage destination
+    MM_STORAGE_S3 = "<<mm-storage-s3-bucket-name>>" if KbConfig.MULTI_MODAL else S3_BUCKET_NAME # TODO: Change this to the S3 bucket as your multimodal storage destination
 
 
 class OpenSearchServerlessConfig:

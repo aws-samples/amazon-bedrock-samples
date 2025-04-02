@@ -89,19 +89,7 @@ class KbRoleStack(Stack):
                       ),
                   ]
               ),
-            #   "interimS3Policy": iam.PolicyDocument(
-            #       statements=[
-            #           iam.PolicyStatement(
-            #               sid="S3BucketStatement",
-            #               effect=iam.Effect.ALLOW,
-            #               actions=["s3:GetObject",
-            #                         "s3:ListBucket",
-            #                         "s3:PutObject",
-            #                         "s3:DeleteObject"],
-            #               resources=[f"arn:{partition}:s3:::{interim_bucket_name}", f"arn:{partition}:s3:::{interim_bucket_name}/*"],
-            #           )
-            #       ]
-            #   ),
+            
               "BDAPolicy": iam.PolicyDocument(
                   statements=[
                       iam.PolicyStatement(
@@ -115,10 +103,10 @@ class KbRoleStack(Stack):
                           effect=iam.Effect.ALLOW,
                           actions=["bedrock:InvokeDataAutomationAsync"],
                           resources=[f"arn:{partition}:bedrock:{region}:aws:data-automation-project/public-rag-default",
-                                     f"arn:{partition}:bedrock:us-east-1:017444429555:data-automation-profile/us.data-automation-v1",
-                                     f"arn:{partition}:bedrock:us-east-2:017444429555:data-automation-profile/us.data-automation-v1",
-                                     f"arn:{partition}:bedrock:us-west-1:017444429555:data-automation-profile/us.data-automation-v1",
-                                     f"arn:{partition}:bedrock:us-west-2:017444429555:data-automation-profile/us.data-automation-v1"]
+                                     f"arn:{partition}:bedrock:us-east-1:{account_id}:data-automation-profile/us.data-automation-v1",
+                                     f"arn:{partition}:bedrock:us-east-2:{account_id}:data-automation-profile/us.data-automation-v1",
+                                     f"arn:{partition}:bedrock:us-west-1:{account_id}:data-automation-profile/us.data-automation-v1",
+                                     f"arn:{partition}:bedrock:us-west-2:{account_id}:data-automation-profile/us.data-automation-v1"]
                       ),
                   ]
               ),
