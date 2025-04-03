@@ -50,7 +50,7 @@ with open(CONFIG_JSON, "w") as outfile:
     json.dump(config_json, outfile)
 
 upload_to_s3.upload_file_to_s3(CONFIG_JSON, s3_bucket_name, 'config')
-
+upload_to_s3.upload_file_to_s3(MODELS_JSON, s3_bucket_name, 'config')
 
 print("######################################"
       "###########CREATE IAM ROLES###########"
