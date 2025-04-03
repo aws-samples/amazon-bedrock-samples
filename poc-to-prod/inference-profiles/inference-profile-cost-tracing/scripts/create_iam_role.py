@@ -2,10 +2,9 @@ import boto3
 import json
 import botocore.exceptions
 import os
-from scripts.utils import get_s3_file_content
+from scripts.utils import get_s3_file_content, ensure_api_gateway_permissions
 from scripts.upload_to_s3 import upload_file_to_s3
 from scripts import s3_config_file
-
 
 
 # Initialize the IAM client
@@ -82,6 +81,7 @@ def update_json_with_arn(role_arn, _config, bucket_name):
 
 
 def main(s3_bucket_name):
+    ensure_api_gateway_permissions()
     role_name = "LambdaCostInferenceInvocationRole"
     role_arn = create_iam_role(role_name)
     config_ = json.loads(get_s3_file_content(s3_bucket_name, s3_config_file))

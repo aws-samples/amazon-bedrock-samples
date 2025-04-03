@@ -1,6 +1,7 @@
 import boto3
 import os
 import json
+import time
 from scripts.utils import get_s3_file_content
 from scripts import s3_config_file
 from scripts.upload_to_s3 import upload_file_to_s3
@@ -10,6 +11,7 @@ CONFIG_PATH = os.path.join(ROOT_PATH, "config")
 CONFIG_JSON = os.path.join(CONFIG_PATH, "config.json")
 
 def main(s3_bucket_name):
+
     # Load configuration
     config = json.loads(get_s3_file_content(s3_bucket_name, s3_config_file))
 
@@ -121,5 +123,3 @@ def main(s3_bucket_name):
     print(f'API ID: {api_id}')
     print('To access this API, you must connect through the VPC Endpoint.')
 
-# if __name__ == "__main__":
-#     main()

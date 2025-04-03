@@ -51,18 +51,6 @@ with open(CONFIG_JSON, "w") as outfile:
 
 upload_to_s3.upload_file_to_s3(CONFIG_JSON, s3_bucket_name, 'config')
 
-# config_json = json.loads(utils.get_s3_file_content(s3_bucket_name, s3_config_file))
-# models_json = json.loads(utils.get_s3_file_content(s3_bucket_name, s3_models_file))
-#
-# CONFIG_JSON = os.path.join(CONFIG_PATH, "config.json")
-# MODELS_JSON = os.path.join(CONFIG_PATH, "models.json")
-#
-# with open(CONFIG_JSON, "w") as outfile:
-#     json.dump(config_json, outfile)
-#
-# with open(MODELS_JSON, "w") as outfile:
-#     json.dump(models_json, outfile)
-
 
 print("######################################"
       "###########CREATE IAM ROLES###########"
