@@ -55,9 +55,6 @@ def find_latest_inference_cost_tracing_bucket():
         )
 
         latest_bucket = sorted_buckets[0]['name']
-        print(f"Found {len(matching_buckets)} matching buckets. Latest is: {latest_bucket} "
-              f"(created {sorted_buckets[0]['creation_date'].strftime('%Y-%m-%d %H:%M:%S')})")
-
         return latest_bucket
 
     except Exception as e:
@@ -144,7 +141,7 @@ def lambda_handler(event, context):
         else:
             inference_profile_id = profile_lookup(tags_for_lookup)
 
-    bucket_name = 'inference-cost-tracing'
+    bucket_name = find_latest_inference_cost_tracing_bucket()
     cost_file = 'config/models.json'
     cost = get_s3_file_content(bucket_name, cost_file)
     message = event.get('body', [])  # extract the input data from the request body
