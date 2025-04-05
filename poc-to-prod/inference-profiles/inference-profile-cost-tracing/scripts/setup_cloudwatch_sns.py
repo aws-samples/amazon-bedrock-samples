@@ -4,9 +4,8 @@ import os
 from scripts.utils import get_s3_file_content
 
 
-def main():
+def main(bucket_name):
     # Load configuration
-    bucket_name = 'inference-cost-tracing'
     config_file = 'config/config.json'
 
     config_file = get_s3_file_content(bucket_name, config_file)
@@ -497,6 +496,6 @@ def main():
         )
         print('Requests per minute alarm created/updated.')
 
-
-if __name__ == '__main__':
-    main()
+#
+# if __name__ == '__main__':
+#     main()

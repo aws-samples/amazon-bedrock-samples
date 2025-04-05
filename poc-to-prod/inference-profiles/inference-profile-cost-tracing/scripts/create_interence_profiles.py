@@ -2,14 +2,15 @@ import boto3
 import json
 import os
 from scripts.utils import get_s3_file_content
-from scripts import s3_bucket_name, s3_config_file
+from scripts import s3_config_file
 from scripts.upload_to_s3 import upload_file_to_s3
 
 
 ROOT_PATH = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 CONFIG_PATH = os.path.join(ROOT_PATH, "config")
 CONFIG_JSON = os.path.join(CONFIG_PATH, "config.json")
-config_ = json.loads(get_s3_file_content(s3_bucket_name, s3_config_file))
+# local_config = json.loads(CONFIG_JSON)
+# config_ = json.loads(get_s3_file_content(local_config['s3_bucket_name'], s3_config_file))
 
 def create_inference_profile(
         bedrock_client, inference_profile_name, model_id, description, tags
@@ -32,7 +33,7 @@ def create_inference_profile(
         print(f"Error creating Inference Profile '{inference_profile_name}': {e}")
 
 
-def main():
+def main(s3_bucket_name):
     # Load configuration
     config_file = get_s3_file_content(s3_bucket_name, s3_config_file)
     config = json.loads(config_file)
