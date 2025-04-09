@@ -1,15 +1,17 @@
 import boto3
 import os
 import json
+import time
 from scripts.utils import get_s3_file_content
-from scripts import s3_bucket_name, s3_config_file
+from scripts import s3_config_file
 from scripts.upload_to_s3 import upload_file_to_s3
 
 ROOT_PATH = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 CONFIG_PATH = os.path.join(ROOT_PATH, "config")
 CONFIG_JSON = os.path.join(CONFIG_PATH, "config.json")
 
-def main():
+def main(s3_bucket_name):
+
     # Load configuration
     config = json.loads(get_s3_file_content(s3_bucket_name, s3_config_file))
 
@@ -19,7 +21,7 @@ def main():
     # Create a new private REST API
     api_response = apigateway_client.create_rest_api(
         name=config['api_name'],
-        description='API Gateway for Bedrock invokation through Lambda Function',
+        description='API Gateway for Bedrock invocation through Lambda Function',
         endpointConfiguration={
             'types': ['PRIVATE']
         }
@@ -121,5 +123,3 @@ def main():
     print(f'API ID: {api_id}')
     print('To access this API, you must connect through the VPC Endpoint.')
 
-if __name__ == "__main__":
-    main()

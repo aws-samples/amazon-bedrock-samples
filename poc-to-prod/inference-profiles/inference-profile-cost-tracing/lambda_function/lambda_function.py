@@ -3,6 +3,65 @@ import boto3
 from botocore.exceptions import ClientError
 import os
 
+import boto3
+import re
+from datetime import datetime
+
+
+def find_latest_inference_cost_tracing_bucket():
+    """
+    Searches for S3 buckets that start with 'inference-cost-tracing-' followed by a UUID-like string
+    and returns the most recently created one.
+
+    Returns:
+        str or None: The name of the latest matching bucket, or None if no match is found
+    """
+    # Initialize S3 client
+    s3_client = boto3.client('s3')
+
+    try:
+        # Get all buckets
+        response = s3_client.list_buckets()
+
+        # Define the pattern to match
+        prefix = "inference-cost-tracing-"
+
+        # UUID pattern (roughly)
+        _pattern = r'^inference-cost-tracing'
+
+        matching_buckets = []
+
+        # Check each bucket and store matching ones with their creation dates
+        for bucket in response['Buckets']:
+            bucket_name = bucket['Name']
+            creation_date = bucket['CreationDate']
+
+            # Check if bucket name matches our pattern
+            if bucket_name.startswith(prefix) and re.match(_pattern, bucket_name):
+                matching_buckets.append({
+                    'name': bucket_name,
+                    'creation_date': creation_date
+                })
+
+        if not matching_buckets:
+            print("No matching buckets found")
+            return None
+
+        # Sort buckets by creation date (newest first)
+        sorted_buckets = sorted(
+            matching_buckets,
+            key=lambda x: x['creation_date'],
+            reverse=True
+        )
+
+        latest_bucket = sorted_buckets[0]['name']
+        return latest_bucket
+
+    except Exception as e:
+        print(f"Error searching for bucket: {str(e)}")
+        return None
+
+
 def get_s3_file_content(bucket_name, object_key):
     """
     Retrieve the content of a file from an S3 bucket.
@@ -57,7 +116,7 @@ def has_matching_keys(original_list, comparison_list):
 
 
 def profile_lookup(payload_tags):
-    bucket_name = 'inference-cost-tracing'
+    bucket_name = find_latest_inference_cost_tracing_bucket()
     cost_file = 'config/config.json'
     config = json.loads(get_s3_file_content(bucket_name, cost_file))
     for profile in config['profiles']:
@@ -82,7 +141,7 @@ def lambda_handler(event, context):
         else:
             inference_profile_id = profile_lookup(tags_for_lookup)
 
-    bucket_name = 'inference-cost-tracing'
+    bucket_name = find_latest_inference_cost_tracing_bucket()
     cost_file = 'config/models.json'
     cost = get_s3_file_content(bucket_name, cost_file)
     message = event.get('body', [])  # extract the input data from the request body
