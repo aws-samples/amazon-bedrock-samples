@@ -7,6 +7,110 @@ import boto3
 import re
 from datetime import datetime
 
+# Global variables to store the cached data
+CONFIG_MAPPING = None
+COST_MAPPING = None
+CACHE_FILE = "/tmp/config.json"
+CACHE_TIMESTAMP_FILE = "/tmp/config_timestamp.txt"
+COST_CACHE_FILE = "/tmp/config.json"
+COST_CACHE_TIMESTAMP_FILE = "/tmp/cost_timestamp.txt"
+CACHE_TTL = 3600  # Cache TTL in seconds (1 hour)
+
+def should_refresh_cache(timestamp_file):
+    """
+    Check if the cache needs to be refreshed based on TTL
+    """
+    try:
+        if not os.path.exists(timestamp_file):
+            return True
+            
+        with open(timestamp_file, 'r') as f:
+            timestamp = float(f.read().strip())
+            
+            
+        # Check if cache has expired
+        current_time = datetime.now().timestamp()
+        return (current_time - timestamp) > CACHE_TTL
+            
+    except Exception:
+        return True
+
+def load_config_mapping():
+    """
+    Load cost mapping from cache or S3, updating cache if necessary
+    """
+    global CONFIG_MAPPING
+    
+    
+    # If we have cached data and it's not expired, use it
+    if CONFIG_MAPPING and not should_refresh_cache(CACHE_TIMESTAMP_FILE):
+        return CONFIG_MAPPING
+    
+    try:
+        # If cache exists but needs refresh, or first load
+        bucket_name = find_latest_inference_cost_tracing_bucket()
+        config_file = 'config/config.json'
+        
+        # Get fresh data from S3
+        file_content = get_s3_file_content(bucket_name, config_file)
+        
+        # Save to tmp storage
+        with open(CACHE_FILE, 'w') as f:
+            f.write(file_content)
+            
+        # Update timestamp
+        with open(CACHE_TIMESTAMP_FILE, 'w') as f:
+            f.write(str(datetime.now().timestamp()))
+            
+        CONFIG_MAPPING = json.loads(file_content)
+        return CONFIG_MAPPING
+        
+    except Exception as e:
+        # If there's an error getting from S3, try to load from cache if it exists
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, 'r') as f:
+                CONFIG_MAPPING = json.loads(f.read())
+            return CONFIG_MAPPING
+        raise Exception(f"Failed to load config mapping: {str(e)}")
+
+def load_cost_mapping():
+    """
+    Load cost mapping from cache or S3, updating cache if necessary
+    """
+    global COST_MAPPING
+    
+    
+    # If we have cached data and it's not expired, use it
+    if COST_MAPPING and not should_refresh_cache(COST_CACHE_TIMESTAMP_FILE):
+        return COST_MAPPING
+    
+    try:
+        # If cache exists but needs refresh, or first load
+        bucket_name = find_latest_inference_cost_tracing_bucket()
+        cost_file = 'config/models.json'
+        
+        # Get fresh data from S3
+        file_content = get_s3_file_content(bucket_name, cost_file)
+        
+        # Save to tmp storage
+        with open(COST_CACHE_FILE, 'w') as f:
+            f.write(file_content)
+            
+        # Update timestamp
+        with open(COST_CACHE_TIMESTAMP_FILE, 'w') as f:
+            f.write(str(datetime.now().timestamp()))
+            
+        COST_MAPPING = json.loads(file_content)
+        return COST_MAPPING
+        
+    except Exception as e:
+        # If there's an error getting from S3, try to load from cache if it exists
+        if os.path.exists(COST_CACHE_FILE):
+            with open(COST_CACHE_FILE, 'r') as f:
+                COST_MAPPING = json.loads(f.read())
+            return COST_MAPPING
+        raise Exception(f"Failed to load cost mapping: {str(e)}")
+
 
 def find_latest_inference_cost_tracing_bucket():
     """
@@ -115,10 +219,8 @@ def has_matching_keys(original_list, comparison_list):
     return any(x != y for x, y in pairs)
 
 
-def profile_lookup(payload_tags):
+def profile_lookup(config,payload_tags):
     bucket_name = find_latest_inference_cost_tracing_bucket()
-    cost_file = 'config/config.json'
-    config = json.loads(get_s3_file_content(bucket_name, cost_file))
     for profile in config['profiles']:
         if has_matching_keys(profile['tags'], payload_tags):
             for _id in config['profile_ids']:
@@ -134,16 +236,22 @@ def lambda_handler(event, context):
 
     inference_profile_id = headers.get('inference-profile-id', None)
     region = headers.get('region', None)
+
+    config = load_config_mapping()
+    model_id = config['default_model_id']
+
     if not inference_profile_id:
         tags_for_lookup = headers.get('tags', {})
         if not tags_for_lookup:
             inference_profile_id = None
         else:
-            inference_profile_id = profile_lookup(tags_for_lookup)
+            inference_profile_id = profile_lookup(config, tags_for_lookup)
 
-    bucket_name = find_latest_inference_cost_tracing_bucket()
-    cost_file = 'config/models.json'
-    cost = get_s3_file_content(bucket_name, cost_file)
+    #bucket_name = find_latest_inference_cost_tracing_bucket()
+    #cost_file = 'config/models.json'
+    #cost = get_s3_file_content(bucket_name, cost_file)
+    cost_mapping = load_cost_mapping()
+
     message = event.get('body', [])  # extract the input data from the request body
     if not message:
         raise Exception("No message")
@@ -151,7 +259,7 @@ def lambda_handler(event, context):
     bedrock_client = boto3.client('bedrock', region_name=region)
     inference_client = boto3.client("bedrock-runtime", region_name=region)
     cloudwatch = boto3.client('cloudwatch', region_name=region)
-    cost_mapping = json.loads(cost)
+  
     region_cost_mapping = cost_mapping[region]
     if inference_profile_id:
         # Get model ID from the inference profile tags
@@ -173,6 +281,7 @@ def lambda_handler(event, context):
             model_token_cost = region_cost_mapping['text'].get(model_id_tag, {})
 
             model_id = model_id_tag  # Use the ModelName tag value as model ID
+
             # Invoke the model using invoke_model
             response = inference_client.converse(
                 modelId=model_id,
@@ -339,7 +448,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': error_message})
             }
     else:
-        model_id = event['model_id']
+            
         response = inference_client.converse(
             modelId=model_id,
             messages=message
