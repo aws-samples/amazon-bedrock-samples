@@ -39,18 +39,16 @@ def main(s3_bucket_name):
     config = json.loads(config_file)
 
     bedrock_client = boto3.client('bedrock', region_name=config['aws_region'])
-    model_id = config['model_id']
     profiles = config['profiles']
     profiles_id = []
     for profile in profiles:
         tags = profile['tags']
         # Convert list of dicts to required format
         formatted_tags = [{'key': t['key'], 'value': t['value']} for t in tags]
-
         ip_arn = create_inference_profile(
             bedrock_client,
             inference_profile_name=profile['name'],
-            model_id=model_id,
+            model_id=profile['model_id'],
             description=profile['description'],
             tags=formatted_tags
         )
