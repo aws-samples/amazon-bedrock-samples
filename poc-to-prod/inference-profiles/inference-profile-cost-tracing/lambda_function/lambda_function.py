@@ -35,7 +35,7 @@ def should_refresh_cache(timestamp_file):
     except Exception:
         return True
 
-def load_config_mapping():
+def load_config_mapping(bucket_name):
     """
     Load cost mapping from cache or S3, updating cache if necessary
     """
@@ -48,7 +48,7 @@ def load_config_mapping():
     
     try:
         # If cache exists but needs refresh, or first load
-        bucket_name = find_latest_inference_cost_tracing_bucket()
+        
         config_file = 'config/config.json'
         
         # Get fresh data from S3
@@ -73,7 +73,7 @@ def load_config_mapping():
             return CONFIG_MAPPING
         raise Exception(f"Failed to load config mapping: {str(e)}")
 
-def load_cost_mapping():
+def load_cost_mapping(bucket_name):
     """
     Load cost mapping from cache or S3, updating cache if necessary
     """
@@ -86,7 +86,7 @@ def load_cost_mapping():
     
     try:
         # If cache exists but needs refresh, or first load
-        bucket_name = find_latest_inference_cost_tracing_bucket()
+        
         cost_file = 'config/models.json'
         
         # Get fresh data from S3
@@ -219,8 +219,8 @@ def has_matching_keys(original_list, comparison_list):
     return any(x != y for x, y in pairs)
 
 
-def profile_lookup(config,payload_tags):
-    bucket_name = find_latest_inference_cost_tracing_bucket()
+def profile_lookup(bucket_name, config, payload_tags):
+    
     for profile in config['profiles']:
         if has_matching_keys(profile['tags'], payload_tags):
             for _id in config['profile_ids']:
@@ -234,10 +234,15 @@ def lambda_handler(event, context):
     if not headers:
         raise Exception("No message")
 
+    s3_bucket_name = headers.get('s3_bucket_name', None)
+
+    if not s3_bucket_name:
+        raise Exception("No S3 bucket passed in header")
+
     inference_profile_id = headers.get('inference-profile-id', None)
     region = headers.get('region', None)
 
-    config = load_config_mapping()
+    config = load_config_mapping(s3_bucket_name)
     model_id = config['default_model_id']
 
     if not inference_profile_id:
@@ -245,9 +250,9 @@ def lambda_handler(event, context):
         if not tags_for_lookup:
             inference_profile_id = None
         else:
-            inference_profile_id = profile_lookup(config, tags_for_lookup)
+            inference_profile_id = profile_lookup(s3_bucket_name, config, tags_for_lookup)
 
-    cost_mapping = load_cost_mapping()
+    cost_mapping = load_cost_mapping(s3_bucket_name)
 
     message = event.get('body', [])  # extract the input data from the request body
     if not message:
