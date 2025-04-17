@@ -31,12 +31,12 @@ CONFIG_PATH = os.path.join(ROOT_PATH, "config")
 create_directory(CONFIG_PATH)
 
 uuid_tag = str(uuid.uuid4())
-
-s3_bucket_name = f'inference-cost-tracing-{uuid_tag}'
+#IF YOU ARE RUNNING THIS ON A WINDOWS MACHINE ADDRESS THE FOLLOWING COMMENTS (LINE 35 & LINE 39). IF YOU ARE ON A MAC PLEASE IGNORE THIS.
+s3_bucket_name = f'inference-cost-tracing-{uuid_tag}' #HARDCODE YOUR OWN PRE-CREATED S3 BUCKET NAME INTO THIS LINE
 s3_config_file = 'config/config.json'
 s3_models_file = 'config/models.json'
 
-upload_to_s3.create_bucket(s3_bucket_name)
+upload_to_s3.create_bucket(s3_bucket_name) #IF YOU HAVE ENTERED YOUR OWN PRE-CREATED BUCKET NAME INTO LINE 35, COMMENT OUT THIS LINE
 
 CONFIG_JSON = os.path.join(CONFIG_PATH, "config.json")
 MODELS_JSON = os.path.join(CONFIG_PATH, "models.json")
