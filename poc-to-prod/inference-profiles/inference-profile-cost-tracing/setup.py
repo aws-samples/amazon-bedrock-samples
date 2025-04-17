@@ -1,6 +1,5 @@
 import os
 import json
-import uuid
 from scripts import utils
 from scripts import create_iam_role, create_interence_profiles, setup_cloudwatch_sns, deploy_lambda, setup_api_gateway, upload_to_s3
 
@@ -30,13 +29,10 @@ ROOT_PATH = os.path.dirname(__file__)
 CONFIG_PATH = os.path.join(ROOT_PATH, "config")
 create_directory(CONFIG_PATH)
 
-uuid_tag = str(uuid.uuid4())
-
-s3_bucket_name = f'inference-cost-tracing-{uuid_tag}'
 s3_config_file = 'config/config.json'
 s3_models_file = 'config/models.json'
 
-upload_to_s3.create_bucket(s3_bucket_name)
+
 
 CONFIG_JSON = os.path.join(CONFIG_PATH, "config.json")
 MODELS_JSON = os.path.join(CONFIG_PATH, "models.json")
@@ -44,7 +40,7 @@ MODELS_JSON = os.path.join(CONFIG_PATH, "models.json")
 with open(CONFIG_JSON) as configfile:
     config_json = json.load(configfile)
 
-config_json['s3_bucket_name'] = s3_bucket_name
+s3_bucket_name = config_json['s3_bucket_name'] 
 
 with open(CONFIG_JSON, "w") as outfile:
     json.dump(config_json, outfile)
