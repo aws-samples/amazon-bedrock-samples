@@ -18,7 +18,6 @@ def create_inference_profile(
     try:
         # Construct the model source ARN
         region = bedrock_client.meta.region_name
-        print(model_id)
         model_arn = f"arn:aws:bedrock:{region}::foundation-model/{model_id}"
 
         response = bedrock_client.create_inference_profile(
@@ -46,7 +45,6 @@ def main(s3_bucket_name):
         tags = profile['tags']
         # Convert list of dicts to required format
         formatted_tags = [{'key': t['key'], 'value': t['value']} for t in tags]
-        print(profile)
         ip_arn = create_inference_profile(
             bedrock_client,
             inference_profile_name=profile['name'],
