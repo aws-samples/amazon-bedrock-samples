@@ -9,18 +9,20 @@ The project operates based on a configuration file (`config.json`) that defines 
 When invoking an LLM through the deployed API Gateway, the project automatically associates the request with the appropriate Inference Profile based on the provided tags. It then publishes metrics to CloudWatch, including token counts and costs, enabling cost tracking and monitoring at a granular level.
 
 ## Getting Started
+Prerequisite: You have a local machine/IDE with access to a terminal. The steps outlined will refer to your IDE but this can be done in a wide variety of environments.
 
-1. Clone the repository to your local machine.
-2. Install the required dependencies (e.g., AWS CLI, Python libraries).
-3. Configure your AWS credentials and region.
-4. Modify the `config.json` file to suit your requirements (e.g., Inference Profile tags, cost thresholds, SNS email).
-5. Run the `setup.py` script to create and deploy all necessary AWS resources.
-
-```
-python setup.py
-```
-
-6. After the setup is complete, you can invoke the LLM through the deployed API Gateway, passing the required headers (e.g., `inference-profile-id`, `region`, `tags`).
+1. Open a terminal in your IDE (the commands in quotes in the following steps can be typed/copy&pasted into the terminal (without the quotes)).
+2. Create python virtual environment: "python -m venv .venv".
+3. Activate environment on Windows: ".venv\Scripts\activate" || Activate environment on Mac: "source .venv/bin/activate".
+4. Clone Repo: "git clone https://github.com/aws-samples/amazon-bedrock-samples.git".
+5. Move to the correct directory: "cd amazon-bedrock-samples/poc-to-prod/inference-profiles/inference-profile-cost-tracing".
+6. Install dependencies: "pip install -r requirements.txt".
+7. Configure your AWS credentials: "aws configure" (this will ask you for your Access Key ID, Secret Access Key ID, AWS Region, and Default output format (can be kept as "None"))
+9. Modify the `config.json` file to suit your requirements (Inference Profile tags, cost thresholds, SNS email, Lambda Role).
+10. (THIS STEP IS REQUIRED IF YOU ARE ON A WINDOWS MACHINE. CAN BE IGNORED OTHERWISE). Open "utils.py" in the "scripts" folder, and follow the comments on line 35 & 39 (configuring an S3 bucket).
+11. (THIS STEP IS REQUIRED IF YOU ARE ON A WINDOWS MACHINE. CAN BE IGNORED OTHERWISE). In the "config" folder you will find "config.json" & "models.json" upload these to the S3 bucket you have specified in the previous step (step 10).
+12. Run the `setup.py` script to create and deploy all necessary AWS resources: "python setup.py".
+13. After the setup is complete, you can invoke the LLM through the deployed API Gateway, passing the required headers (e.g., `inference-profile-id`, `region`, `tags`).
 
 ## Monitoring and Alerting
 

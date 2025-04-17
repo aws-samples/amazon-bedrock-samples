@@ -28,23 +28,29 @@ def deploy_layer(region):
         "--target", python_dir
     ], check=True)
 
-    # 3. Zip up the python folder
+    # 3. Zip up the python folder 
     print(f"Zipping {python_dir} into {layer_zip} ...")
     if os.path.exists(layer_zip):
         os.remove(layer_zip)  # remove old zip if exists
 
-    # We zip *everything* inside `lambda-layer` (i.e., the `python` folder).
-    subprocess.run([
-        "zip", "-r", layer_zip,
-        os.path.basename(python_dir)
-    ], cwd=layer_dir, check=True)
+    # Use Python's zipfile module
+    import zipfile
+    with zipfile.ZipFile(layer_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        # Walk through all files in the python directory
+        for root, dirs, files in os.walk(python_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                # Calculate the path within the zip file (relative to python_dir)
+                arcname = os.path.relpath(file_path, layer_dir)
+                print(f"Adding {file_path} as {arcname}")
+                zipf.write(file_path, arcname)
     print(f"{layer_zip} created successfully.")
 
     # 4. Publish the Lambda layer using Boto3
     lambda_client = boto3.client("lambda", region_name=region)
 
     # Read the zip file contents
-    with open(os.path.join(layer_dir, layer_zip), "rb") as f:
+    with open(layer_zip, "rb") as f:
         zip_content = f.read()
 
     print("Publishing new Lambda layer version...")
@@ -59,7 +65,6 @@ def deploy_layer(region):
     layer_arn = response["LayerVersionArn"]
     print(f"Successfully published layer. ARN: {layer_arn}")
     return layer_name, layer_arn
-
 
 
 def get_s3_file_content(bucket_name, object_key):
