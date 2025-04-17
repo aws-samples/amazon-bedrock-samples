@@ -247,9 +247,6 @@ def lambda_handler(event, context):
         else:
             inference_profile_id = profile_lookup(config, tags_for_lookup)
 
-    #bucket_name = find_latest_inference_cost_tracing_bucket()
-    #cost_file = 'config/models.json'
-    #cost = get_s3_file_content(bucket_name, cost_file)
     cost_mapping = load_cost_mapping()
 
     message = event.get('body', [])  # extract the input data from the request body
