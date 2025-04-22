@@ -3,7 +3,7 @@ import uuid
 import boto3
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('restaurant_assistant')
+table = dynamodb.Table('restaurant_bookings')
 
 def get_named_parameter(event, name):
     """
