@@ -17,6 +17,7 @@ import { PublicVpcLoadBalancer } from "./load-balancer";
 import { OLTPDatabase } from "./oltp";
 import { LangfuseWebService } from "./web";
 import { LangfuseWorkerService } from "./worker";
+import { CognitoAuth } from "./cognito";
 
 export interface ILangfuseDeploymentProps {
   /**
@@ -73,6 +74,8 @@ export interface ILangfuseDeploymentProps {
    * Extra environment variables to configure on Langfuse services' containers
    */
   langfuseEnvironment?: { [key: string]: string };
+
+  // langfuseEnvironment: { [key: 'AUTH_DISABLE_SIGNUP']: 'true' };
   /**
    * Name to use for the private DNS namespace created for service discovery
    *
@@ -122,6 +125,14 @@ export interface ILangfuseDeploymentProps {
    * @default 4096
    */
   workerMemoryMiB?: number;
+  /**
+   * In case of Cognito authentication
+   */
+  useCognito?: boolean
+  existingUserPoolId?: string
+  createDomain?: boolean;
+  userPoolDomainPrefix?: string;
+
 }
 
 /**
@@ -222,6 +233,8 @@ export class LangfuseDeployment extends Construct {
       },
     ]);
 
+    const cognitoAuth = new CognitoAuth(this, 'CognitoAuth', {loadBalancerUrl: this.loadBalancer.url})
+
     const oltpDb = new OLTPDatabase(this, "OLTP", {
       vpc: props.vpc,
       instanceType: props.dbNodeType,
@@ -269,6 +282,7 @@ export class LangfuseDeployment extends Construct {
       ],
       true,
     );
+
     const nextAuthSecret = new secretsmanager.Secret(this, "NextAuthSecret", {
       description:
         "Langfuse NEXTAUTH_SECRET (Used to validate login session cookies)",
@@ -351,6 +365,7 @@ export class LangfuseDeployment extends Construct {
       vpc: props.vpc,
       s3BatchExportPrefix: "langfuse-exports/",
       tags: props.tags,
+      authCognitoSecret: cognitoAuth.cognitoSecret,
     });
   }
 
