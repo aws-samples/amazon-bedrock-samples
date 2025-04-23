@@ -128,7 +128,7 @@ This script will:
 
 ## 📊 CloudWatch Dashboard
 
-![Dashboard Preview](inference-profile-cost-tracing/assets/gif-dashboard.gif)
+![Dashboard Preview](https://github.com/aws-samples/amazon-bedrock-samples/poc-to-prod/inference-profiles/inference-profile-cost-tracing/assets/gif-dashboard.gif)
 
 An example of the CloudWatch dashboard displaying inference usage and cost metrics.
 
