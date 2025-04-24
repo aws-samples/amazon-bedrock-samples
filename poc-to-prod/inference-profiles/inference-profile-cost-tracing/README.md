@@ -1,35 +1,160 @@
-# AWS Inference Profile Cost Tracing
+# Amazon Bedrock Inference Cost Monitoring & Allocation
 
-This project automates the process of creating and setting up AWS Inference Profiles with cost tracing and monitoring capabilities. It leverages tags and custom CloudWatch dashboards to allow customers to monitor their usage and costs associated with invoking large language models (LLMs) from Anthropic's Bedrock service.
+## 📌 Overview
 
-## Project Overview
+This project provides a structured approach to monitor and allocate inference costs for applications utilizing Amazon Bedrock. By leveraging Application Inference Profiles (AIPs), AWS tagging, and CloudWatch dashboards, it enables detailed cost tracking across various dimensions such as applications, tenants, and environments.
 
-The project operates based on a configuration file (`config.json`) that defines the AWS resources to be created, such as Inference Profiles, IAM roles, CloudWatch dashboards, and SNS topics for alerts. Each Inference Profile contains a set of tags that represent attributes like the customer account, application ID, model name, and environment.
+## 🧰 Features
 
-When invoking an LLM through the deployed API Gateway, the project automatically associates the request with the appropriate Inference Profile based on the provided tags. It then publishes metrics to CloudWatch, including token counts and costs, enabling cost tracking and monitoring at a granular level.
+- **Application Inference Profiles (AIPs)**: Create AIPs for each combination of application, tenant, and environment to isolate and monitor usage.
+- **AWS Tagging Integration**: Utilize AWS tags to associate metadata with each AIP, facilitating granular cost allocation.
+- **Automated Setup**: Deploy necessary AWS resources including Lambda functions, API Gateway endpoints, CloudWatch dashboards, and SNS alerts using a setup script.
+- **Real-Time Monitoring**: Visualize inference usage and costs through a Streamlit dashboard integrated with CloudWatch metrics.
 
-## Getting Started
+## ⚙️ Prerequisites
 
-1. Clone the repository to your local machine.
-2. Install the required dependencies (e.g., AWS CLI, Python libraries).
-3. Configure your AWS credentials and region.
-4. Modify the `config.json` file to suit your requirements (e.g., Inference Profile tags, cost thresholds, SNS email).
-5. Run the `setup.py` script to create and deploy all necessary AWS resources.
+Before setting up the project, ensure the following:
+- **AWS Account**: An active AWS account with permissions to create and manage resources such as Lambda functions, API Gateway, CloudWatch, and SNS.
+- **Python Environment**: Python 3.12 or higher installed on your local machine.
+- **Virtual Environment Setup**: It's recommended to use a virtual environment to manage project dependencies.
 
+## 📝 Configuration
+
+Prior to executing the setup script, update the configuration files to reflect your specific use case.
+
+1. **Update config/config.json**: Define your applications, profiles, environments, and associated tags.
+   
+   Example structure:
+
+```json
+{
+  "profiles": [
+    {
+      "name": "CustomerOneWebSearchBot", 
+      "description": "For Customer-1 using Websearch Bot",
+      "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+      "tags": [
+                {
+                    "key": "CreatedBy",
+                    "value": "Dev-Account"
+                },
+                {
+                    "key": "ApplicationID",
+                    "value": "Web-Search-Bot"
+                },
+                {
+                    "key": "Environment",
+                    "value": "Dev"
+                }
+         ...
+      ]
+    },
+    {
+      "name": "CustomerOneCodeAssistant",
+      "description": "For Customer-1 using Coding Assistant Bot",
+      "model_id": "amazon.nova-pro-v1:0",
+      "tags": [
+                {
+                    "key": "CreatedBy",
+                    "value": "Prod-Account"
+                },
+                {
+                    "key": "ApplicationID",
+                    "value": "Coding-Assistant-Bot"
+                },
+                {
+                    "key": "Environment",
+                    "value": "Prod"
+                }
+         ...
+      ]
+    }
+  ]
+}
 ```
+
+2. **Update config/models.json**: Specify the pricing details for each model, including input and output token costs.
+   
+   Example structure:
+
+```json
+{
+  "anthropic.claude-3-haiku-20240307-v1:0": {
+    "input_cost": 0.00163,
+    "output_cost": 0.00551
+  },
+  "amazon.nova-pro-v1:0": {
+    "input_cost": 0.00075,
+    "output_cost": 0.001
+  }
+}
+```
+
+## 🚀 Setup Instructions
+
+Follow these steps to set up the project:
+
+1. **Clone the Repository**:
+
+```bash
+git clone https://github.com/aws-samples/amazon-bedrock-samples.git
+cd amazon-bedrock-samples/poc-to-prod/inference-profiles/inference-profile-cost-tracing
+```
+
+2. **Set Up Virtual Environment**:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows, use 'venv\Scripts\activate'
+```
+
+3. **Install Dependencies**:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. **Execute Setup Script including User Roles**:
+
+```bash
+python setup.py --create-user-roles
+```
+5. **Execute Setup Script excluding User Roles**:
+
+```bash
 python setup.py
 ```
 
-6. After the setup is complete, you can invoke the LLM through the deployed API Gateway, passing the required headers (e.g., `inference-profile-id`, `region`, `tags`).
+This script will:
+- Create Application Inference Profiles based on your configuration.
+- Deploy Lambda functions responsible for capturing metadate.
+- Deploy API Gateway endpoints (you will use this to run your inferences).
+- Set up CloudWatch dashboards and SNS alerts for monitoring.
 
-## Monitoring and Alerting
 
-The project creates a custom CloudWatch dashboard named `BedrockInvocationDashboard` to visualize the metrics related to LLM invocations and costs. Additionally, it sets up an SNS topic (`BedrockInvocationAlarms`) to receive email alerts based on configurable thresholds for cost, token usage, and request counts.
+**Clean all created Assets**:
 
-## Customization
+```bash
+python unsetup.py
+```
 
-You can easily extend or modify the project to suit your specific needs. For example, you could add support for additional LLM providers, customize the dashboard layout, or integrate with other monitoring and alerting systems.
+## 📊 CloudWatch Dashboard
 
-## Contributing
+![Dashboard Preview](assets/gif-dashboard.gif)
 
-Contributions to this project are welcome. If you encounter any issues or have ideas for improvements, please open an issue or submit a pull request.
+An example of the CloudWatch dashboard displaying inference usage and cost metrics.
+
+## 🎥 Video Tutorial
+
+For a comprehensive walkthrough of the solution, watch the following video:
+
+[![Video Tutorial](https://img.youtube.com/vi/OTbVOuAmsZk/0.jpg)](https://www.youtube.com/watch?v=OTbVOuAmsZk&t=686s)
+
+----
+## 🧾 License
+
+This project is licensed under the MIT License.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
