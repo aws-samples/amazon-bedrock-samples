@@ -140,8 +140,7 @@ python unsetup.py
 
 ## 📊 CloudWatch Dashboard
 
-![Dashboard Preview](assets/gif-dashboard.gif)
-<img src="./assets/gif-dashboard.gif"/>
+![Dashboard Preview](assets/gif-dashboard.png)
 An example of the CloudWatch dashboard displaying inference usage and cost metrics.
 
 ## 🎥 Video Tutorial
