@@ -599,20 +599,34 @@ class AgentsForAmazonBedrock:
         
         _role_arn = self._create_agent_role(agent_name, inference_profile, foundational_model, kb_arns)
 
-        time.sleep(10)
+        max_retries = 5
+        base_delay = 10
         
-        response = self._bedrock_agent_client.create_agent(
-                        agentName=agent_name,
-                        agentResourceRoleArn=_role_arn,
-                        description=agent_description.replace('\n', ''),
-                        idleSessionTTLInSeconds=1800,
-                        foundationModel=inference_profile,
-                        instruction=agent_instructions,
-                    )
-        time.sleep(5)
+        for attempt in range(max_retries):
+            try:
+                time.sleep(base_delay * (2 ** attempt))  # Exponential backoff
+                
+                response = self._bedrock_agent_client.create_agent(
+                    agentName=agent_name,
+                    agentResourceRoleArn=_role_arn,
+                    description=agent_description.replace('\n', ''),
+                    idleSessionTTLInSeconds=1800,
+                    foundationModel=inference_profile,
+                    instruction=agent_instructions,
+                )
+                time.sleep(5)
+                return response['agent']['agentId']
+                
+            except self._bedrock_agent_client.exceptions.AccessDeniedException as e:
+                if attempt == max_retries - 1:  # Last attempt
+                    raise Exception(f"Failed to create agent after {max_retries} attempts: {str(e)}")
+                print(f"Attempt {attempt + 1} failed with AccessDeniedException. Retrying...")
+                
+            except Exception as e:
+                # For other exceptions, fail immediately
+                raise Exception(f"Unexpected error creating agent: {str(e)}")
+            
         return response['agent']['agentId']
-
-
     
     def add_action_group_with_lambda(self,
                                      agent_name: str,
