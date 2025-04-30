@@ -8,7 +8,7 @@ from botocore.session import Session
 DEFAULT_GUARDRAIL_NAME = "<DEFAULT_GUARDRAIL_NAME>"
 AR_POLICY = "<AR_POLICY_ID>"
 AR_POLICY_VERSION = "<AR_POLICY_VERSION>" # e.g "1"
-REGION = "us-west-2" #Region - AR checks is currently available in us-west-2 for allow-listed accounts
+REGION = "us-west-2" #or any region where AR is allow-listed accounts
 
 # Model ID mapping
 MODEL_MAPPING = {
