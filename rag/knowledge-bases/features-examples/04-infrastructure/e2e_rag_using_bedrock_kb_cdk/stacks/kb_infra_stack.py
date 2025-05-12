@@ -20,7 +20,7 @@ from aws_cdk.aws_bedrock import (
   CfnKnowledgeBase,
   CfnDataSource
 )
-
+import json
 from config import EnvSettings, KbConfig, DsConfig, OpenSearchServerlessConfig
 
 region = EnvSettings.ACCOUNT_REGION
@@ -31,8 +31,10 @@ vector_store_type = KbConfig.VECTOR_STORE_TYPE
 collectionName = OpenSearchServerlessConfig.COLLECTION_NAME
 indexName = OpenSearchServerlessConfig.INDEX_NAME
 
-import json 
 embeddingModelId = KbConfig.EMBEDDING_MODEL_ID
+multi_modal = bool(KbConfig.MULTI_MODAL and KbConfig.PARSING_STRATEGY)
+parsing_strategy = KbConfig.PARSING_STRATEGY
+intermediate_bucket_name = DsConfig.MM_STORAGE_S3
 
 max_tokens = KbConfig.MAX_TOKENS
 overlap_percentage = KbConfig.OVERLAP_PERCENTAGE
@@ -47,7 +49,9 @@ class KbInfraStack(Stack):
 
         # Construct ARNs using the correct partition
         self.embedding_model_arn = f"arn:{partition}:bedrock:{region}::foundation-model/{embeddingModelId}"
+        self.parser_model_arn = f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
         self.s3_bucket_arn = f"arn:{partition}:s3:::{DsConfig.S3_BUCKET_NAME}"
+        self.intermediate_bucket_arn = f"arn:{partition}:s3:::{DsConfig.MM_STORAGE_S3}"
 
         self.kbRoleArn = ssm.StringParameter.from_string_parameter_attributes(
             self, 
@@ -88,18 +92,31 @@ class KbInfraStack(Stack):
         self.data_source = self.create_data_source(self.knowledge_base)
     
     def create_knowledge_base_oss(self) -> CfnKnowledgeBase:
+        print("Creating knowledge base with OSS vector store....")
+        supplemental_data_storage_configuration = []
+
+        if multi_modal:
+            print("Creating Multi modal suplementalstorage configuration...")
+            supplemental_data_storage_configuration=CfnKnowledgeBase.SupplementalDataStorageConfigurationProperty(
+                    supplemental_data_storage_locations=[CfnKnowledgeBase.SupplementalDataStorageLocationProperty(
+                        supplemental_data_storage_location_type="S3",
+                        s3_location=CfnKnowledgeBase.S3LocationProperty
+                        (uri=f"s3://{intermediate_bucket_name}")
+                    )]
+                )
         return CfnKnowledgeBase(
             self, 
             'e2eRagKB',
-            knowledge_base_configuration=CfnKnowledgeBase.KnowledgeBaseConfigurationProperty(
+            knowledge_base_configuration=bedrock.CfnKnowledgeBase.KnowledgeBaseConfigurationProperty(
                 type="VECTOR",
                 vector_knowledge_base_configuration=CfnKnowledgeBase.VectorKnowledgeBaseConfigurationProperty(
-                    embedding_model_arn=self.embedding_model_arn
+                    embedding_model_arn=self.embedding_model_arn,
+                    supplemental_data_storage_configuration=supplemental_data_storage_configuration
                 )
             ),
             name='docKnowledgeBaseOSS',
             role_arn=self.kbRoleArn,
-            description='e2eRAG Knowledge base with OSS',
+            description='e2e multi-modal RAG Knowledge base with OSS',
             storage_configuration=CfnKnowledgeBase.StorageConfigurationProperty(
                 type="OPENSEARCH_SERVERLESS",
                 opensearch_serverless_configuration=bedrock.CfnKnowledgeBase.OpenSearchServerlessConfigurationProperty(
@@ -113,15 +130,29 @@ class KbInfraStack(Stack):
                 )
             )
         )
+
     
     def create_knowledge_base_aurora(self) -> CfnKnowledgeBase:
+        print("Creating knowledge base with Aurora vector store....")
+        supplemental_data_storage_configuration = []
+
+        if multi_modal:
+            print("Creating Multi modal suplementalstorage configuration...")
+            supplemental_data_storage_configuration=CfnKnowledgeBase.SupplementalDataStorageConfigurationProperty(
+                    supplemental_data_storage_locations=[CfnKnowledgeBase.SupplementalDataStorageLocationProperty(
+                        supplemental_data_storage_location_type="S3",
+                        s3_location=CfnKnowledgeBase.S3LocationProperty
+                        (uri=f"s3://{intermediate_bucket_name}")
+                    )]
+                )
         return CfnKnowledgeBase(
             self, 
             'RagKB',
             knowledge_base_configuration=CfnKnowledgeBase.KnowledgeBaseConfigurationProperty(
             type="VECTOR",
             vector_knowledge_base_configuration=CfnKnowledgeBase.VectorKnowledgeBaseConfigurationProperty(
-                embedding_model_arn=self.embedding_model_arn
+                embedding_model_arn=self.embedding_model_arn,
+                supplemental_data_storage_configuration=supplemental_data_storage_configuration
             )
             ),
             name='docKnowledgeBaseAurora',
@@ -146,11 +177,26 @@ class KbInfraStack(Stack):
             )
           )    
     
-  
     def create_data_source(self, knowledge_base) -> CfnDataSource:
+        print("Creating data source...")
         kbid = knowledge_base.attr_knowledge_base_id
         chunking_strategy = KbConfig.CHUNKING_STRATEGY
+        parsing_configuration = None
+        if multi_modal and parsing_strategy == "BEDROCK_DATA_AUTOMATION":
+             parsing_configuration=bedrock.CfnDataSource.ParsingConfigurationProperty(
+                    parsing_strategy= parsing_strategy,
+                    bedrock_data_automation_configuration=bedrock.CfnDataSource.BedrockDataAutomationConfigurationProperty(
+                        parsing_modality="MULTIMODAL" ) 
+             )
+        if multi_modal and parsing_strategy == "BEDROCK_FOUNDATION_MODEL":
+            parsing_configuration=bedrock.CfnDataSource.ParsingConfigurationProperty(
+                    parsing_strategy= parsing_strategy,
+                    bedrock_foundation_model_configuration=bedrock.CfnDataSource.BedrockFoundationModelConfigurationProperty(
+                    model_arn=self.parser_model_arn)
+            )
         
+        print("Parsing configuration: ",parsing_configuration)
+
         if chunking_strategy == "Fixed-size chunking":
             vector_ingestion_config = bedrock.CfnDataSource.VectorIngestionConfigurationProperty(
                 chunking_configuration=bedrock.CfnDataSource.ChunkingConfigurationProperty(
@@ -159,7 +205,8 @@ class KbInfraStack(Stack):
                         max_tokens=max_tokens,
                         overlap_percentage=overlap_percentage
                     )
-                )
+                ),
+                parsing_configuration = parsing_configuration
             )
         elif chunking_strategy == "Default chunking":
             vector_ingestion_config = bedrock.CfnDataSource.VectorIngestionConfigurationProperty(
@@ -169,14 +216,16 @@ class KbInfraStack(Stack):
                         max_tokens=300,
                         overlap_percentage=20
                     )
-                )
+                ),
+                parsing_configuration = parsing_configuration
             )
         else:
             vector_ingestion_config = bedrock.CfnDataSource.VectorIngestionConfigurationProperty(
-                chunking_configuration=bedrock.CfnDataSource.ChunkingConfigurationProperty(
-                    chunking_strategy="NONE"
+                    chunking_configuration=bedrock.CfnDataSource.ChunkingConfigurationProperty(
+                        chunking_strategy="NONE"
+                    ),
+                    parsing_configuration = parsing_configuration
                 )
-            )
 
         return CfnDataSource(
             self, 
@@ -193,6 +242,7 @@ class KbInfraStack(Stack):
             vector_ingestion_configuration=vector_ingestion_config
         )
   
+  # Below functions can be used if you need to integrate lambda functions for ingestion and querying 
     def create_ingest_lambda(self, knowledge_base, data_source) -> lambda_:
         ingest_lambda = lambda_.Function(
             self,

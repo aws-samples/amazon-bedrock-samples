@@ -1,8 +1,8 @@
 evaluator:
   model: claude-3
 target:
-  bedrock_agent_alias_id: {agent_id}
-  bedrock_agent_id: none
+  bedrock_agent_alias_id: None
+  bedrock_agent_id: [agent_id]
   type: bedrock-agent
 tests:
   check_for_chicken_dinner:

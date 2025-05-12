@@ -10,6 +10,10 @@ langchain
 langchain_aws
 langchain-core
 langchain_community
+langchainhub
+langchain-text-splitters
+langgraph
+nltk
 s3fs
 requests
 pypdf

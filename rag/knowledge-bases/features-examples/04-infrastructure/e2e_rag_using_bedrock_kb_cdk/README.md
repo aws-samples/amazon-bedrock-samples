@@ -1,6 +1,9 @@
 
 # Deploy e2e RAG solution (using Amazon Bedrock Knowledge Bases) via CDK
-<mark>By no means this deployment is production-ready deployment. Please adjust the IAM polies and permissions as per your organization policy)</mark>
+
+Ref Blog: https://aws.amazon.com/blogs/machine-learning/build-an-end-to-end-rag-solution-using-knowledge-bases-for-amazon-bedrock-and-the-aws-cdk/
+
+<mark>By NO means this deployment is production-ready deployment. Please adjust the IAM polies and permissions as per your organization policy)</mark>
 
 This is a complete setup for automatic deployment of end-to-end RAG workflow using Amazon Bedrock Knowledge Bases. 
 Following resources will get created and deployed:
@@ -55,6 +58,14 @@ Once the virtualenv is activated, you can install the required dependencies.
 ```
 pip install -r requirements.txt
 ```
+Upgrade aws-cdk-lib 
+```
+pip install --upgrade aws-cdk-lib
+```
+### Pre-requisites: 
+- A S3 bucket set up with your documents in a supported format (.txt, .md, .html, .doc/docx, .csv, .xls/.xlsx, .pdf).
+
+- Another S3 bucket set up for multimodal storage destination if building multi-modal RAG
 
 ### IMPORTANT : Update Config file 
 **Open `config.py` and adjust the below parameters as per your application configuration**:
@@ -66,25 +77,16 @@ pip install -r requirements.txt
 - OVERLAP_PERCENTAGE
 - S3_BUCKET_NAME
 - VECTOR_STORE_TYPE (Ensure you select either 'OSS' for an OpenSearch Serverless or 'Aurora' for an Aurora PostgreSQL vector store)
+- MULTI_MODAL (Set to true if building multi-modal RAG)
+- PARSING_STRATEGY - Choose Parsing Strategy  'BEDROCK_DATA_AUTOMATION' or'BEDROCK_FOUNDATION_MODEL (if MULTI_MODAL is set to true)
+- MM_STORAGE_S3 - S3 bucket for multimodal storage destination (if MULTI_MODAL is set to true). Make sure this bucket is in same region as of your data bucket.
 
 
 **Save it!**
 
 ### PREPARATION: Bootstrap and synthesize the CDK project
 
-At this point you can now prepare the code zip and synthesize the CloudFormation template for this code. 
-
-On your terminal, export your AWS credentials for a role/user in ACCOUNT_ID. The role needs to have all permissions necessary to do the operations in this repository:
-```
-export AWS_REGION="<region>" # Same region as ACCOUNT_REGION above
-export AWS_ACCESS_KEY_ID="<access-key>" # Set to the access key of your role/user
-export AWS_SECRET_ACCESS_KEY="<secret-key>" # Set to the secret key of your role/user
-```
-
-To create the dependency run:
-```
-./prepare.sh
-```
+At this point you can now synthesize the CloudFormation template. 
 
 When deploying for the *first time*, run:
 ```

@@ -362,7 +362,8 @@ class BedrockKnowledgeBase:
                     "Action": [
                         "bedrock:GetDataAutomationStatus"
                     ],
-                    "Resource": f"arn:aws:bedrock:{self.region_name}:{self.account_number}:data-automation-invocation/*"
+                    "Resource": [f"arn:aws:bedrock:us-west-2:{self.account_number}:data-automation-invocation/*",
+                                 f"arn:aws:bedrock:us-east-1:{self.account_number}:data-automation-invocation/*"]
                 },
                 {
                     "Sid": "BDAInvokeStatement",
@@ -370,7 +371,12 @@ class BedrockKnowledgeBase:
                     "Action": [
                         "bedrock:InvokeDataAutomationAsync"
                     ],
-                    "Resource": f"arn:aws:bedrock:{self.region_name}:aws:data-automation-project/public-rag-default"
+                    "Resource": [f"arn:aws:bedrock:us-west-2:aws:data-automation-project/public-rag-default",
+                                 f"arn:aws:bedrock:us-east-1:aws:data-automation-project/public-rag-default",
+                                 f"arn:aws:bedrock:us-east-1:{self.account_number}:data-automation-profile/us.data-automation-v1",
+                                 f"arn:aws:bedrock:us-east-2:{self.account_number}:data-automation-profile/us.data-automation-v1",
+                                 f"arn:aws:bedrock:us-west-1:{self.account_number}:data-automation-profile/us.data-automation-v1",
+                                 f"arn:aws:bedrock:us-west-2:{self.account_number}:data-automation-profile/us.data-automation-v1"]
                 }
             ]
         }
