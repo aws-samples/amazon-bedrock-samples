@@ -131,7 +131,7 @@ def create_lambda_role(agent_name, dynamodb_table_name):
     return lambda_iam_role
 
 
-def create_agent_role_and_policies(agent_name, agent_foundation_model, kb_id=None):
+def create_agent_role_and_policies(agent_name, agent_foundation_model, foundation_model, kb_id=None):
     agent_bedrock_allow_policy_name = f"{agent_name}-ba"
     agent_role_name = f'AmazonBedrockExecutionRoleForAgents_{agent_name}'
     # Create IAM policies for agent
@@ -141,9 +141,21 @@ def create_agent_role_and_policies(agent_name, agent_foundation_model, kb_id=Non
             "Effect": "Allow",
             "Action": "bedrock:InvokeModel",
             "Resource": [
-                f"arn:aws:bedrock:{region}::foundation-model/{agent_foundation_model}"
+                f"arn:aws:bedrock:*::foundation-model/{foundation_model}",
+                f"arn:aws:bedrock:*:*:inference-profile/{agent_foundation_model}"
             ]
+        },
+        {
+            "Sid": "AmazonBedrockAgentBedrockGetInferenceProfile",
+            "Effect": "Allow",
+            "Action":  [
+                "bedrock:GetInferenceProfile",
+                "bedrock:ListInferenceProfiles",
+                "bedrock:UseInferenceProfile"
+            ],
+            "Resource": "*"
         }
+
     ]
     # add Knowledge Base retrieve and retrieve and generate permissions if agent has KB attached to it
     if kb_id:
