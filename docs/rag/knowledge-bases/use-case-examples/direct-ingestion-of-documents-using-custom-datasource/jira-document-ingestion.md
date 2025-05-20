@@ -6,7 +6,7 @@ To read more about DLA, see the [documentation](https://docs.aws.amazon.com/bedr
 
 In this example, we pull JIRA issues via an API then ingest these issues as documents in our knowledge base using DLA.
 
-# Pre-requisites
+## Pre-requisites
 - You will need to create a knowledge base with a custom data source.  You can do this via the AWS console or follow the instructions in this notebook found in this repo at:   amazon-bedrock-samples/rag/knowledge-bases/features-examples/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb
 - Please note the knowledge base id and the data source id.
 - You will need a JIRA account with an API key and some sample data.  Instructions on how to do this are in this [pdf](./JIRA-API-Access.pdf).  Note: It's possible that these instructions may change as they refer to a third party product.
@@ -20,7 +20,7 @@ In this example, we pull JIRA issues via an API then ingest these issues as docu
 Please run the notebook cell by cell instead of using "Run All Cells" option.
 </div>
 
-# Install dependencies
+## Install dependencies
 
 
 ```python
@@ -30,7 +30,7 @@ Please run the notebook cell by cell instead of using "Run All Cells" option.
 %pip install dotenv
 ```
 
-# Set System Path
+## Set System Path
 We are using helper functions from the features-examples folder so we set the system path accordingly to allow for imports.
 
 
@@ -46,7 +46,7 @@ print(sys.path)
 
 ```
 
-# Setup the environment
+## Setup the environment
 <div class="alert alert-block alert-info">
 Open the file 'example_dot_env' and fill in the appropriate values.<br/>  Rename it to .env so the python interpreter will pick it up.
 </div>
@@ -75,7 +75,7 @@ ds_id = os.environ.get("DOCUMENT_STORE_ID")
 
 ```
 
-# Setup the JIRA connection
+## Setup the JIRA connection
 
 
 
@@ -95,7 +95,7 @@ projects = jira.projects()
 
 ```
 
-# Generate document configs for the knowledge base.
+## Generate document configs for the knowledge base.
 We loop through each JIRA project and create a 'document config' for each jira issue.  We store the project as metadata for each document.  This allows for filtering when we use the Retrieve API or the Retrieve and Generate API.
 
 
@@ -118,7 +118,7 @@ print(f"Total number of documents: {len(documents)}")
 
 ```
 
-# Ingest documents directly to the knowledge base using DAL.
+## Ingest documents directly to the knowledge base using DLA.
 Note:  In this example we aren't considering queing or retry logic as we ingest documents.  
 
 
@@ -135,7 +135,7 @@ for i in range(0, len(documents), 10):
     print(response)
 ```
 
-# Check the status of your documents
+## Check the status of your documents
 You should see a list of your documents with a status of 'indexed'
 
 
@@ -152,7 +152,7 @@ response = bedrock_agent_client.list_knowledge_base_documents(
 pprint.pprint(response)
 ```
 
-# Query the knowledge base using the Retrieve API
+## Query the knowledge base using the Retrieve API
 
 
 ```python
@@ -204,7 +204,7 @@ Chunk 5 Score:  0.38347003
 Chunk 5 Metadata:  {'x-amz-bedrock-kb-source-uri': 'KAN-57', 'source': 'Acme Software', 'x-amz-bedrock-kb-chunk-id': '1%3A0%3AgsBwQ5UBv38PVEjanOuQ', 'x-amz-bedrock-kb-data-source-id': 'MXVGTRJ9JX'}
 
 
-# Query the knowledge base and pass results to the foundation model using the Retrieve and Generate API
+## Query the knowledge base and pass results to the foundation model using the Retrieve and Generate API
 Here we query the knowledge base for issues involving security.  Notice the use of metadata to filter. The foundation model provides a nicely formatted response. 
 
 
@@ -252,7 +252,7 @@ if result:
 
 ```
 
-# Example Response
+## Example Response
 
 Based on the search results, you have security issues related to unrestricted access allowed by some of your security groups in AWS. Specifically, the search results mention that several of your security groups are allowing unrestricted incoming traffic (0.0.0.0/0) on certain ports, which poses a security risk. To resolve these issues, you should review the inbound rules for the affected security groups and restrict access to only trusted IP addresses or security groups for the required ports. Remove any rules allowing unrestricted 0.0.0.0/0 access on ports that should be restricted. Additionally, it is recommended to implement additional security measures like IP tables and regularly audit your security group rules to ensure they align with your security requirements.
 

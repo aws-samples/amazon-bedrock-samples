@@ -6,20 +6,20 @@ To read more about DLA, see the [documentation](https://docs.aws.amazon.com/bedr
 
 In this example, we pull documents from google drive and then ingest them in our knowledge base using DLA.
 
-# Pre-requisites
+## Pre-requisites
 - You will need to create a knowledge base with a custom data source.  You can do this via the AWS console or follow the instructions in this notebook found in this repo at:   amazon-bedrock-samples/rag/knowledge-bases/features-examples/01-rag-concepts/01_create_ingest_documents_test_kb_multi_ds.ipynb
 - Please note the knowledge base id and the data source id.
 - You will need a Google Drive and some sample data.  You can create a free google account for this.  
 - You will need to setup API access for Google Drive.  Instructions on how to do this are in this [pdf](./Google-Drive-API-Access.pdf).  Note: It's possible that these instructions may change as they refer to a third party product.
 
-# Acquire Sample Data
+## Acquire Sample Data
 
 We will use synthetic data for our document.  You can find a sample pdf in this repo under:
 
 amazon-bedrock-samples/rag/knowledge-bases/features-examples/synthetic_dataset/octank_financial_10K.pdf
 
 
-# Add the documents to Google Drive.
+## Add the documents to Google Drive.
 
 You will need a google account.  Go to https://workspace.google.com/products/drive/ and sign in.  Drag the pdf from your desktop to the drive.  When done it should look something like this:
 
@@ -32,7 +32,7 @@ You will need a google account.  Go to https://workspace.google.com/products/dri
 Please run the notebook cell by cell instead of using "Run All Cells" option.
 </div>
 
-# Install dependencies
+## Install dependencies
 
 
 ```python
@@ -45,7 +45,7 @@ Please run the notebook cell by cell instead of using "Run All Cells" option.
 
 ```
 
-# Set System Path
+## Set System Path
 We are using helper functions from the features-examples folder so we set the system path accordingly to allow for imports.
 
 
@@ -61,7 +61,7 @@ print(sys.path)
 
 ```
 
-# Setup the environment
+## Setup the environment
 
 <div class="alert alert-block alert-info">
 If you want to use environment variables then open the file 'example_dot_env' and fill in the appropriate values for your `KNOWLEDGE_BASE_ID` and `DOCUMENT_STORE_ID`.  Rename it to .env so the python interpreter will pick it up.  Otherwise you can hardcode the values below.
@@ -82,7 +82,7 @@ ds_id = os.environ.get("DOCUMENT_STORE_ID")
 # ds_id = "your-ds-id"
 ```
 
-# Generate document configs for the knowledge base.
+## Generate document configs for the knowledge base.
 We loop through the available files and create a 'document config' for each one.  In our example, we just have the one pdf file.  We store metadata for each document config.  This allows for filtering when we use the Retrieve API or the Retrieve and Generate API.
 
 When you run the cell below, you'll be redirected to google to authenticate.  After authentication, it will read each ebook and store them to a list.
@@ -111,7 +111,7 @@ for file in files:
 print(f"Total number of documents: {len(documents)}")
 ```
 
-# Ingest documents directly to the knowledge base using DAL
+# Ingest documents directly to the knowledge base using DLA
 Note:  In this example we aren't considering queing or retry logic as we ingest documents.  
 
 
@@ -127,7 +127,7 @@ for i in range(0, len(documents), 10):
     print(response)
 ```
 
-# Check the status of your documents
+## Check the status of your documents
 You should see a list of your documents with a status of 'indexed'
 
 
@@ -144,7 +144,7 @@ response = bedrock_agent_client.list_knowledge_base_documents(
 pprint.pprint(response)
 ```
 
-# Query the knowledge base using the Retrieve API
+## Query the knowledge base using the Retrieve API
 
 
 ```python
@@ -221,7 +221,7 @@ Chunk 5 Metadata:  {'x-amz-bedrock-kb-source-uri': 'octank_financial_10K.pdf', '
 
 
 
-# Query the knowledge base
+## Query the knowledge base
 Here we query the knowledge base with a question about the pdf.  Notice the use of metadata to filter by document source.
 
 
@@ -267,7 +267,7 @@ if result:
 
 ```
 
-# Example response
+## Example response
 
 The schedule of assets is a financial statement schedule that provides a detailed breakdown of the company's assets. It includes information such as a list of the company's major customers, the carrying amounts and fair values of the company's financial assets, and the gross and net amounts of the company's impaired assets.
 
