@@ -15,7 +15,7 @@ def get_named_parameter(event, name):
 def get_booking_details(booking_id):
     """
     Retrieve details of a restaurant booking
-    
+
     Args:
         booking_id (string): The ID of the booking to retrieve
     """
@@ -32,7 +32,7 @@ def get_booking_details(booking_id):
 def create_booking(date, name, hour, num_guests):
     """
     Create a new restaurant booking
-    
+
     Args:
         date (string): The date of the booking
         name (string): Name to idenfity your reservation
@@ -58,7 +58,7 @@ def create_booking(date, name, hour, num_guests):
 def delete_booking(booking_id):
     """
     Delete an existing restaurant booking
-    
+
     Args:
         booking_id (str): The ID of the booking to delete
     """
@@ -70,15 +70,15 @@ def delete_booking(booking_id):
             return {'message': f'Failed to delete booking with ID {booking_id}'}
     except Exception as e:
         return {'error': str(e)}
-    
+
 
 def lambda_handler(event, context):
     # get the action group used during the invocation of the lambda function
     actionGroup = event.get('actionGroup', '')
-    
+
     # name of the function that should be invoked
     function = event.get('function', '')
-    
+
     # parameters to invoke function with
     parameters = event.get('parameters', [])
 
