@@ -1,6 +1,6 @@
 # Bedrock Agent with Powertools for AWS
 
-This is a work in progress sample to test the ongoing implementation of the upcoming Powertools for AWS (TypeScript) Event Handler for Bedrock Agent Functions.
+This sample demonstrates how to create an Amazon Bedrock Agent using Powertools for AWS (TypeScript) Event Handler for Bedrock Agent Functions.
 
 ## Prerequisites
 
