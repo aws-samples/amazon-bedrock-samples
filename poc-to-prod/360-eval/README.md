@@ -20,7 +20,7 @@ Additionally, the framework supports user-defined evaluation metrics tailored to
 The system is designed for scalability, automatically aggregating results from multiple benchmark runs into comprehensive reports, providing an increasingly complete picture of model latency and performance over time.
 
 
-<img src="/assets/llm-as-judge-background.png" alt="Alt Text" width="600" height="700">
+<img src="./assets/llm-as-judge-background.png" alt="Alt Text" width="600" height="700">
 
 
 ## Overview
