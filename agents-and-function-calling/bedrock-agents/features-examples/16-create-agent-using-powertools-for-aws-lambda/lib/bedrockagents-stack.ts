@@ -40,10 +40,8 @@ export class BedrockAgentsStack extends Stack {
       runtime: Runtime.NODEJS_22_X,
       entry: './src/weather.ts',
       handler: 'handler',
-      bundling: {
-        minify: true,
+      bundling: {,
         mainFields: ['module', 'main'],
-        sourceMap: true,
         format: OutputFormat.ESM,
       },
     });
