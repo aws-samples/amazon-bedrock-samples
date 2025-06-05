@@ -546,5 +546,6 @@ if __name__ == "__main__":
         args.temperature_variations,
         args.experiment_counts,
         args.experiment_name,
+        args.user_defined_metrics
     )
 

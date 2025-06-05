@@ -42,11 +42,10 @@ This project provides tools for:
 ## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/aws-samples/amazon-bedrock-samples/model-full-benchmarking-llm.git
-cd model-full-benchmarking-llm-judge
-
-# Install dependencies
+git clone https://github.com/aws-samples/amazon-bedrock-samples/poc-to-prod/360-eval.git
+cd 360-eval
+```
+```bash
 pip install -r requirements.txt
 ```
 
