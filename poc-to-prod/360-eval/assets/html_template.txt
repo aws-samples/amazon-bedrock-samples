@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <title>LLM Benchmark Report</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 2rem;
+      color: #e0e0e0;
+      line-height: 1.6;
+      background-color: #121212;
+    }
+
+    .section {
+      margin-bottom: 2.5rem;
+      padding: 1.5rem;
+      border-radius: 8px;
+      background-color: #1e1e1e;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #64b5f6;
+      border-bottom: 2px solid #64b5f6;
+      padding-bottom: 0.5rem;
+    }
+
+    h2 {
+      color: #90caf9;
+      margin-top: 0;
+    }
+
+    h3 {
+      color: #bbdefb;
+    }
+
+    .recommendations {
+      background-color: #263238;
+      padding: 1rem;
+      border-left: 4px solid #64b5f6;
+      margin: 1rem 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #444;
+    }
+
+    th {
+      background-color: #2c2c2c;
+      color: #fff;
+    }
+
+    .card {
+      background: #2d2d2d;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      background: #1a1a1a;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid #333;
+      z-index: 100;
+    }
+
+    .nav ul {
+      display: flex;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .nav li a {
+      text-decoration: none;
+      color: #bbdefb;
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+
+    .nav li a:hover {
+      background-color: #303f9f;
+      color: #ffffff;
+    }
+
+    .highlight {
+      background-color: #263238;
+      border-left: 4px solid #ff9800;
+      padding: 0.5rem 1rem;
+    }
+
+    .metric-highlight {
+      font-weight: bold;
+      color: #64b5f6;
+    }
+
+    .radar-charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .radar-chart-container {
+      background: #2d2d2d;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .model-selector {
+      margin: 1rem 0;
+    }
+
+    .model-selector select {
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #555;
+      font-size: 1rem;
+      min-width: 200px;
+      background-color: #333;
+      color: #e0e0e0;
+    }
+
+    .radar-charts-container {
+      position: relative;
+      min-height: 600px;
+    }
+
+    .model-chart {
+      width: 100%;
+      text-align: center;
+    }
+
+    .radar-chart-single {
+      display: flex;
+      justify-content: center;
+      margin: 2rem auto;
+      max-width: 550px;
+      background: #2d2d2d;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .chart-description {
+      max-width: 700px;
+      margin: 0 auto;
+      color: #bbb;
+    }
+
+    .model-charts h4 {
+      margin-top: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #444;
+    }
+
+    .radar-chart-container h5 {
+      margin-top: 0;
+      color: #bbb;
+      font-size: 1rem;
+    }
+
+    /* Updated color key for dark mode */
+    .good-key {
+      background-color: #2e7d32;
+      padding: 0 5px;
+      color: white;
+    }
+
+    .moderate-key {
+      background-color: #f57c00;
+      padding: 0 5px;
+      color: white;
+    }
+
+    .needs-improvement-key {
+      background-color: #c62828;
+      padding: 0 5px;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>LLM Benchmark Report</h1>
+  <p>Report generated on: {{ timestamp }}</p>
+  <div class="nav">
+    <ul>
+      <li><a href="#latency-metrics">Latency Metrics</a></li>
+      <li><a href="#cost-metrics">Cost Metrics</a></li>
+      <li><a href="#task-analysis">Task Analysis</a></li>
+      <li><a href="#model-task-performance">Model-Task Performance</a></li>
+      <li><a href="#recommendations">Recommendations</a></li>
+    </ul>
+  </div>
+  <div class="section" id="latency-metrics">
+    <h2>Latency Metrics</h2>
+    <div class="card">
+      <h3>Time to First Token</h3>
+      {{ ttft_comparison_div | safe }}
+    </div>
+    <div class="card">
+      <h3>Output Tokens per Second</h3>
+      {{ otps_comparison_div | safe }}
+    </div>
+  </div>
+  <div class="section" id="cost-metrics">
+    <h2>Cost Metrics</h2>
+    <div class="card">
+      <h3>Average Cost Per Response By Model</h3>
+      {{ cost_comparison_div | safe }}
+    </div>
+  </div>
+  <div class="section" id="task-analysis">
+    <h2>Task Analysis</h2>
+    {% for task in task_analysis %}
+    <div class="card">
+      <h3>{{ task.name }}</h3>
+      {{ task.chart | safe }}
+      <div class="highlight">
+        <h4>Key Findings</h4>
+        <ul>
+          {% for finding in task.findings %}
+          <li>{{ finding }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="section" id="model-task-performance">
+    <h2>Model-Task Performance</h2>
+    <div class="card">
+      <h3>Success Rate by Model and Task</h3>
+      {{ model_task_heatmap_div | safe }}
+    </div>
+    <div class="card">
+      <h3>Detailed Performance Comparison</h3>
+      {{ model_task_bubble_div | safe }}
+    </div>
+    <div class="card">
+      <h3>Error Analysis</h3>
+      {{ error_analysis_div | safe }}
+    </div>
+    <div class="card">
+      <h3>Judge Scores Analysis</h3>
+      <div class="highlight">
+        <p>The radar charts below show how each model performs across different quality dimensions for all tasks.</p>
+        <div class="model-selector">
+          <label for="modelSelect">Select Model: </label>
+          <select id="modelSelect" onchange="showModelChart(this.value)">
+            {% for model in unique_models %}
+            <option value="{{ model }}" {% if loop.first %}selected{% endif %}>{{ model }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="radar-charts-container">
+        {% for model in unique_models %}
+        <div id="chart-{{ model|replace('.', '-')|replace(':', '-') }}" class="model-chart"
+          style="{% if not loop.first %}display: none;{% endif %}">
+          <div class="radar-chart-single">
+            {% if model in judge_score_radars %}
+            {{ judge_score_radars[model] | safe }}
+            {% else %}
+            <p>No data available for this model</p>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Integrated Analysis: Performance vs Speed vs Cost</h3>
+    {{ integrated_analysis_table_div | safe }}
+    <div class="highlight">
+      <h4>Key</h4>
+      <ul>
+        <li><span class="good-key">Good</span>: Optimal performance</li>
+        <li><span class="moderate-key">Moderate</span>: Average performance</li>
+        <li><span class="needs-improvement-key">Needs Improvement</span>: Below optimal thresholds</li>
+      </ul>
+      <p>Composite Score combines success rate (weight: 1.0), speed (weight: 0.5), and cost efficiency (weight: 0.5)</p>
+    </div>
+  </div>
+
+  <div class="section" id="regional-analysis">
+    <h2>Regional Performance Analysis</h2>
+    <div class="card">
+      <h3>Latency and Cost by Region with Time of Day</h3>
+      <div style="height: 1000px;">
+        {{ regional_performance_div | safe }}
+      </div>
+      <div class="highlight" style="margin-top: 10px;">
+        <h4>Key Insights</h4>
+        <ul>
+          <li><strong>Bubble Size:</strong> Success rate (larger = higher success)</li>
+          <li><strong>Bubble Color:</strong> Composite score combining success, latency, and cost</li>
+          <li><strong>Time Period:</strong> Analysis considers local time in each region when the tests were run</li>
+          <li><strong>Bottom Chart:</strong> Shows how performance varies throughout the day by hour</li>
+        </ul>
+        <p>Use these insights to select the optimal region and time window for your use case.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="recommendations">
+    <h2>Recommendations</h2>
+    <div class="recommendations">
+      <h3>Task-Specific Model Recommendations</h3>
+      <table>
+        <tr>
+          <th>Task</th>
+          <th>Best Model for Accuracy</th>
+          <th>Success Rate</th>
+          <th>Best Model for Speed</th>
+          <th>Latency (Secs)</th>
+          <th>Best Model for Cost/Performance</th>
+          <th>Score</th>
+        </tr>
+        {% for rec in task_recommendations %}
+        <tr>
+          <td>{{ rec.task }}</td>
+          <td><strong>{{ rec.best_accuracy_model }}</strong></td>
+          <td>{{ rec.accuracy }}</td>
+          <td><strong>{{ rec.best_speed_model }}</strong></td>
+          <td>{{ rec.speed }}</td>
+          <td><strong>{{ rec.best_value_model }}</strong></td>
+          <td>{{ rec.value }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function showModelChart(modelName) {
+      // Hide all model charts
+      document.querySelectorAll('.model-chart').forEach(function (el) {
+        el.style.display = 'none';
+      });
+      // Show selected model's chart
+      const selectedChart = document.getElementById('chart-' + modelName.replace(/\./g, '-').replace(/:/g, '-'));
+      if (selectedChart) {
+        selectedChart.style.display = 'block';
+        // Force Plotly to resize
+        window.dispatchEvent(new Event('resize'));
+      }
+    }
+    // Initialize on load
+    window.addEventListener('load', function () {
+      window.dispatchEvent(new Event('resize'));
+    });
+  </script>
+</body>
+</html>
