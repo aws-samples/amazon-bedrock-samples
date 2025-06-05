@@ -1,5 +1,0 @@
-boto3/controlplane/awscli-1.35.21-py3-none-any.whl
-boto3/controlplane/botocore-1.35.55-py3-none-any.whl
-boto3/controlplane/boto3-1.35.55-py3-none-any.whl
-opensearch-py
-retrying
