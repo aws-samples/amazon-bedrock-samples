@@ -107,7 +107,7 @@ except:
 
 
 ```python
-!curl -o 'data/All_Beauty_5.json.gz' 'https://jmcauley.ucsd.edu/data/amazon_v2/categoryFilesSmall/All_Beauty_5.json.gz' --insecure
+!curl -o 'data/All_Beauty_5.json.gz' 'https://mcauleylab.ucsd.edu/public_datasets/data/amazon_v2/categoryFilesSmall/All_Beauty_5.json.gz' --insecure
 ```
 
 
