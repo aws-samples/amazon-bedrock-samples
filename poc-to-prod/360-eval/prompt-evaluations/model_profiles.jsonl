@@ -1,4 +1,4 @@
-{"model_id": "us.amazon.nova-pro-v1:0", "latency_inference_profile": "standard", "input_token_cost": 0.0008, "output_token_cost": 0.0032, "region": "us-east-1"}
-{"model_id": "us.amazon.nova-lite-v1:0",  "latency_inference_profile": "standard", "input_token_cost": 0.00006, "output_token_cost": 0.00024, "region": "us-east-1"}
-{"model_id": "us.anthropic.claude-3-haiku-20240307-v1:0", "latency_inference_profile": "standard", "input_token_cost": 0.00025, "output_token_cost": 0.00125, "region": "us-east-1"}
-{"model_id": "openai/gpt-4o-mini", "region": "N/A", "inference_profile": "standard", "input_token_cost": 0.00000075, "output_token_cost": 0.00001}
+{"model_id": "us.amazon.nova-pro-v1:0", "inference_profile": "standard", "input_token_cost": 0.0008, "output_token_cost": 0.0032, "region": "us-east-1"}
+{"model_id": "us.amazon.nova-lite-v1:0",  "inference_profile": "standard", "input_token_cost": 0.00006, "output_token_cost": 0.00024, "region": "us-east-1"}
+{"model_id": "us.anthropic.claude-3-haiku-20240307-v1:0", "inference_profile": "standard", "input_token_cost": 0.00025, "output_token_cost": 0.00125, "region": "us-east-1"}
+{"model_id": "openai/gpt-4o-mini", "region": "NA", "inference_profile": "NA", "input_token_cost": 0.00000075, "output_token_cost": 0.00001}

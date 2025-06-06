@@ -342,7 +342,7 @@ def execute_benchmark(_, scenarios, cfg, unprocessed_dir):
                     scn["task_types"],
                     scn["task_criteria"],
                     scn["golden_answer"],
-                    scn["latency_inference_profile"],
+                    scn["inference_profile"],
                     scn["configured_output_tokens_for_request"],
                     scn["model_id"],
                     scn["input_token_cost"] / 1000,
@@ -453,12 +453,12 @@ def main(
         for line in f:
             js = json.loads(line)
             raw.append({
-                "prompt":    js.get("text_prompt", ""),
-                "task_types":       js["task"]["task_type"],
-                "task_criteria":    js["task"]["task_criteria"],
-                "golden_answer":    js.get("golden_answer", ""),                
+                "prompt":                               js.get("text_prompt", ""),
+                "task_types":                           js["task"]["task_type"],
+                "task_criteria":                        js["task"]["task_criteria"],
+                "golden_answer":                        js.get("golden_answer", ""),
                 "configured_output_tokens_for_request": js.get("expected_output_tokens",200),
-                "region":           js.get("region", "us-east-1"),                
+                "region":                               js.get("region", "us-east-1"),
             })
     if not raw:
         logging.error("No scenarios found in input.")
@@ -502,7 +502,7 @@ def main(
     # Cost summary & monthly forecast
     cost_sum = (
         master
-        .groupby(["model_id","latency_inference_profile"])["response_cost"]
+        .groupby(["model_id","inference_profile"])["response_cost"]
         .agg(["mean","sum","count"])
         .rename(columns={"mean":"avg_cost","sum":"total_cost","count":"num_invocations"})
     )

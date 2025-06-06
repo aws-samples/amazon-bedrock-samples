@@ -7,7 +7,6 @@ import logging
 import random
 import json
 import tiktoken
-import ast
 import re
 from litellm import completion
 from litellm import cost_per_token
