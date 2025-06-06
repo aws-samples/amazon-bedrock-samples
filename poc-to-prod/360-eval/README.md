@@ -66,8 +66,6 @@ The framework will automatically detect and use your OpenAI API key when benchma
 
 The benchmarking tool requires input data in JSONL format, with each line containing a scenario to evaluate. Each scenario must follow this schema:
 
-
-
 ### Field Descriptions
 
 - `text_prompt`: The prompt to send to the model (in the example: "Summarize the principles of edge computing in one sentence.")
@@ -93,6 +91,26 @@ The benchmarking tool requires input data in JSONL format, with each line contai
   - Critical for objective evaluation metrics
   - Should represent a high-quality answer that meets all task criteria
 
+Example:
+```json
+{
+  "text_prompt": "Summarize the principles of edge computing in one sentence.",
+  "expected_output_tokens": 250,
+  "task": {
+    "task_type": "Summarization", 
+    "task_criteria": "Summarize the text provided ensuring that the main message is not diluted nor changed"
+  },
+  "golden_answer": "Edge computing is a distributed computing paradigm that brings computation and data storage closer to the location where it is needed, improving response times and saving bandwidth by processing data near the source rather than relying on a central data center."
+}
+```
+
+## Model Profiles Data Format
+
+The benchmarking tool requires to input the model profiles in JSONL format, with each line containing a Model name, region, inference profile and cost data. Each evaluation profile must follow this schema:
+
+### Field Descriptions
+
+
 - `model_id`: Target model identifier (example: "amazon.nova-pro-v1:0")
   - Specifies which model will process the prompt
   - For Bedrock models, use the full model ID (e.g., "amazon.nova-pro-v1:0")
@@ -110,17 +128,9 @@ The benchmarking tool requires input data in JSONL format, with each line contai
 - `output_token_cost`: Cost per 1,000 output tokens (example: 0.0032)
   - Used for cost calculation and reporting
 
-
 Example:
 ```json
 {
-  "text_prompt": "Summarize the principles of edge computing in one sentence.",
-  "expected_output_tokens": 250,
-  "task": {
-    "task_type": "Summarization", 
-    "task_criteria": "Summarize the text provided ensuring that the main message is not diluted nor changed"
-  },
-  "golden_answer": "Edge computing is a distributed computing paradigm that brings computation and data storage closer to the location where it is needed, improving response times and saving bandwidth by processing data near the source rather than relying on a central data center.",
   "model_id": "amazon.nova-pro-v1:0",
   "region": "us-east-1",
   "inference_profile": "standard",
@@ -155,7 +165,7 @@ Example:
   "model_id": "us.amazon.nova-premier-v1:0", 
   "region": "us-east-2", 
   "input_cost_per_1k": 0.0025, 
-  "output_cost_per_1k": 0.0125
+  "output_cost_per_1k": 0.0125  
 }
 ```
 
@@ -178,7 +188,8 @@ python src/benchmarks_run.py input_file.jsonl \
     --sleep_between_invocations 60 \
     --experiment_counts 1 \
     --experiment_name "My-Benchmark" \
-    --temperature_variations
+    --temperature_variations 2 \
+    --user_defined_metrics "business writing style, brand adherence"
 ```
 
 #### Command Line Arguments
@@ -191,6 +202,7 @@ python src/benchmarks_run.py input_file.jsonl \
 - `--experiment_counts`: Number of experiment repetitions (default: 1)
 - `--experiment_name`: Name for this benchmark run (default: "Benchmark-YYYYMMDD")
 - `--temperature_variations`: Number of pct variations in the evaluation dataset default temperature ( + - 25th percentile)
+- `--user_defined_metrics`:  Comma delimited user-defined evaluation metrics tailored to specific use cases
 
 ### Visualizing Results
 
@@ -211,11 +223,15 @@ The reports include:
 
 ## Requirements
 
-- Python 3.12+
+- Python 3.12 +
 - AWS account with Amazon Bedrock access
 - Boto3
 - Plotly
 - Pandas
+- Tick-token
+- LiteLLM
+- Jinja2
+- Dotenv
 
 ## License
 

@@ -428,7 +428,9 @@ def main(
     file_path = os.path.join(eval_dir, input_file)
     judges_list = []
     judge_file_name = "judge_profiles.jsonl"
+    model_file_name = "model_profiles.jsonl"
     judge_path = os.path.join(eval_dir, judge_file_name)
+    model_path = os.path.join(eval_dir, model_file_name)
     with open(judge_path, 'r', encoding='utf-8') as f:
         for line in f:
             judges_list.append(json.loads(line))
@@ -452,21 +454,24 @@ def main(
             js = json.loads(line)
             raw.append({
                 "prompt":    js.get("text_prompt", ""),
-                "region":          js.get("region","us-east-1"),
                 "task_types":       js["task"]["task_type"],
                 "task_criteria":    js["task"]["task_criteria"],
-                "golden_answer":    js.get("golden_answer", ""),
-                "latency_inference_profile": js.get("inference_profile","standard"),
+                "golden_answer":    js.get("golden_answer", ""),                
                 "configured_output_tokens_for_request": js.get("expected_output_tokens",200),
-                "model_id":         js.get("model_id",""),
-                "input_token_cost": js.get("input_token_cost",0.0),
-                "output_token_cost":js.get("output_token_cost",0.0),
+                "region":           js.get("region", "us-east-1"),                
             })
     if not raw:
         logging.error("No scenarios found in input.")
         return
+    
+    raw_with_models = []
+    with open(model_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            js = json.loads(line)
+            for s in raw:
+                raw_with_models.append({**s, **js})                
 
-    scenarios = expand_scenarios(raw, cfg)
+    scenarios = expand_scenarios(raw_with_models, cfg)
     logging.info(f"Expanded to {len(scenarios)} scenarios")
 
     all_dfs = []
@@ -489,7 +494,7 @@ def main(
     master = pd.concat(all_dfs, ignore_index=True)
 
     # # Latency percentiles
-    # lat = master["time_to_last_byte"].dropna().  #### LEAVING THIS AS IT MIGHT COME IN HANDY IN THE FUTURE
+    # lat = master["time_to_last_byte"].dropna()
     # pct = {f"p{p}": np.percentile(lat,p) for p in (50, 90, 95, 99)}
     # print("Latency percentiles:", pct)
     # logging.info(f"Percentiles: {pct}")
@@ -526,15 +531,15 @@ def main(
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Advanced Unified LLM Benchmarking Tool")
-    p.add_argument("input_file", help="JSONL file with scenarios")
-    p.add_argument("--output_dir", default="./benchmark_results")
-    p.add_argument("--parallel_calls",       type=int, default=4)
-    p.add_argument("--invocations_per_scenario", type=int, default=1)
+    p.add_argument("input_file",                  help="JSONL file with scenarios")
+    p.add_argument("--output_dir",                default="./benchmark_results")
+    p.add_argument("--parallel_calls",            type=int, default=4)
+    p.add_argument("--invocations_per_scenario",  type=int, default=2)
     p.add_argument("--sleep_between_invocations", type=int, default=3)
-    p.add_argument("--experiment_counts",     type=int, default=1)
-    p.add_argument("--experiment_name",       default=f"Benchmark-{datetime.now().strftime('%Y%m%d')}")
-    p.add_argument("--temperature_variations", type=int, default=0)
-    p.add_argument("--user_defined_metrics", default=None)
+    p.add_argument("--experiment_counts",         type=int, default=2)
+    p.add_argument("--experiment_name",           default=f"Benchmark-{datetime.now().strftime('%Y%m%d')}")
+    p.add_argument("--temperature_variations",    type=int, default=0)
+    p.add_argument("--user_defined_metrics",      default=None)
     args = p.parse_args()
 
     main(
