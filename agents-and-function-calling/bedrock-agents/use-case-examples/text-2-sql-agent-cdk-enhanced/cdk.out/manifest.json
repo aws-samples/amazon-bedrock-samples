@@ -1,0 +1,232 @@
+{
+  "version": "44.0.0",
+  "artifacts": {
+    "text-2-sql2.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "text-2-sql2.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "text-2-sql2": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://unknown-account/unknown-region",
+      "properties": {
+        "templateFile": "text-2-sql2.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/fa1ebaf4ed8c59d549c908bf58ec67493a71567a4a943c9470370ce590f0a6c6.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "text-2-sql2.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-${AWS::Region}",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "text-2-sql2.assets"
+      ],
+      "metadata": {
+        "/text-2-sql2/SchemaBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SchemaBucket79EE2269"
+          }
+        ],
+        "/text-2-sql2/SchemaBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SchemaBucketPolicy557840E2"
+          }
+        ],
+        "/text-2-sql2/SchemaBucket/AutoDeleteObjectsCustomResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SchemaBucketAutoDeleteObjectsCustomResource0F518746"
+          }
+        ],
+        "/text-2-sql2/LatestNodeRuntimeMap": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LatestNodeRuntimeMap"
+          }
+        ],
+        "/text-2-sql2/Custom::S3AutoDeleteObjectsCustomResourceProvider": [
+          {
+            "type": "aws:cdk:is-custom-resource-handler-customResourceProvider",
+            "data": true
+          }
+        ],
+        "/text-2-sql2/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+          }
+        ],
+        "/text-2-sql2/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F"
+          }
+        ],
+        "/text-2-sql2/DeployFiles/AwsCliLayer/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DeployFilesAwsCliLayerF562E16D"
+          }
+        ],
+        "/text-2-sql2/DeployFiles/CustomResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DeployFilesCustomResource51EC1601"
+          }
+        ],
+        "/text-2-sql2/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C": [
+          {
+            "type": "aws:cdk:is-custom-resource-handler-singleton",
+            "data": true
+          },
+          {
+            "type": "aws:cdk:is-custom-resource-handler-runtime-family",
+            "data": 2
+          }
+        ],
+        "/text-2-sql2/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265"
+          }
+        ],
+        "/text-2-sql2/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF"
+          }
+        ],
+        "/text-2-sql2/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536"
+          }
+        ],
+        "/text-2-sql2/GlueRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GlueRoleDEDFFD2C"
+          }
+        ],
+        "/text-2-sql2/GlueDatabase": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GlueDatabase"
+          }
+        ],
+        "/text-2-sql2/MyCrawler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyCrawler"
+          }
+        ],
+        "/text-2-sql2/ActionGroupFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ActionGroupFunctionServiceRole77660D62"
+          }
+        ],
+        "/text-2-sql2/ActionGroupFunction/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ActionGroupFunctionServiceRoleDefaultPolicyA247E007"
+          }
+        ],
+        "/text-2-sql2/ActionGroupFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ActionGroupFunctionFE14D1CB"
+          }
+        ],
+        "/text-2-sql2/ActionGroupFunction/LambdaInvocationPolicy-c865ed35ebbfcb26": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ActionGroupFunctionLambdaInvocationPolicyc865ed35ebbfcb26461AD9E7"
+          }
+        ],
+        "/text-2-sql2/ActionGroupFunction/AllowBedrockInvoke": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ActionGroupFunctionAllowBedrockInvoke858CB725"
+          }
+        ],
+        "/text-2-sql2/MyAgent/Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyAgentRoleE8318EBB"
+          }
+        ],
+        "/text-2-sql2/MyAgent/Role/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyAgentRoleDefaultPolicy30DBC7AC"
+          }
+        ],
+        "/text-2-sql2/MyAgent/AgentResource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyAgentAgentResource30A5B35B"
+          }
+        ],
+        "/text-2-sql2/AgentRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AgentRoleF4A42D6B"
+          }
+        ],
+        "/text-2-sql2/AgentRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AgentRoleDefaultPolicy1027F5D2"
+          }
+        ],
+        "/text-2-sql2/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/text-2-sql2/CDKMetadata/Condition": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadataAvailable"
+          }
+        ],
+        "/text-2-sql2/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/text-2-sql2/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "text-2-sql2"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  },
+  "minimumCliVersion": "2.1018.1"
+}
