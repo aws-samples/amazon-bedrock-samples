@@ -7,7 +7,7 @@ This script simulates calling batch inference by:
 2. Making Bedrock invoke calls for each record
 3. Recording responses with corresponding record IDs in an output file
 
-The output format matches the AWS Bedrock batch inference output format.
+The output format matches the AWS Bedrock Batch Inference output format.
 """
 
 import os
@@ -15,7 +15,7 @@ import json
 import time
 import logging
 import argparse
-import random
+import secrets
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
 
@@ -357,7 +357,10 @@ class BatchInferenceSimulator:
                     return error_response
                 
                 # Calculate backoff with jitter
-                jitter_amount = random.uniform(-self.jitter, self.jitter) * backoff_time
+                # Generate cryptographically secure random number between -jitter and jitter
+                rand_int = secrets.randbelow(2**32)  # Using 32 bits for sufficient precision
+                normalized = (rand_int / (2**32 - 1)) * 2 - 1  # Convert to [-1, 1]
+                jitter_amount = normalized * self.jitter * backoff_time
                 sleep_time = backoff_time + jitter_amount
                 
                 self.logger.warning(
