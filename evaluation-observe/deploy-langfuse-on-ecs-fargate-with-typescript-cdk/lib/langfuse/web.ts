@@ -39,6 +39,11 @@ interface ILangfuseWebServiceProps extends ILangfuseServiceSharedProps {
    * @default 'langfuse/langfuse'
    */
   imageName?: string;
+
+  /**
+   * In case of Cognito authentication
+   */
+  authCognitoSecret?: secretsmanager.ISecret
 }
 
 /**
@@ -52,6 +57,11 @@ export class LangfuseWebService extends LangfuseServiceBase {
         NEXTAUTH_URL: props.loadBalancer
           ? props.loadBalancer.url
           : `http://0.0.0.0:${LANGFUSE_WEB_PORT}`,
+        ...(props.authCognitoSecret && {
+          AUTH_DISABLE_SIGNUP: 'false',
+          AUTH_COGNITO_ALLOW_ACCOUNT_LINKING: 'true',
+          AUTH_DISABLE_USERNAME_PASSWORD: 'true'
+        }),
         ...(props.environment || {}),
       },
       healthCheck: {
@@ -76,10 +86,16 @@ export class LangfuseWebService extends LangfuseServiceBase {
       ],
       secrets: {
         NEXTAUTH_SECRET: ecs.Secret.fromSecretsManager(props.nextAuthSecret),
+        ...(props.authCognitoSecret && {
+          AUTH_COGNITO_CLIENT_ID: ecs.Secret.fromSecretsManager(props.authCognitoSecret, 'AUTH_COGNITO_CLIENT_ID'),
+          AUTH_COGNITO_CLIENT_SECRET: ecs.Secret.fromSecretsManager(props.authCognitoSecret, 'AUTH_COGNITO_CLIENT_SECRET'),
+          AUTH_COGNITO_ISSUER: ecs.Secret.fromSecretsManager(props.authCognitoSecret, 'AUTH_COGNITO_ISSUER')
+        })
       },
       serviceName: "web",
     });
 
+    const sec = ecs.Secret.fromSecretsManager(props.nextAuthSecret)
     const securityGroup = new ec2.SecurityGroup(this, "WebSG", {
       vpc: props.vpc,
       allowAllOutbound: false,
