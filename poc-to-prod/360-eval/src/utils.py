@@ -177,16 +177,6 @@ def llm_judge_template(all_metrics,
     """.strip()
 
 
-# Count tokens using tiktoken
-def count_oai_tokens(text: str) -> int:
-    encoding = tiktoken.encoding_for_model("gpt-4o")
-    return len(encoding.encode(text))
-
-
-def count_gcp_tokens(provider_client, text: str) -> int:
-    return provider_client.models.count_tokens(model="gemini-1.5-flash", contents=text).total_tokens
-
-
 # Define which exceptions should trigger a retry
 RETRYABLE_EXCEPTIONS = (
     Exception,

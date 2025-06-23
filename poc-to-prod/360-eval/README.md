@@ -224,15 +224,16 @@ The reports include:
 
 ## Requirements
 
-- Python 3.12 +
-- AWS account with Amazon Bedrock access
+- Python 3.12+
 - Boto3
 - Plotly
 - Pandas
-- Tick-token
 - LiteLLM
 - Jinja2
 - Dotenv
+- Streamlit
+- Scipy
+- AWS account, Amazon Bedrock access & credentials stored
 
 ## License
 
