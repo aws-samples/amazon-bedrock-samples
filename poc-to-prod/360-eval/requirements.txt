@@ -5,3 +5,8 @@ plotly==6.1.2
 python-dotenv==1.1.0
 tiktoken==0.9.0
 litellm==1.72.1
+google-genai==1.19.0
+keyboard==0.13.5
+psutil==7.0.0
+streamlit
+scipy==1.16.0

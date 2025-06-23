@@ -1,18 +1,19 @@
 import pytz
 import datetime
-import os
 import boto3
-import time
-import logging
-import random
 import json
 import tiktoken
 import re
-from litellm import completion
-from litellm import cost_per_token
+import time
+import os
+import random
+import logging
+import requests.exceptions
+from tenacity import retry, stop_after_delay, wait_exponential, retry_if_exception_type
+from litellm import completion, RateLimitError, ServiceUnavailableError, APIError, APIConnectionError
+from litellm import token_counter
 from botocore.exceptions import ClientError
 from botocore.config import Config
-
 
 logger = logging.getLogger(__name__)
 
@@ -23,19 +24,19 @@ logger = logging.getLogger(__name__)
 def get_body(prompt, max_tokens, temperature, top_p):
     sys = ""
     body = [{"role": "user", "content": [{"text": f"{sys}\n##USER:{prompt}"}]}]
-    cfg  = {"maxTokens": max_tokens, "temperature": temperature, "topP": top_p}
+    cfg = {"maxTokens": max_tokens, "temperature": temperature, "topP": top_p}
     return body, cfg
 
 
-def setup_logging(log_dir='logs'):
+def setup_logging(log_dir='logs', experiment='none'):
     ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     os.makedirs(log_dir, exist_ok=True)
-    log_file = f"{log_dir}/advanced-benchmark-{ts}.log"
-    
+    log_file = f"{log_dir}/360-benchmark-{ts}-{experiment}.log"
+
     # Reset root logger and handlers to avoid duplicate logs
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-    
+
     # Configure root logger
     logging.basicConfig(
         filename=log_file,
@@ -43,17 +44,17 @@ def setup_logging(log_dir='logs'):
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         filemode='w'
     )
-    
+
     # Add console handler for warnings and above
     console = logging.StreamHandler()
     console.setLevel(logging.WARNING)
     console.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logging.getLogger('').addHandler(console)
-    
+
     # Configure logger for this module
     module_logger = logging.getLogger(__name__)
     module_logger.info(f"Logging initialized. Log file: {log_file}")
-    
+
     return ts, log_file
 
 
@@ -84,111 +85,26 @@ def calculate_average_scores(dict_list):
     return result
 
 
-def converse_with_bedrock(
-        region,
-        model_id,
-        messages,
-        inference_config,
-        perf_config="standard",
-        max_retries=10,
-        initial_backoff=1,
-        max_backoff=300,  # 5 minutes in seconds
-        jitter=True,
-        stream=True,
-):
+def extract_json_with_llm(all_metrics, text, judge_model_id, cfg):
+    metrics_entries = [f'            "{metric}": <int>' for metric in all_metrics]
+    metrics_string = ",\n".join(metrics_entries)
 
-    # Initialize Bedrock client
-    bedrock_runtime = get_bedrock_client(region)
+    prompt = f"""## Instruction
+Extract and return the JSON object from the given text that matches the specified JSON schema. The schema is:
+```json
+{{
+    "scores": {{
+{metrics_string}
+            }}
+}}
+```
+## Text
+{text}
 
-    attempts = 0
-    backoff_time = initial_backoff
-    # request_count = 1
-    while attempts <= max_retries:
-        try:
-            if stream:
-                ttft = time.time()
-                return bedrock_runtime.converse_stream(
-                    modelId=model_id,
-                    messages=messages,
-                    inferenceConfig=inference_config,
-                    performanceConfig=perf_config
-                ), ttft, attempts + 1
-            else:
-                return bedrock_runtime.converse(
-                    messages=messages,
-                    modelId=model_id,
-                    inferenceConfig=inference_config), None, attempts + 1
-
-        except ClientError as error:
-            error_code = error.response['Error']['Code']
-            error_message = error.response['Error']['Message']
-
-            # Handle throttling errors with exponential backoff
-            if error_code in ['ThrottlingException', 'TooManyRequestsException', 'ServiceUnavailableException']:
-                # request_count += 1
-                if attempts < max_retries:
-                    # Apply jitter to backoff time if enabled
-                    if jitter:
-                        actual_backoff = backoff_time * (0.5 + random.random())
-                    else:
-                        actual_backoff = backoff_time
-
-                    # Cap the backoff time at max_backoff
-                    actual_backoff = min(actual_backoff, max_backoff)
-                    if stream:
-                        logger.warning(
-                            f"Throttling error encountered (attempt {attempts + 1}/{max_retries}) with Model: {model_id}. "
-                            f"Backing off for {actual_backoff:.2f} seconds."
-                        )
-                    else:
-                        logger.warning(
-                            f"Throttling error encountered (attempt {attempts + 1}/{max_retries}) with Judge Model: {model_id}. "
-                            f"Backing off for {actual_backoff:.2f} seconds."
-                        )
-
-                    time.sleep(actual_backoff)
-
-                    # Increase backoff for next attempt
-                    backoff_time = min(backoff_time * 2, max_backoff)
-                    attempts += 1
-                else:
-                    logger.error(f"Maximum retry attempts reached after throttling. Last error: {error_message}")
-                    raise
-            else:
-                # If not a throttling error, re-raise
-                logger.error(f"Bedrock error: {error_code} - {error_message}")
-                raise
-
-        except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
-            raise
-
-    # If we've exhausted all retries
-    raise Exception(f"Failed to get a response after {max_retries} retry attempts")
-
-
-def extract_json_with_llm(all_metrics, text, judge_model_id, judge_region, cfg):
-    prompt = f"""If present extract and return the JSON that meets this criteria from the text:
-            # JSON schema to extract:
-            ```json
-    {{
-      "scores": {{
-        "{all_metrics[0]}": <int>,
-        "{all_metrics[1]}": <int>,
-        ...
-      }}
-    }}
-    ```
-    # Body of Text:
-    {text}
+Provide your response immediately without any preamble or additional information.
             """
-    body = [{"role": "user", "content": [{"text": prompt}]}]
-    resp, = converse_with_bedrock(messages=body,
-                                  model_id=judge_model_id,
-                                  region=judge_region,
-                                  inference_config=cfg,
-                                  stream=False)
-    text = resp['output']['message']['content'][0]['text']
+    resp = run_inference(model_name=judge_model_id, prompt_text=prompt, provider_params=cfg, stream=False)
+    text = resp['text']
     payload = extract_json_from_text(text)
     if not payload:
         return None
@@ -213,12 +129,11 @@ def extract_json_from_text(text):
         return None
 
 
-def extract_json_response(all_metrics, text, judge_model_id, judge_region, cfg):
+def extract_json_response(all_metrics, text, judge_model_id, cfg):
     payload = extract_json_from_text(text)
     if not payload:
-        payload = extract_json_with_llm(all_metrics, text, judge_model_id, judge_region, cfg)
+        payload = extract_json_with_llm(all_metrics, text, judge_model_id, cfg)
     return payload
-
 
 
 def llm_judge_template(all_metrics,
@@ -228,89 +143,201 @@ def llm_judge_template(all_metrics,
                        model_response,
                        golden_answer
                        ):
-
     metrics_list = "\n".join(f"- {m}" for m in all_metrics)
+    metrics_entries = [f'            "{metric}": <int>' for metric in all_metrics]
+    metrics_string = ",\n".join(metrics_entries)
     return f"""
-        You are an expert evaluator.  
-        Task: {task_types}
+    ## You are an expert evaluator.  
+    # Task: {task_types}
 
-        Task description: {task_criteria}
+    # Task description: {task_criteria}
 
-        Original Prompt:
-        {prompt}
+    # Original Prompt:
+    {prompt}
 
-        Model Response:
-        {model_response}
+    # Model Response:
+    {model_response}
 
-        Golden (Reference) Response:
-        {golden_answer}
+    # Golden (Reference) Response:
+    {golden_answer}
 
-        Please evaluate the model response on the following metrics:
-        {metrics_list}
+    # Please evaluate the model response on the following metrics:
+    {metrics_list}
 
-        For each metric, assign an integer score from 1 (worst) to 5 (best).
+    # For each metric, assign an integer score from 1 (worst) to 5 (best).
 
-        **Output JSON only** in this format:
-        ```json
-        {{
-          "scores": {{
-            "{all_metrics[0]}": <int>,
-            "{all_metrics[1]}": <int>,
-            ...
-          }}
-        }}
-        ```
-        """.strip()
+    ## IMPORTANT: **Output JSON only** in this format:
+    ```json
+    {{
+      "scores": {{
+{metrics_string}
+      }}
+    }}
+    ```
+    """.strip()
 
 
 # Count tokens using tiktoken
-def count_tokens(text: str, model_name: str) -> int:
-    encoding = tiktoken.encoding_for_model(model_name.split('/')[-1])
+def count_oai_tokens(text: str) -> int:
+    encoding = tiktoken.encoding_for_model("gpt-4o")
     return len(encoding.encode(text))
 
 
+def count_gcp_tokens(provider_client, text: str) -> int:
+    return provider_client.models.count_tokens(model="gemini-1.5-flash", contents=text).total_tokens
+
+
+# Define which exceptions should trigger a retry
+RETRYABLE_EXCEPTIONS = (
+    Exception,
+    RateLimitError,
+    ServiceUnavailableError,
+    APIConnectionError,
+    APIError,
+    requests.exceptions.RequestException,
+    requests.exceptions.Timeout,
+    requests.exceptions.ConnectionError
+)
+
+
+# Create a class to track retry counts
+class RetryTracker:
+    def __init__(self):
+        self.attempts = 0
+
+    def increment(self, retry_state):
+        self.attempts = retry_state.attempt_number
+        logger.info(f"Retry attempt {self.attempts}, sleeping for {retry_state.next_action.sleep} seconds")
+
+
+# Retry decorator with exponential backoff
+def _call_llm_with_retry(model_name, messages, provider_params, retry_tracker, stream):
+    """Wrapper function to call LLM with retry logic"""
+
+    @retry(
+        retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
+        wait=wait_exponential(multiplier=2, min=1, max=300),  # Start at 1s, exponentially increase, max 60s per attempt
+        stop=stop_after_delay(300),  # Total retry time of 5 minutes
+        before_sleep=retry_tracker.increment
+    )
+    def _api_call():
+        try:
+            time_ = time.time()
+            compl = completion(
+                model=model_name,
+                messages=messages,
+                stream=stream,
+                **provider_params
+            )
+            return compl,time_
+        except RETRYABLE_EXCEPTIONS as e:
+            logger.warning(f"Retryable error occurred: {str(e)}")
+            # Add jitter to avoid thundering herd
+            jitter = random.uniform(0, 3)
+            time.sleep(jitter)
+            raise  # Re-raise for the retry decorator to catch
+        except Exception as e:
+            logger.error(f"Non-retryable error calling LLM: {str(e)}")
+            raise
+
+    return _api_call()
+
+
 # Run streaming inference and collect metrics
-def run_3p_inference(model_name: str, prompt_text: str, provider_params: dict):
+def run_inference(model_name: str,
+                  prompt_text: str,
+                  input_cost: float = 0.00001,
+                  output_cost: float = 0.00001,
+                  provider_params: dict = dict,
+                  stream: bool = True):
+
 
     # Concatenate user prompt for token counting
-    messages = [{ "content": prompt_text, "role": "user"}]
-    input_tokens = count_tokens(prompt_text, model_name)
-
+    messages = [{"content": prompt_text, "role": "user"}]
     start_time = time.time()
     response_chunks = []
     first = True
     time_to_first_token = 0
-    for chunk in completion(
-        model=model_name,
-        messages=messages,
-        stream=True,
-        **provider_params
-    ):
-        if first:
-            time_to_first_token = time.time() - start_time
-            first = False
-        delta = chunk.choices[0].delta.get("content", "")
-        if delta:
-            response_chunks.append(delta)
+    # Create a retry tracker
+    retry_tracker = RetryTracker()
 
-    total_runtime = time.time() - start_time
-    full_response = "".join(response_chunks)
+    try:
+        if 'gemini' in model_name:
+            os.environ['GEMINI_API_KEY'] = provider_params['api_key']
+            del provider_params['api_key']
+            # Use the retry wrapper for the API call
+        payload, start_time = _call_llm_with_retry(
+            model_name=model_name,
+            messages=messages,
+            provider_params=provider_params,
+            retry_tracker=retry_tracker,
+            stream=stream
+        )
+        if not stream:
+            response = dict()
+            response["text"] = payload.choices[0].message.content
+            response['outputTokens'] = payload.model_extra['usage']['completion_tokens']
+            response['inputTokens'] = payload.model_extra['usage']['prompt_tokens']
+            return response
+        else:
+            time_to_first_token = 0
+            for chunk in payload:
+                if first:
+                    time_to_first_token = time.time() - start_time
+                    first = False
 
-    completion_tokens = count_tokens(full_response, model_name)
-    output_tokens = count_tokens(full_response, model_name)
+                # Handle potential None or malformed chunks
+                if not chunk or not hasattr(chunk, 'choices') or len(chunk.choices) == 0:
+                    logger.warning("Received invalid chunk from API")
+                    continue
 
-    tokens_per_sec = output_tokens / total_runtime
+                delta = chunk.choices[0].delta.get("content", "")
+                if delta:
+                    response_chunks.append(delta)
 
-    input_cost, output_cost = cost_per_token(model=model_name,
-                                             prompt_tokens=input_tokens,
-                                             completion_tokens=completion_tokens)
+            end = time.time()
+            time_to_last_byte = round(end - start_time, 4)
+            total_runtime = time.time() - start_time
+            full_response = "".join(response_chunks)
 
-    return {
-        "time_to_first_byte": time_to_first_token,
-        "time_to_last_byte": total_runtime,
-        "throughput_tps": tokens_per_sec,
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "response_cost": input_cost + output_cost,
-        "model_response": full_response
-    }
+            # Token counting with error handling
+            try:
+                counter_id = model_name.replace('converse/', '') # Converse is needed for inference only
+                output_tokens = token_counter(model=counter_id, messages=[{"user": "role", "content": full_response}])
+                input_tokens = token_counter(model=counter_id, messages=[{"user": "role", "content": prompt_text}])
+            except Exception as e:
+                logger.error(f"Error counting tokens: {str(e)}")
+                output_tokens = 0.0000001
+                input_tokens = 0.0000001
+
+            tokens_per_sec = input_cost / total_runtime if total_runtime > 0 else 0
+            tot_input_cost = input_tokens * (input_cost / 1000)
+            tot_output_cost = output_tokens * (output_cost / 1000)
+
+            return {
+                "model_response": full_response,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_runtime": total_runtime,
+                "time_to_first_byte": time_to_first_token,
+                "time_to_last_byte": time_to_last_byte,
+                "throughput_tps": tokens_per_sec,
+                "total_cost": tot_output_cost + tot_input_cost,
+                "retry_count": retry_tracker.attempts
+            }
+
+    except Exception as e:
+        logger.error(f"Error during inference: {type(e).__name__}: {str(e)}")
+        # Return partial results if available, or error information
+        if response_chunks:
+            partial_response = "".join(response_chunks)
+            logger.info(f"Returning partial response of length {len(partial_response)}")
+            return {
+                "model_response": partial_response,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "partial_result": True,
+                "retry_count": retry_tracker.attempts  # Include the retry count even in error case
+            }
+        else:
+            raise RuntimeError(f"Inference failed after {retry_tracker.attempts} retries: {str(e)}")

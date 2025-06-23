@@ -3,6 +3,7 @@ import time
 import concurrent.futures
 import json
 import logging
+import uuid
 import pandas as pd
 import argparse
 from dotenv import load_dotenv
@@ -10,15 +11,12 @@ from datetime import datetime
 from botocore.exceptions import ClientError
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
-from visualize_results import create_html_report
-from utils import (run_3p_inference,
-                    get_timestamp,
+from utils import (get_timestamp,
                    setup_logging,
                    calculate_average_scores,
-                   converse_with_bedrock,
+                   run_inference,
                    extract_json_response,
-                   llm_judge_template,
-                   get_body)
+                   llm_judge_template)
 
 env = load_dotenv()
 
@@ -43,7 +41,6 @@ def evaluate_with_llm_judge(judge_model_id,
      """
     standard_metrics = ["Correctness", "Completeness", "Relevance", "Format", "Coherence", "Following-instructions"]
     all_metrics = standard_metrics + (custom_metrics or [])
-
     eval_template = llm_judge_template(all_metrics,
                                        task_types,
                                        task_criteria,
@@ -51,22 +48,19 @@ def evaluate_with_llm_judge(judge_model_id,
                                        model_response,
                                        golden_answer)
 
-    body = [{"role": "user", "content": [{"text": eval_template}]}]
-    cfg = {"maxTokens": 750, "temperature": 0.3, "topP": 0.9}
-
+    cfg = {"maxTokens": 1500, "temperature": 0.3, "topP": 0.9, "aws_region_name": judge_region}
     try:
-        resp, ignore, ignore  = converse_with_bedrock(messages=body,
-                                        model_id=judge_model_id,
-                                        region=judge_region,
-                                        inference_config=cfg,
-                                        stream=False)
-        text = resp['output']['message']['content'][0]['text']
+        resp = run_inference(model_name=judge_model_id,
+                             prompt_text=eval_template,
+                             provider_params=cfg,
+                             stream=False)
+        text = resp['text']
     except Exception as e:
         logging.error(f"Judge error ({judge_model_id}): {e}")
         return {"judgment": "Error inference response", "explanation": str(e), "full_response": "", "scores": {"score": "NULL"}}
 
     try:
-        eval_results = extract_json_response(all_metrics, text, judge_model_id, judge_region, cfg)
+        eval_results = extract_json_response(all_metrics, text, judge_model_id, cfg)
         if not eval_results:
             return {"judgment": "Error Parsing response", "explanation": "JSON NOT FOUND", "full_response": text,
                     "scores": {"score": "NULL"}}
@@ -82,10 +76,11 @@ def evaluate_with_llm_judge(judge_model_id,
             "scores": eval_results["scores"],
             "explanation": ";".join(explanation),
             "full_response": text,
-            "judge_input_tokens": resp['usage']['inputTokens'],
-            "judge_output_tokens": resp['usage']['outputTokens']
+            "judge_input_tokens": resp['inputTokens'],
+            "judge_output_tokens": resp['outputTokens']
         }
     except Exception as e:
+        logging.error(f"Error when evaluation with {judge_model_id}: {e}")
         return {"judgment": "Error Parsing response", "explanation": str(e), "full_response": text, "scores": {"score": "NULL"}}
 
     return payload
@@ -99,24 +94,43 @@ def evaluate_with_judges(judges,
                          golden_answer,
                          task_types,
                          task_criteria,
-                        user_defined_metrics
+                         user_defined_metrics
                          ):
 
     results = []
     for j in judges:
-        r = evaluate_with_llm_judge(
-            judge_model_id=j["model_id"],
-            judge_region=j["region"],
-            prompt=prompt,
-            model_response=model_response,
-            golden_answer=golden_answer,
-            task_types=task_types,
-            task_criteria=task_criteria,
-            custom_metrics=user_defined_metrics
-        )
-        r['judge_input_token_cost'] = r["judge_input_tokens"] * (j["input_cost_per_1k"] / 1000) # After 15 years I still don't trust the order of operators :)
-        r['judge_output_token_cost'] = r["judge_output_tokens"] * (j["output_cost_per_1k"] / 1000)
-        results.append({"model": j["model_id"], **r})
+        try:
+            logging.debug(f"Evaluating with judge model {j['model_id']}")
+            r = evaluate_with_llm_judge(
+                judge_model_id=j["model_id"],
+                judge_region=j["region"],
+                prompt=prompt,
+                model_response=model_response,
+                golden_answer=golden_answer,
+                task_types=task_types,
+                task_criteria=task_criteria,
+                custom_metrics=user_defined_metrics
+            )
+            
+            # Check for various error indicators
+            if "error" in r or r.get("judgment") == "Error inference response" or r.get("judgment") == "Error Parsing response":
+                logging.warning(f"Judge {j['model_id']} returned an error response: {r.get('explanation', 'Unknown error')}")
+                results.append({"model": j["model_id"], **r})
+                continue
+                
+            # Check if scores are valid
+            if not r.get("scores") or r.get("scores", {}).get("score") == "NULL":
+                logging.warning(f"Judge {j['model_id']} returned invalid scores: {r.get('scores', 'None')}")
+                results.append({"model": j["model_id"], **r})
+                continue
+                
+            r['judge_input_token_cost'] = r["judge_input_tokens"] * (j["input_cost_per_1k"] / 1000) # After 15 years I still don't trust the order of operators :)
+            r['judge_output_token_cost'] = r["judge_output_tokens"] * (j["output_cost_per_1k"] / 1000)
+            results.append({"model": j["model_id"], **r})
+            logging.debug(f"Successfully evaluated with judge {j['model_id']}, judgment: {r.get('judgment', 'Unknown')}")
+        except Exception as e:
+            logging.error(f"Exception evaluating with judge {j['model_id']}: {str(e)}", exc_info=True)
+            results.append({"model": j["model_id"], "judgment": "Judge Exception", "explanation": str(e), "scores": {"score": "NULL"}})
 
 
     pass_ct = sum(1 for r in results if r["judgment"] == "PASS")
@@ -129,125 +143,64 @@ def evaluate_with_judges(judges,
     return {"majority_judgment": maj, "majority_explanations": exps, "judge_details": results, "majority_score": avg_scores, "eval_cost": tot_cost}
 
 
-def run_bedrock_inference(
-        region=None,
-        prompt=None,
-        latency_profile=None,
-        max_tokens=None,
-        model_id=None,
-        in_cost=None,
-        out_cost=None,
-        temperature=0,
-        top_p=0,
-    ):
-
-        throughput_tps = None
-        ttlb = None
-        ttfb = None
-        out_toks = None
-        resp_txt = ""
-        in_toks = None
-        cost = None
-
-        # build messages
-        msgs, cfgs = get_body(prompt, max_tokens, temperature, top_p)
-        r, start, request_count = converse_with_bedrock(
-            region=region,
-            messages=msgs,
-            model_id=model_id,
-            inference_config=cfgs,
-            perf_config={"latency": latency_profile})
-        first = None
-        for ev in r.get("stream", []):
-            if "contentBlockDelta" in ev:
-                d = ev["contentBlockDelta"].get("delta", {})
-                if "text" in d:
-                    resp_txt += d["text"]
-                    if first is None:
-                        first = time.time()
-            elif "metadata" in ev and ev["metadata"].get("usage"):
-                u = ev["metadata"]["usage"]
-                out_toks = u.get("outputTokens")
-                in_toks = u.get("inputTokens")
-                if in_toks is not None and out_toks is not None:
-                    cost = in_toks * in_cost + out_toks * out_cost
-        end = time.time()
-        if first:
-            ttfb = round(first - start, 4)
-            ttlb = round(end - start, 4)
-        if ttlb and out_toks:
-            throughput_tps = round(out_toks / ttlb, 2)
-
-        return {"throughput_tps":throughput_tps,
-                "time_to_first_byte": ttfb,
-                "time_to_last_byte": ttlb,
-                "input_tokens": in_toks,
-                "output_tokens": out_toks,
-                "response_cost": cost,
-                "model_response": resp_txt,
-                "request_count": request_count}
-
 # ----------------------------------------
 # Core benchmarking function
 # ----------------------------------------
 def benchmark(
         region,
         prompt, task_types, task_criteria, golden_answer,
-        latency_profile, max_tokens, model_id,
+        max_tokens, model_id,
         in_cost, out_cost,
         temperature, top_p,
         judge_models,
         user_defined_metrics
 ):
     logging.debug(f"Starting benchmark for model: {model_id} in region: {region}")
-    status   = "Success"
-    ts       = get_timestamp()
-    perf     = {}
-    err_code = None
-    time_to_first_byte = None
-    time_to_last_byte = None
-    input_tokens = None
-    output_tokens = None
-    cost = None
-    resp_txt = None
-    evaluation_cost_data = 0
+    status                  = "Success"
+    time_to_first_byte      = 0
+    time_to_last_byte       = 0
+    ts                      = get_timestamp()
+    perf                    = {}
+    err_code                = None
+    total_runtime           = 0
+    throughput_tps          = 0
+    input_tokens            = 0
+    output_tokens           = 0
+    cost                    = 0
+    resp_txt                = ""
+    evaluation_cost_data    = 0
     inference_request_count = 0
-    throughput_tps = 0
+    params             = {"max_tokens": max_tokens,
+                          "temperature": temperature,
+                          "top_p": top_p
+                          }
     try:
-        if '/' in model_id:
-            r = run_3p_inference(model_id,
-                             prompt,
-                             provider_params={"api_key": os.getenv('OPENAI_API'),
-                                              "max_tokens": max_tokens,
-                                              "temperature": temperature,
-                                              "top_p": top_p})
+        if "gemini" in model_id:
+            params['api_key'] = os.getenv('GOOGLE_API')
+        elif 'azure' in model_id:
+            params['api_key'] =  os.getenv('AZURE_API_KEY')
+        elif 'openai' in model_id:
+            params['api_key'] =  os.getenv('OPENAI_API')
+        elif "bedrock" in model_id:
+            params['aws_region_name'] = region
+            model_id = model_id.replace("bedrock", "bedrock/converse")
 
-            time_to_first_byte = r['time_to_first_byte']
-            time_to_last_byte = r['time_to_last_byte']
-            input_tokens = r['input_tokens']
-            output_tokens = r['output_tokens']
-            cost = r['response_cost']
-            resp_txt = r['model_response']
-        else:
-            r = run_bedrock_inference(
-                region,
-                prompt,
-                latency_profile,
-                max_tokens,
-                model_id,
-                in_cost,
-                out_cost,
-                temperature,
-                top_p)
+        r = run_inference(model_id,
+                          prompt,
+                          in_cost,
+                          out_cost,
+                          provider_params=params,
+                          stream=True)
 
-            time_to_first_byte = r['time_to_first_byte']
-            time_to_last_byte = r['time_to_last_byte']
-            input_tokens = r['input_tokens']
-            output_tokens = r['output_tokens']
-            cost = r['response_cost']
-            resp_txt = r['model_response']
-            inference_request_count = r['request_count']
-            throughput_tps = r['throughput_tps']
+        resp_txt = r['model_response']
+        input_tokens = r['input_tokens']
+        output_tokens = r['output_tokens']
+        total_runtime = r['total_runtime']
+        time_to_first_byte = r['time_to_first_byte']
+        time_to_last_byte = r['time_to_last_byte']
+        throughput_tps = r['throughput_tps']
+        cost = r['total_cost']
+        inference_request_count = r['retry_count']
 
         if resp_txt:
             multi = evaluate_with_judges(
@@ -265,13 +218,15 @@ def benchmark(
             perf["judge_scores"]      = multi["majority_score"]
             evaluation_cost_data   = multi["eval_cost"]
         else:
-            status = "LLM-AS-A-JURY EVALUATION ERROR"
-            logging.error(f"Unexpected error evaluating {model_id}: {status}")
+            logging.error(f"Target model error: Model {model_id} returned an empty output.")
 
     except ClientError as err:
         status = err.response["Error"]["Code"]
         status += f" {str(err)}"
         logging.error(f"API error evaluating {model_id}: {status}")
+    except KeyError as key_err:
+        status = f"KeyError: {str(key_err)}"
+        logging.error(f"Unexpected error evaluating {model_id}: {status}")
     except Exception as e:
         status = str(e)
         logging.error(f"Unexpected error evaluating {model_id}: {status}")
@@ -279,6 +234,7 @@ def benchmark(
     return {
         "time_to_first_byte":  time_to_first_byte,
         "time_to_last_byte":   time_to_last_byte,
+        "total_runtime":       total_runtime,
         "throughput_tps":      throughput_tps,
         "job_timestamp_iso":   ts,
         "api_call_status":     status,
@@ -324,7 +280,7 @@ def expand_scenarios(raw, cfg):
 # ----------------------------------------
 # Parallel execution
 # ----------------------------------------
-def execute_benchmark(_, scenarios, cfg, unprocessed_dir):
+def execute_benchmark(scenarios, cfg, unprocessed_dir):
     all_recs = []
     unprocessed_records = []
     lock = Lock()
@@ -342,11 +298,10 @@ def execute_benchmark(_, scenarios, cfg, unprocessed_dir):
                     scn["task_types"],
                     scn["task_criteria"],
                     scn["golden_answer"],
-                    scn["inference_profile"],
                     scn["configured_output_tokens_for_request"],
                     scn["model_id"],
-                    scn["input_token_cost"] / 1000,
-                    scn["output_token_cost"] / 1000,
+                    scn["input_token_cost"],
+                    scn["output_token_cost"],
                     scn["TEMPERATURE"],
                     cfg["TOP_P"],
                     cfg["judge_models"],
@@ -378,15 +333,35 @@ def execute_benchmark(_, scenarios, cfg, unprocessed_dir):
     with ThreadPoolExecutor(max_workers=cfg["parallel_calls"]) as exe:
         futures = [exe.submit(run_scn, s) for s in scenarios]
         for f in concurrent.futures.as_completed(futures):
-            all_recs.extend(f.result())
+            try:
+                result = f.result()
+                if result:
+                    all_recs.extend(result)
+                else:
+                    logging.warning("Received empty result from a scenario task")
+            except Exception as e:
+                logging.error(f"Exception in ThreadPoolExecutor task: {str(e)}", exc_info=True)
+                # Record the failure but allow other tasks to continue
+                with lock:
+                    unprocessed_records.append({
+                        "scenario": "Unknown (future failed)",
+                        "exception": str(e),
+                        "reason": "Exception in ThreadPoolExecutor task",
+                        "timestamp": get_timestamp()
+                    })
     
     # Write unprocessed records to file if any exist
     if unprocessed_records:
         ts = get_timestamp().replace(':', '-')
-        unprocessed_file = os.path.join(unprocessed_dir, f"unprocessed_{ts}.json")
+        uuid_ = str(uuid.uuid4()).split('-')[-1]
+        unprocessed_file = os.path.join(unprocessed_dir, f"unprocessed_{ts}_{uuid_}.json")
         logging.warning(f"Writing {len(unprocessed_records)} unprocessed records to {unprocessed_file}")
-        with open(unprocessed_file, 'w') as f:
-            json.dump(unprocessed_records, f, indent=2, default=str)
+        try:
+            with open(unprocessed_file, 'w') as f:
+                json.dump(unprocessed_records, f, indent=2, default=str)
+            logging.info(f"Successfully wrote unprocessed records to {unprocessed_file}")
+        except Exception as e:
+            logging.error(f"Failed to write unprocessed records file: {str(e)}", exc_info=True)
             
     return all_recs
 
@@ -396,39 +371,54 @@ def execute_benchmark(_, scenarios, cfg, unprocessed_dir):
 def main(
     input_file,
     output_dir,
+    report,
     parallel_calls,
     invocations_per_scenario,
     sleep_between_invocations,
     temp_variants,
     experiment_counts,
     experiment_name,
-    defined_metrics
+    user_defined_metrics=None,
+    model_file_name=None,
+    judge_file_name=None
 ):
-    user_defined_metrics = None
-    if defined_metrics:
-        user_defined_metrics = [metrics.strip().replace(' ', '-') for metrics in defined_metrics.split(',')]
+    user_defined_metrics_list = None
+    if user_defined_metrics:
+        user_defined_metrics_list = [metrics.strip().replace(' ', '-') for metrics in user_defined_metrics.split(',') if metrics != "None"]
 
-    # Create logs directory
-    logs_dir = "logs"
+    # Get project root directory
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    
+    # Create logs directory with absolute path
+    logs_dir = os.path.join(project_root, "logs")
+    config_dir = os.path.join(project_root, "config")
     os.makedirs(logs_dir, exist_ok=True)
     
     # Setup logging
-    ts, log_file = setup_logging(logs_dir)
+    ts, log_file = setup_logging(logs_dir, experiment_name)
     logging.info(f"Starting benchmark run: {experiment_name}")
     print(f"Logs are being saved to: {log_file}")
-    
-    # Create output directory
+
+    uuid_ = str(uuid.uuid4()).split('-')[-1]
+
+    # Ensure output directory is absolute
+    if not os.path.isabs(output_dir):
+        output_dir = os.path.join(project_root, output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     # Create directory for unprocessed records
     unprocessed_dir = os.path.join(output_dir, "unprocessed")
     os.makedirs(unprocessed_dir, exist_ok=True)
 
-    eval_dir = "./prompt-evaluations"
+    # Use consistent paths for prompt evaluations directory
+    eval_dir = os.path.join(project_root, "prompt-evaluations")
+    os.makedirs(eval_dir, exist_ok=True)
+    
     file_path = os.path.join(eval_dir, input_file)
     judges_list = []
-    judge_file_name = "judge_profiles.jsonl"
-    model_file_name = "model_profiles.jsonl"
+
+    judge_file_name = judge_file_name if judge_file_name else f"{config_dir}/judge_profiles.jsonl"
+    model_file_name = model_file_name if model_file_name else f"{config_dir}/models_profiles.jsonl"
     judge_path = os.path.join(eval_dir, judge_file_name)
     model_path = os.path.join(eval_dir, model_file_name)
     with open(judge_path, 'r', encoding='utf-8') as f:
@@ -444,7 +434,7 @@ def main(
         "TOP_P":                         1.0,
         "EXPERIMENT_NAME":               experiment_name,
         "judge_models":                  judges_list,
-        "user_defined_metrics":          user_defined_metrics
+        "user_defined_metrics":          user_defined_metrics_list
     }
 
     # Load scenarios
@@ -477,62 +467,56 @@ def main(
     all_dfs = []
     for run in range(1, experiment_counts+1):
         logging.info(f"=== Run {run}/{experiment_counts} ===")
-        results = execute_benchmark(None, scenarios, cfg, unprocessed_dir)
-        
-        if not results:
-            logging.error(f"Run {run}/{experiment_counts} produced no results. Check the unprocessed records file.")
-            continue
+        try:
+            results = execute_benchmark(scenarios, cfg, unprocessed_dir)
             
-        df = pd.DataFrame(results)
-        df["run_count"] = run
-        df["timestamp"] = pd.Timestamp.now()
-        out_csv = os.path.join(output_dir, f"invocations_{run}_{ts}.csv")
-        df.to_csv(out_csv, index=False)
-        logging.info(f"Run {run} results saved to {out_csv}")
-        all_dfs.append(df)
+            if not results:
+                logging.error(f"Run {run}/{experiment_counts} produced no results. Check the unprocessed records file.")
+                continue
+                
+            try:
+                df = pd.DataFrame(results)
+                df["run_count"] = run
+                df["timestamp"] = pd.Timestamp.now()
+                out_csv = os.path.join(output_dir, f"invocations_{run}_{ts}_{uuid_}.csv")
+                df.to_csv(out_csv, index=False)
+                logging.info(f"Run {run} results saved to {out_csv}")
+                all_dfs.append(df)
+            except Exception as e:
+                logging.error(f"Error saving results for run {run}: {str(e)}", exc_info=True)
+        except Exception as e:
+            logging.error(f"Critical error in run {run}: {str(e)}", exc_info=True)
+            print(f"\nRun {run} failed with error: {str(e)}. Continuing with next run...")
 
-    master = pd.concat(all_dfs, ignore_index=True)
-
-    # # Latency percentiles
-    # lat = master["time_to_last_byte"].dropna()
-    # pct = {f"p{p}": np.percentile(lat,p) for p in (50, 90, 95, 99)}
-    # print("Latency percentiles:", pct)
-    # logging.info(f"Percentiles: {pct}")
-
-    # Cost summary & monthly forecast
-    cost_sum = (
-        master
-        .groupby(["model_id","inference_profile"])["response_cost"]
-        .agg(["mean","sum","count"])
-        .rename(columns={"mean":"avg_cost","sum":"total_cost","count":"num_invocations"})
-    )
-    cost_sum["monthly_forecast"] = (
-        cost_sum["avg_cost"] *
-        (cost_sum["num_invocations"] / invocations_per_scenario) * 30
-    )
-    print("\nCost summary & forecast:\n", cost_sum)
-
-    logging.info(f"Cost summary:\n{cost_sum}")
-
-    # Generate report
-    report = create_html_report(output_dir, ts)
-    
     # Check for unprocessed records
-    unprocessed_files = [f for f in os.listdir(unprocessed_dir) if f.startswith("unprocessed_")]
-    if unprocessed_files:
-        logging.warning(f"Found {len(unprocessed_files)} files with unprocessed records in {unprocessed_dir}")
-        print(f"\nWarning: {len(unprocessed_files)} files with unprocessed records found in {unprocessed_dir}")
-    
-    print(f"\nBenchmark complete! Report: {report}")
-    logging.info(f"Benchmark run complete. Report generated at {report}")
+    try:
+        unprocessed_files = [f for f in os.listdir(unprocessed_dir) if f.startswith("unprocessed_")]
+        if unprocessed_files:
+            logging.warning(f"Found {len(unprocessed_files)} files with unprocessed records in {unprocessed_dir}")
+            print(f"\nWarning: {len(unprocessed_files)} files with unprocessed records found in {unprocessed_dir}")
+    except Exception as e:
+        logging.error(f"Error checking for unprocessed records: {str(e)}", exc_info=True)
 
-
+    if report:
+        try:
+            from visualize_results import create_html_report
+            # Generate report
+            report = create_html_report(output_dir, ts)
+            print(f"\nBenchmark complete! Report: {report}")
+            logging.info(f"Benchmark run complete. Report generated at {report}")
+        except ImportError as e:
+            logging.error(f"Failed to import visualization module: {str(e)}")
+            print("\nBenchmark complete, but report generation failed due to import error.")
+        except Exception as e:
+            logging.error(f"Error generating report: {str(e)}", exc_info=True)
+            print("\nBenchmark complete, but report generation failed.")
 
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Advanced Unified LLM Benchmarking Tool")
     p.add_argument("input_file",                  help="JSONL file with scenarios")
-    p.add_argument("--output_dir",                default="./benchmark_results")
+    p.add_argument("--output_dir",                default="benchmark_results")
+    p.add_argument("--report",                    type=lambda x: x.lower() == 'true', default=True)
     p.add_argument("--parallel_calls",            type=int, default=4)
     p.add_argument("--invocations_per_scenario",  type=int, default=2)
     p.add_argument("--sleep_between_invocations", type=int, default=3)
@@ -540,17 +524,20 @@ if __name__ == "__main__":
     p.add_argument("--experiment_name",           default=f"Benchmark-{datetime.now().strftime('%Y%m%d')}")
     p.add_argument("--temperature_variations",    type=int, default=0)
     p.add_argument("--user_defined_metrics",      default=None)
+    p.add_argument("--model_file_name",           default=None)
+    p.add_argument("--judge_file_name",           default=None)
     args = p.parse_args()
-
     main(
         args.input_file,
         args.output_dir,
+        args.report,
         args.parallel_calls,
         args.invocations_per_scenario,
         args.sleep_between_invocations,
         args.temperature_variations,
         args.experiment_counts,
         args.experiment_name,
-        args.user_defined_metrics
+        args.user_defined_metrics,
+        args.model_file_name,
+        args.judge_file_name
     )
-

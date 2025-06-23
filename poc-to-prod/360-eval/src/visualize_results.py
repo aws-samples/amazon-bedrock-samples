@@ -8,25 +8,53 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import pytz
+import sys
+import numpy as np
+from scipy import stats
 
 
 # Configuration
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+# Get project root directory
+PROJECT_ROOT = Path(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
 # Setup logger
 logger = logging.getLogger(__name__)
+log_dir = PROJECT_ROOT / "logs"
+os.makedirs(log_dir, exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    # filename=log_dir / f"visualize_results_{TIMESTAMP}.log",
+    filemode='a'
+)
+logger.info(f"Starting visualization with project root: {PROJECT_ROOT}")
 
-with open("./assets/html_template.txt", 'r') as file:
-    HTML_TEMPLATE = file.read()
+# Load HTML template with absolute path
+template_path = PROJECT_ROOT / "assets" / "html_template.txt"
+try:
+    with open(template_path, 'r') as file:
+        HTML_TEMPLATE = file.read()
+    logger.info(f"Loaded HTML template from {template_path}")
+except FileNotFoundError:
+    logger.error(f"HTML template not found at {template_path}")
+    HTML_TEMPLATE = """<!DOCTYPE html>
+<html>
+<head><title>LLM Benchmark Report</title></head>
+<body><h1>LLM Benchmark Report</h1><p>Template not found, using fallback.</p></body>
+</html>"""
 
 
 def extract_model_name(model_id):
     """Extract clean model name from ID."""
     if '.' in model_id:
         parts = model_id.split('.')
-        if len(parts) >= 2:
+        if len(parts) == 3:
             model_name = parts[-1].split(':')[0].split('-v')[0]
-            return model_name
+        else:
+            model_name = parts[-2] + '.' + parts[-1]
+        return model_name
     return model_id.split(':')[0]
 
 def parse_json_string(json_str):
@@ -44,11 +72,35 @@ def parse_json_string(json_str):
 
 def load_data(directory):
     """Load and prepare benchmark data."""
+    # Ensure directory is a Path object
+    directory = Path(directory)
+    logger.info(f"Looking for CSV files in: {directory}")
+    
     # Load CSV files
     files = glob.glob(str(directory / "invocations_*.csv"))
     if not files:
+        logger.error(f"No invocation CSVs found in {directory}")
         raise FileNotFoundError(f"No invocation CSVs found in {directory}")
-    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    
+    logger.info(f"Found {len(files)} CSV files: {files}")
+    dataframes = []
+    
+    for f in files:
+        try:
+            logger.info(f"Reading file: {f}")
+            df_file = pd.read_csv(f)
+            logger.info(f"Read {len(df_file)} rows from {f}")
+            dataframes.append(df_file)
+        except Exception as e:
+            logger.error(f"Error reading {f}: {str(e)}")
+            continue
+    
+    if not dataframes:
+        logger.error("No valid data found in any CSV files")
+        raise ValueError("No valid data found in any CSV files")
+    
+    df = pd.concat(dataframes, ignore_index=True)
+    logger.info(f"Combined data has {len(df)} rows")
 
     # Clean and prepare data
     df = df[df['api_call_status'] == 'Success'].reset_index(drop=True)
@@ -61,6 +113,31 @@ def load_data(directory):
     df['task_success'] = df['judge_success']
     # Calculate tokens per second
     df['OTPS'] = df['output_tokens'] / (df['time_to_last_byte'] + 0.001)
+
+    # ── Cost summary ───────────────────────────────────────────────────────────
+    cost_stats = (
+        df.groupby(["model_id"])["response_cost"]
+          .agg(avg_cost="mean", total_cost="sum", num_invocations="count")
+    )
+
+    # ── Latency percentiles (50/90/95/99) ──────────────────────────────────────
+    latency_stats = (
+        df.groupby(["model_id"])["time_to_last_byte"]
+          .quantile([0.50, 0.90, 0.95, 0.99])         # returns MultiIndex
+          .unstack(level=-1)                          # percentiles → columns
+    )
+    latency_stats.columns = [f"p{int(q*100)}" for q in latency_stats.columns]
+
+    # ── Combine both sets of metrics ──────────────────────────────────────────
+    summary = cost_stats.join(latency_stats)
+
+    # Optional: forecast spend per model/profile (30-day projection)
+    summary["monthly_forecast"] = (
+        summary["avg_cost"]
+        * (summary["num_invocations"] / df.shape[0])
+        * 30
+    )
+    df = pd.concat([df, summary], axis=1)
 
     return df
 
@@ -142,6 +219,121 @@ def calculate_cost_metrics(df):
     return cost.reset_index()
 
 
+def create_ttfb_histogram_with_normal_distribution(df):
+    """
+    Creates overlapping histogram plots with normal distribution curves for time_to_first_byte by model.
+    Only creates the plot if there are more than 2000 records available.
+    
+    Args:
+        df: DataFrame containing the benchmark data
+        
+    Returns:
+        Plotly figure or None if insufficient data
+    """
+    # Check if we have enough data
+    # Check if we have enough data
+    value_counts = df['model_name'].value_counts()
+    # Get values that appear more than 2000 times
+    frequent_values = value_counts[value_counts > 2000].index
+    # Filter the dataframe to only include rows where the column value is in our frequent_values list
+    df_match = df[df['model_name'].isin(frequent_values)]
+
+    if df_match.empty:
+        logger.info(f"Insufficient data for TTFT histogram: {len(df)} records (need >2000)")
+        return None
+
+    # Filter out any null values
+    df_clean = df_match[df_match['time_to_first_byte'].notna()].copy()
+
+    if df_clean.empty:
+        return ["No valid time_to_first_byte data found"]
+    
+    logger.info(f"Creating TTFT histogram with {len(df)} records")
+
+    # Create figure
+    fig = go.Figure()
+    
+    # Get unique models and assign colors
+    unique_models = df_clean['model_name'].unique()
+    colors = px.colors.qualitative.Set1[:len(unique_models)]
+    
+    # Create histogram and normal distribution for each model
+    for i, model in enumerate(unique_models):
+        model_data = df_clean[df_clean['model_name'] == model]['time_to_first_byte']
+        
+        if len(model_data) < 10:  # Skip models with too few data points
+            continue
+            
+        # Calculate statistics for normal distribution
+        mean = model_data.mean()
+        std = model_data.std()
+        
+        # Add histogram
+        fig.add_trace(go.Histogram(
+            x=model_data,
+            name=f'{model} (n={len(model_data)})',
+            opacity=0.6,
+            marker_color=colors[i % len(colors)],
+            histnorm='probability density',  # Normalize to match normal curve
+            nbinsx=50,
+            showlegend=True
+        ))
+        
+        # Generate points for normal distribution curve
+        x_range = np.linspace(
+            model_data.min() - 0.5 * std,
+            model_data.max() + 0.5 * std,
+            100
+        )
+        normal_curve = stats.norm.pdf(x_range, mean, std)
+        
+        # Add normal distribution curve
+        fig.add_trace(go.Scatter(
+            x=x_range,
+            y=normal_curve,
+            mode='lines',
+            name=f'{model} Normal (μ={mean:.3f}, σ={std:.3f})',
+            line=dict(
+                color=colors[i % len(colors)],
+                width=2,
+                dash='dash'
+            ),
+            opacity=0.8,
+            showlegend=True
+        ))
+    
+    # Update layout
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#1e1e1e",
+        plot_bgcolor="#2d2d2d",
+        title={
+            'text': 'Time to First Token Distribution by Model<br><sub>Histograms with Normal Distribution Overlays</sub>',
+            'x': 0.5,
+            'xanchor': 'center'
+        },
+        xaxis_title='Time to First Token (seconds)',
+        yaxis_title='Probability Density',
+        barmode='overlay',  # Allow histograms to overlap
+        legend=dict(
+            orientation="v",
+            yanchor="top",
+            y=1,
+            xanchor="left",
+            x=1.02
+        ),
+        height=800,
+        # width=1000,
+        margin=dict(r=250)  # Extra margin for legend
+    )
+
+    # Update x and y axes
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.3)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.3)')
+    
+    return fig
+
+
 def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics):
     """Create visualizations for the report."""
     visualizations = {}
@@ -202,7 +394,7 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
         x='model_name',
         y='avg_cost',
         labels={'model_name': 'Model', 'avg_cost': 'Cost per Response (USD)'},
-        # title='Average Cost per Response by Model',
+        title='Using μ (Micro) Symbol for Small Numbers',
         color='avg_cost',
         color_continuous_scale='Viridis_r'  # Reversed so lower is better (green)
     )
@@ -223,7 +415,7 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
         index='model_name',
         columns='task_types',
         aggfunc='mean'
-    ).fillna(0)
+    ).infer_objects(copy=False).fillna(0)
 
     heatmap_fig = px.imshow(
         pivot_success,
@@ -300,12 +492,12 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
             fails['error'] = fails['judge_explanation'].fillna("Unknown").replace("", "Unknown")
             # Extract error categories using regex
             fails['error_category'] = fails['error'].apply(
-                lambda x: ' - '.join(list(set(re.findall(r'[A-Za-z]+', str(x))))) if pd.notnull(x) else "Unknown"
+                lambda x: '<br>'.join(list(set(re.findall(r'[A-Za-z-]+', str(x))))) if pd.notnull(x) else "Unknown"
             )
 
             counts = fails.groupby(['model_name', 'task_types', 'error_category']).size().reset_index(name='count')
             # counts['error_category'] = counts['error_category']
-
+            # if counts
             error_fig = px.treemap(
                 counts,
                 template="plotly_dark",  # Use the built-in dark template as a base
@@ -324,11 +516,11 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
                 plot_bgcolor="#2d2d2d",  # Slightly lighter than paper for contrast
                 )
 
-            visualizations['error_analysis'] = error_fig
+            visualizations['error_analysis'] = error_fig.to_html(full_html=False)
         else:
-            visualizations['error_analysis'] = go.Figure()
+            visualizations['error_analysis'] = '<div id="not-found">No Errors found in the Evaluation</div>'
     else:
-        visualizations['error_analysis'] = go.Figure()
+        visualizations['error_analysis'] = '<div id="not-found">No Jury Evaluation Found</div>'
 
     # Add this inside create_visualizations() function
     # Extract judge scores from the DataFrame
@@ -339,7 +531,7 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
     radar_charts = {}
 
     # Get all unique models and categories
-    unique_models = df['model_name'].unique()
+    unique_models = df['model_name'].dropna().unique()
     all_categories = set()
 
     # First, collect all categories across all data
@@ -444,7 +636,7 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
             # Create subplot with 2x2 grid
             fig = make_subplots(
                 rows=2, cols=2,
-                subplot_titles=("Success Rate", "Latency (Secs)", "Cost per Response (USD)", "Tokens per Second")
+                subplot_titles=("Success Rate", "Latency (Secs)", 'Cost per Response (USD)<br><span style="font-size: 12px;">Using μ (Micro) Symbol for Small Numbers</span>', "Tokens per Second")
             )
 
             # Sort data for each subplot
@@ -488,6 +680,11 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
     visualizations['task_charts'] = task_charts
     visualizations['integrated_analysis_table'] = create_integrated_analysis_table(model_task_metrics)
     visualizations['regional_performance'] = create_regional_performance_analysis(df)
+    
+    # Add TTFB histogram with normal distribution (only if sufficient data)
+    ttfb_histogram = create_ttfb_histogram_with_normal_distribution(df)
+    if ttfb_histogram is not None:
+        visualizations['ttfb_histogram'] = ttfb_histogram
 
     return visualizations
 
@@ -578,22 +775,114 @@ def generate_task_recommendations(model_task_metrics):
     return sorted(recommendations, key=lambda x: x['task'])
 
 
+def generate_ttfb_histogram_findings(df):
+    """
+    Generate key findings for the TTFB histogram analysis.
+    Returns either meaningful findings or a message about insufficient data.
+
+    Args:
+        df: DataFrame containing the benchmark data
+
+    Returns:
+        List of finding strings or single message about insufficient data
+    """
+    # Check if we have enough data
+    value_counts = df['model_name'].value_counts()
+    # Get values that appear more than 2000 times
+    frequent_values = value_counts[value_counts > 2000].index
+    # Filter the dataframe to only include rows where the column value is in our frequent_values list
+    df_match = df[df['model_name'].isin(frequent_values)]
+    if df_match.empty:
+        return ["Not enough data to perform measurements (need at minimum over 2000 measurements per model)"]
+
+    # Filter out any null values
+    df_clean = df_match[df_match['time_to_first_byte'].notna()].copy()
+
+    if df_clean.empty:
+        return ["No valid time_to_first_byte data found"]
+
+    findings = []
+
+    for model in df_clean['model_name'].unique().tolist():
+        df_model = df_clean[df_clean['model_name'] == model]
+        # Overall statistics
+        overall_mean = df_model['time_to_first_byte'].mean()
+        overall_std = df_model['time_to_first_byte'].std()
+        findings.append(f"Model <b>{model}</b> TTFT: μ={overall_mean:.3f}s, σ={overall_std:.3f}s across {len(df_clean)} measurements")
+
+    # Model-specific analysis
+    model_stats = df_clean.groupby('model_name')['time_to_first_byte'].agg(['mean', 'std', 'count']).reset_index()
+    model_stats = model_stats[model_stats['count'] >= 2000]  # Only models with sufficient data
+
+    if not model_stats.empty:
+        # Fastest model (lowest mean TTFB)
+        fastest_model = model_stats.loc[model_stats['mean'].idxmin()]
+        findings.append(f"Fastest model: <b>{fastest_model['model_name']}</b> with {fastest_model['mean']:.3f}s average TTFB")
+
+        # Most consistent model (lowest standard deviation)
+        most_consistent = model_stats.loc[model_stats['std'].idxmin()]
+        findings.append(f"Most consistent model: <b>{most_consistent['model_name']}</b> with {most_consistent['std']:.3f}s standard deviation")
+
+        # Model with highest variability
+        most_variable = model_stats.loc[model_stats['std'].idxmax()]
+        findings.append(f"Most variable model: <b>{most_variable['model_name']}</b> with {most_variable['std']:.3f}s standard deviation")
+
+        # Distribution characteristics
+        # Check for normality using coefficient of variation
+        model_stats['cv'] = model_stats['std'] / model_stats['mean']  # Coefficient of variation
+
+        # Models with good normal distribution characteristics (low CV)
+        well_distributed = model_stats[model_stats['cv'] < 0.3]  # CV < 30% indicates good consistency
+        if not well_distributed.empty:
+            best_distributed = well_distributed.loc[well_distributed['cv'].idxmin()]
+            findings.append(f"Best distribution characteristics: <b>{best_distributed['model_name']}</b> (Coefficient of Variation/CV={best_distributed['cv']:.2f})")
+
+        # Performance spread analysis
+        fastest_mean = model_stats['mean'].min()
+        slowest_mean = model_stats['mean'].max()
+        performance_spread = ((slowest_mean - fastest_mean) / fastest_mean) * 100
+        findings.append(f"Performance spread: {performance_spread:.1f}% difference between fastest and slowest models")
+        for model in df_clean['model_name'].unique().tolist():
+            # Outlier detection
+            df_model = df_clean[df_clean['model_name'] == model]
+            q1 = df_model['time_to_first_byte'].quantile(0.25)
+            q3 = df_model['time_to_first_byte'].quantile(0.75)
+            iqr = q3 - q1
+            outlier_threshold = q3 + 1.5 * iqr
+            outliers = df_model[df_model['time_to_first_byte'] > outlier_threshold]
+            if not outliers.empty:
+                outlier_pct = (len(outliers) / len(df_clean)) * 100
+                findings.append(f"Outliers for <b>{model}</b>: {len(outliers)} measurements ({outlier_pct:.1f}%) exceed {outlier_threshold:.3f}s")
+
+    return findings
+
 
 def create_html_report(output_dir, timestamp):
     """Generate HTML benchmark report with task-specific analysis."""
+    # Ensure output_dir is an absolute path
+    if isinstance(output_dir, str):
+        if not os.path.isabs(output_dir):
+            output_dir = PROJECT_ROOT / output_dir
+        output_dir = Path(output_dir)
+    
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Using output directory: {output_dir}")
 
-    # Set up logging for report generation
-    log_dir = 'logs'
+    # Use log directory from project root
+    log_dir = PROJECT_ROOT / "logs"
     os.makedirs(log_dir, exist_ok=True)
-    report_log_file = f"{log_dir}/report_generation-{timestamp}.log"
+    report_log_file = log_dir / f"report_generation-{timestamp}.log"
     logger.info(f"Report generation logs will be saved to: {report_log_file}")
 
     # Load and process data
     logger.info("Loading and processing data...")
-
-    df = load_data(output_dir)
+    try:
+        df = load_data(output_dir)
+        logger.info(f"Loaded data with {len(df)} records from {output_dir}")
+    except Exception as e:
+        logger.error(f"Error loading data: {str(e)}")
+        raise
 
     # Calculate metrics
     logger.info("Calculating model-task metrics...")
@@ -615,6 +904,9 @@ def create_html_report(output_dir, timestamp):
 
     logger.info("Generating recommendations...")
     task_recommendations = generate_task_recommendations(model_task_metrics)
+
+    logger.info("Generating TTFT histogram findings...")
+    ttfb_findings = generate_ttfb_histogram_findings(df)
 
     # Prepare task analysis data for template
     task_analysis = []
@@ -657,17 +949,23 @@ def create_html_report(output_dir, timestamp):
                               visualizations.get('judge_score_radars', {}).items()},
 
         # Error and regional Analysis
-        error_analysis_div=visualizations['error_analysis'].to_html(full_html=False),
+        error_analysis_div=visualizations['error_analysis'],
         integrated_analysis_table_div=visualizations['integrated_analysis_table'].to_html(full_html=False),
         regional_performance_div=visualizations['regional_performance'].to_html(full_html=False),
+        
+        # TTFB histogram (only if sufficient data)
+        ttfb_histogram_div=visualizations['ttfb_histogram'].to_html(full_html=False) if 'ttfb_histogram' in visualizations else '',
+        ttfb_findings=ttfb_findings,
+        
         # Recommendations
         task_recommendations=task_recommendations,
     )
 
     # Write report to file
     out_file = output_dir / f"llm_benchmark_report_{timestamp}.html"
+    logger.info(f"Writing HTML report to: {out_file}")
     out_file.write_text(html, encoding="utf-8")
-    logger.info(f"HTML report written to: {out_file}")
+    logger.info(f"HTML report written successfully")
 
     return out_file
 
@@ -693,13 +991,21 @@ def extract_judge_scores(json_str):
 def create_integrated_analysis_table(model_task_metrics):
     """
     Creates an interactive table that integrates performance, speed, and cost metrics
-    for each model and task type with optimal range highlighting.
+    for each model and task type with optimal range highlighting using a green/yellow/red color scheme.
     """
-    # Define optimal ranges for each metric
-    optimal_ranges = {
-        'success_rate': 0.95,  # Success rate >= 95% is considered good
-        'avg_latency': 1,  # Latency <= 1s is considered good
-        'avg_cost': 0.5,  # Cost <= $0.5 is considered good
+    # Define thresholds for each metric (good, medium, poor)
+    thresholds = {
+        'success_rate': {'good': 0.95, 'medium': 0.85},  # >=95% good, >=85% medium, <85% poor
+        'avg_latency': {'good': 0.6, 'medium': 1.2},  # <=1s good, <=2s medium, >2s poor
+        'avg_cost': {'good': 0.5, 'medium': 1.0},  # <=\$0.5 good, <=\$1 medium, >\$1 poor
+        'avg_otps': {'good': 100, 'medium': 35},
+    }
+
+    # Define colors
+    colors = {
+        'good': '#c6efce',  # green
+        'medium': '#ffffcc',  # yellow
+        'poor': '#ffcccc'  # red
     }
 
     # Prepare the data for the table
@@ -725,6 +1031,23 @@ def create_integrated_analysis_table(model_task_metrics):
     # Create figure
     fig = go.Figure()
 
+    # Helper function to determine color based on value and thresholds
+    def get_color(value, metric):
+        if metric == 'success_rate' or metric == 'avg_otps':
+            if value >= thresholds[metric]['good']:
+                return colors['good']
+            elif value >= thresholds[metric]['medium']:
+                return colors['medium']
+            else:
+                return colors['poor']
+        else:  # For latency and cost, lower is better
+            if value <= thresholds[metric]['good']:
+                return colors['good']
+            elif value <= thresholds[metric]['medium']:
+                return colors['medium']
+            else:
+                return colors['poor']
+
     # Create table cells with conditional formatting
     fig.add_trace(go.Table(
         header=dict(
@@ -745,22 +1068,23 @@ def create_integrated_analysis_table(model_task_metrics):
             ],
             align='left',
             font=dict(size=11),
-            # Conditional formatting based on optimal ranges
+            # Conditional formatting based on thresholds
             fill_color=[
                 ['white'] * len(table_data),  # Model column (no coloring)
                 ['white'] * len(table_data),  # Task column (no coloring)
-                # Success rate coloring
-                ['#c6efce' if sr >= optimal_ranges['success_rate'] else '#ffcccc' for sr in table_data['success_rate']],
-                # Latency coloring (lower is better)
-                ['#c6efce' if lt <= optimal_ranges['avg_latency'] else '#ffcccc' for lt in table_data['avg_latency']],
-                # Cost coloring (lower is better)
-                ['#c6efce' if cost <= optimal_ranges['avg_cost'] else '#ffcccc' for cost in table_data['avg_cost']],
+                # Success rate coloring (three-color)
+                [get_color(sr, 'success_rate') for sr in table_data['success_rate']],
+                # Latency coloring (three-color)
+                [get_color(lt, 'avg_latency') for lt in table_data['avg_latency']],
+                # Cost coloring (three-color)
+                [get_color(cost, 'avg_cost') for cost in table_data['avg_cost']],
                 # OTPS coloring (just use white)
-                ['white'] * len(table_data),
-                # Composite score coloring based on quartiles
-                ['#c6efce' if score >= table_data['composite_score'].quantile(0.75) else
-                 '#fde9d9' if score >= table_data['composite_score'].quantile(0.5) else
-                 '#ffcccc' for score in table_data['composite_score']]
+                # ['white'] * len(table_data),
+                [get_color(tps, 'avg_otps') for tps in table_data['avg_otps']],
+                # Composite score coloring based on quantiles
+                [colors['good'] if score >= table_data['composite_score'].quantile(0.67) else
+                 colors['medium'] if score >= table_data['composite_score'].quantile(0.33) else
+                 colors['poor'] for score in table_data['composite_score']]
             ]
         )
     ))
@@ -772,7 +1096,7 @@ def create_integrated_analysis_table(model_task_metrics):
         width=900,
         height=len(table_data) * 25 + 100,  # Dynamic height based on number of rows
         margin=dict(l=20, r=20, b=20, t=40),
-        template="ggplot2",  # Use the built-in dark template as a base
+        template="ggplot2",
     )
 
     return fig
@@ -841,7 +1165,7 @@ def create_regional_performance_analysis(df):
         'us-gov-west-1': pytz.timezone('America/Los_Angeles'),  # US-West
     }
 
-    df = df[~df['model_id'].str.contains('/', case=False, na=False)]
+    # df = df[df['model_id'].str.contains('bedrock', case=False, na=False)]
     # Add local time information
     def get_local_time(row):
         if row['region'] in region_timezones:
@@ -863,19 +1187,20 @@ def create_regional_performance_analysis(df):
     # Add local time columns
     time_data = df.apply(get_local_time, axis=1)
     df = pd.concat([df, time_data], axis=1)
-
+    df['average_input_output_token_size'] = df['input_tokens'] + df['output_tokens']
     # Group data by region
     regional_metrics = df.groupby(['region', 'task_types']).agg({
+        'average_input_output_token_size': 'mean',
         'time_to_first_byte': 'mean',
         'time_to_last_byte': 'mean',
         'response_cost': 'mean',
-        # 'task_success': 'mean',
         'inference_request_count': 'mean',
         'throughput_tps': 'mean',
         'hour_of_day': lambda x: x.mode()[0] if not x.empty else -1,
         'local_time': lambda x: x.iloc[0] if not x.empty else 'Unknown'
     }).reset_index()
 
+    regional_metrics['average_input_output_token_size'] = regional_metrics['average_input_output_token_size'].round(1).astype("string")
     # Calculate time of day periods
     def get_time_period(hour):
         if hour == -1:
@@ -902,7 +1227,7 @@ def create_regional_performance_analysis(df):
             (1 - (regional_metrics['response_cost'] / max_cost))
     )
 
-    regional_metrics['composite_label'] = regional_metrics['region'] + ":<br>" + regional_metrics['task_types']
+    regional_metrics['composite_label'] = regional_metrics['region'] + "<br>Mean of Total Token Size: " + regional_metrics['average_input_output_token_size']
 
     # Normalize the composite score
     min_score = regional_metrics['composite_score'].min()
@@ -913,12 +1238,19 @@ def create_regional_performance_analysis(df):
     fig = make_subplots(
         rows=2,
         cols=1,
-        subplot_titles=("Latency vs Cost by Region", "Hourly Performance by Region"),
+        subplot_titles=("Latency vs Cost by Region", 'Hourly Performance by Region<br><span style="font-size: 12px;">Using μ (Micro) Symbol for Small Numbers</span>'),
         vertical_spacing=0.30,  # Increased for more space between plots
         specs=[[{"type": "scatter"}], [{"type": "bar"}]],
     )
 
     fig.update_layout(template="plotly_dark")
+
+    # Calculate min and max for scaling
+    min_count = regional_metrics['inference_request_count'].min()
+    max_count = regional_metrics['inference_request_count'].max()
+
+    # Create a more dramatic size scale (20-100 instead of default)
+    size_values = 20 + ((regional_metrics['inference_request_count'] - min_count) / (((max_count - min_count) * 50) + 1))
 
     # Add scatter plot for latency vs cost
     scatter = go.Scatter(
@@ -926,8 +1258,8 @@ def create_regional_performance_analysis(df):
         y=regional_metrics['response_cost'],
         mode='markers+text',
         marker=dict(
-            # size=regional_metrics['task_success'] * 100, #Size based on success rate
-            size=regional_metrics['inference_request_count'] * 50,
+            size=size_values, #Size based on success rate
+            # size=regional_metrics['inference_request_count'] * 50,
             color=regional_metrics['composite_score'],
             colorscale='Viridis',
             colorbar=dict(title="Composite Score", y=0.75, len=0.5),  # Positioned in top half
@@ -939,7 +1271,7 @@ def create_regional_performance_analysis(df):
         '<b>%{text}</b><br>' +
         'Latency: %{x:.2f}s<br>' +
         'Cost: $%{y:.4f}<br>' +
-        'Average Number of Retries: ' + regional_metrics['inference_request_count'].apply(lambda x: str(round(x,2)))+ '<br>' +  #%{marker.size:.1f}<br>' +
+        'Average Number of Retries: ' + regional_metrics['inference_request_count'].apply(lambda x: str(round(x,2)))+ '<br>' +
         'Local Time at Inference: ' + regional_metrics['local_time'] + '<br>' +
         'Time Period: ' + regional_metrics['time_period'] + '<br>',
         name='',
@@ -1034,15 +1366,19 @@ def create_regional_performance_analysis(df):
         borderpad=10,
         align="center"
     )
-
-
     return fig
 
 
 
 if __name__ == "__main__":
-    OUTPUT_DIR = Path(
-        "./benchmark_results")
+    # Use absolute path relative to project root
+    OUTPUT_DIR = PROJECT_ROOT / "benchmark_results"
     logger.info(f"Starting LLM benchmark report generation with timestamp: {TIMESTAMP}")
-    report_file = create_html_report(OUTPUT_DIR, TIMESTAMP)
-    logger.info(f"Report generation complete: {report_file}")
+    try:
+        report_file = create_html_report(OUTPUT_DIR, TIMESTAMP)
+        logger.info(f"Report generation complete: {report_file}")
+        print(f"Report generated successfully: {report_file}")
+    except Exception as e:
+        logger.error(f"Error generating report: {str(e)}", exc_info=True)
+        print(f"Error generating report: {str(e)}")
+        sys.exit(1)

@@ -27,14 +27,14 @@ The system is designed for scalability, automatically aggregating results from m
 
 This project provides tools for:
 
-- Running performance benchmarks across multiple LLM models (Amazon Bedrock and OpenAI models)
+- Running performance benchmarks across multiple LLM models (Amazon Bedrock and third-party models)
 - Using LLM-as-judge methodology where models evaluate other models' responses
 - Measuring key performance metrics (latency, throughput, cost, response quality)
 - Visualizing results and generating interactive reports
 
 ## Features
 
-- **Multi-model benchmarking**: Compare different models side-by-side, including OpenAI models
+- **Multi-model benchmarking**: Compare different models side-by-side, including third-party models
 - **LLM-as-judge evaluation**: Leverage LLMs to evaluate other models' responses
 - **Comprehensive metrics**: Track latency, throughput, cost, and quality of responses
 - **Interactive visualizations**: Generate holistic HTML reports
@@ -49,18 +49,18 @@ cd 360-eval
 pip install -r requirements.txt
 ```
 
-### OpenAI API Setup
+### Third Party API Setup
 
-To use OpenAI models in the benchmarking process:
+To use third-party models in the benchmarking process:
 
 1. Create a `.env` file in the project root directory
-2. Add your OpenAI API key in the following format:
+2. Add your 3P API key in the following format:
 
 ```
 OPENAI_API='your_openai_api_key_here'
+GCP_KEY='your_gpc_api_key_here'
 ```
 
-The framework will automatically detect and use your OpenAI API key when benchmarking OpenAI models.
 
 ## Evaluation Unit Data Format
 
@@ -113,8 +113,8 @@ The benchmarking tool requires to input the model profiles in JSONL format, with
 
 - `model_id`: Target model identifier (example: "amazon.nova-pro-v1:0")
   - Specifies which model will process the prompt
-  - For Bedrock models, use the full model ID (e.g., "amazon.nova-pro-v1:0")
-  - For OpenAI models, use identifiers like "openai/gpt-4" or "openai/gpt-3.5-turbo"
+  - For Bedrock models, use the full model ID and provider (e.g., "bedrock/us.amazon.nova-pro-v1:0")
+  - For third-party models, use identifiers like "openai/gpt-4" or "openai/gpt-3.5-turbo"
 
 - `region`: AWS region for Bedrock models (example: "us-east-1")
   - Region where the Bedrock model is available
@@ -131,9 +131,8 @@ The benchmarking tool requires to input the model profiles in JSONL format, with
 Example:
 ```json
 {
-  "model_id": "amazon.nova-pro-v1:0",
+  "model_id": "bedrock/us.amazon.nova-pro-v1:0",
   "region": "us-east-1",
-  "inference_profile": "standard",
   "input_token_cost": 0.0008,
   "output_token_cost": 0.0032
 }
@@ -216,7 +215,9 @@ The reports include:
 
 
 ## Project Structure
-
+- `assets/html_template.txt`: Web report template
+- `logs`: Logs of the evaluation session are stored here
+- `benchmark_results/unprocessed`: Records that failed to be evaluated are stored here
 - `src/benchmarks_run.py`: Main benchmarking engine
 - `src/utils.py`: Utility functions for API interactions and data processing
 - `src/visualize_results.py`: Data visualization and reporting tools
