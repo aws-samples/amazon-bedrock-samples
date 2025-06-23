@@ -5,7 +5,6 @@
 
 echo "🚀 Starting 360-Eval Dashboard..."
 echo "📊 Dashboard will be available at: http://localhost:8501"
-echo "🌙 Using dark theme for better visualization"
 echo ""
 
 # Check if streamlit is installed

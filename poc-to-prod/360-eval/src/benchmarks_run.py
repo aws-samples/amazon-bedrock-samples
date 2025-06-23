@@ -464,7 +464,6 @@ def main(
     scenarios = expand_scenarios(raw_with_models, cfg)
     logging.info(f"Expanded to {len(scenarios)} scenarios")
 
-    all_dfs = []
     for run in range(1, experiment_counts+1):
         logging.info(f"=== Run {run}/{experiment_counts} ===")
         try:
@@ -481,7 +480,6 @@ def main(
                 out_csv = os.path.join(output_dir, f"invocations_{run}_{ts}_{uuid_}.csv")
                 df.to_csv(out_csv, index=False)
                 logging.info(f"Run {run} results saved to {out_csv}")
-                all_dfs.append(df)
             except Exception as e:
                 logging.error(f"Error saving results for run {run}: {str(e)}", exc_info=True)
         except Exception as e:
