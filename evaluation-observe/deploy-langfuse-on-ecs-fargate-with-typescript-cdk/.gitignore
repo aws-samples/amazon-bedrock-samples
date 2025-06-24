@@ -42,5 +42,6 @@ Thumbs.db
 dist
 cdk.out
 .cdk.staging
+cdk.context.json
 
 config.py

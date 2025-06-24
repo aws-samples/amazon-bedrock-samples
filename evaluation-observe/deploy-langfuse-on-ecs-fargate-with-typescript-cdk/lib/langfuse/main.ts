@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT-0
 // External Dependencies:
 import * as cdk from "aws-cdk-lib";
+import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as s3 from "aws-cdk-lib/aws-s3";
@@ -13,11 +14,11 @@ import { Construct } from "constructs";
 // Local Dependencies:
 import { CacheCluster } from "./cache";
 import { ClickHouseDeployment } from "./clickhouse";
+import { addLangfuseCognitoClient, CognitoOAuthSecret } from "./cognito";
 import { PublicVpcLoadBalancer } from "./load-balancer";
 import { OLTPDatabase } from "./oltp";
 import { LangfuseWebService } from "./web";
 import { LangfuseWorkerService } from "./worker";
-import { CognitoAuth } from "./cognito";
 
 export interface ILangfuseDeploymentProps {
   /**
@@ -38,6 +39,17 @@ export interface ILangfuseDeploymentProps {
    * @default "cache.t3.small"
    */
   cacheNodeType?: string;
+  /**
+   * Highly recommended: Use Amazon Cognito for authentication instead of Langfuse's default
+   *
+   * The user pool must have been configured with a "domain" to work properly. See
+   * `cognito.BasicCognitoUserPoolWithDomain` for a simple example.
+   *
+   * @example new cognito.BasicCognitoUserPoolWithDomain(this, "UserPool").userPool
+   *
+   * @default - Use Langfuse's built-in authentication, ⚠️ with open sign-up by default!
+   */
+  cognitoUserPool?: cognito.UserPool;
   /**
    * CPU allocation for the ECS Fargate container running Langfuse's (ClickHouse) OLAP RDBMS
    *
@@ -74,8 +86,6 @@ export interface ILangfuseDeploymentProps {
    * Extra environment variables to configure on Langfuse services' containers
    */
   langfuseEnvironment?: { [key: string]: string };
-
-  // langfuseEnvironment: { [key: 'AUTH_DISABLE_SIGNUP']: 'true' };
   /**
    * Name to use for the private DNS namespace created for service discovery
    *
@@ -125,14 +135,6 @@ export interface ILangfuseDeploymentProps {
    * @default 4096
    */
   workerMemoryMiB?: number;
-  /**
-   * In case of Cognito authentication
-   */
-  useCognito?: boolean
-  existingUserPoolId?: string
-  createDomain?: boolean;
-  userPoolDomainPrefix?: string;
-
 }
 
 /**
@@ -233,7 +235,20 @@ export class LangfuseDeployment extends Construct {
       },
     ]);
 
-    const cognitoAuth = new CognitoAuth(this, 'CognitoAuth', {loadBalancerUrl: this.loadBalancer.url})
+    let cognitoClientSecret: secretsmanager.Secret | undefined;
+    if (props.cognitoUserPool) {
+      const cognitoClient = addLangfuseCognitoClient(
+        props.cognitoUserPool,
+        "Langfuse",
+        {
+          baseUrl: this.loadBalancer.url,
+        },
+      );
+      cognitoClientSecret = new CognitoOAuthSecret(this, "CognitoAuthSecret", {
+        client: cognitoClient,
+        userPool: props.cognitoUserPool,
+      });
+    }
 
     const oltpDb = new OLTPDatabase(this, "OLTP", {
       vpc: props.vpc,
@@ -365,7 +380,7 @@ export class LangfuseDeployment extends Construct {
       vpc: props.vpc,
       s3BatchExportPrefix: "langfuse-exports/",
       tags: props.tags,
-      authCognitoSecret: cognitoAuth.cognitoSecret,
+      authCognitoSecret: cognitoClientSecret,
     });
   }
 

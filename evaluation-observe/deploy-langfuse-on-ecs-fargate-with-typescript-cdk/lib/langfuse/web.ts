@@ -34,16 +34,21 @@ interface ILangfuseWebServiceProps extends ILangfuseServiceSharedProps {
    */
   nextAuthSecret: secretsmanager.ISecret;
   /**
+   * Optional Secrets Manager Secret storing Cognito authentication parameters
+   *
+   * Providing this parameter will set up Langfuse environment variables to use Cognito and disable
+   * open user sign-up. The secret should be a key-value format containing at least
+   * `clientId`, `clientSecret`, and `issuer` fields.
+   *
+   * @default None
+   */
+  authCognitoSecret?: secretsmanager.ISecret;
+  /**
    * Source container image name for the worker
    *
    * @default 'langfuse/langfuse'
    */
   imageName?: string;
-
-  /**
-   * In case of Cognito authentication
-   */
-  authCognitoSecret?: secretsmanager.ISecret
 }
 
 /**
@@ -58,9 +63,9 @@ export class LangfuseWebService extends LangfuseServiceBase {
           ? props.loadBalancer.url
           : `http://0.0.0.0:${LANGFUSE_WEB_PORT}`,
         ...(props.authCognitoSecret && {
-          AUTH_DISABLE_SIGNUP: 'false',
-          AUTH_COGNITO_ALLOW_ACCOUNT_LINKING: 'true',
-          AUTH_DISABLE_USERNAME_PASSWORD: 'true'
+          AUTH_COGNITO_ALLOW_ACCOUNT_LINKING: "true",
+          AUTH_DISABLE_SIGNUP: "false",
+          AUTH_DISABLE_USERNAME_PASSWORD: "true",
         }),
         ...(props.environment || {}),
       },
@@ -87,15 +92,28 @@ export class LangfuseWebService extends LangfuseServiceBase {
       secrets: {
         NEXTAUTH_SECRET: ecs.Secret.fromSecretsManager(props.nextAuthSecret),
         ...(props.authCognitoSecret && {
-          AUTH_COGNITO_CLIENT_ID: ecs.Secret.fromSecretsManager(props.authCognitoSecret, 'AUTH_COGNITO_CLIENT_ID'),
-          AUTH_COGNITO_CLIENT_SECRET: ecs.Secret.fromSecretsManager(props.authCognitoSecret, 'AUTH_COGNITO_CLIENT_SECRET'),
-          AUTH_COGNITO_ISSUER: ecs.Secret.fromSecretsManager(props.authCognitoSecret, 'AUTH_COGNITO_ISSUER')
-        })
+          AUTH_COGNITO_CLIENT_ID: ecs.Secret.fromSecretsManager(
+            props.authCognitoSecret,
+            "clientId",
+          ),
+          AUTH_COGNITO_CLIENT_SECRET: ecs.Secret.fromSecretsManager(
+            props.authCognitoSecret,
+            "clientSecret",
+          ),
+          AUTH_COGNITO_ISSUER: ecs.Secret.fromSecretsManager(
+            props.authCognitoSecret,
+            "issuer",
+          ),
+        }),
       },
       serviceName: "web",
     });
 
-    const sec = ecs.Secret.fromSecretsManager(props.nextAuthSecret)
+    if (props.authCognitoSecret)
+      props.authCognitoSecret.grantRead(
+        this.fargateService.taskDefinition.taskRole,
+      );
+
     const securityGroup = new ec2.SecurityGroup(this, "WebSG", {
       vpc: props.vpc,
       allowAllOutbound: false,
