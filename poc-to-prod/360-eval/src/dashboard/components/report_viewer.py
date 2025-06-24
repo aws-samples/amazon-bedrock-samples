@@ -41,8 +41,8 @@ class ReportViewerComponent:
     
     def _get_available_reports(self):
         """Get all available reports from status files (now in logs directory)."""
-        from ..utils.constants import STATUS_FILES_DIR
-        status_dir = Path(STATUS_FILES_DIR)
+        from ..utils.constants import DEFAULT_OUTPUT_DIR
+        status_dir = Path(DEFAULT_OUTPUT_DIR)
         available_reports = []
         
         # Find all status files (both evaluation and comprehensive reports) in logs directory
