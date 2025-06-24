@@ -817,7 +817,7 @@ def generate_ttfb_histogram_findings(df):
     if not model_stats.empty:
         # Fastest model (lowest mean TTFB)
         fastest_model = model_stats.loc[model_stats['mean'].idxmin()]
-        findings.append(f"Fastest model: <b>{fastest_model['model_name']}</b> with {fastest_model['mean']:.3f}s average TTFB")
+        findings.append(f"Fastest model: <b>{fastest_model['model_name']}</b> with {fastest_model['mean']:.3f}s average TTFT")
 
         # Most consistent model (lowest standard deviation)
         most_consistent = model_stats.loc[model_stats['std'].idxmin()]
@@ -926,7 +926,7 @@ def create_html_report(output_dir, timestamp):
     # Format the datetime object into the desired string representation
     formatted_date = datetime_object.strftime("%B %d, %Y at %I:%M %p")
     # Add this to extract unique models
-    unique_models = df['model_name'].unique().tolist()
+    unique_models = df['model_name'].dropna().unique().tolist()
     html = Template(HTML_TEMPLATE).render(
         timestamp=formatted_date,
 
