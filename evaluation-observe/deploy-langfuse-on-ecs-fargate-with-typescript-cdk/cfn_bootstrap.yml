@@ -11,6 +11,16 @@ Description: |-
   Grants broad permissions to CodeBuild - not recommended for use in production environments.
 
 Parameters:
+  AuthType:
+    Type: String
+    AllowedValues:
+      - 'cognito'
+      - 'langfuse'
+    Default: 'cognito'
+    Description: >-
+      We recommend 'cognito' to manage your Langfuse users through Amazon Cognito. The 'langfuse'
+      native auth will have public user sign-up enabled by default through the web UI!
+
   CodeRepo:
     Type: String
     Default: https://github.com/aws-samples/amazon-bedrock-samples
@@ -34,6 +44,10 @@ Parameters:
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
+      - Label:
+          default: Solution Settings
+        Parameters:
+          - AuthType
       - Label:
           default: Source Code Location
         Parameters:
@@ -143,6 +157,9 @@ Resources:
         ComputeType: BUILD_GENERAL1_LARGE
         EnvironmentVariables:
           # Pass CFn stack parameters through to the deploy job:
+          - Name: LANGFUSE_AUTH_TYPE
+            Type: PLAINTEXT
+            Value: !Ref AuthType
           - Name: PUBLIC_REPO
             Type: PLAINTEXT
             Value: !Ref CodeRepo

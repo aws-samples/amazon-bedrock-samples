@@ -4,6 +4,7 @@ Langfuse is an Open Source LLM Engineering platform that helps teams collaborati
 
 This repository demonstrates how to deploy a self-hosted Langfuse solution using AWS Fargate for Amazon ECS. It is designed for initial experimentation and is not suitable for production use. Additionally, it does not include all capabilities available in the Langfuse Enterprise Edition. For production-ready deployments, check out the [Langfuse offerings through AWS Marketplace](https://aws.amazon.com/marketplace/seller-profile?id=seller-nmyz7ju7oafxu).
 
+
 ## Architecture overview
 
 This deployment involves multiple AWS services to host Langfuse components as described in their [official documentation on self-hosting](https://langfuse.com/self-hosting#architecture). In this sample, shown also in the architecture diagram below, we use:
@@ -36,11 +37,25 @@ This deployment involves multiple AWS services to host Langfuse components as de
 
 This flow ensures efficient handling of requests while leveraging AWS's managed services for scalability, reliability, and security.
 
+
 ## Deployment option 1: Quick start
 
 If you don't have CDK development tooling set up already, and would just like to deploy the Langfuse architecture with the default settings - you can use the [AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html) template in [cfn_bootstrap.yml](./cfn_bootstrap.yml): Open the [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home?#/stacks/create) in your target AWS Account and Region, click **Create stack**, and upload the template file.
 
 This "bootstrap" stack sets up a CI project in [AWS CodeBuild](https://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html) which pulls the sample code and performs the below app CDK setup steps for you automatically in the Cloud - with no local development environment required. ⚠️ **Note** though, that the CodeBuild project is granted *broad permissions* to deploy all the sample's AWS resources on your behalf - so is not recommended for use in production environments as-is.
+
+
+## After deployment: Getting started
+
+You can find the URL to access your Langfuse UI from the `LangfuseUrl` "Output" of your stack in [CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html).
+
+If you deployed with the default, recommended configuration (see [bin/demo.ts](bin/demo.ts)) using Amazon Cognito for authentication, you'll need to head on over to your created user pool in the [Amazon Cognito User Pools console](https://console.aws.amazon.com/cognito/v2/idp/user-pools) to set yourself up a username and password for logging in to Langfuse.
+
+If you *disabled* Cognito during deployment, you can simply "Sign up" from your Langfuse URL.
+
+> ⚠️ **Warning:** Allowing public open sign-up is not recommended! you could also consider re-deploying the `LangfuseDemo` construct with `langfuseEnvironment: {'AUTH_DISABLE_SIGNUP': 'true'}` to disable it, after creating your first admin user.
+
+
 
 ## Deployment option 2: Developer setup (Suggested workflow)
 

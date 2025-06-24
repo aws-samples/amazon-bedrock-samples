@@ -286,6 +286,7 @@ export class LangfuseServiceBase extends Construct {
       ...(props.environment || {}),
     };
     if (props.s3BatchExportPrefix) {
+      taskEnv.LANGFUSE_S3_BATCH_EXPORT_BUCKET = props.s3Bucket.bucketName;
       taskEnv.LANGFUSE_S3_BATCH_EXPORT_PREFIX = props.s3BatchExportPrefix;
       taskEnv.LANGFUSE_S3_BATCH_EXPORT_REGION = cdk.Stack.of(this).region;
     }
