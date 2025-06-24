@@ -1,6 +1,9 @@
 # Ignore python notebook checkpoints
 .ipynb_checkpoints
 
+#Ignore pycache
+__pycache__
+
 # Ignore python venv folder
 .venv
 
