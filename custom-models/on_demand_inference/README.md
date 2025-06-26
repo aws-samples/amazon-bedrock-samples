@@ -87,7 +87,7 @@ This notebook demonstrates the complete fine-tuning and deployment process:
 - Remember to clean up resources after testing
 
 ⚠️ **Regional Requirements:**
-- Nova Micro fine-tuning is only available in us-west-2 region
+- Nova Micro fine-tuning is only available in us-east-1 region
 - Ensure your AWS resources are in the correct region
 
 ⚠️ **Data Limits:**
