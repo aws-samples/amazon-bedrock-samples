@@ -7,9 +7,9 @@ from pathlib import Path
 PROJECT_ROOT = Path(os.path.abspath(__file__)).parents[3]
 
 # Default directories - using absolute paths
-DEFAULT_OUTPUT_DIR = str(PROJECT_ROOT / "benchmark_results")
+DEFAULT_OUTPUT_DIR = str(PROJECT_ROOT / "benchmark-results")
 DEFAULT_PROMPT_EVAL_DIR = str(PROJECT_ROOT / "prompt-evaluations")
-CONFIG_DIR = str(PROJECT_ROOT / "config")
+CONFIG_DIR = str(PROJECT_ROOT / "default-config")
 LOGS_DIR = str(PROJECT_ROOT / "logs")
 STATUS_FILES_DIR = str(PROJECT_ROOT / "logs")  # Status files now saved in logs directory
 

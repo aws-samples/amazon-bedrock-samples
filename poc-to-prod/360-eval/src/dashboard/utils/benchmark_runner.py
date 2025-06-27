@@ -67,8 +67,13 @@ def run_evaluations_linearly(evaluation_configs):
         # Add evaluations to queue
         for eval_config in evaluation_configs:
             eval_id = eval_config["id"]
+            eval_name = eval_config["name"]
             # Mark as queued
             update_evaluation_status(eval_id, "queued", 0)
+            # Create status file immediately to persist queued evaluations
+            composite_id = f"{eval_id}_{eval_name}"
+            status_file = Path(STATUS_FILES_DIR) / f"eval_{composite_id}_status.json"
+            _update_status_file(status_file, "queued", 0, evaluation_config=eval_config)
             _evaluation_queue.append(eval_config.copy())
             dashboard_logger.info(f"Queued evaluation: '{eval_config['name']}' (ID: {eval_id})")
         

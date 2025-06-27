@@ -91,14 +91,14 @@ class EvaluationMonitorComponent:
             # Show currently running evaluation
             if queue_status["current_evaluation"]:
                 current = queue_status["current_evaluation"]
-                st.info(f"▶️ Currently Running: **{current['name']}** (ID: {current['id']})")
+                st.info(f"▶️ Currently Running: **{current['name']}**")
             
             # Show queued evaluations
             if queue_status["queue_length"] > 0:
                 st.info(f"⏳ Queued Evaluations: **{queue_status['queue_length']}**")
                 with st.expander("View Queued Evaluations"):
                     for i, queued_eval in enumerate(queue_status["queued_evaluations"], 1):
-                        st.write(f"{i}. {queued_eval['name']} (ID: {queued_eval['id']})") 
+                        st.write(f"{i}. {queued_eval['name']}")
             
             st.divider()
         

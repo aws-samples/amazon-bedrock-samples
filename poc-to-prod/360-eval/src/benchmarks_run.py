@@ -391,7 +391,7 @@ def main(
     
     # Create logs directory with absolute path
     logs_dir = os.path.join(project_root, "logs")
-    config_dir = os.path.join(project_root, "config")
+    config_dir = os.path.join(project_root, "default-config")
     os.makedirs(logs_dir, exist_ok=True)
     
     # Setup logging
@@ -447,7 +447,7 @@ def main(
                 "task_types":                           js["task"]["task_type"],
                 "task_criteria":                        js["task"]["task_criteria"],
                 "golden_answer":                        js.get("golden_answer", ""),
-                "configured_output_tokens_for_request": js.get("expected_output_tokens",200),
+                "configured_output_tokens_for_request": js.get("expected_output_tokens", 200),
                 "region":                               js.get("region", "us-east-1"),
             })
     if not raw:
@@ -513,7 +513,7 @@ def main(
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Advanced Unified LLM Benchmarking Tool")
     p.add_argument("input_file",                  help="JSONL file with scenarios")
-    p.add_argument("--output_dir",                default="benchmark_results")
+    p.add_argument("--output_dir",                default="benchmark-results")
     p.add_argument("--report",                    type=lambda x: x.lower() == 'true', default=True)
     p.add_argument("--parallel_calls",            type=int, default=4)
     p.add_argument("--invocations_per_scenario",  type=int, default=2)

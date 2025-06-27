@@ -57,7 +57,7 @@ class EvaluationSetupComponent:
             
             # Preview CSV data
             st.subheader("Data Preview")
-            st.dataframe(preview_csv_data(df))
+            st.dataframe(preview_csv_data(df), hide_index=True)
         
         # Task type and criteria
         st.text_input(

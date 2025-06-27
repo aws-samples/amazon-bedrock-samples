@@ -194,7 +194,7 @@ python src/benchmarks_run.py input_file.jsonl \
 #### Command Line Arguments
 
 - `input_file`: JSONL file with benchmark scenarios (required)
-- `--output_dir`: Directory to save results (default: "benchmark_results")
+- `--output_dir`: Directory to save results (default: "benchmark-results")
 - `--parallel_calls`: Number of parallel API calls (default: 4)
 - `--invocations_per_scenario`: Invocations per scenario (default: 5)
 - `--sleep_between_invocations`: Sleep time in seconds between invocations (default: 60)
