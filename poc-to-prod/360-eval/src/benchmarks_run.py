@@ -477,7 +477,7 @@ def main(
                 df = pd.DataFrame(results)
                 df["run_count"] = run
                 df["timestamp"] = pd.Timestamp.now()
-                out_csv = os.path.join(output_dir, f"invocations_{run}_{ts}_{uuid_}.csv")
+                out_csv = os.path.join(output_dir, f"invocations_{run}_{ts}_{uuid_}_{experiment_name}.csv")
                 df.to_csv(out_csv, index=False)
                 logging.info(f"Run {run} results saved to {out_csv}")
             except Exception as e:

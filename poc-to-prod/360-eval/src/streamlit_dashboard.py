@@ -96,8 +96,8 @@ def main():
         
         # Main area - show different components based on active tab
         if active_tab == "Setup":
-            # Use tabs instead of nested expanders
-            setup_tab1, setup_tab2 = st.tabs(["Evaluation Setup", "Model Configuration"])
+            # Use tabs for the three setup sections
+            setup_tab1, setup_tab2, setup_tab3 = st.tabs(["Evaluation Setup", "Model Configuration", "Advanced Configuration"])
             
             with setup_tab1:
                 logger.info("Rendering Evaluation Setup component")
@@ -106,6 +106,10 @@ def main():
             with setup_tab2:
                 logger.info("Rendering Model Configuration component")
                 ModelConfigurationComponent().render()
+            
+            with setup_tab3:
+                logger.info("Rendering Advanced Configuration component")
+                EvaluationSetupComponent().render_advanced_config()
                 
         elif active_tab == "Monitor":
             logger.info("Rendering Evaluation Monitor component")

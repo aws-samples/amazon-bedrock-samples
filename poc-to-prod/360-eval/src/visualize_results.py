@@ -70,19 +70,42 @@ def parse_json_string(json_str):
         return {"error": str(e)}
 
 
-def load_data(directory):
-    """Load and prepare benchmark data."""
+def load_data(directory, evaluation_names=None):
+    """Load and prepare benchmark data.
+    
+    Args:
+        directory: Directory containing CSV files
+        evaluation_names: Optional list of evaluation names to filter by
+    """
     # Ensure directory is a Path object
     directory = Path(directory)
     logger.info(f"Looking for CSV files in: {directory}")
     
     # Load CSV files
-    files = glob.glob(str(directory / "invocations_*.csv"))
-    if not files:
+    all_files = glob.glob(str(directory / "invocations_*.csv"))
+    if not all_files:
         logger.error(f"No invocation CSVs found in {directory}")
         raise FileNotFoundError(f"No invocation CSVs found in {directory}")
     
-    logger.info(f"Found {len(files)} CSV files: {files}")
+    # Filter files by evaluation names if specified
+    if evaluation_names:
+        files = []
+        for file_path in all_files:
+            file_name = Path(file_path).name
+            # Check if any evaluation name is in the filename
+            if any(eval_name in file_name for eval_name in evaluation_names):
+                files.append(file_path)
+        
+        if not files:
+            logger.warning(f"No CSV files found matching evaluations: {evaluation_names}")
+            logger.info(f"Available files: {[Path(f).name for f in all_files]}")
+            raise FileNotFoundError(f"No CSV files found for evaluations: {evaluation_names}")
+        
+        logger.info(f"Filtered to {len(files)} CSV files matching evaluations {evaluation_names}: {[Path(f).name for f in files]}")
+    else:
+        files = all_files
+        logger.info(f"Found {len(files)} CSV files (no filter applied): {[Path(f).name for f in files]}")
+    
     dataframes = []
     
     for f in files:
@@ -857,8 +880,14 @@ def generate_ttfb_histogram_findings(df):
     return findings
 
 
-def create_html_report(output_dir, timestamp):
-    """Generate HTML benchmark report with task-specific analysis."""
+def create_html_report(output_dir, timestamp, evaluation_names=None):
+    """Generate HTML benchmark report with task-specific analysis.
+    
+    Args:
+        output_dir: Directory containing CSV files and where report will be saved
+        timestamp: Timestamp for report filename
+        evaluation_names: Optional list of evaluation names to filter by
+    """
     # Ensure output_dir is an absolute path
     if isinstance(output_dir, str):
         if not os.path.isabs(output_dir):
@@ -876,10 +905,14 @@ def create_html_report(output_dir, timestamp):
     logger.info(f"Report generation logs will be saved to: {report_log_file}")
 
     # Load and process data
-    logger.info("Loading and processing data...")
+    if evaluation_names:
+        logger.info(f"Loading and processing data for evaluations: {evaluation_names}")
+    else:
+        logger.info("Loading and processing data for all evaluations...")
     try:
-        df = load_data(output_dir)
-        logger.info(f"Loaded data with {len(df)} records from {output_dir}")
+        df = load_data(output_dir, evaluation_names)
+        evaluation_info = f" for evaluations {evaluation_names}" if evaluation_names else " (all evaluations)"
+        logger.info(f"Loaded data with {len(df)} records from {output_dir}{evaluation_info}")
     except Exception as e:
         logger.error(f"Error loading data: {str(e)}")
         raise
@@ -961,11 +994,19 @@ def create_html_report(output_dir, timestamp):
         task_recommendations=task_recommendations,
     )
 
-    # Write report to file
-    out_file = output_dir / f"llm_benchmark_report_{timestamp}.html"
+    # Write report to file with evaluation-specific naming
+    if evaluation_names:
+        eval_suffix = "_" + "_".join(evaluation_names[:3])  # Limit to first 3 for filename length
+        if len(evaluation_names) > 3:
+            eval_suffix += f"_and_{len(evaluation_names)-3}_more"
+        out_file = output_dir / f"llm_benchmark_report_{timestamp}{eval_suffix}.html"
+    else:
+        out_file = output_dir / f"llm_benchmark_report_{timestamp}.html"
+    
     logger.info(f"Writing HTML report to: {out_file}")
     out_file.write_text(html, encoding="utf-8")
-    logger.info(f"HTML report written successfully")
+    evaluation_scope = f"for {len(evaluation_names)} specific evaluations" if evaluation_names else "for all evaluations"
+    logger.info(f"HTML report written successfully {evaluation_scope}")
 
     return out_file
 

@@ -73,81 +73,6 @@ class EvaluationSetupComponent:
             key="task_criteria",
             on_change=self._update_task_criteria
         )
-        
-        # Advanced parameters (use subheader instead of expander to avoid nesting)
-        st.subheader("Advanced Parameters")
-        
-        # Use columns for better organization
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Output directory
-            st.text_input(
-                "Output Directory",
-                value=st.session_state.current_evaluation_config["output_dir"],
-                key="output_dir",
-                on_change=self._update_output_dir
-            )
-            
-            # Parallel calls
-            st.number_input(
-                "Parallel API Calls",
-                min_value=1,
-                max_value=20,
-                value=st.session_state.current_evaluation_config["parallel_calls"],
-                key="parallel_calls",
-                on_change=self._update_parallel_calls
-            )
-            
-            # Invocations per scenario
-            st.number_input(
-                "Invocations per Scenario",
-                min_value=1,
-                max_value=20,
-                value=st.session_state.current_evaluation_config["invocations_per_scenario"],
-                key="invocations_per_scenario",
-                on_change=self._update_invocations_per_scenario
-            )
-        
-        with col2:
-            # Sleep between invocations
-            st.number_input(
-                "Sleep Between Invocations (seconds)",
-                min_value=0,
-                max_value=300,
-                value=st.session_state.current_evaluation_config["sleep_between_invocations"],
-                key="sleep_between_invocations",
-                on_change=self._update_sleep_between_invocations
-            )
-            
-            # Experiment counts
-            st.number_input(
-                "Experiment Counts",
-                min_value=1,
-                max_value=10,
-                value=st.session_state.current_evaluation_config["experiment_counts"],
-                key="experiment_counts",
-                on_change=self._update_experiment_counts
-            )
-            
-            # Temperature variations
-            st.number_input(
-                "Temperature Variations",
-                min_value=0,
-                max_value=5,
-                value=st.session_state.current_evaluation_config["temperature_variations"],
-                key="temperature_variations",
-                on_change=self._update_temperature_variations
-            )
-        
-        # Custom metrics (full width)
-        st.text_input(
-            "User-Defined Metrics (comma-separated)",
-            value=st.session_state.current_evaluation_config["user_defined_metrics"],
-            key="user_defined_metrics",
-            help="Additional evaluation metrics beyond the default ones (comma-separated list)",
-            on_change=self._update_user_defined_metrics
-        )
     
     # Event handlers for state updates
     def _update_name(self):
@@ -194,3 +119,92 @@ class EvaluationSetupComponent:
     
     def _update_user_defined_metrics(self):
         st.session_state.current_evaluation_config["user_defined_metrics"] = st.session_state.user_defined_metrics
+    
+    def render_advanced_config(self):
+        """Render the advanced configuration section as a separate tab."""
+        
+        st.markdown("### Advanced Parameters")
+        st.markdown("Configure advanced settings for your evaluation.")
+        
+        # Use columns for better organization
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Parallel calls
+            st.number_input(
+                "Parallel API Calls",
+                min_value=1,
+                max_value=20,
+                value=st.session_state.current_evaluation_config["parallel_calls"],
+                key="adv_parallel_calls",
+                on_change=self._update_parallel_calls_adv
+            )
+            
+            # Invocations per scenario
+            st.number_input(
+                "Invocations per Scenario",
+                min_value=1,
+                max_value=20,
+                value=st.session_state.current_evaluation_config["invocations_per_scenario"],
+                key="adv_invocations_per_scenario",
+                on_change=self._update_invocations_per_scenario_adv
+            )
+        
+        with col2:
+            # Sleep between invocations
+            st.number_input(
+                "Sleep Between Invocations (seconds)",
+                min_value=0,
+                max_value=300,
+                value=st.session_state.current_evaluation_config["sleep_between_invocations"],
+                key="adv_sleep_between_invocations",
+                on_change=self._update_sleep_between_invocations_adv
+            )
+            
+            # Experiment counts
+            st.number_input(
+                "Experiment Counts",
+                min_value=1,
+                max_value=10,
+                value=st.session_state.current_evaluation_config["experiment_counts"],
+                key="adv_experiment_counts",
+                on_change=self._update_experiment_counts_adv
+            )
+            
+            # Temperature variations
+            st.number_input(
+                "Temperature Variations",
+                min_value=0,
+                max_value=5,
+                value=st.session_state.current_evaluation_config["temperature_variations"],
+                key="adv_temperature_variations",
+                on_change=self._update_temperature_variations_adv
+            )
+        
+        # Custom metrics (full width)
+        st.text_input(
+            "User-Defined Metrics (comma-separated)",
+            value=st.session_state.current_evaluation_config["user_defined_metrics"],
+            key="adv_user_defined_metrics",
+            help="Additional evaluation metrics beyond the default ones (comma-separated list)",
+            on_change=self._update_user_defined_metrics_adv
+        )
+    
+    # Advanced configuration event handlers with different keys
+    def _update_parallel_calls_adv(self):
+        st.session_state.current_evaluation_config["parallel_calls"] = st.session_state.adv_parallel_calls
+    
+    def _update_invocations_per_scenario_adv(self):
+        st.session_state.current_evaluation_config["invocations_per_scenario"] = st.session_state.adv_invocations_per_scenario
+    
+    def _update_sleep_between_invocations_adv(self):
+        st.session_state.current_evaluation_config["sleep_between_invocations"] = st.session_state.adv_sleep_between_invocations
+    
+    def _update_experiment_counts_adv(self):
+        st.session_state.current_evaluation_config["experiment_counts"] = st.session_state.adv_experiment_counts
+    
+    def _update_temperature_variations_adv(self):
+        st.session_state.current_evaluation_config["temperature_variations"] = st.session_state.adv_temperature_variations
+    
+    def _update_user_defined_metrics_adv(self):
+        st.session_state.current_evaluation_config["user_defined_metrics"] = st.session_state.adv_user_defined_metrics

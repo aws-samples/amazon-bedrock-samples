@@ -27,7 +27,7 @@ os.makedirs(DASHBOARD_LOG_DIR, exist_ok=True)
 dashboard_logger = logging.getLogger('dashboard')
 dashboard_logger.setLevel(logging.DEBUG)
 
-# Use in-memory logging
+# Use in-memory logging with per-evaluation log management
 from io import StringIO
 
 # Stream handler for console output
@@ -41,6 +41,50 @@ dashboard_logger.info("Dashboard logger initialized (in-memory mode)")
 
 # Store evaluation configs locally for thread safety
 _thread_local_evaluations = {}
+
+# Per-evaluation log handlers for cleanup management
+_evaluation_log_handlers = {}
+
+def _create_evaluation_log_handler(eval_id):
+    """Create a StringIO handler for this specific evaluation."""
+    log_buffer = StringIO()
+    handler = logging.StreamHandler(log_buffer)
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    
+    # Add handler to dashboard logger
+    dashboard_logger.addHandler(handler)
+    
+    # Store for later cleanup
+    _evaluation_log_handlers[eval_id] = {
+        'handler': handler,
+        'buffer': log_buffer
+    }
+    
+    return handler
+
+def _cleanup_evaluation_logs(eval_id, preserve_on_failure=False):
+    """Clean up evaluation-specific logs. If preserve_on_failure=True and evaluation failed, keep logs."""
+    if eval_id in _evaluation_log_handlers:
+        handler_info = _evaluation_log_handlers[eval_id]
+        handler = handler_info['handler']
+        log_buffer = handler_info['buffer']
+        
+        if preserve_on_failure:
+            # Check if there were any ERROR or EXCEPTION logs
+            log_content = log_buffer.getvalue()
+            has_errors = any(level in log_content for level in ['ERROR', 'EXCEPTION', 'CRITICAL'])
+            
+            if has_errors:
+                dashboard_logger.info(f"Preserving logs for failed evaluation {eval_id} (contains errors)")
+                return  # Don't clean up - preserve for debugging
+        
+        # Remove handler and clean up
+        dashboard_logger.removeHandler(handler)
+        handler.close()
+        log_buffer.close()
+        del _evaluation_log_handlers[eval_id]
+        dashboard_logger.debug(f"Cleaned up logs for evaluation {eval_id}")
 
 # Evaluation queue and status tracking
 _evaluation_queue = []
@@ -158,7 +202,10 @@ def run_benchmark_process(eval_id):
     
     # Create composite identifier for consistent file naming
     composite_id = f"{eval_id}_{eval_name}"
-    dashboard_logger.info(f"Using composite identifier: {composite_id}")
+    
+    # Create evaluation-specific log handler for this evaluation
+    _create_evaluation_log_handler(eval_id)
+    dashboard_logger.info(f"Started logging for evaluation {eval_id} ({eval_name})")
     
     try:
         # Get project root
@@ -181,9 +228,10 @@ def run_benchmark_process(eval_id):
         eval_start_time = time.time()
         _update_status_file(status_file, "in-progress", 0, logs_dir=str(logs_dir), start_time=eval_start_time)
         
-        # Convert CSV data to JSONL
-        dashboard_logger.info(f"Converting CSV data to JSONL for evaluation {eval_id}")
+        # Setup evaluation files (JSONL, model profiles, judge profiles)
+        dashboard_logger.info(f"Setting up evaluation files for {eval_id}: JSONL conversion, model profiles, judge profiles")
         try:
+            # Convert CSV data to JSONL
             jsonl_path = convert_to_jsonl(
                 evaluation_config["csv_data"],
                 evaluation_config["prompt_column"],
@@ -194,53 +242,37 @@ def run_benchmark_process(eval_id):
                 evaluation_config["name"]
             )
             if not jsonl_path:
-                dashboard_logger.error(f"Failed to convert CSV data to JSONL for evaluation {eval_id}")
                 error_msg = "Failed to convert CSV data to JSONL format"
+                dashboard_logger.error(f"File setup failed for {eval_id}: {error_msg}")
                 _update_status_file(status_file, "failed", 0, error=error_msg)
                 update_evaluation_status(eval_id, "failed", 0, error=error_msg)
+                _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
                 return False
-            dashboard_logger.info(f"Successfully created JSONL file at {jsonl_path}")
-        except Exception as e:
-            dashboard_logger.exception(f"Exception while converting CSV data to JSONL: {str(e)}")
-            error_msg = f"CSV conversion error: {str(e)}"
-            _update_status_file(status_file, "failed", 0, error=error_msg)
-            update_evaluation_status(eval_id, "failed", 0, error=error_msg)
-            return False
-        
-        # Create unique model profiles JSONL for this evaluation
-        dashboard_logger.info(f"Creating model profiles JSONL for evaluation {eval_id}")
-        try:
+            
             # Generate unique filenames for this evaluation using composite ID
             model_file_name = f"model_profiles_{composite_id}.jsonl"
             judge_file_name = f"judge_profiles_{composite_id}.jsonl"
             
+            # Create model and judge profiles
             models_jsonl = create_model_profiles_jsonl(
                 evaluation_config["selected_models"],
                 "",
                 custom_filename=model_file_name
             )
-            dashboard_logger.info(f"Successfully created model profiles at {models_jsonl}")
-        except Exception as e:
-            dashboard_logger.exception(f"Exception while creating model profiles: {str(e)}")
-            error_msg = f"Model profiles error: {str(e)}"
-            _update_status_file(status_file, "failed", 0, error=error_msg)
-            update_evaluation_status(eval_id, "failed", 0, error=error_msg)
-            return False
-        
-        # Create unique judge profiles JSONL
-        dashboard_logger.info(f"Creating judge profiles JSONL for evaluation {eval_id}")
-        try:
             judges_jsonl = create_judge_profiles_jsonl(
                 evaluation_config["judge_models"],
                 "",
                 custom_filename=judge_file_name
             )
-            dashboard_logger.info(f"Successfully created judge profiles at {judges_jsonl}")
+            
+            dashboard_logger.info(f"File setup completed for {eval_id}: JSONL={jsonl_path}, Models={models_jsonl}, Judges={judges_jsonl}")
+            
         except Exception as e:
-            dashboard_logger.exception(f"Exception while creating judge profiles: {str(e)}")
-            error_msg = f"Judge profiles error: {str(e)}"
+            error_msg = f"File setup error: {str(e)}"
+            dashboard_logger.exception(f"File setup failed for {eval_id}: {error_msg}")
             _update_status_file(status_file, "failed", 0, error=error_msg)
             update_evaluation_status(eval_id, "failed", 0, error=error_msg)
+            _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
             return False
         
         # Get current script directory for reliable relative paths
@@ -266,12 +298,10 @@ def run_benchmark_process(eval_id):
         if evaluation_config["user_defined_metrics"]:
             cmd.extend(["--user_defined_metrics", evaluation_config["user_defined_metrics"]])
 
-        # Log the command being executed
-        dashboard_logger.info(f"Executing benchmark command for evaluation {eval_id}:")
-        dashboard_logger.info(" ".join(cmd))
-        dashboard_logger.info(f"Working directory: {os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))}")
-        dashboard_logger.info(f"Output directory: {output_dir}")
-        dashboard_logger.info(f"Expected files: model={model_file_name}, judge={judge_file_name}")
+        # Start benchmark execution
+        working_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        dashboard_logger.info(f"Starting benchmark execution for {eval_id} - PID will be assigned, output to {output_dir}")
+        dashboard_logger.debug(f"Full command: {' '.join(cmd)}")
         
         # Create stdout/stderr capture variables
         stdout_capture = StringIO()
@@ -284,23 +314,32 @@ def run_benchmark_process(eval_id):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                cwd=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # Run from src directory
+                cwd=working_dir
             )
             
-            dashboard_logger.info(f"Started subprocess with PID {process.pid}")
-            dashboard_logger.info(f"Command: python {os.path.join(script_dir, 'benchmarks_run.py')} {jsonl_path} --output_dir {output_dir} --experiment_name {evaluation_config['name']}")
+            dashboard_logger.info(f"Benchmark process started for {eval_id} with PID {process.pid}")
             
-            # Set up threads to read process output
+            # Set up threads to read process output with reduced logging
+            stdout_line_count = 0
+            stderr_line_count = 0
+            
             def read_stdout():
+                nonlocal stdout_line_count
                 for line in iter(process.stdout.readline, ''):
                     stdout_capture.write(line)
-                    dashboard_logger.debug(f"STDOUT: {line.strip()}")
+                    stdout_line_count += 1
+                    # Only log every 50th line or important lines
+                    if stdout_line_count % 50 == 0 or any(keyword in line.lower() for keyword in ['error', 'warning', 'completed', 'failed']):
+                        dashboard_logger.debug(f"STDOUT ({stdout_line_count} lines): {line.strip()}")
             
             def read_stderr():
+                nonlocal stderr_line_count
                 for line in iter(process.stderr.readline, ''):
                     stderr_capture.write(line)
-                    # Only log as debug - stderr often contains normal info, not errors
-                    dashboard_logger.debug(f"STDERR: {line.strip()}")
+                    stderr_line_count += 1
+                    # Only log stderr if it contains actual errors or every 50th line
+                    if any(keyword in line.lower() for keyword in ['error', 'exception', 'failed', 'traceback']) or stderr_line_count % 50 == 0:
+                        dashboard_logger.debug(f"STDERR ({stderr_line_count} lines): {line.strip()}")
             
             stdout_thread = threading.Thread(target=read_stdout)
             stderr_thread = threading.Thread(target=read_stderr)
@@ -309,27 +348,38 @@ def run_benchmark_process(eval_id):
             stdout_thread.start()
             stderr_thread.start()
             
-            # Monitor evaluation state - simplified approach
+            # Monitor evaluation state with smart logging intervals
             poll_count = 0
+            last_log_time = time.time()
+            
             while True:
                 # Check if process is still running
                 if process.poll() is not None:
-                    dashboard_logger.info(f"Process completed with return code {process.returncode}")
+                    dashboard_logger.info(f"Benchmark process completed for {eval_id} with return code {process.returncode}")
                     break
                 
-                # Periodically log that we're still monitoring the process
-                if poll_count % 6 == 0:  # Every minute (6 * 10 seconds)
-                    dashboard_logger.info(f"Process {process.pid} still running (poll count: {poll_count})")
+                # Smart logging intervals: 1min, 5min, 10min, then every 10min
+                current_time = time.time()
+                elapsed_minutes = (current_time - last_log_time) / 60
+                
+                should_log = False
+                if poll_count == 6:  # 1 minute
+                    should_log = True
+                elif poll_count == 30:  # 5 minutes  
+                    should_log = True
+                elif poll_count == 60:  # 10 minutes
+                    should_log = True
+                elif poll_count > 60 and poll_count % 60 == 0:  # Every 10 minutes after that
+                    should_log = True
+                
+                if should_log:
+                    runtime_minutes = poll_count // 6
+                    dashboard_logger.info(f"Benchmark process {process.pid} running for {runtime_minutes} minutes ({eval_id})")
+                    last_log_time = current_time
                     
                     # Update status to show progress
                     _update_status_file(status_file, "running", min(poll_count * 2, 90), logs_dir=str(logs_dir))
                     update_evaluation_status(eval_id, "running", min(poll_count * 2, 90))
-                    
-                    # Periodically check for reports being generated
-                    csv_files = list(output_dir.glob(f"*{evaluation_config['name']}*.csv"))
-                    html_files = list(output_dir.glob(f"*{evaluation_config['name']}*.html"))
-                    if csv_files or html_files:
-                        dashboard_logger.info(f"Found {len(csv_files)} CSV files and {len(html_files)} HTML files while process is running")
                 
                 # Wait before checking again
                 time.sleep(10)
@@ -346,27 +396,26 @@ def run_benchmark_process(eval_id):
             stdout_content = stdout_capture.getvalue()
             stderr_content = stderr_capture.getvalue()
             
-            dashboard_logger.info(f"Process completed with return code {return_code}")
-            
-            # Log final output for debugging
+            # Process final status and output
             if stdout_content:
-                dashboard_logger.debug(f"Final STDOUT content (last 500 chars): {stdout_content[-500:]}")
+                dashboard_logger.debug(f"Final STDOUT ({stdout_line_count} lines): {stdout_content[-500:]}")
             if stderr_content:
-                dashboard_logger.debug(f"Final STDERR content (last 500 chars): {stderr_content[-500:]}")
+                dashboard_logger.debug(f"Final STDERR ({stderr_line_count} lines): {stderr_content[-500:]}")
             
             # Check for actual errors - only fail on non-zero return code
             if return_code != 0:
-                dashboard_logger.error(f"Process failed with return code {return_code}")
-                error_msg = f"Process failed with return code {return_code}"
+                error_msg = f"Benchmark failed with return code {return_code}"
                 if stderr_content and any(critical in stderr_content.lower() for critical in ['fatal', 'critical error', 'traceback', 'exception']):
                     error_msg += f". Error details: {stderr_content[:300]}"
+                dashboard_logger.error(f"Benchmark execution failed for {eval_id}: {error_msg}")
                 _update_status_file(status_file, "failed", 0, 
                                   logs_dir=str(logs_dir),
                                   error=error_msg)
                 update_evaluation_status(eval_id, "failed", 0, error=error_msg)
+                _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
                 return False
             
-            dashboard_logger.info(f"Process completed successfully with return code 0")
+            dashboard_logger.info(f"Benchmark execution completed successfully for {eval_id}")
             
         except Exception as e:
             dashboard_logger.exception(f"Exception during subprocess execution: {str(e)}")
@@ -375,6 +424,7 @@ def run_benchmark_process(eval_id):
                               logs_dir=str(logs_dir),
                               error=error_msg)
             update_evaluation_status(eval_id, "failed", 0, error=error_msg)
+            _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
             return False
         
         # Look for generated results
@@ -430,7 +480,10 @@ def run_benchmark_process(eval_id):
                                output_dir=str(output_dir),
                                evaluation_config=evaluation_config)
             update_evaluation_status(eval_id, "completed", 100)
-            
+        
+        # Clean up logs for successful evaluation
+        _cleanup_evaluation_logs(eval_id, preserve_on_failure=False)
+        dashboard_logger.info(f"Cleaned up logs for successful evaluation {eval_id}")
         return True
     
     except Exception as e:
@@ -440,6 +493,9 @@ def run_benchmark_process(eval_id):
                            logs_dir=str(logs_dir) if 'logs_dir' in locals() else None,
                            error=error_msg)
         update_evaluation_status(eval_id, "failed", 0, error=error_msg)
+        
+        # Preserve logs for failed evaluation (check for errors)
+        _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
         return False
     finally:
         # Clean up thread-local storage

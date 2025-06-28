@@ -285,10 +285,48 @@ class EvaluationMonitorComponent:
             
             # Add ability to generate comprehensive report from all evaluations
             st.subheader("📊 Generate Report")
-            st.info("Generate a aggregated report from all completed evaluations.")
             
-            if st.button("🔄 Generate Report", key="gen_comprehensive_report", type="secondary"):
-                self._generate_comprehensive_report()
+            # Report generation options
+            report_scope = st.radio(
+                "Report Scope:",
+                ["All Evaluations", "Selected Evaluations"],
+                index=0,
+                help="Choose whether to generate a report from all completed evaluations or only selected ones"
+            )
+            
+            selected_eval_names = []
+            if report_scope == "Selected Evaluations":
+                # Get completed evaluations (don't require existing results since we're generating a new report)
+                completed_with_results = [
+                    e for e in st.session_state.evaluations 
+                    if e.get("status") == "completed"
+                ]
+                
+                if completed_with_results:
+                    selected_eval_names = st.multiselect(
+                        "Select evaluations for report:",
+                        options=[e["name"] for e in completed_with_results],
+                        help="Select which completed evaluations to include in the report"
+                    )
+                    
+                    if selected_eval_names:
+                        st.info(f"Report will include {len(selected_eval_names)} evaluation(s): {', '.join(selected_eval_names)}")
+                    else:
+                        st.warning("Please select at least one evaluation for the report.")
+                else:
+                    st.warning("No completed evaluations with results found.")
+            else:
+                st.info("Report will include all completed evaluations.")
+            
+            # Generate report button
+            can_generate = (report_scope == "All Evaluations" or 
+                          (report_scope == "Selected Evaluations" and selected_eval_names))
+            
+            if st.button("🔄 Generate Report", key="gen_comprehensive_report", type="secondary", disabled=not can_generate):
+                if report_scope == "Selected Evaluations":
+                    self._generate_comprehensive_report(selected_evaluations=selected_eval_names)
+                else:
+                    self._generate_comprehensive_report()
             
             # Add section to run selected evaluations
             st.subheader("Run Evaluations")
@@ -390,8 +428,12 @@ class EvaluationMonitorComponent:
         except (ImportError, NameError, AttributeError):
             st.info("In-memory logs not available - only benchmark logs are saved to disk.")
     
-    def _generate_comprehensive_report(self):
-        """Generate a comprehensive report from all evaluation results in the directory."""
+    def _generate_comprehensive_report(self, selected_evaluations=None):
+        """Generate a comprehensive report from evaluation results in the directory.
+        
+        Args:
+            selected_evaluations: Optional list of evaluation names to filter by
+        """
         try:
             # Import the visualize_results module
             from ...visualize_results import create_html_report
@@ -416,14 +458,31 @@ class EvaluationMonitorComponent:
             # Generate timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             
-            # Create status indicator
-            with st.spinner(f"Generating report from {len(csv_files)} result files... This may take a moment."):
-                # Call the report generator with the output directory
-                report_path = create_html_report(output_dir, timestamp)
+            # Create status indicator with appropriate message
+            if selected_evaluations:
+                spinner_msg = f"Generating report from {len(selected_evaluations)} selected evaluation(s)... This may take a moment."
+            else:
+                spinner_msg = f"Generating report from {len(csv_files)} result files... This may take a moment."
+                
+            with st.spinner(spinner_msg):
+                # Call the report generator with the output directory and optional evaluation filter
+                report_path = create_html_report(output_dir, timestamp, selected_evaluations)
                 
                 # Find which CSV files were used to generate this comprehensive report
                 import glob
-                csv_files_used = glob.glob(str(Path(output_dir) / "invocations_*.csv"))
+                all_csv_files = glob.glob(str(Path(output_dir) / "invocations_*.csv"))
+                
+                # Filter CSV files if specific evaluations were selected
+                if selected_evaluations:
+                    csv_files_used = []
+                    for csv_file in all_csv_files:
+                        csv_filename = os.path.basename(csv_file)
+                        # Check if any selected evaluation name is in the filename
+                        if any(eval_name in csv_filename for eval_name in selected_evaluations):
+                            csv_files_used.append(csv_file)
+                else:
+                    csv_files_used = all_csv_files
+                
                 csv_filenames = [os.path.basename(f) for f in csv_files_used]
                 
                 # Create a comprehensive report status entry (use timestamp as ID)
@@ -445,14 +504,16 @@ class EvaluationMonitorComponent:
                     dashboard_logger.error(f"Error saving comprehensive report status: {str(e)}")
 
 
-                st.success(f"- Report generated: {os.path.basename(str(report_path))}  \n- It includes data from {len(csv_files)} evaluation result files.  \n- Check the **Reports** tab to view all available reports.")
-
-                # Show success message
-                # st.success(f"Report generated: {os.path.basename(str(report_path))}")
-                # st.info(f"Report includes data from {len(csv_files)} evaluation result files.")
-                #
-                # # Notify user about Reports tab
-                # st.success("Report generated! Check the **Reports** tab to view all available reports.")
+                # Create appropriate success message based on scope
+                if selected_evaluations:
+                    scope_description = f"data from {len(selected_evaluations)} selected evaluation(s): {', '.join(selected_evaluations)}"
+                else:
+                    scope_description = f"data from {len(csv_files_used)} evaluation result files"
+                
+                st.success(f"✅ **Report generated successfully!**  \n"
+                          f"📁 **File:** {os.path.basename(str(report_path))}  \n"
+                          f"📊 **Scope:** {scope_description}  \n"
+                          f"📋 **View:** Check the **Reports** tab to view all available reports.")
 
                 # Set pending rerun to refresh UI
                 st.session_state.pending_rerun = True
