@@ -32,8 +32,9 @@ def initialize_session_state():
             "csv_data": None,
             "prompt_column": None,
             "golden_answer_column": None,
-            "task_type": "",
-            "task_criteria": "",
+            "task_type": "",  # Keep for backward compatibility
+            "task_criteria": "",  # Keep for backward compatibility
+            "task_evaluations": [{"task_type": "", "task_criteria": "", "temperature": 0.7, "user_defined_metrics": ""}],
             "output_dir": DEFAULT_OUTPUT_DIR,
             "parallel_calls": DEFAULT_PARALLEL_CALLS,
             "invocations_per_scenario": DEFAULT_INVOCATIONS_PER_SCENARIO,
@@ -62,8 +63,9 @@ def create_new_evaluation():
         "csv_data": None,
         "prompt_column": None,
         "golden_answer_column": None,
-        "task_type": "",
-        "task_criteria": "",
+        "task_type": "",  # Keep for backward compatibility
+        "task_criteria": "",  # Keep for backward compatibility
+        "task_evaluations": [{"task_type": "", "task_criteria": "", "temperature": 0.7, "user_defined_metrics": ""}],
         "output_dir": DEFAULT_OUTPUT_DIR,
         "parallel_calls": DEFAULT_PARALLEL_CALLS,
         "invocations_per_scenario": DEFAULT_INVOCATIONS_PER_SCENARIO,
@@ -82,48 +84,95 @@ def create_new_evaluation():
 
 
 def save_current_evaluation():
-    """Save the current evaluation configuration to the list of evaluations."""
+    """Save the current evaluation configuration to the list of evaluations.
+    If multiple task evaluations are configured, creates separate evaluations for each."""
     # Debug current state
     print(f"Current session state before saving: {len(st.session_state.evaluations)} evaluations")
     
-    if st.session_state.current_evaluation_config["id"] is None:
-        # This is a new evaluation
-        new_eval = st.session_state.current_evaluation_config.copy()
-        new_eval["id"] = str(uuid.uuid4())
-        new_eval["created_at"] = datetime.now().isoformat()
-        new_eval["updated_at"] = datetime.now().isoformat()
-        new_eval["status"] = "configuring"  # Ensure status is set
-        
-        # Add to evaluations list
-        st.session_state.evaluations.append(new_eval)
-        print(f"Added new evaluation with ID: {new_eval['id']}, Name: {new_eval['name']}")
-        print(f"Session state after adding: {len(st.session_state.evaluations)} evaluations")
-        
-        # Reset current config for next evaluation
-        reset_current_evaluation()
-    else:
-        # This is an update to an existing evaluation
-        eval_id = st.session_state.current_evaluation_config["id"]
-        updated = False
-        
-        # Update existing evaluation
-        for i, eval_config in enumerate(st.session_state.evaluations):
-            if eval_config["id"] == eval_id:
-                st.session_state.current_evaluation_config["updated_at"] = datetime.now().isoformat()
-                st.session_state.evaluations[i] = st.session_state.current_evaluation_config.copy()
-                print(f"Updated evaluation with ID: {eval_id}, Name: {st.session_state.evaluations[i]['name']}")
-                updated = True
-                break
-                
-        if not updated:
-            # If not found (unusual case), add as new
-            print(f"Evaluation with ID {eval_id} not found in list, adding as new")
-            new_eval = st.session_state.current_evaluation_config.copy() 
+    # Get task evaluations, defaulting to single task if not present
+    task_evaluations = st.session_state.current_evaluation_config.get("task_evaluations", 
+        [{"task_type": st.session_state.current_evaluation_config.get("task_type", ""), 
+          "task_criteria": st.session_state.current_evaluation_config.get("task_criteria", "")}])
+    
+    base_name = st.session_state.current_evaluation_config["name"]
+    
+    # Create separate evaluations for each task evaluation
+    for i, task_eval in enumerate(task_evaluations):
+        if st.session_state.current_evaluation_config["id"] is None:
+            # This is a new evaluation
+            new_eval = st.session_state.current_evaluation_config.copy()
+            new_eval["id"] = str(uuid.uuid4())
+            new_eval["created_at"] = datetime.now().isoformat()
             new_eval["updated_at"] = datetime.now().isoformat()
-            st.session_state.evaluations.append(new_eval)
+            new_eval["status"] = "configuring"  # Ensure status is set
             
-        # Reset current config for next evaluation
-        reset_current_evaluation()
+            # Set individual task type, criteria, temperature, and user metrics for this evaluation
+            new_eval["task_type"] = task_eval["task_type"]
+            new_eval["task_criteria"] = task_eval["task_criteria"]
+            new_eval["temperature"] = task_eval.get("temperature", 0.7)
+            new_eval["user_defined_metrics"] = task_eval.get("user_defined_metrics", "")
+            
+            # Update evaluation name with index if multiple tasks
+            if len(task_evaluations) > 1:
+                new_eval["name"] = f"{base_name}_{i+1}"
+            else:
+                new_eval["name"] = base_name
+            
+            # Remove task_evaluations array from individual evaluation (not needed)
+            if "task_evaluations" in new_eval:
+                del new_eval["task_evaluations"]
+            
+            # Add to evaluations list
+            st.session_state.evaluations.append(new_eval)
+            print(f"Added new evaluation with ID: {new_eval['id']}, Name: {new_eval['name']}")
+            
+        else:
+            # This is an update to an existing evaluation - only update if single task
+            if len(task_evaluations) == 1:
+                eval_id = st.session_state.current_evaluation_config["id"]
+                updated = False
+                
+                # Update existing evaluation
+                for j, eval_config in enumerate(st.session_state.evaluations):
+                    if eval_config["id"] == eval_id:
+                        updated_eval = st.session_state.current_evaluation_config.copy()
+                        updated_eval["updated_at"] = datetime.now().isoformat()
+                        updated_eval["task_type"] = task_eval["task_type"]
+                        updated_eval["task_criteria"] = task_eval["task_criteria"]
+                        updated_eval["temperature"] = task_eval.get("temperature", 0.7)
+                        updated_eval["user_defined_metrics"] = task_eval.get("user_defined_metrics", "")
+                        
+                        # Remove task_evaluations array from individual evaluation
+                        if "task_evaluations" in updated_eval:
+                            del updated_eval["task_evaluations"]
+                        
+                        st.session_state.evaluations[j] = updated_eval
+                        print(f"Updated evaluation with ID: {eval_id}, Name: {st.session_state.evaluations[j]['name']}")
+                        updated = True
+                        break
+                        
+                if not updated:
+                    # If not found (unusual case), add as new
+                    print(f"Evaluation with ID {eval_id} not found in list, adding as new")
+                    new_eval = st.session_state.current_evaluation_config.copy()
+                    new_eval["updated_at"] = datetime.now().isoformat()
+                    new_eval["task_type"] = task_eval["task_type"]
+                    new_eval["task_criteria"] = task_eval["task_criteria"]
+                    new_eval["temperature"] = task_eval.get("temperature", 0.7)
+                    new_eval["user_defined_metrics"] = task_eval.get("user_defined_metrics", "")
+                    
+                    # Remove task_evaluations array from individual evaluation
+                    if "task_evaluations" in new_eval:
+                        del new_eval["task_evaluations"]
+                    
+                    st.session_state.evaluations.append(new_eval)
+            else:
+                print("Cannot update evaluation with multiple tasks - this should create new evaluations instead")
+    
+    print(f"Session state after adding: {len(st.session_state.evaluations)} evaluations")
+    
+    # Reset current config for next evaluation
+    reset_current_evaluation()
 
 
 def reset_current_evaluation():

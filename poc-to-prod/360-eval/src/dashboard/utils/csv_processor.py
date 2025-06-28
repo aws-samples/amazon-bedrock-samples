@@ -31,7 +31,7 @@ def preview_csv_data(df, max_rows=5):
     return None
 
 
-def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria, output_dir, name):
+def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria, output_dir, name, temperature=0.7, user_defined_metrics=""):
     """
     Convert CSV data to JSONL format for LLM benchmarking.
     
@@ -106,7 +106,9 @@ def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria
                 "task_type": task_type,
                 "task_criteria": task_criteria
             },
-            "golden_answer": answer
+            "golden_answer": answer,
+            "temperature": temperature,
+            "user_defined_metrics": user_defined_metrics
         }
         jsonl_data.append(entry)
     

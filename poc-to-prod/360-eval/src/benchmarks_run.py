@@ -256,7 +256,7 @@ def expand_scenarios(raw, cfg):
     for s in raw:
         prompt = s["prompt"]
         region = s["region"]
-        base_t = s.get("TEMPERATURE", cfg["TEMPERATURE"])
+        base_t = s.get("temperature", s.get("TEMPERATURE", cfg["TEMPERATURE"]))
         param_variants = []
         n_variants = cfg["TEMPERATURE_VARIATIONS"]
         u_diff = 1
@@ -292,6 +292,14 @@ def execute_benchmark(scenarios, cfg, unprocessed_dir):
         for invocation in range(cfg["invocations_per_scenario"]):
             try:
                 logging.info(f"Running scenario: {scn['model_id']}@{scn['region']}, temp={scn['TEMPERATURE']}, invocation {invocation+1}/{cfg['invocations_per_scenario']}")
+                # Use per-scenario user_defined_metrics if available, otherwise fall back to global
+                scenario_metrics = scn.get("user_defined_metrics", "")
+                if scenario_metrics:
+                    # Convert comma-separated string to list
+                    user_metrics = [m.strip() for m in scenario_metrics.split(",") if m.strip()]
+                else:
+                    user_metrics = cfg["user_defined_metrics"]
+                
                 r = benchmark(
                     scn["region"],
                     scn["prompt"],
@@ -305,7 +313,7 @@ def execute_benchmark(scenarios, cfg, unprocessed_dir):
                     scn["TEMPERATURE"],
                     cfg["TOP_P"],
                     cfg["judge_models"],
-                    cfg["user_defined_metrics"]
+                    user_metrics
                 )
                 
                 # Check if the record was processed successfully
@@ -449,6 +457,8 @@ def main(
                 "golden_answer":                        js.get("golden_answer", ""),
                 "configured_output_tokens_for_request": js.get("expected_output_tokens", 200),
                 "region":                               js.get("region", "us-east-1"),
+                "temperature":                          js.get("temperature", 0.7),
+                "user_defined_metrics":                 js.get("user_defined_metrics", ""),
             })
     if not raw:
         logging.error("No scenarios found in input.")

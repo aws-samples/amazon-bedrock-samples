@@ -59,20 +59,108 @@ class EvaluationSetupComponent:
             st.subheader("Data Preview")
             st.dataframe(preview_csv_data(df), hide_index=True)
         
-        # Task type and criteria
-        st.text_input(
-            "Task Type (e.g., Summarization, Question-Answering, etc.)",
-            value=st.session_state.current_evaluation_config["task_type"],
-            key="task_type",
-            on_change=self._update_task_type
+        # Task evaluations section
+        st.subheader("Task Evaluations")
+        
+        # Initialize session state for task counter if not present
+        if "task_counter" not in st.session_state:
+            st.session_state.task_counter = 1
+        
+        # Initialize task_evaluations if not present
+        if "task_evaluations" not in st.session_state.current_evaluation_config:
+            st.session_state.current_evaluation_config["task_evaluations"] = [{"task_type": "", "task_criteria": "", "temperature": 0.7, "user_defined_metrics": ""}]
+        
+        # Initialize number of tasks if not present
+        if "num_tasks" not in st.session_state:
+            st.session_state.num_tasks = len(st.session_state.current_evaluation_config["task_evaluations"])
+        
+        # Number input to control how many task evaluations
+        new_num_tasks = st.number_input(
+            "Number of Task Evaluations",
+            min_value=1,
+            max_value=10,
+            value=st.session_state.num_tasks,
+            step=1,
+            help="Specify how many different task evaluations you want to create"
         )
         
-        st.text_area(
-            "Task Criteria (specific evaluation instructions)",
-            value=st.session_state.current_evaluation_config["task_criteria"],
-            key="task_criteria",
-            on_change=self._update_task_criteria
-        )
+        # Adjust the task evaluations list based on the number input
+        if new_num_tasks != st.session_state.num_tasks:
+            current_tasks = st.session_state.current_evaluation_config["task_evaluations"]
+            
+            if new_num_tasks > len(current_tasks):
+                # Add new tasks
+                for _ in range(new_num_tasks - len(current_tasks)):
+                    current_tasks.append({"task_type": "", "task_criteria": "", "temperature": 0.7, "user_defined_metrics": ""})
+            elif new_num_tasks < len(current_tasks):
+                # Remove tasks
+                st.session_state.current_evaluation_config["task_evaluations"] = current_tasks[:new_num_tasks]
+            
+            st.session_state.num_tasks = new_num_tasks
+        
+        # Display each task evaluation
+        for i in range(st.session_state.num_tasks):
+            if i < len(st.session_state.current_evaluation_config["task_evaluations"]):
+                task_eval = st.session_state.current_evaluation_config["task_evaluations"][i]
+            else:
+                task_eval = {"task_type": "", "task_criteria": "", "temperature": 0.7, "user_defined_metrics": ""}
+                st.session_state.current_evaluation_config["task_evaluations"].append(task_eval)
+            
+            # Task separator for visual clarity
+            if i > 0:
+                st.divider()
+            
+            st.markdown(f"**Task Evaluation {i + 1}**")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                task_type = st.text_input(
+                    "Task Type",
+                    value=task_eval.get("task_type", ""),
+                    key=f"task_type_{i}",
+                    placeholder="e.g., Summarization, Question-Answering"
+                )
+                
+            with col2:
+                task_criteria = st.text_area(
+                    "Task Criteria",
+                    value=task_eval.get("task_criteria", ""),
+                    key=f"task_criteria_{i}",
+                    placeholder="Specific evaluation instructions",
+                    height=100
+                )
+            
+            # Second row for temperature and user-defined metrics
+            col3, col4 = st.columns(2)
+            
+            with col3:
+                temperature = st.slider(
+                    "Temperature",
+                    min_value=0.01,
+                    max_value=1.0,
+                    value=task_eval.get("temperature", 0.5),
+                    step=0.1,
+                    key=f"temperature_{i}",
+                    help="Controls randomness in model responses (0.0 = deterministic, 2.0 = very random)"
+                )
+                
+            with col4:
+                user_defined_metrics = st.text_input(
+                    "User-Defined Metrics (optional)",
+                    value=task_eval.get("user_defined_metrics", ""),
+                    key=f"user_defined_metrics_{i}",
+                    placeholder="e.g., business writing style, brand adherence",
+                    help="Comma-separated additional evaluation metrics for this task"
+                )
+            
+            # Update the task evaluation in session state
+            st.session_state.current_evaluation_config["task_evaluations"][i] = {
+                "task_type": task_type,
+                "task_criteria": task_criteria,
+                "temperature": temperature,
+                "user_defined_metrics": user_defined_metrics
+            }
     
     # Event handlers for state updates
     def _update_name(self):
@@ -93,11 +181,7 @@ class EvaluationSetupComponent:
     def _update_golden_answer_column(self):
         st.session_state.current_evaluation_config["golden_answer_column"] = st.session_state.golden_answer_column
     
-    def _update_task_type(self):
-        st.session_state.current_evaluation_config["task_type"] = st.session_state.task_type
-    
-    def _update_task_criteria(self):
-        st.session_state.current_evaluation_config["task_criteria"] = st.session_state.task_criteria
+    # No longer need add/remove methods - handled by number input
     
     def _update_output_dir(self):
         st.session_state.current_evaluation_config["output_dir"] = st.session_state.output_dir
@@ -181,14 +265,6 @@ class EvaluationSetupComponent:
                 on_change=self._update_temperature_variations_adv
             )
         
-        # Custom metrics (full width)
-        st.text_input(
-            "User-Defined Metrics (comma-separated)",
-            value=st.session_state.current_evaluation_config["user_defined_metrics"],
-            key="adv_user_defined_metrics",
-            help="Additional evaluation metrics beyond the default ones (comma-separated list)",
-            on_change=self._update_user_defined_metrics_adv
-        )
     
     # Advanced configuration event handlers with different keys
     def _update_parallel_calls_adv(self):
@@ -206,5 +282,3 @@ class EvaluationSetupComponent:
     def _update_temperature_variations_adv(self):
         st.session_state.current_evaluation_config["temperature_variations"] = st.session_state.adv_temperature_variations
     
-    def _update_user_defined_metrics_adv(self):
-        st.session_state.current_evaluation_config["user_defined_metrics"] = st.session_state.adv_user_defined_metrics

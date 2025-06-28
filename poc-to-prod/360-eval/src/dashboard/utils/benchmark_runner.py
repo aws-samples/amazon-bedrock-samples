@@ -239,7 +239,9 @@ def run_benchmark_process(eval_id):
                 evaluation_config["task_type"],
                 evaluation_config["task_criteria"],
                 "",
-                evaluation_config["name"]
+                evaluation_config["name"],
+                evaluation_config.get("temperature", 0.7),
+                evaluation_config.get("user_defined_metrics", "")
             )
             if not jsonl_path:
                 error_msg = "Failed to convert CSV data to JSONL format"

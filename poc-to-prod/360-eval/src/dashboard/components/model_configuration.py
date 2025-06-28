@@ -290,11 +290,21 @@ class ModelConfigurationComponent:
         elif not config["prompt_column"] or not config["golden_answer_column"]:
             missing_items.append("prompt and golden answer column selection")
         
-        # Check for task type and criteria
-        if not config["task_type"]:
-            missing_items.append("task type")
-        if not config["task_criteria"]:
-            missing_items.append("task criteria")
+        # Check for task type and criteria (support both old and new format)
+        task_evaluations = config.get("task_evaluations", [])
+        if task_evaluations:
+            # New format: check each task evaluation
+            for i, task_eval in enumerate(task_evaluations):
+                if not task_eval.get("task_type", "").strip():
+                    missing_items.append(f"task type for evaluation {i+1}")
+                if not task_eval.get("task_criteria", "").strip():
+                    missing_items.append(f"task criteria for evaluation {i+1}")
+        else:
+            # Fallback to old format for backward compatibility
+            if not config.get("task_type", "").strip():
+                missing_items.append("task type")
+            if not config.get("task_criteria", "").strip():
+                missing_items.append("task criteria")
         
         # Check for at least one target model
         if not config["selected_models"]:
