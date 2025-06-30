@@ -57,10 +57,27 @@ class ResultsViewerComponent:
                     judges_summary = "0 judges"
                     judges_details = "None"
                 
+                # Extract file name from CSV data or show as unknown
+                csv_file_name = "Unknown"
+                if eval_config.get("csv_data") is not None:
+                    # Try to get original file name if available
+                    csv_file_name = eval_config.get("csv_file_name", "Uploaded CSV")
+                elif hasattr(eval_config.get("csv_data"), "name"):
+                    csv_file_name = eval_config["csv_data"].name
+                
+                # Get temperature used
+                temperature = eval_config.get("temperature", "Not specified")
+                
+                # Check if custom metrics were used
+                user_metrics = eval_config.get("user_defined_metrics", "")
+                has_custom_metrics = "Yes" if user_metrics and user_metrics.strip() else "No"
+                
                 eval_data.append({
-                    # "ID": eval_config["id"],
                     "Name": eval_config["name"],
                     "Task Type": eval_config["task_type"],
+                    "Data File": csv_file_name,
+                    "Temperature": temperature,
+                    "Custom Metrics": has_custom_metrics,
                     "Models": models_summary,
                     "Judges": judges_summary,
                     "Completed": pd.to_datetime(eval_config["updated_at"]).strftime("%Y-%m-%d %H:%M")
@@ -130,11 +147,26 @@ class ResultsViewerComponent:
             st.write(f"**Task Type:** {eval_config.get('task_type', 'Unknown')}")
             st.write(f"**Task Criteria:** {eval_config.get('task_criteria', 'Unknown')}")
             st.write(f"**Status:** {eval_config.get('status', 'Unknown')}")
+            
+            # Display data file name
+            data_file = eval_config.get('csv_file_name', 'Unknown')
+            st.write(f"**Data File:** {data_file}")
+            
         with col2:
             st.write(f"**Created:** {pd.to_datetime(eval_config.get('created_at', '')).strftime('%Y-%m-%d %H:%M') if eval_config.get('created_at') else 'Unknown'}")
             st.write(f"**Completed:** {pd.to_datetime(eval_config.get('updated_at', '')).strftime('%Y-%m-%d %H:%M') if eval_config.get('updated_at') else 'Unknown'}")
             if eval_config.get('duration'):
                 st.write(f"**Duration:** {eval_config['duration']:.1f} seconds")
+            
+            # Display temperature and custom metrics
+            temperature = eval_config.get('temperature', 'Not specified')
+            st.write(f"**Temperature:** {temperature}")
+            
+            user_metrics = eval_config.get('user_defined_metrics', '')
+            if user_metrics and user_metrics.strip():
+                st.write(f"**Custom Metrics:** {user_metrics}")
+            else:
+                st.write(f"**Custom Metrics:** None")
         
         # Show error if present
         if eval_config.get('error'):

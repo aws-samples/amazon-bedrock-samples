@@ -77,12 +77,6 @@ class EvaluationMonitorComponent:
         dashboard_logger.debug("Retrieving session evaluations")
         session_evals = self._get_session_evaluations(current_session_start)
         
-        # Separate active and recently completed evaluations
-        active_evals = [e for e in session_evals if e.get('status') in ['in-progress', 'running']]
-        completed_evals = [e for e in session_evals if e.get('status') == 'completed' and 
-                          e.get('end_time', 0) > current_time - 60]  # Show completed in last minute
-        failed_evals = [e for e in session_evals if e.get('status') == 'failed' and
-                       e.get('end_time', 0) > current_time - 60]  # Show failed in last minute
         
         # Display queue status if there are queued/running evaluations
         if queue_status["queue_length"] > 0 or queue_status["current_evaluation"]:
@@ -102,134 +96,10 @@ class EvaluationMonitorComponent:
             
             st.divider()
         
-        # Display active and recent evaluations
-        st.subheader("Active & Recent Evaluations")
-        all_display_evals = active_evals + completed_evals + failed_evals
         
-        if not all_display_evals:
-            st.info("No active evaluations in this session. Go to Setup tab to create and run evaluations.")
-        else:
-            dashboard_logger.info(f"Displaying {len(all_display_evals)} evaluations (Active: {len(active_evals)}, " +
-                                  f"Recently Completed: {len(completed_evals)}, Failed: {len(failed_evals)})")
-            
-            # Display evaluations with status indicators
-            for i, eval_config in enumerate(all_display_evals):
-                # Highlight the evaluation if it matches the one clicked in a notification
-                highlight_style = ""
-                if "highlight_eval_id" in st.session_state and st.session_state.highlight_eval_id == eval_config["id"]:
-                    highlight_style = "border: 2px solid #FFA500; background-color: rgba(255, 165, 0, 0.1); border-radius: 5px; padding: 10px;"
-                    # Clear the highlight after showing it once
-                    st.session_state.highlight_eval_id = None
-                
-                with st.container():
-                    if highlight_style:
-                        st.markdown(f'<div style="{highlight_style}">', unsafe_allow_html=True)
-                    
-                    col1, col2, col3 = st.columns([3, 2, 1])
-                    
-                    with col1:
-                        # Display status as colored indicator
-                        status = eval_config.get('status', 'unknown')
-                        
-                        # Check if this evaluation has a report to link to
-                        has_report = (status == "completed" and 
-                                     'results' in eval_config and 
-                                     eval_config['results'] and 
-                                     os.path.exists(eval_config['results']))
-                        
-                        # Display name - as link if report exists
-                        if has_report:
-                            report_path = eval_config['results']
-                            file_url = f"{os.path.abspath(report_path)}"
-                            st.markdown(f"**[{eval_config['name']}]({file_url})**", unsafe_allow_html=True)
-                        else:
-                            st.write(f"**{eval_config['name']}**")
-                        
-                        # Display status indicator
-                        if status in ['in-progress', 'running']:
-                            st.markdown("🔄 **Status**: <span style='color:blue'>In Progress 🔄</span>", unsafe_allow_html=True)
-                        elif status == "failed":
-                            st.markdown("❌ **Status**: <span style='color:red'>Failed ❌</span>", unsafe_allow_html=True)
-                        elif status == "completed":
-                            st.markdown("✅ **Status**: <span style='color:green'>Completed ✅</span>", unsafe_allow_html=True)
-                        elif status == "queued":
-                            st.markdown("⏳ **Status**: <span style='color:purple'>Queued ⏳</span>", unsafe_allow_html=True)
-                        elif status == "running":
-                            st.markdown("🔄 **Status**: <span style='color:blue'>Running</span>", unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"⚠️ **Status**: {status.capitalize()}")
-                    
-                    with col2:
-                        # Display details
-                        st.write(f"Task: {eval_config['task_type']}")
-                        st.write(f"Models: {len(eval_config['selected_models'])}")
-                        
-                        # Display elapsed time if available
-                        if 'start_time' in eval_config:
-                            end_time = eval_config.get('end_time', time.time())
-                            elapsed = end_time - eval_config['start_time']
-                            st.write(f"Elapsed: {self._format_time(elapsed)}")
-                    
-                    with col3:
-                        # For completed evaluations, show report status
-                        if status == "completed":
-                            # Check if a report already exists
-                            if 'results' in eval_config and eval_config['results'] and os.path.exists(eval_config['results']):
-                                # Log that we have a report
-                                dashboard_logger.info(f"Evaluation has report: {eval_config['results']}")
-                                st.markdown("📊 **Report Available**", unsafe_allow_html=True)
-                        
-                        # Add view logs button
-                        if 'logs_dir' in eval_config and os.path.exists(eval_config['logs_dir']):
-                            if st.button("View Logs", key=f"logs_{i}"):
-                                self._show_logs(eval_config)
-                                dashboard_logger.info(f"Showing logs for evaluation {eval_config['id']}")
-                        
-                        # Debug button to view full evaluation details
-                        if st.button("Debug Info", key=f"debug_{i}"):
-                            dashboard_logger.info(f"Showing debug info for evaluation {eval_config['id']}")
-                            with st.expander("Evaluation Details"):
-                                st.json({k: str(v) if k == 'csv_data' else v for k, v in eval_config.items()})
-                
-                # Show error if present
-                if 'error' in eval_config and eval_config['error']:
-                    with st.expander("❌ Show Error Details", expanded=True):
-                        st.error(f"**Error:** {eval_config['error']}")
-                        if 'start_time' in eval_config:
-                            error_time = datetime.fromtimestamp(eval_config.get('updated_at', time.time()) if isinstance(eval_config.get('updated_at'), (int, float)) else time.time())
-                            st.caption(f"Error occurred at: {error_time.strftime('%Y-%m-%d %H:%M:%S')}")
-                        dashboard_logger.error(f"Evaluation {eval_config['id']} error: {eval_config['error']}")
-                
-                # Show additional status info for running/queued evaluations
-                if status in ['running', 'queued']:
-                    with st.expander("📊 Status Details"):
-                        if 'start_time' in eval_config and eval_config['start_time']:
-                            start_time = datetime.fromtimestamp(eval_config['start_time'])
-                            st.write(f"**Started:** {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
-                        
-                        if 'updated_at' in eval_config:
-                            if isinstance(eval_config['updated_at'], str):
-                                try:
-                                    updated_time = datetime.fromisoformat(eval_config['updated_at'])
-                                    st.write(f"**Last Updated:** {updated_time.strftime('%Y-%m-%d %H:%M:%S')}")
-                                except:
-                                    pass
-                        
-                        st.write(f"**Configuration:**")
-                        st.write(f"- Models: {len(eval_config.get('selected_models', []))}")
-                        st.write(f"- Judge Models: {len(eval_config.get('judge_models', []))}")
-                        st.write(f"- Parallel Calls: {eval_config.get('parallel_calls', 'N/A')}")
-                        st.write(f"- Invocations per Scenario: {eval_config.get('invocations_per_scenario', 'N/A')}")
-                
-                # Close the highlight div if it was opened
-                if "highlight_eval_id" in st.session_state and st.session_state.highlight_eval_id == eval_config["id"]:
-                    st.markdown('</div>', unsafe_allow_html=True)
-                
-                st.divider()
-            
         
-        # Display Available Evaluations Section
-        st.subheader("Available Evaluations")
+        # Display Processing Evaluations Section
+        st.subheader("Processing Evaluations")
         
         # Debug session state
         print(f"Checking for available evaluations in {len(st.session_state.evaluations)} total evaluations")
@@ -283,59 +153,19 @@ class EvaluationMonitorComponent:
             eval_df = pd.DataFrame(eval_data)
             st.dataframe(eval_df, hide_index=True)
             
-            # Add ability to generate comprehensive report from all evaluations
-            st.subheader("📊 Generate Report")
-            
-            # Report generation options
-            report_scope = st.radio(
-                "Report Scope:",
-                ["All Evaluations", "Selected Evaluations"],
-                index=0,
-                help="Choose whether to generate a report from all completed evaluations or only selected ones"
-            )
-            
-            selected_eval_names = []
-            if report_scope == "Selected Evaluations":
-                # Get completed evaluations (don't require existing results since we're generating a new report)
-                completed_with_results = [
-                    e for e in st.session_state.evaluations 
-                    if e.get("status") == "completed"
-                ]
-                
-                if completed_with_results:
-                    selected_eval_names = st.multiselect(
-                        "Select evaluations for report:",
-                        options=[e["name"] for e in completed_with_results],
-                        help="Select which completed evaluations to include in the report"
-                    )
-                    
-                    if selected_eval_names:
-                        st.info(f"Report will include {len(selected_eval_names)} evaluation(s): {', '.join(selected_eval_names)}")
-                    else:
-                        st.warning("Please select at least one evaluation for the report.")
-                else:
-                    st.warning("No completed evaluations with results found.")
-            else:
-                st.info("Report will include all completed evaluations.")
-            
-            # Generate report button
-            can_generate = (report_scope == "All Evaluations" or 
-                          (report_scope == "Selected Evaluations" and selected_eval_names))
-            
-            if st.button("🔄 Generate Report", key="gen_comprehensive_report", type="secondary", disabled=not can_generate):
-                if report_scope == "Selected Evaluations":
-                    self._generate_comprehensive_report(selected_evaluations=selected_eval_names)
-                else:
-                    self._generate_comprehensive_report()
-            
             # Add section to run selected evaluations
             st.subheader("Run Evaluations")
             
-            # Multiselect for evaluation IDs
+            # Filter evaluations for the dropdown - only include those not yet processed
+            # Exclude: completed, failed, running, queued, in-progress
+            excluded_statuses = ["completed", "failed", "running", "queued", "in-progress"]
+            runnable_evals = [e for e in available_evals if e.get("status", "").lower() not in excluded_statuses]
+            
+            # Multiselect for evaluation IDs - only show runnable evaluations
             selected_eval_ids = st.multiselect(
                 "Select evaluations to run (will execute in order selected)",
-                options=[e["id"] for e in available_evals],
-                format_func=lambda x: next((e["name"] for e in available_evals if e["id"] == x), x)
+                options=[e["id"] for e in runnable_evals],
+                format_func=lambda x: next((e["name"] for e in runnable_evals if e["id"] == x), x)
             )
             
             if selected_eval_ids:
@@ -348,10 +178,7 @@ class EvaluationMonitorComponent:
                 if st.button("🚀 Add to Execution Queue", key="run_evaluations_btn", type="primary"):
                     self._run_evaluations_linearly(selected_eval_ids)
 
-        st.info(f"📋 Evaluations logs available at: {log_dir}")
 
-        # No automatic reruns - removed auto-refresh logic
-    
     def _get_session_evaluations(self, session_start_time):
         """Get all evaluations for the current session, including completed ones."""
         session_evals = []
@@ -428,99 +255,6 @@ class EvaluationMonitorComponent:
         except (ImportError, NameError, AttributeError):
             st.info("In-memory logs not available - only benchmark logs are saved to disk.")
     
-    def _generate_comprehensive_report(self, selected_evaluations=None):
-        """Generate a comprehensive report from evaluation results in the directory.
-        
-        Args:
-            selected_evaluations: Optional list of evaluation names to filter by
-        """
-        try:
-            # Import the visualize_results module
-            from ...visualize_results import create_html_report
-            from ..utils.constants import PROJECT_ROOT, DEFAULT_OUTPUT_DIR
-            
-            # Use the default output directory to look for all results
-            output_dir = DEFAULT_OUTPUT_DIR
-            if not os.path.isabs(output_dir):
-                output_dir = os.path.join(PROJECT_ROOT, output_dir)
-            
-            # Check if output directory exists and has any CSV files
-            if not os.path.exists(output_dir):
-                st.error(f"Output directory not found: {output_dir}")
-                return
-                
-            # Look for CSV result files
-            csv_files = list(Path(output_dir).glob("*.csv"))
-            if not csv_files:
-                st.warning(f"No CSV result files found in {output_dir}. Please run some evaluations first.")
-                return
-            
-            # Generate timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
-            # Create status indicator with appropriate message
-            if selected_evaluations:
-                spinner_msg = f"Generating report from {len(selected_evaluations)} selected evaluation(s)... This may take a moment."
-            else:
-                spinner_msg = f"Generating report from {len(csv_files)} result files... This may take a moment."
-                
-            with st.spinner(spinner_msg):
-                # Call the report generator with the output directory and optional evaluation filter
-                report_path = create_html_report(output_dir, timestamp, selected_evaluations)
-                
-                # Find which CSV files were used to generate this comprehensive report
-                import glob
-                all_csv_files = glob.glob(str(Path(output_dir) / "invocations_*.csv"))
-                
-                # Filter CSV files if specific evaluations were selected
-                if selected_evaluations:
-                    csv_files_used = []
-                    for csv_file in all_csv_files:
-                        csv_filename = os.path.basename(csv_file)
-                        # Check if any selected evaluation name is in the filename
-                        if any(eval_name in csv_filename for eval_name in selected_evaluations):
-                            csv_files_used.append(csv_file)
-                else:
-                    csv_files_used = all_csv_files
-                
-                csv_filenames = [os.path.basename(f) for f in csv_files_used]
-                
-                # Create a comprehensive report status entry (use timestamp as ID)
-                evals_status = {
-                    "status": "completed",
-                    "results": str(report_path),
-                    "evaluations_used_to_generate": csv_filenames,
-                    "report_generated_at": datetime.now().isoformat(),
-                    "updated_at": datetime.now().timestamp(),
-                    "progress": 100
-                }
-                
-                # Save comprehensive report status
-                evals_status_file = Path(output_dir) / f"evaluation_report_{timestamp}_status.json"
-                try:
-                    with open(evals_status_file, 'w') as f:
-                        json.dump(evals_status, f)
-                except Exception as e:
-                    dashboard_logger.error(f"Error saving comprehensive report status: {str(e)}")
-
-
-                # Create appropriate success message based on scope
-                if selected_evaluations:
-                    scope_description = f"data from {len(selected_evaluations)} selected evaluation(s): {', '.join(selected_evaluations)}"
-                else:
-                    scope_description = f"data from {len(csv_files_used)} evaluation result files"
-                
-                st.success(f"✅ **Report generated successfully!**  \n"
-                          f"📁 **File:** {os.path.basename(str(report_path))}  \n"
-                          f"📊 **Scope:** {scope_description}  \n"
-                          f"📋 **View:** Check the **Reports** tab to view all available reports.")
-
-                # Set pending rerun to refresh UI
-                st.session_state.pending_rerun = True
-                
-        except Exception as e:
-            st.error(f"Error generating comprehensive report: {str(e)}")
-            dashboard_logger.exception(f"Error generating comprehensive report: {str(e)}")
 
     def _run_evaluations_linearly(self, eval_ids):
         """Run the selected evaluations one by one in a simple linear fashion.

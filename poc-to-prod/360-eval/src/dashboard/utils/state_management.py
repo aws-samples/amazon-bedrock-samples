@@ -30,6 +30,7 @@ def initialize_session_state():
             "id": None,
             "name": f"Benchmark-{datetime.now().strftime("%Y%m%d%H%M%S")}",
             "csv_data": None,
+            "csv_file_name": None,
             "prompt_column": None,
             "golden_answer_column": None,
             "task_type": "",  # Keep for backward compatibility
@@ -61,6 +62,7 @@ def create_new_evaluation():
         "id": str(uuid.uuid4()),
         "name": f"Benchmark-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
         "csv_data": None,
+        "csv_file_name": None,
         "prompt_column": None,
         "golden_answer_column": None,
         "task_type": "",  # Keep for backward compatibility

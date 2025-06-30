@@ -1,12 +1,14 @@
-# 360-Eval Dashboard user-guide:
+# 360-Eval Dashboard Tutorial & User Guide
 
-A modern Streamlit-based web interface for running, monitoring, and analyzing LLM benchmark evaluations using the LLM-as-a-JURY methodology.
+A Streamlit-based web interface for running, monitoring, and analyzing LLM benchmark evaluations using the LLM-as-a-JURY methodology.
 
+## 🚀 Getting Started
 
-## 🚀 Quick Start
+### Prerequisites
+- Install dependencies from the main README.md
+- Configure AWS credentials for Bedrock access
 
-### Launch
-These steps come after installing requirements for 360-Eval, please consult README.md for those steps.
+### Launch the Dashboard
 ```bash
 # Navigate to the project directory
 cd poc-to-prod/360-eval
@@ -15,195 +17,308 @@ cd poc-to-prod/360-eval
 python -m streamlit run src/streamlit_dashboard.py
 ```
 
-The dashboard will be rendered in `http://localhost:8501`
+The dashboard will be available at `http://localhost:8501`
 
-## 📋 Features
+### Close the Dashboard
+To stop the dashboard:
+- Press `Ctrl+C` in the terminal where the dashboard is running
+---
 
-### 🛠️ **Setup Tab**
-Create and configure new benchmark evaluations with:
+## 📚 Step-by-Step Tutorial
 
-**Evaluation Setup:**
-- Upload CSV datasets with **prompts** and **golden answers**
-- Configure evaluation parameters (parallel calls, invocations, temperature)
-- Set experiment counts and custom metrics
-- Define task types and evaluation criteria
+### Step 1: Setting Up Your First Evaluation
 
-**Model Configuration:**
-- Select and configure LLM models for evaluation
-- Choose judge models for assessment
-- Set region preferences and cost parameters
-- Configure inference profiles
+#### 1.1 Navigate to Setup Tab
+The Setup tab contains three sub-tabs:
 
-### 📊 **Monitor Tab**
-Real-time monitoring of evaluation execution:
+**🔧 Evaluation Setup Tab**
+1. **Name Your Evaluation**
+   - Enter a descriptive name (e.g., "Customer_Support_Bot_V2")
+   - This name identifies your results and reports
 
-- **Execution Queue Status:** Track currently running and queued evaluations
-- **Linear Processing:** Evaluations run sequentially to ensure stability
-- **Live Status Updates:** Real-time progress tracking by **manual refresh**
-- **Active & Recent Evaluations:** View in-progress, completed, and failed evaluations
-- **Log Access:** Direct access to evaluation logs
-- **Report Generation:** Create individual or aggregated reports
+2. **Upload Your Dataset**
+   - Click "Upload CSV with prompts and golden answers"
+   - Your CSV should have at least two columns:
+     - One for prompts (questions/inputs)
+     - One for golden answers (expected responses)
+   - Example CSV structure:
+     ```csv
+     prompt,golden_answer
+     "What is the capital of France?","Paris"
+     "Explain machine learning","Machine learning is..."
+     ```
 
-### 📈 **Results Tab**
-Detailed analysis of completed evaluations:
+3. **Select Data Columns**
+   - Choose the "Prompt Column" (contains your test questions)
+   - Choose the "Golden Answer Column" (contains expected responses)
+   - Preview your data to verify selections
 
-- **Evaluation Overview:** Status, timing, and configuration details
-- **Model & Judge Information:** Complete details including costs and regions
-- **Configuration Display:** All parameters used during evaluation
-  - Parallel API Calls
-  - Invocations per Scenario
-  - Experiment Counts
-  - Temperature Variations
-  - User-Defined Metrics
-- **Performance Metrics:** Duration, success rates, and error analysis
+4. **Configure Multiple Task Evaluations**
+   - Use "Number of Task Evaluations" to create multiple tests
+   - For each task evaluation, specify:
+     - **Task Type**: e.g., "Question-Answering", "Summarization", "Translation"
+     - **Task Criteria**: Detailed evaluation instructions
+     - **Temperature**: Controls response creativity (0.01 = deterministic, 1.0 = very creative)
+     - **User-Defined Metrics**: Optional custom criteria (e.g., "professional tone")
 
-### 📊 **Reports Tab**
-Centralized report management and viewing:
+**Example Multi-Task Setup:**
+- Task 1: Question-Answering, Temperature 0.3, Focus on factual accuracy
+- Task 2: Creative Writing, Temperature 0.8, Focus on engagement and creativity
 
-- **Report Library:** Table view of all available reports
-- **Creation Tracking:** Timestamps and file sizes
-- **Evaluation Traceability:** See which evaluations contributed to each report
-- **In-App Viewing:** Display HTML reports within the dashboard
-- **Download Options:** Export reports for external use
+#### 1.2 Configure Models (Model Configuration Tab)
+1. **Select Models to Evaluate**
+   - Choose from available LLM models
+   - Configure regions and inference profiles
+   - Set cost parameters for each model
 
-## 🏗️ Architecture
+2. **Choose Judge Models**
+   - Select models that will evaluate the responses
+   - Judges assess quality based on your task criteria
+   - Can use different models as judges than those being evaluated
 
-### File Organization
+#### 1.3 Set Parameters (Third Configuration Tab)
+Fine-tune execution parameters:
+- **Parallel API Calls**: Start with 4 for most use cases
+- **Invocations per Scenario**: Use 3-5 for reliable results
+- **Sleep Between Invocations**: 60-120 seconds for production APIs
+- **Experiment Counts**: Number of runs (use 1 for testing, 3-5 for production)
+- **Temperature Variations**: Test additional temperature settings automatically
+
+**💾 Save Your Configuration**
+Click "Save Evaluation Configuration" to store your setup.
+
+### Step 2: Running Evaluations
+
+#### 2.1 Navigate to Monitor Tab
+The Monitor tab shows "Processing Evaluations" and execution controls.
+
+#### 2.2 Queue Your Evaluations
+1. **Select Evaluations to Run**
+   - Use the dropdown to select from available (not yet processed) evaluations
+   - Only shows evaluations that haven't been completed, failed, or are currently running
+   - Multiple evaluations can be selected for batch processing
+
+2. **Add to Execution Queue**
+   - Click "🚀 Add to Execution Queue"
+   - Evaluations run sequentially (one at a time) for stability
+   - Monitor queue status and currently running evaluation
+
+#### 2.3 Monitor Progress
+- **Queue Status**: Shows currently running and queued evaluations
+- **Manual Refresh**: Click "Refresh Evaluations" to update status
+- **Log Monitoring**: Check the logs directory for detailed progress
+
+### Step 3: Analyzing Results
+
+#### 3.1 Navigate to Evaluations Tab
+View all completed evaluations with detailed information.
+
+#### 3.2 Review Evaluation Data
+The main table shows:
+- **Name**: Evaluation identifier
+- **Task Type**: What was being tested
+- **Data File**: Original CSV filename used
+- **Temperature**: Temperature setting used
+- **Custom Metrics**: Whether custom metrics were applied
+- **Models**: Number of models tested
+- **Judges**: Number of judge models used
+- **Completed**: Completion timestamp
+
+#### 3.3 Detailed Analysis
+1. **Select an Evaluation**: Choose from the dropdown
+2. **Review Configuration**: See all parameters used
+3. **Model Performance**: Analyze results by model and judge
+4. **Error Analysis**: Check for any issues or failures
+
+### Step 4: Generating and Managing Reports
+
+#### 4.1 Navigate to Reports Tab
+Location for all report generation and management.
+
+#### 4.2 Generate New Reports
+1. **Choose Report Scope**:
+   - **All Evaluations**: Include all completed evaluations
+   - **Selected Evaluations**: Choose specific evaluations to include
+
+2. **Select Evaluations** (if using Selected Evaluations):
+   - Pick which completed evaluations to include
+   - Useful for focused analysis or comparison
+
+3. **Generate Report**:
+   - Click "🔄 Generate Report"
+   - Wait for processing (may take a few moments)
+   - New report appears in Available Reports section
+
+#### 4.3 View Reports
+1. **Available Reports Table**: Shows all generated reports with:
+   - Report name and creation time
+   - Number of evaluations included
+   - File size information
+   - Which CSV files were used
+
+2. **Select and View**: Choose a report to view within the dashboard
+3. **Download**: Export HTML reports for external use
+
+#### 4.4 Delete Reports
+1. **Select a Report**: Choose the report you want to remove
+2. **Delete Process**:
+   - Click "🗑️ Delete Report"
+   - First click shows confirmation warning
+   - Second click permanently deletes the report
+
+---
+
+## 🔄 Workflow Example
+
+### Scenario: Testing a Customer Service Chatbot
+
+#### Step 1: Prepare Your Data
+Create a CSV file with customer service scenarios:
+```csv
+customer_query,expected_response_type
+"How do I return a product?","Provide clear return policy steps"
+"What are your business hours?","State specific hours and timezone"
+"I'm having trouble with my order","Show empathy and offer specific help"
 ```
-360-eval/
-├── src/
-│   ├── streamlit_dashboard.py          # Main application entry
-│   └── dashboard/
-│       ├── components/                 # UI components
-│       │   ├── evaluation_setup.py    # Setup configuration
-│       │   ├── model_configuration.py # Model selection
-│       │   ├── evaluation_monitor.py  # Execution monitoring
-│       │   ├── results_viewer.py      # Results analysis
-│       │   └── report_viewer.py       # Report management
-│       └── utils/                      # Core utilities
-│           ├── benchmark_runner.py    # Evaluation execution
-│           ├── state_management.py    # Session & persistence
-│           ├── csv_processor.py       # Data processing
-│           └── constants.py           # Configuration
-├── benchmark_results/                  # Evaluation outputs
-├── prompt-evaluations/                # Evaluation definitions
-├── config/                            # Model/judge profiles
-└── logs/                              # Execution logs
-```
 
-### Data Flow
-1. **Setup:** Configure evaluations and models through the UI
-2. **Execution:** Evaluations run linearly with queue management
-3. **Storage:** Results stored in status files with full configuration
-4. **Analysis:** Data loaded from consolidated status files
-5. **Reporting:** HTML reports generated and tracked
+#### Step 2: Configure Evaluation
+1. **Upload CSV** and select columns
+2. **Create Multiple Tasks**:
+   - Task 1: "Accuracy" - Temperature 0.2 - "Provide factually correct information"
+   - Task 2: "Helpfulness" - Temperature 0.5 - "Be helpful and customer-friendly"
+   - Task 3: "Brand Voice" - Temperature 0.4 - Custom metrics: "professional tone, brand consistency"
 
-## 💾 Data Persistence
+#### Step 3: Select Models and Judges
+- **Models**: Test various LLM models
+- **Judges**: Use different models as judges
+- **Settings**: 3 invocations per scenario, 2 experiment counts
 
-### Status Files
-Each evaluation creates a status file (`eval_{id}_{name}_status.json`) containing:
+#### Step 4: Execute and Monitor
+1. Save configuration and go to Monitor tab
+2. Add evaluation to queue and monitor progress
+3. Use logs to track detailed execution
 
-```json
-{
-  "status": "completed",
-  "results": "/path/to/report.html",
-  "models_data": [...],
-  "judges_data": [...],
-  "evaluation_config": {
-    "parallel_calls": 8,
-    "invocations_per_scenario": 3,
-    "experiment_counts": 2,
-    "temperature_variations": 0.7,
-    "user_defined_metrics": "accuracy, latency, cost"
-  },
-  "evaluations_used_to_generate": ["file1.csv", "file2.csv"]
-}
-```
+#### Step 5: Analyze Results
+1. View completed evaluation in Evaluations tab
+2. Compare model performance across different tasks
+3. Review temperature impact and custom metrics
 
-### Session Management
-- **Cross-Session Persistence:** Monitor and Results tabs retain data between browser sessions
-- **Configuration Reset:** Setup tab starts fresh each session
-- **File-Based Recovery:** Evaluations loaded from status files on startup
-- **Automatic Cleanup:** Profile files consolidated into status files after completion
+#### Step 6: Generate Reports
+1. Create report including all tasks
+2. Review visualizations and performance metrics
+3. Download report for stakeholder presentation
 
-## 🔧 Key Features
+---
 
-### Linear Evaluation Processing
-- **Queue-Based Execution:** Evaluations process one at a time
-- **Thread Safety:** Eliminates race conditions and resource conflicts
-- **Error Isolation:** Failed evaluations don't affect others
-- **Progress Tracking:** Real-time status updates with detailed logging
+## 🔧 Features
 
-### Smart File Management
-- **Consolidated Storage:** All evaluation data stored in status files
-- **Automatic Cleanup:** Separate profile files removed after completion
-- **Composite Naming:** `{eval_id}_{eval_name}` pattern for easy identification
-- **Backward Compatibility:** Legacy file formats supported
+### Multi-Task Evaluations
+Create tests by configuring multiple task types with different:
+- Evaluation criteria
+- Temperature settings
+- Custom metrics
+- Success measures
 
-### Report Management
-- **Centralized Repository:** All reports accessible from dedicated tab
-- **Evaluation Tracking:** Clear mapping of reports to source evaluations
-- **In-App Viewing:** HTML reports displayed within the dashboard
-- **Creation History:** Timestamps and metadata for all reports
+### Temperature Testing
+- **Factual Tasks**: Use low temperature (0.1-0.3)
+- **Creative Tasks**: Use higher temperature (0.7-0.9)
+- **Mixed Tasks**: Test multiple temperatures automatically
 
-## 🚦 Usage Workflow
+### Custom Metrics
+Add domain-specific evaluation criteria:
+- Brand voice consistency
+- Technical accuracy
+- Emotional appropriateness
+- Regulatory compliance
 
-1. **Configure Evaluation:**
-   - Upload CSV dataset in Setup tab
-   - Select models and judges
-   - Set evaluation parameters
+### Queue Management
+- **Batch Processing**: Add multiple evaluations to queue
+- **Priority Handling**: Queue processes in selection order
+- **Resource Management**: Sequential execution prevents conflicts
 
-2. **Monitor Execution:**
-   - Switch to Monitor tab
-   - Add evaluations to execution queue
-   - Track progress and view logs
+---
 
-3. **Analyze Results:**
-   - View completed evaluations in Results tab
-   - Examine model performance and configuration
-   - Generate individual reports
+## 📊 Results and Reports
 
-4. **Review Reports:**
-   - Access all reports in Reports tab
-   - View aggregated analysis
-   - Download for external use
+### CSV Output Files
+The evaluation process generates CSV files containing:
+- **Model responses**: Raw outputs from each tested model
+- **Judge scores**: Numerical ratings and assessments
+- **Latency data**: Response time measurements
+- **Cost tracking**: Token usage and pricing information
+- **Error logs**: Any failures or issues encountered
+- **Configuration data**: Parameters used for each test
 
-## 🔍 Troubleshooting
+### HTML Reports
+Reports provide visual analysis including:
+- Performance charts comparing models
+- Cost analysis and budget tracking
+- Response time distributions
+- Success rate matrices
+- Error categorization and analysis
 
-### Common Issues
-- **Port Conflicts:** Dashboard runs on `localhost:8501` by default
-- **Log Access:** Logs available in `logs/` directory and through UI
-- **Session State:** Use manual refresh if auto-updates aren't working
-- **File Permissions:** Ensure write access to `benchmark_results/` directory
+The reports combine data from multiple CSV files to show patterns and comparisons across different evaluations.
 
-### Debug Information
-- **Log Files:** Detailed execution logs in `logs/` directory
-- **Status Files:** Check `logs/*_status.json` for evaluation state
-- **Debug Panel:** Available in sidebar for session information
+---
 
-## 📊 Report Features
+## 🚨 Troubleshooting
 
-### Visualization Types
-- **Performance Metrics:** Latency, throughput, and cost analysis
-- **Success Rate Heatmaps:** Model vs. task performance matrices
-- **Error Analysis:** Detailed failure categorization
-- **Regional Performance:** Geographic analysis with time zones
-- **Judge Score Radars:** Multi-dimensional evaluation criteria
+### Common Issues and Solutions
 
-### Export Options
-- **HTML Reports:** Interactive charts and tables
-- **Download Support:** Export reports for presentations
-- **Data Tables:** Integrated analysis with filtering
+**Issue**: Evaluation gets stuck in "queued" status
+- **Solution**: Check logs for API errors or rate limiting
+- **Prevention**: Use appropriate sleep intervals between calls
 
-## 🛡️ Security & Performance
+**Issue**: CSV upload fails
+- **Solution**: Verify CSV format and column headers
+- **Check**: Ensure file encoding is UTF-8
 
-### Session Management
-- **Isolated Sessions:** Each browser session maintains separate state
-- **Memory Efficient:** Automatic cleanup of completed evaluations
-- **Thread Safe:** Concurrent access protection
+**Issue**: Models not available
+- **Solution**: Verify AWS credentials and region settings
+- **Check**: Ensure Bedrock model access is enabled
 
-### Resource Management
-- **Linear Processing:** Prevents resource exhaustion
-- **Automatic Cleanup:** Removes temporary files after completion
-- **Error Handling:** Graceful degradation on failures
+**Issue**: Reports not generating
+- **Solution**: Verify completed evaluations exist
+- **Check**: Ensure evaluation CSV files are present
+
+### Debug Tools
+- **Sidebar Debug Panel**: Session information and log access
+- **Log Files**: Detailed execution logs in `logs/` directory
+- **Status Files**: Check evaluation state in status JSON files
+- **Manual Refresh**: Use refresh buttons if auto-updates fail
+
+### Performance Tips
+- **Parallel Calls**: Adjust based on API rate limits
+- **Sleep Intervals**: Increase if experiencing rate limiting
+- **Batch Size**: Process smaller evaluation sets for faster feedback
+- **Resource Monitoring**: Watch CPU and memory usage during execution
+
+---
+
+## 🎯 Best Practices
+
+### Data Preparation
+- **Clear Prompts**: Write specific, unambiguous test prompts
+- **Quality Golden Answers**: Provide detailed expected responses
+- **Balanced Dataset**: Include various difficulty levels and scenarios
+- **Consistent Format**: Maintain uniform CSV structure
+
+### Evaluation Configuration
+- **Start Small**: Begin with 1-2 models and simple criteria
+- **Iterative Approach**: Add complexity gradually
+- **Temperature Testing**: Use different temperatures for different task types
+- **Multiple Judges**: Use 2+ judge models for reliable assessment
+
+### Execution Management
+- **Sequential Processing**: Let evaluations run one at a time
+- **Monitor Resources**: Watch for API rate limits and costs
+- **Log Review**: Check logs for detailed progress and error information
+- **Patience**: Large evaluations can take significant time
+
+### Report Generation
+- **Focused Reports**: Create targeted reports for specific analysis
+- **Regular Cleanup**: Delete outdated reports to manage storage
+- **Documentation**: Include evaluation context in report names
+
+---
 

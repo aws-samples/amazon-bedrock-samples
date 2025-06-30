@@ -90,7 +90,7 @@ def main():
             st.divider()
             
             # Navigation tabs in sidebar - always include Reports tab
-            tab_names = ["Setup", "Monitor", "Results", "Reports"]
+            tab_names = ["Setup", "Monitor", "Evaluations", "Reports"]
             active_tab = st.radio("Navigation", tab_names)
             logger.info(f"Selected tab: {active_tab}")
         
@@ -115,7 +115,7 @@ def main():
             logger.info("Rendering Evaluation Monitor component")
             EvaluationMonitorComponent().render()
             
-        elif active_tab == "Results":
+        elif active_tab == "Evaluations":
             logger.info("Rendering Results Viewer component")
             ResultsViewerComponent().render()
             

@@ -17,7 +17,8 @@ class EvaluationSetupComponent:
             "Evaluation Name",
             value=st.session_state.current_evaluation_config["name"],
             key="eval_name",
-            on_change=self._update_name
+            on_change=self._update_name,
+            help="A descriptive name for this evaluation run. This will be used to identify results and generate reports. Example: 'Customer_Support_Bot_V2'"
         )
         
         # CSV Upload
@@ -25,7 +26,8 @@ class EvaluationSetupComponent:
             "Upload CSV with prompts and golden answers",
             type=["csv"],
             key="csv_upload",
-            on_change=self._process_csv_upload
+            on_change=self._process_csv_upload,
+            help="Upload a CSV file containing your test data. Each row should have a prompt (question/input) and the expected correct answer (golden answer)."
         )
         
         # If CSV data is available, show column selection
@@ -42,7 +44,8 @@ class EvaluationSetupComponent:
                     options=columns,
                     index=None if prompt_col is None else columns.index(prompt_col) if prompt_col in columns else None,
                     key="prompt_column",
-                    on_change=self._update_prompt_column
+                    on_change=self._update_prompt_column,
+                    help="Select the column containing the questions or inputs you want to test the AI model with."
                 )
             
             with col2:
@@ -52,7 +55,8 @@ class EvaluationSetupComponent:
                     options=columns,
                     index=None if golden_col is None else columns.index(golden_col) if golden_col in columns else None,
                     key="golden_answer_column",
-                    on_change=self._update_golden_answer_column
+                    on_change=self._update_golden_answer_column,
+                    help="Select the column containing the correct/expected answers that the AI model's responses will be compared against."
                 )
             
             # Preview CSV data
@@ -81,7 +85,7 @@ class EvaluationSetupComponent:
             max_value=10,
             value=st.session_state.num_tasks,
             step=1,
-            help="Specify how many different task evaluations you want to create"
+            help="How many different types of tasks to test. Each task can have different evaluation criteria, temperature, and metrics. Use 1 for simple testing, 2-3 for comprehensive evaluation."
         )
         
         # Adjust the task evaluations list based on the number input
@@ -119,7 +123,8 @@ class EvaluationSetupComponent:
                     "Task Type",
                     value=task_eval.get("task_type", ""),
                     key=f"task_type_{i}",
-                    placeholder="e.g., Summarization, Question-Answering"
+                    placeholder="e.g., Summarization, Question-Answering",
+                    help="What kind of task is this? Examples: Summarization, Translation, Creative Writing, Code Generation, Question-Answering, Classification"
                 )
                 
             with col2:
@@ -128,7 +133,8 @@ class EvaluationSetupComponent:
                     value=task_eval.get("task_criteria", ""),
                     key=f"task_criteria_{i}",
                     placeholder="Specific evaluation instructions",
-                    height=100
+                    height=100,
+                    help="Detailed instructions for how this task should be evaluated. Be specific about what makes a good vs. poor response. Example: 'Summarize the text while preserving all key facts and maintaining a professional tone.'"
                 )
             
             # Second row for temperature and user-defined metrics
@@ -142,7 +148,7 @@ class EvaluationSetupComponent:
                     value=task_eval.get("temperature", 0.5),
                     step=0.1,
                     key=f"temperature_{i}",
-                    help="Controls randomness in model responses (0.0 = deterministic, 2.0 = very random)"
+                    help="Controls randomness in model responses (0.01 = deterministic, 1.0 = very creative)"
                 )
                 
             with col4:
@@ -151,7 +157,7 @@ class EvaluationSetupComponent:
                     value=task_eval.get("user_defined_metrics", ""),
                     key=f"user_defined_metrics_{i}",
                     placeholder="e.g., business writing style, brand adherence",
-                    help="Comma-separated additional evaluation metrics for this task"
+                    help="Additional custom criteria to evaluate beyond the standard metrics (correctness, completeness, etc.). Separate multiple criteria with commas. Examples: 'professional tone', 'brand voice consistency', 'technical accuracy'"
                 )
             
             # Update the task evaluation in session state
@@ -171,6 +177,8 @@ class EvaluationSetupComponent:
             df = read_csv_file(st.session_state.csv_upload)
             if df is not None:
                 st.session_state.current_evaluation_config["csv_data"] = df
+                # Capture the original file name
+                st.session_state.current_evaluation_config["csv_file_name"] = st.session_state.csv_upload.name
                 # Reset column selections to ensure user explicitly chooses them
                 st.session_state.current_evaluation_config["prompt_column"] = None
                 st.session_state.current_evaluation_config["golden_answer_column"] = None
@@ -221,7 +229,8 @@ class EvaluationSetupComponent:
                 max_value=20,
                 value=st.session_state.current_evaluation_config["parallel_calls"],
                 key="adv_parallel_calls",
-                on_change=self._update_parallel_calls_adv
+                on_change=self._update_parallel_calls_adv,
+                help="How many API calls to run simultaneously. Higher values = faster execution but may hit rate limits. Start with 4 for most use cases."
             )
             
             # Invocations per scenario
@@ -231,7 +240,8 @@ class EvaluationSetupComponent:
                 max_value=20,
                 value=st.session_state.current_evaluation_config["invocations_per_scenario"],
                 key="adv_invocations_per_scenario",
-                on_change=self._update_invocations_per_scenario_adv
+                on_change=self._update_invocations_per_scenario_adv,
+                help="How many times to run each test scenario. More invocations = more reliable results but longer execution time. Use 3-5 for production testing."
             )
         
         with col2:
@@ -242,7 +252,8 @@ class EvaluationSetupComponent:
                 max_value=300,
                 value=st.session_state.current_evaluation_config["sleep_between_invocations"],
                 key="adv_sleep_between_invocations",
-                on_change=self._update_sleep_between_invocations_adv
+                on_change=self._update_sleep_between_invocations_adv,
+                help="Pause time between API calls to avoid rate limits. Use 60-120 seconds for production APIs, 0-30 for testing. Higher values = slower but more reliable."
             )
             
             # Experiment counts
@@ -252,7 +263,8 @@ class EvaluationSetupComponent:
                 max_value=10,
                 value=st.session_state.current_evaluation_config["experiment_counts"],
                 key="adv_experiment_counts",
-                on_change=self._update_experiment_counts_adv
+                on_change=self._update_experiment_counts_adv,
+                help="Number of complete experiment runs to perform. Each run tests all scenarios. More runs = better statistical confidence. Use 1 for quick testing, 3-5 for production."
             )
             
             # Temperature variations
@@ -262,7 +274,8 @@ class EvaluationSetupComponent:
                 max_value=5,
                 value=st.session_state.current_evaluation_config["temperature_variations"],
                 key="adv_temperature_variations",
-                on_change=self._update_temperature_variations_adv
+                on_change=self._update_temperature_variations_adv,
+                help="Test different creativity levels automatically. 0 = use exact temperature set per task, 1+ = test additional temperature variants. Use 0 for precise control, 2-3 for comprehensive testing."
             )
         
     
