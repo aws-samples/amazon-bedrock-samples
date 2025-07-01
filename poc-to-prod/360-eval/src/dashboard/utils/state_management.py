@@ -300,7 +300,9 @@ def load_evaluations_from_files():
                         "sleep_between_invocations": stored_config.get("sleep_between_invocations", 3),
                         "experiment_counts": stored_config.get("experiment_counts", 1),
                         "temperature_variations": stored_config.get("temperature_variations", 0),
-                        "user_defined_metrics": stored_config.get("user_defined_metrics", "")
+                        "user_defined_metrics": stored_config.get("user_defined_metrics", ""),
+                        "temperature": stored_config.get("temperature"),
+                        "csv_file_name": stored_config.get("csv_file_name")
                     }
                     
                     st.session_state.evaluations.append(eval_config)

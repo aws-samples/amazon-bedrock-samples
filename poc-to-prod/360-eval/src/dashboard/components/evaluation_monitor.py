@@ -136,7 +136,7 @@ class EvaluationMonitorComponent:
             for eval_config in available_evals:
                 # Prepare the name field - as a link if report exists
                 if eval_config["id"] in report_links:
-                    name_field = f"<a href='{report_links[eval_config['id']]}'>{eval_config['name']}</a>"
+                    name_field = f"{eval_config['name']}"
                 else:
                     name_field = eval_config["name"]
                 
@@ -170,14 +170,16 @@ class EvaluationMonitorComponent:
             
             if selected_eval_ids:
                 st.info(f"Selected {len(selected_eval_ids)} evaluation(s).")
-                
-                # Show warning if there are already evaluations in queue
-                if queue_status["queue_length"] > 0 or queue_status["current_evaluation"]:
-                    st.warning(f"⚠️ There are already evaluations running/queued. New evaluations will be added to the queue.")
-                
-                if st.button("🚀 Add to Execution Queue", key="run_evaluations_btn", type="primary"):
-                    self._run_evaluations_linearly(selected_eval_ids)
 
+                # # Show warning if there are already evaluations in queue
+                # if queue_status["queue_length"] > 0 or queue_status["current_evaluation"]:
+                #     st.warning(f"⚠️ There are already evaluations running/queued. New evaluations will be added to the queue.")
+                if queue_status["queue_length"] > 0 or queue_status["current_evaluation"]:
+                    if st.button("🚀 Add to Execution Queue", key="run_evaluations_btn", type="primary"):
+                        self._run_evaluations_linearly(selected_eval_ids)
+                else:
+                    if st.button("🚀 Execute Evaluation/s", key="run_evaluations_btn", type="primary"):
+                        self._run_evaluations_linearly(selected_eval_ids)
 
     def _get_session_evaluations(self, session_start_time):
         """Get all evaluations for the current session, including completed ones."""
