@@ -153,12 +153,36 @@ class EvaluationMonitorComponent:
             eval_df = pd.DataFrame(eval_data)
             st.dataframe(eval_df, hide_index=True)
             
+            # Add section to delete evaluations
+            st.subheader("Delete Evaluations")
+            
+            # Filter evaluations that can be deleted (exclude running, queued, in-progress)
+            deletable_statuses = ["configuring", "failed", "completed"]
+            deletable_evals = [e for e in available_evals if e.get("status", "").lower() in deletable_statuses]
+            
+            if deletable_evals:
+                selected_delete_ids = st.multiselect(
+                    "Select evaluations to delete permanently",
+                    options=[e["id"] for e in deletable_evals],
+                    format_func=lambda x: next((f"{e['name']} ({e['status']})" for e in deletable_evals if e["id"] == x), x),
+                    help="⚠️ This will permanently delete the evaluation configuration and status files."
+                )
+                
+                if selected_delete_ids:
+                    st.warning(f"⚠️ You are about to delete {len(selected_delete_ids)} evaluation(s). This action cannot be undone.")
+                    
+                    if st.button("🗑️ Delete Selected Evaluations", type="secondary"):
+                        self._delete_evaluations(selected_delete_ids)
+                        st.info("Please refresh the page or navigate to another tab to see the updated list.")
+            else:
+                st.info("No evaluations available for deletion.")
+            
             # Add section to run selected evaluations
             st.subheader("Run Evaluations")
             
-            # Filter evaluations for the dropdown - only include those not yet processed
-            # Exclude: completed, failed, running, queued, in-progress
-            excluded_statuses = ["completed", "failed", "running", "queued", "in-progress"]
+            # Filter evaluations for the dropdown - include configuring and failed evaluations
+            # Exclude: completed, running, queued, in-progress (allow failed to be re-run)
+            excluded_statuses = ["completed", "running", "queued", "in-progress"]
             runnable_evals = [e for e in available_evals if e.get("status", "").lower() not in excluded_statuses]
             
             # Multiselect for evaluation IDs - only show runnable evaluations
@@ -307,3 +331,44 @@ class EvaluationMonitorComponent:
         except Exception as e:
             st.error(f"Error starting execution: {str(e)}")
             dashboard_logger.exception(f"Error in linear execution: {str(e)}")
+    
+    def _delete_evaluations(self, eval_ids):
+        """Delete selected evaluations from session state and disk."""
+        from ..utils.state_management import delete_evaluation_from_disk
+        
+        deleted_count = 0
+        for eval_id in eval_ids:
+            # Find the evaluation to get its name
+            eval_to_delete = None
+            for eval_config in st.session_state.evaluations:
+                if eval_config["id"] == eval_id:
+                    eval_to_delete = eval_config
+                    break
+            
+            if eval_to_delete:
+                # Delete from disk
+                if delete_evaluation_from_disk(eval_id, eval_to_delete["name"]):
+                    # Remove from session state
+                    st.session_state.evaluations = [
+                        e for e in st.session_state.evaluations if e["id"] != eval_id
+                    ]
+                    
+                    # Also remove from active and completed lists
+                    st.session_state.active_evaluations = [
+                        e for e in st.session_state.active_evaluations if e["id"] != eval_id
+                    ]
+                    st.session_state.completed_evaluations = [
+                        e for e in st.session_state.completed_evaluations if e["id"] != eval_id
+                    ]
+                    
+                    deleted_count += 1
+                    dashboard_logger.info(f"Deleted evaluation: {eval_to_delete['name']} (ID: {eval_id})")
+                else:
+                    st.error(f"Failed to delete evaluation: {eval_to_delete['name']}")
+            else:
+                st.error(f"Evaluation with ID {eval_id} not found")
+        
+        if deleted_count > 0:
+            st.success(f"Successfully deleted {deleted_count} evaluation(s)")
+        else:
+            st.error("No evaluations were deleted")

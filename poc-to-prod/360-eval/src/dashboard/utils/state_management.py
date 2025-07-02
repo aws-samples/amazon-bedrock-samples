@@ -2,6 +2,7 @@
 
 import streamlit as st
 import uuid
+import time
 from datetime import datetime
 import os
 from .constants import (
@@ -128,6 +129,9 @@ def save_current_evaluation():
             st.session_state.evaluations.append(new_eval)
             print(f"Added new evaluation with ID: {new_eval['id']}, Name: {new_eval['name']}")
             
+            # Save configuring evaluation to disk for persistence
+            save_configuring_evaluation_to_disk(new_eval)
+            
         else:
             # This is an update to an existing evaluation - only update if single task
             if len(task_evaluations) == 1:
@@ -151,6 +155,9 @@ def save_current_evaluation():
                         st.session_state.evaluations[j] = updated_eval
                         print(f"Updated evaluation with ID: {eval_id}, Name: {st.session_state.evaluations[j]['name']}")
                         updated = True
+                        
+                        # Save updated configuring evaluation to disk
+                        save_configuring_evaluation_to_disk(updated_eval)
                         break
                         
                 if not updated:
@@ -168,6 +175,9 @@ def save_current_evaluation():
                         del new_eval["task_evaluations"]
                     
                     st.session_state.evaluations.append(new_eval)
+                    
+                    # Save configuring evaluation to disk for persistence
+                    save_configuring_evaluation_to_disk(new_eval)
             else:
                 print("Cannot update evaluation with multiple tasks - this should create new evaluations instead")
     
@@ -180,6 +190,81 @@ def save_current_evaluation():
 def reset_current_evaluation():
     """Reset the current evaluation configuration to default values."""
     st.session_state.current_evaluation_config = create_new_evaluation()
+
+
+def save_configuring_evaluation_to_disk(eval_config):
+    """Save a configuring evaluation to disk for persistence across page refreshes."""
+    try:
+        import json
+        from pathlib import Path
+        
+        # Create status file for configuring evaluation
+        status_dir = Path(STATUS_FILES_DIR)
+        status_dir.mkdir(exist_ok=True)
+        
+        eval_id = eval_config["id"]
+        eval_name = eval_config["name"]
+        composite_id = f"{eval_id}_{eval_name}"
+        status_file = status_dir / f"eval_{composite_id}_status.json"
+        
+        # Create minimal status data for configuring evaluation
+        status_data = {
+            "status": "configuring",
+            "updated_at": time.time(),
+            "progress": 0,
+            "evaluation_config": {
+                "parallel_calls": eval_config.get("parallel_calls"),
+                "invocations_per_scenario": eval_config.get("invocations_per_scenario"),
+                "experiment_counts": eval_config.get("experiment_counts"),
+                "temperature_variations": eval_config.get("temperature_variations"),
+                "user_defined_metrics": eval_config.get("user_defined_metrics"),
+                "sleep_between_invocations": eval_config.get("sleep_between_invocations"),
+                "task_type": eval_config.get("task_type"),
+                "task_criteria": eval_config.get("task_criteria"),
+                "temperature": eval_config.get("temperature"),
+                "csv_file_name": eval_config.get("csv_file_name")
+            },
+            # Store models and judges data for configuring evaluations
+            "models_data": eval_config.get("selected_models", []),
+            "judges_data": eval_config.get("judge_models", [])
+        }
+        
+        with open(status_file, 'w') as f:
+            json.dump(status_data, f)
+            
+        print(f"Saved configuring evaluation to disk: {status_file}")
+        
+    except Exception as e:
+        import logging
+        logging.warning(f"Could not save configuring evaluation to disk: {str(e)}")
+
+
+def delete_evaluation_from_disk(eval_id, eval_name):
+    """Delete an evaluation's status file from disk."""
+    try:
+        from pathlib import Path
+        
+        status_dir = Path(STATUS_FILES_DIR)
+        composite_id = f"{eval_id}_{eval_name}"
+        status_file = status_dir / f"eval_{composite_id}_status.json"
+        
+        # Try both composite and legacy formats
+        if status_file.exists():
+            status_file.unlink()
+            print(f"Deleted status file: {status_file}")
+        else:
+            # Try legacy format
+            legacy_status_file = status_dir / f"eval_{eval_id}_status.json"
+            if legacy_status_file.exists():
+                legacy_status_file.unlink()
+                print(f"Deleted legacy status file: {legacy_status_file}")
+        
+        return True
+        
+    except Exception as e:
+        import logging
+        logging.warning(f"Could not delete evaluation from disk: {str(e)}")
+        return False
 
 
 
