@@ -57,10 +57,14 @@ class ResultsViewerComponent:
                     judges_summary = "0 judges"
                     judges_details = "None"
                 
-                # Extract file name from CSV data or show as unknown
+                # Extract file name from persistent storage or CSV data
                 csv_file_name = "Unknown"
-                if eval_config.get("csv_data") is not None:
-                    # Try to get original file name if available
+                
+                # First check if we have the persisted file name (from status files)
+                if eval_config.get("csv_file_name"):
+                    csv_file_name = eval_config.get("csv_file_name")
+                # Fallback to CSV data if available (for active session)
+                elif eval_config.get("csv_data") is not None:
                     csv_file_name = eval_config.get("csv_file_name", "Uploaded CSV")
                 elif hasattr(eval_config.get("csv_data"), "name"):
                     csv_file_name = eval_config["csv_data"].name
