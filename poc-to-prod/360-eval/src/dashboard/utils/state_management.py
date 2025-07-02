@@ -240,30 +240,114 @@ def save_configuring_evaluation_to_disk(eval_config):
 
 
 def delete_evaluation_from_disk(eval_id, eval_name):
-    """Delete an evaluation's status file from disk."""
+    """Delete all files related to an evaluation from disk."""
     try:
         from pathlib import Path
+        import logging
         
-        status_dir = Path(STATUS_FILES_DIR)
+        deleted_files = []
         composite_id = f"{eval_id}_{eval_name}"
-        status_file = status_dir / f"eval_{composite_id}_status.json"
         
-        # Try both composite and legacy formats
+        # 1. Delete status files from logs directory
+        status_dir = Path(STATUS_FILES_DIR)
+        
+        # Try composite format first
+        status_file = status_dir / f"eval_{composite_id}_status.json"
         if status_file.exists():
             status_file.unlink()
-            print(f"Deleted status file: {status_file}")
-        else:
-            # Try legacy format
-            legacy_status_file = status_dir / f"eval_{eval_id}_status.json"
-            if legacy_status_file.exists():
-                legacy_status_file.unlink()
-                print(f"Deleted legacy status file: {legacy_status_file}")
+            deleted_files.append(f"Status: {status_file}")
         
-        return True
+        # Try legacy format
+        legacy_status_file = status_dir / f"eval_{eval_id}_status.json"
+        if legacy_status_file.exists():
+            legacy_status_file.unlink()
+            deleted_files.append(f"Legacy status: {legacy_status_file}")
+        
+        # 2. Delete CSV invocation files from benchmark-results directory
+        benchmark_results_dir = Path(DEFAULT_OUTPUT_DIR)
+        
+        # Look for invocation CSV files with various patterns
+        csv_patterns = [
+            f"invocations_*{composite_id}*.csv",
+            f"invocations_*{eval_id}*.csv", 
+            f"*{eval_name}*.csv"
+        ]
+        
+        for pattern in csv_patterns:
+            csv_files = list(benchmark_results_dir.glob(pattern))
+            for csv_file in csv_files:
+                csv_file.unlink()
+                deleted_files.append(f"CSV: {csv_file}")
+        
+        # 3. Delete HTML report files
+        html_patterns = [
+            f"*{composite_id}*.html",
+            f"*{eval_id}*.html",
+            f"*{eval_name}*.html"
+        ]
+        
+        for pattern in html_patterns:
+            html_files = list(benchmark_results_dir.glob(pattern))
+            for html_file in html_files:
+                html_file.unlink()
+                deleted_files.append(f"HTML: {html_file}")
+        
+        # 4. Delete evaluation report status files
+        eval_report_patterns = [
+            f"evaluation_report_*{eval_id}*_status.json",
+            f"evaluation_report_*{eval_name}*_status.json"
+        ]
+        
+        for pattern in eval_report_patterns:
+            report_files = list(benchmark_results_dir.glob(pattern))
+            for report_file in report_files:
+                report_file.unlink()
+                deleted_files.append(f"Report: {report_file}")
+        
+        # 5. Delete unprocessed error files (in unprocessed subdirectory)
+        unprocessed_dir = benchmark_results_dir / "unprocessed"
+        if unprocessed_dir.exists():
+            unprocessed_patterns = [
+                f"unprocessed_*{eval_id[:8]}*.json",  # Use first 8 chars of eval_id
+                f"*{composite_id[:16]}*.json"  # Use first 16 chars of composite_id
+            ]
+            
+            for pattern in unprocessed_patterns:
+                unprocessed_files = list(unprocessed_dir.glob(pattern))
+                for unprocessed_file in unprocessed_files:
+                    unprocessed_file.unlink()
+                    deleted_files.append(f"Unprocessed: {unprocessed_file}")
+        
+        # 6. Delete JSONL prompt files from prompt-evaluations directory
+        prompt_eval_dir = benchmark_results_dir.parent / "prompt-evaluations"
+        if prompt_eval_dir.exists():
+            jsonl_patterns = [
+                f"{eval_name}.jsonl",
+                f"*{composite_id}*.jsonl",
+                f"model_profiles_{composite_id}.jsonl",
+                f"judge_profiles_{composite_id}.jsonl",
+                f"model_profiles_{eval_id}.jsonl",
+                f"judge_profiles_{eval_id}.jsonl"
+            ]
+            
+            for pattern in jsonl_patterns:
+                jsonl_files = list(prompt_eval_dir.glob(pattern))
+                for jsonl_file in jsonl_files:
+                    jsonl_file.unlink()
+                    deleted_files.append(f"JSONL: {jsonl_file}")
+        
+        if deleted_files:
+            print(f"Deleted {len(deleted_files)} files for evaluation {eval_name}:")
+            for file_info in deleted_files:
+                print(f"  - {file_info}")
+            return True
+        else:
+            print(f"No files found to delete for evaluation {eval_name}")
+            return True  # Still consider it successful if no files found
         
     except Exception as e:
         import logging
-        logging.warning(f"Could not delete evaluation from disk: {str(e)}")
+        logging.warning(f"Could not delete evaluation files from disk: {str(e)}")
         return False
 
 
