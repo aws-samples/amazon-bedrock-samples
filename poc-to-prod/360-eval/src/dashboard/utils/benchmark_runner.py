@@ -63,8 +63,10 @@ def _create_evaluation_log_handler(eval_id):
     
     return handler
 
-def _cleanup_evaluation_logs(eval_id, preserve_on_failure=False):
-    """Clean up evaluation-specific logs. If preserve_on_failure=True and evaluation failed, keep logs."""
+def _cleanup_evaluation_logs(eval_id, preserve_on_failure=False, eval_name=None):
+    """Clean up evaluation-specific logs and files. If preserve_on_failure=True and evaluation failed, keep logs."""
+    
+    # Clean up in-memory log handlers first
     if eval_id in _evaluation_log_handlers:
         handler_info = _evaluation_log_handlers[eval_id]
         handler = handler_info['handler']
@@ -79,12 +81,61 @@ def _cleanup_evaluation_logs(eval_id, preserve_on_failure=False):
                 dashboard_logger.info(f"Preserving logs for failed evaluation {eval_id} (contains errors)")
                 return  # Don't clean up - preserve for debugging
         
-        # Remove handler and clean up
+        # Remove handler and clean up in-memory logs
         dashboard_logger.removeHandler(handler)
         handler.close()
         log_buffer.close()
         del _evaluation_log_handlers[eval_id]
-        dashboard_logger.debug(f"Cleaned up logs for evaluation {eval_id}")
+    
+    # Clean up physical log files from disk (only for successful evaluations or when explicitly requested)
+    if not preserve_on_failure:
+        try:
+            from pathlib import Path
+            deleted_files = []
+            
+            # 1. Delete log files from logs directory
+            logs_dir = Path(os.path.join(PROJECT_ROOT, 'logs'))
+            if logs_dir.exists():
+                # Pattern: 360-benchmark-{timestamp}-{eval_id}_{eval_name}.log
+                log_patterns = [
+                    f"360-benchmark-*{eval_id}*.log",
+                    f"360-benchmark-*{eval_name}*.log" if eval_name else None
+                ]
+                
+                for pattern in log_patterns:
+                    if pattern:  # Skip None patterns
+                        log_files = list(logs_dir.glob(pattern))
+                        for log_file in log_files:
+                            log_file.unlink()
+                            deleted_files.append(f"Log: {log_file}")
+            
+            # 2. Delete JSONL files from prompt-evaluations directory
+            prompt_eval_dir = Path(DEFAULT_OUTPUT_DIR).parent / "prompt-evaluations"
+            if prompt_eval_dir.exists() and eval_name:
+                # Pattern: Benchmark-{eval_name}.jsonl or {eval_name}.jsonl
+                jsonl_patterns = [
+                    f"Benchmark-{eval_name}.jsonl",
+                    f"{eval_name}.jsonl",
+                    f"*{eval_id}*.jsonl"
+                ]
+                
+                for pattern in jsonl_patterns:
+                    jsonl_files = list(prompt_eval_dir.glob(pattern))
+                    for jsonl_file in jsonl_files:
+                        jsonl_file.unlink()
+                        deleted_files.append(f"JSONL: {jsonl_file}")
+            
+            if deleted_files:
+                dashboard_logger.info(f"Cleaned up {len(deleted_files)} log/config files for successful evaluation {eval_id}:")
+                for file_info in deleted_files:
+                    dashboard_logger.debug(f"  - {file_info}")
+            else:
+                dashboard_logger.debug(f"No log files found to clean up for evaluation {eval_id}")
+                
+        except Exception as e:
+            dashboard_logger.warning(f"Could not clean up log files for evaluation {eval_id}: {str(e)}")
+    else:
+        dashboard_logger.info(f"Preserving log files for failed evaluation {eval_id}")
 
 # Evaluation queue and status tracking
 _evaluation_queue = []
@@ -510,7 +561,7 @@ def run_benchmark_process(eval_id):
                                    output_dir=str(output_dir),
                                    evaluation_config=evaluation_config)
                 update_evaluation_status(eval_id, "failed", 0, error=error_msg)
-                _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
+                _cleanup_evaluation_logs(eval_id, preserve_on_failure=True, eval_name=evaluation_config.get("name"))
                 return False
         else:
             # No output files found - this indicates evaluation failure
@@ -540,11 +591,11 @@ def run_benchmark_process(eval_id):
                                output_dir=str(output_dir),
                                evaluation_config=evaluation_config)
             update_evaluation_status(eval_id, "failed", 0, error=error_msg)
-            _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
+            _cleanup_evaluation_logs(eval_id, preserve_on_failure=True, eval_name=evaluation_config.get("name"))
             return False
         
         # Clean up logs for successful evaluation
-        _cleanup_evaluation_logs(eval_id, preserve_on_failure=False)
+        _cleanup_evaluation_logs(eval_id, preserve_on_failure=False, eval_name=evaluation_config.get("name"))
         dashboard_logger.info(f"Cleaned up logs for successful evaluation {eval_id}")
         return True
     
