@@ -152,7 +152,36 @@ class EvaluationMonitorComponent:
             # Display the table
             eval_df = pd.DataFrame(eval_data)
             st.dataframe(eval_df, hide_index=True)
-            
+
+            # Add section to run selected evaluations
+            st.subheader("Run Evaluations")
+
+            # Filter evaluations for the dropdown - include configuring and failed evaluations
+            # Exclude: completed, running, queued, in-progress (allow failed to be re-run)
+            excluded_statuses = ["completed", "running", "queued", "in-progress"]
+            runnable_evals = [e for e in available_evals if e.get("status", "").lower() not in excluded_statuses]
+
+            # Multiselect for evaluation IDs - only show runnable evaluations
+            selected_eval_ids = st.multiselect(
+                "Select evaluations to run (will execute in order selected)",
+                options=[e["id"] for e in runnable_evals],
+                format_func=lambda x: next((e["name"] for e in runnable_evals if e["id"] == x), x)
+            )
+
+            if selected_eval_ids:
+                st.info(f"Selected {len(selected_eval_ids)} evaluation(s).")
+
+                # # Show warning if there are already evaluations in queue
+                # if queue_status["queue_length"] > 0 or queue_status["current_evaluation"]:
+                #     st.warning(f"⚠️ There are already evaluations running/queued. New evaluations will be added to the queue.")
+                if queue_status["queue_length"] > 0 or queue_status["current_evaluation"]:
+                    if st.button("🚀 Add to Execution Queue", key="run_evaluations_btn", type="primary"):
+                        self._run_evaluations_linearly(selected_eval_ids)
+                else:
+                    if st.button("🚀 Execute Evaluation/s", key="run_evaluations_btn", type="primary"):
+                        self._run_evaluations_linearly(selected_eval_ids)
+
+
             # Add section to delete evaluations
             st.subheader("Delete Evaluations")
             
@@ -177,33 +206,7 @@ class EvaluationMonitorComponent:
             else:
                 st.info("No evaluations available for deletion.")
             
-            # Add section to run selected evaluations
-            st.subheader("Run Evaluations")
-            
-            # Filter evaluations for the dropdown - include configuring and failed evaluations
-            # Exclude: completed, running, queued, in-progress (allow failed to be re-run)
-            excluded_statuses = ["completed", "running", "queued", "in-progress"]
-            runnable_evals = [e for e in available_evals if e.get("status", "").lower() not in excluded_statuses]
-            
-            # Multiselect for evaluation IDs - only show runnable evaluations
-            selected_eval_ids = st.multiselect(
-                "Select evaluations to run (will execute in order selected)",
-                options=[e["id"] for e in runnable_evals],
-                format_func=lambda x: next((e["name"] for e in runnable_evals if e["id"] == x), x)
-            )
-            
-            if selected_eval_ids:
-                st.info(f"Selected {len(selected_eval_ids)} evaluation(s).")
 
-                # # Show warning if there are already evaluations in queue
-                # if queue_status["queue_length"] > 0 or queue_status["current_evaluation"]:
-                #     st.warning(f"⚠️ There are already evaluations running/queued. New evaluations will be added to the queue.")
-                if queue_status["queue_length"] > 0 or queue_status["current_evaluation"]:
-                    if st.button("🚀 Add to Execution Queue", key="run_evaluations_btn", type="primary"):
-                        self._run_evaluations_linearly(selected_eval_ids)
-                else:
-                    if st.button("🚀 Execute Evaluation/s", key="run_evaluations_btn", type="primary"):
-                        self._run_evaluations_linearly(selected_eval_ids)
 
     def _get_session_evaluations(self, session_start_time):
         """Get all evaluations for the current session, including completed ones."""

@@ -447,41 +447,101 @@ def run_benchmark_process(eval_id):
         dashboard_logger.info(f"Found {len(csv_files)} CSV files and {len(html_reports)} HTML reports")
         
         if csv_files or html_reports:
-            # Success - found output files
+            # Found output files, but verify they contain valid data
             results_info = []
             latest_csv = None
             latest_html = None
+            csv_has_valid_data = False
             
             if csv_files:
                 latest_csv = max(csv_files, key=os.path.getmtime)
                 results_info.append(f"CSV: {latest_csv}")
+                
+                # Verify CSV has valid data
+                try:
+                    import pandas as pd
+                    csv_df = pd.read_csv(latest_csv)
+                    if len(csv_df) > 0:
+                        # Check if CSV has any meaningful data (not all empty responses)
+                        if 'model_response' in csv_df.columns:
+                            non_empty_responses = csv_df['model_response'].notna() & (csv_df['model_response'] != '')
+                            if non_empty_responses.sum() > 0:
+                                csv_has_valid_data = True
+                                dashboard_logger.info(f"CSV contains {non_empty_responses.sum()} successful responses out of {len(csv_df)} total")
+                            else:
+                                dashboard_logger.warning(f"CSV exists but all {len(csv_df)} model responses are empty")
+                        else:
+                            # If no model_response column, check for other success indicators
+                            csv_has_valid_data = True  # Assume valid if structure is different
+                    else:
+                        dashboard_logger.warning("CSV file exists but is empty")
+                except Exception as e:
+                    dashboard_logger.warning(f"Could not analyze CSV file: {str(e)}")
+                    csv_has_valid_data = True  # Assume valid if we can't parse
+                    
             if html_reports:
                 latest_html = max(html_reports, key=os.path.getmtime)
                 results_info.append(f"HTML: {latest_html}")
                 
             results_path = str(latest_html) if latest_html else str(latest_csv) if latest_csv else None
             
-            _update_status_file(status_file, "completed", 100, 
-                               logs_dir=str(logs_dir),
-                               results=results_path,
-                               end_time=time.time(),
-                               eval_id=eval_id,
-                               eval_name=evaluation_config.get("name"),
-                               output_dir=str(output_dir),
-                               evaluation_config=evaluation_config)
-            update_evaluation_status(eval_id, "completed", 100, results=results_path)
-            dashboard_logger.info(f"Evaluation completed successfully. Results: {'; '.join(results_info)}")
+            # Only mark as completed if we have valid data
+            if csv_has_valid_data or html_reports:
+                _update_status_file(status_file, "completed", 100, 
+                                   logs_dir=str(logs_dir),
+                                   results=results_path,
+                                   end_time=time.time(),
+                                   eval_id=eval_id,
+                                   eval_name=evaluation_config.get("name"),
+                                   output_dir=str(output_dir),
+                                   evaluation_config=evaluation_config)
+                update_evaluation_status(eval_id, "completed", 100, results=results_path)
+                dashboard_logger.info(f"Evaluation completed successfully. Results: {'; '.join(results_info)}")
+            else:
+                # CSV exists but contains no valid data - treat as failure
+                error_msg = f"Evaluation failed: CSV file generated but contains no successful model responses. All invocations appear to have failed."
+                dashboard_logger.error(error_msg)
+                _update_status_file(status_file, "failed", 0, 
+                                   logs_dir=str(logs_dir),
+                                   error=error_msg,
+                                   end_time=time.time(),
+                                   eval_id=eval_id,
+                                   eval_name=evaluation_config.get("name"),
+                                   output_dir=str(output_dir),
+                                   evaluation_config=evaluation_config)
+                update_evaluation_status(eval_id, "failed", 0, error=error_msg)
+                _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
+                return False
         else:
-            # No output files found - this might still be success if the process completed normally
-            dashboard_logger.warning(f"Process completed but no output files found in {output_dir}")
-            _update_status_file(status_file, "completed", 100, 
+            # No output files found - this indicates evaluation failure
+            error_msg = f"Evaluation failed: No invocation CSV file generated. Expected pattern: invocations_*{composite_id}*.csv in {output_dir}"
+            dashboard_logger.error(error_msg)
+            
+            # Check for unprocessed files to get more details about the failure
+            unprocessed_files = list(output_dir.glob("unprocessed*.json"))
+            if unprocessed_files:
+                error_msg += f". Found {len(unprocessed_files)} unprocessed error files indicating invocation failures."
+                try:
+                    # Get sample error from first unprocessed file
+                    with open(unprocessed_files[0], 'r') as f:
+                        unprocessed_data = json.load(f)
+                    if isinstance(unprocessed_data, list) and len(unprocessed_data) > 0:
+                        sample_error = unprocessed_data[0].get('result', {}).get('api_call_status', 'Unknown error')
+                        error_msg += f" Sample error: {sample_error[:200]}"
+                except Exception as e:
+                    dashboard_logger.warning(f"Could not read unprocessed files: {str(e)}")
+            
+            _update_status_file(status_file, "failed", 0, 
                                logs_dir=str(logs_dir),
+                               error=error_msg,
                                end_time=time.time(),
                                eval_id=eval_id,
                                eval_name=evaluation_config.get("name"),
                                output_dir=str(output_dir),
                                evaluation_config=evaluation_config)
-            update_evaluation_status(eval_id, "completed", 100)
+            update_evaluation_status(eval_id, "failed", 0, error=error_msg)
+            _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
+            return False
         
         # Clean up logs for successful evaluation
         _cleanup_evaluation_logs(eval_id, preserve_on_failure=False)
