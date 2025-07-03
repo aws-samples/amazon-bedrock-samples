@@ -28,7 +28,7 @@ class ModelConfigurationComponent:
         )
         
         # Available models tabs (Bedrock, OpenAI)
-        tab1, tab2 = st.tabs(["Bedrock Models", "3P Models"])
+        tab1, tab2 = st.tabs(["Bedrock Models", "Other Models"])
         
         with tab1:
             bedrock_models = [model[0] for model in DEFAULT_BEDROCK_MODELS]

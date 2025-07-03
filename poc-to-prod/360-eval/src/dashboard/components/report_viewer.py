@@ -349,9 +349,6 @@ class ReportViewerComponent:
                           f"📁 **File:** {os.path.basename(str(report_path))}  \n"
                           f"📊 **Scope:** {scope_description}  \n"
                           f"🔄 **Refresh:** The new report will appear in the Available Reports section below.")
-
-                # Trigger a rerun to refresh the available reports list
-                st.rerun()
                 
         except Exception as e:
             st.error(f"Error generating comprehensive report: {str(e)}")

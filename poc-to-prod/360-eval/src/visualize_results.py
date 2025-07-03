@@ -137,6 +137,15 @@ def load_data(directory, evaluation_names=None):
     # Calculate tokens per second
     df['OTPS'] = df['output_tokens'] / (df['time_to_last_byte'] + 0.001)
 
+    judge_scores = pd.DataFrame(df['judge_scores'].to_dict()).transpose()
+    # Identify numeric index values
+    numeric_index_mask = pd.to_numeric(judge_scores.index, errors='coerce').notna()
+    # Filter the DataFrame based on the mask
+    df_scores = judge_scores[numeric_index_mask]
+    # Reset the index of the filtered DataFrame
+    judge_scores_df = df_scores.reset_index(drop=True)
+    judge_scores_df['mean_scores'] = judge_scores_df.mean(axis=1)
+    df = pd.concat([df, judge_scores_df], axis=1)
     # ── Cost summary ───────────────────────────────────────────────────────────
     cost_stats = (
         df.groupby(["model_id"])["response_cost"]
@@ -242,14 +251,17 @@ def calculate_cost_metrics(df):
     return cost.reset_index()
 
 
-def create_ttfb_histogram_with_normal_distribution(df):
+def create_normal_distribution_histogram(df,
+                                         key='time_to_first_byte',
+                                         label='Time to First Token (seconds)'):
     """
     Creates overlapping histogram plots with normal distribution curves for time_to_first_byte by model.
     Only creates the plot if there are more than 2000 records available.
     
     Args:
         df: DataFrame containing the benchmark data
-        
+        label: label for the histogram plot
+        key: data column to create the histogram plot
     Returns:
         Plotly figure or None if insufficient data
     """
@@ -262,16 +274,16 @@ def create_ttfb_histogram_with_normal_distribution(df):
     df_match = df[df['model_name'].isin(frequent_values)]
 
     if df_match.empty:
-        logger.info(f"Insufficient data for TTFT histogram: {len(df)} records (need >2000)")
+        logger.info(f"Insufficient data for {label} Distribution by Model histogram: {len(df)} records (need >2000)")
         return None
 
     # Filter out any null values
-    df_clean = df_match[df_match['time_to_first_byte'].notna()].copy()
+    df_clean = df_match[df_match[key].notna()].copy()
 
     if df_clean.empty:
         return ["No valid time_to_first_byte data found"]
     
-    logger.info(f"Creating TTFT histogram with {len(df)} records")
+    logger.info(f"Creating {label} Distribution by Model histogram with {len(df)} records")
 
     # Create figure
     fig = go.Figure()
@@ -282,7 +294,7 @@ def create_ttfb_histogram_with_normal_distribution(df):
     
     # Create histogram and normal distribution for each model
     for i, model in enumerate(unique_models):
-        model_data = df_clean[df_clean['model_name'] == model]['time_to_first_byte']
+        model_data = df_clean[df_clean['model_name'] == model][key]
         
         if len(model_data) < 10:  # Skip models with too few data points
             continue
@@ -331,11 +343,11 @@ def create_ttfb_histogram_with_normal_distribution(df):
         paper_bgcolor="#1e1e1e",
         plot_bgcolor="#2d2d2d",
         title={
-            'text': 'Time to First Token Distribution by Model<br><sub>Histograms with Normal Distribution Overlays</sub>',
+            'text': f'{label} Distribution by Model<br><sub>Histograms with Normal Distribution Overlays</sub>',
             'x': 0.5,
             'xanchor': 'center'
         },
-        xaxis_title='Time to First Token (seconds)',
+        xaxis_title=label,
         yaxis_title='Probability Density',
         barmode='overlay',  # Allow histograms to overlap
         legend=dict(
@@ -346,7 +358,6 @@ def create_ttfb_histogram_with_normal_distribution(df):
             x=1.02
         ),
         height=800,
-        # width=1000,
         margin=dict(r=250)  # Extra margin for legend
     )
 
@@ -369,7 +380,6 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
         template="plotly_dark",  # Use the built-in dark template as a base
         x='model_name',
         y='avg_ttft',
-        # error_y=latency_metrics['time_to_first_byte_std'],
         labels={'model_name': 'Model', 'avg_ttft': 'Time to First Token (Secs)'},
         title='Time to First Token by Model',
         color='avg_ttft',
@@ -549,7 +559,6 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
     # Extract judge scores from the DataFrame
 
     df['parsed_scores'] = df['judge_scores'].apply(extract_judge_scores)
-
     # Create one radar chart per model (combining all tasks)
     radar_charts = {}
 
@@ -705,9 +714,13 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
     visualizations['regional_performance'] = create_regional_performance_analysis(df)
     
     # Add TTFB histogram with normal distribution (only if sufficient data)
-    ttfb_histogram = create_ttfb_histogram_with_normal_distribution(df)
+    ttfb_histogram = create_normal_distribution_histogram(df)
     if ttfb_histogram is not None:
         visualizations['ttfb_histogram'] = ttfb_histogram
+
+    accuracy_histogram = create_normal_distribution_histogram(df, key='mean_scores', label='Accuracy Distribution by Model')
+    if accuracy_histogram is not None:
+        visualizations['accuracy_histogram'] = accuracy_histogram
 
     return visualizations
 
@@ -989,7 +1002,11 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
         # TTFB histogram (only if sufficient data)
         ttfb_histogram_div=visualizations['ttfb_histogram'].to_html(full_html=False) if 'ttfb_histogram' in visualizations else '',
         ttfb_findings=ttfb_findings,
-        
+
+        # Accuracy histogram (only if sufficient data)
+        accuracy_histogram_div=visualizations['accuracy_histogram'].to_html(
+            full_html=False) if 'accuracy_histogram' in visualizations else '',
+
         # Recommendations
         task_recommendations=task_recommendations,
     )

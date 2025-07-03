@@ -92,6 +92,7 @@
       color: #bbdefb;
       padding: 0.5rem;
       border-radius: 4px;
+      cursor: pointer;
     }
 
     .nav li a:hover {
@@ -203,12 +204,13 @@
   <p>Report generated on: {{ timestamp }}</p>
   <div class="nav">
     <ul>
-      <li><a href="#latency-metrics">Latency Metrics</a></li>
-      <li><a href="#ttfb-distribution">TTFT Distribution</a></li>
-      <li><a href="#cost-metrics">Cost Metrics</a></li>
-      <li><a href="#task-analysis">Task Analysis</a></li>
-      <li><a href="#model-task-performance">Model-Task Performance</a></li>
-      <li><a href="#recommendations">Recommendations</a></li>
+      <li><a onclick="scrollToSection('latency-metrics')">Latency Metrics</a></li>
+      <li><a onclick="scrollToSection('ttfb-distribution')">TTFT Distribution</a></li>
+      <li><a onclick="scrollToSection('cost-metrics')">Cost Metrics</a></li>
+      <li><a onclick="scrollToSection('task-analysis')">Task Analysis</a></li>
+      <li><a onclick="scrollToSection('model-task-performance')">Model-Task Performance</a></li>
+      <li><a onclick="scrollToSection('regional-analysis')">Regional Analysis</a></li>
+      <li><a onclick="scrollToSection('recommendations')">Recommendations</a></li>
     </ul>
   </div>
   <div class="section" id="latency-metrics">
@@ -246,6 +248,25 @@
     {% else %}
     <div class="card">
       <h3>TTFT Distribution Analysis</h3>
+      <div class="highlight">
+        <p>Not enough data to perform meaningful measurements (requires >2000 records for statistical significance)</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="section" id="accuracy-distribution">
+    <h2>Accuracy Distribution Analysis</h2>
+    {% if accuracy_histogram_div %}
+    <div class="card">
+      <h3>TTFT Distribution by Model</h3>
+      <div class="chart-description">
+      </div>
+      {{ accuracy_histogram_div | safe }}
+    </div>
+    {% else %}
+    <div class="card">
+      <h3>Accuracy Distribution Analysis</h3>
       <div class="highlight">
         <p>Not enough data to perform meaningful measurements (requires >2000 records for statistical significance)</p>
       </div>
@@ -398,6 +419,17 @@
         window.dispatchEvent(new Event('resize'));
       }
     }
+    
+    function scrollToSection(sectionId) {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }
+    
     // Initialize on load
     window.addEventListener('load', function () {
       window.dispatchEvent(new Event('resize'));
