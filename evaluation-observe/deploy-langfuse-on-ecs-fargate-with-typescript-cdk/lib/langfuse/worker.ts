@@ -15,11 +15,11 @@ const LANGFUSE_WORKER_PORT = 3030;
 
 interface ILangfuseWorkerServiceProps extends ILangfuseServiceSharedProps {
   /**
-   * Source container image name for the worker
+   * Source container image name (including version tag) for the service
    *
-   * @default 'langfuse/langfuse-worker'
+   * @default 'ghcr.io/langfuse/langfuse-worker:3'
    */
-  imageName?: string;
+  imageSource?: string;
 }
 
 /**
@@ -45,7 +45,7 @@ export class LangfuseWorkerService extends LangfuseServiceBase {
         startPeriod: cdk.Duration.minutes(4),
         timeout: cdk.Duration.seconds(60), // Worker can get busy and that's okay
       },
-      imageName: props.imageName || "langfuse/langfuse-worker",
+      imageSource: props.imageSource || "ghcr.io/langfuse/langfuse-worker:3",
       portMappings: [
         {
           containerPort: LANGFUSE_WORKER_PORT,
