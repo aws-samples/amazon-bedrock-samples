@@ -49,6 +49,15 @@ export interface IClickHouseDeploymentProps {
    */
   environment?: { [key: string]: string };
   /**
+   * Source image (including version tag) of ClickHouse to build & deploy from
+   * 
+   * Note that this construct actually builds a custom (ECR Private) image from the base you
+   * specify here, to configure logging for the target ECS environment.
+   * 
+   * @default 'clickhouse:25.6'
+   */
+  image?: string;
+  /**
    * ECS Fargate CPU allocation for the ClickHouse container.
    *
    * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html#fargate-tasks-size
@@ -66,12 +75,6 @@ export interface IClickHouseDeploymentProps {
    * AWS Tags to apply to created resources (ECS tasks, ECR images, Secrets, etc)
    */
   tags?: cdk.Tag[];
-  /**
-   * Released version of ClickHouse to deploy
-   *
-   * @default "25.1"
-   */
-  version?: string;
 }
 
 // Refer to: https://clickhouse.com/docs/en/guides/sre/network-ports
@@ -211,7 +214,7 @@ export class ClickHouseDeployment extends Construct {
     const cpu = props.cpu || 1024;
     const memoryLimitMiB = props.memoryLimitMiB || 8192;
     const serviceName = props.serviceName || "clickhouse";
-    const version = props.version || "25.1";
+    const image = props.image || "clickhouse:25.6";
 
     this.secret = new secretsmanager.Secret(this, "Secret", {
       generateSecretString: {
@@ -252,7 +255,7 @@ export class ClickHouseDeployment extends Construct {
       ),
       platform: ecrassets.Platform.LINUX_AMD64,
       buildArgs: {
-        BASE_IMAGE: `clickhouse:${version}`,
+        BASE_IMAGE: image,
       },
     });
 
@@ -260,7 +263,7 @@ export class ClickHouseDeployment extends Construct {
       // If the custom image config overrides aren't needed, a straight `clickhouse:${version}`
       // dockerImageName would work here:
       dockerImageName: customImage.imageUri,
-      ecrImageTag: version,
+      ecrImageTag: image.split(":").pop(),
       tags: props.tags,
     });
 
