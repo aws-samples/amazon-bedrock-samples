@@ -43,5 +43,6 @@ dist
 cdk.out
 .cdk.staging
 cdk.context.json
+cdk.outputs.json
 
 config.py
