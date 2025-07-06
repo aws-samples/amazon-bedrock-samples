@@ -331,3 +331,26 @@ def run_inference(model_name: str,
             }
         else:
             raise RuntimeError(f"Inference failed after {retry_tracker.attempts} retries: {str(e)}")
+
+
+def report_summary_template(models, evaluations):
+    models_str = '\n'.join(models)
+    return f"""
+## Task
+Your task is to summarize the key findings from the provided LLM model evaluation dataset in a single, objective paragraph. The dataset contains information on performance metrics (speed, tokens per minute, throttle errors), accuracy, and cost.
+
+## Guidelines
+1. Read through the dataset carefully to understand the different metrics and their values.
+2. Identify the main points and notable observations related to performance, accuracy, and cost.
+3. Write a concise paragraph summarizing these key findings using neutral, fact-based language.
+4. Avoid subjective statements or judgments about what constitutes good/bad performance, reliability, or cost-effectiveness.
+5. Condenses the entire data into a concise overview, highlighting key findings, methodologies, and conclusions.
+
+## Models:
+{models_str}
+
+## Dataset
+{evaluations}
+
+Please provide your summary paragraph immediately after reading the dataset, without any preamble.
+    """.strip()

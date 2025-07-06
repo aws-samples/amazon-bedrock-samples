@@ -202,17 +202,69 @@
 <body>
   <h1>LLM Benchmark Report</h1>
   <p>Report generated on: {{ timestamp }}</p>
+  
+  <div class="section">
+    <div class="card">
+      <h2>Executive Summary</h2>
+      <p>{{ inference }}</p>
+    </div>
+  </div>
+  
   <div class="nav">
     <ul>
+      <li><a onclick="scrollToSection('recommendations')">Recommendations</a></li>
       <li><a onclick="scrollToSection('latency-metrics')">Latency Metrics</a></li>
       <li><a onclick="scrollToSection('ttfb-distribution')">TTFT Distribution</a></li>
       <li><a onclick="scrollToSection('cost-metrics')">Cost Metrics</a></li>
       <li><a onclick="scrollToSection('task-analysis')">Task Analysis</a></li>
       <li><a onclick="scrollToSection('model-task-performance')">Model-Task Performance</a></li>
       <li><a onclick="scrollToSection('regional-analysis')">Regional Analysis</a></li>
-      <li><a onclick="scrollToSection('recommendations')">Recommendations</a></li>
     </ul>
   </div>
+
+    <div class="section" id="recommendations">
+    <h2>Recommendations</h2>
+    <div class="recommendations">
+      <h3>Task-Specific Model Recommendations</h3>
+      <table>
+        <tr>
+          <th>Task</th>
+          <th>Best Model for Accuracy</th>
+          <th>Success Rate</th>
+          <th>Best Model for Speed</th>
+          <th>Latency (Secs)</th>
+          <th>Best Model for Cost/Performance</th>
+          <th>Score</th>
+        </tr>
+        {% for rec in task_recommendations %}
+        <tr>
+          <td>{{ rec.task }}</td>
+          <td><strong>{{ rec.best_accuracy_model }}</strong></td>
+          <td>{{ rec.accuracy }}</td>
+          <td><strong>{{ rec.best_speed_model }}</strong></td>
+          <td>{{ rec.speed }}</td>
+          <td><strong>{{ rec.best_value_model }}</strong></td>
+          <td>{{ rec.value }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Recommendation Analysis: Performance vs Speed vs Cost</h3>
+    {{ integrated_analysis_table_div | safe }}
+    <div class="highlight">
+      <h4>Key</h4>
+      <ul>
+        <li><span class="good-key">Good</span>: Optimal performance</li>
+        <li><span class="moderate-key">Moderate</span>: Average performance</li>
+        <li><span class="needs-improvement-key">Needs Improvement</span>: Below optimal thresholds</li>
+      </ul>
+      <p>Score combines success rate (weight: 1.0), speed (weight: 0.5), and cost efficiency (weight: 0.5)</p>
+    </div>
+  </div>
+
   <div class="section" id="latency-metrics">
     <h2>Latency Metrics</h2>
     <div class="card">
@@ -256,13 +308,24 @@
   </div>
 
   <div class="section" id="accuracy-distribution">
-    <h2>Accuracy Distribution Analysis</h2>
+    <h2>Average of Evaluation Scores Distribution Analysis</h2>
     {% if accuracy_histogram_div %}
     <div class="card">
-      <h3>TTFT Distribution by Model</h3>
+      <h3>Average of Evaluation Scores Distribution by Model</h3>
       <div class="chart-description">
       </div>
       {{ accuracy_histogram_div | safe }}
+    </div>
+    <div class="card">
+      <h3>Key Findings</h3>
+      <div class="highlight">
+        <ul>
+          {% for finding in accuracy_findings %}
+          <li>{{ finding }}</li>
+          {% endfor %}
+        </ul>
+        <p><strong>Outliers threshold Calculation used: Third Quantile + 1.5 * Interquartile Range (IQR) (Third Quantile - First Quantile)</strong></p>
+      </div>
     </div>
     {% else %}
     <div class="card">
@@ -342,20 +405,6 @@
     </div>
   </div>
 
-  <div class="card">
-    <h3>Integrated Analysis: Performance vs Speed vs Cost</h3>
-    {{ integrated_analysis_table_div | safe }}
-    <div class="highlight">
-      <h4>Key</h4>
-      <ul>
-        <li><span class="good-key">Good</span>: Optimal performance</li>
-        <li><span class="moderate-key">Moderate</span>: Average performance</li>
-        <li><span class="needs-improvement-key">Needs Improvement</span>: Below optimal thresholds</li>
-      </ul>
-      <p>Score combines success rate (weight: 1.0), speed (weight: 0.5), and cost efficiency (weight: 0.5)</p>
-    </div>
-  </div>
-
   <div class="section" id="regional-analysis">
     <h2>Regional Performance Analysis</h2>
     <div class="card">
@@ -376,34 +425,7 @@
     </div>
   </div>
 
-  <div class="section" id="recommendations">
-    <h2>Recommendations</h2>
-    <div class="recommendations">
-      <h3>Task-Specific Model Recommendations</h3>
-      <table>
-        <tr>
-          <th>Task</th>
-          <th>Best Model for Accuracy</th>
-          <th>Success Rate</th>
-          <th>Best Model for Speed</th>
-          <th>Latency (Secs)</th>
-          <th>Best Model for Cost/Performance</th>
-          <th>Score</th>
-        </tr>
-        {% for rec in task_recommendations %}
-        <tr>
-          <td>{{ rec.task }}</td>
-          <td><strong>{{ rec.best_accuracy_model }}</strong></td>
-          <td>{{ rec.accuracy }}</td>
-          <td><strong>{{ rec.best_speed_model }}</strong></td>
-          <td>{{ rec.speed }}</td>
-          <td><strong>{{ rec.best_value_model }}</strong></td>
-          <td>{{ rec.value }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-    </div>
-  </div>
+
 
   <script>
     function showModelChart(modelName) {

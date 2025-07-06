@@ -1,17 +1,17 @@
 import logging, glob, re, ast, os
+import pytz
+import sys
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 from pathlib import Path
 from plotly.subplots import make_subplots
 from jinja2 import Template
 from collections import Counter
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime
-import pytz
-import sys
-import numpy as np
 from scipy import stats
-
+from utils import run_inference, report_summary_template
 
 # Configuration
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -265,11 +265,12 @@ def create_normal_distribution_histogram(df,
     Returns:
         Plotly figure or None if insufficient data
     """
+    min_vals = 1000
     # Check if we have enough data
     # Check if we have enough data
     value_counts = df['model_name'].value_counts()
     # Get values that appear more than 2000 times
-    frequent_values = value_counts[value_counts > 2000].index
+    frequent_values = value_counts[value_counts > min_vals].index
     # Filter the dataframe to only include rows where the column value is in our frequent_values list
     df_match = df[df['model_name'].isin(frequent_values)]
 
@@ -710,7 +711,10 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
             task_charts[task] = fig
 
     visualizations['task_charts'] = task_charts
-    visualizations['integrated_analysis_table'] = create_integrated_analysis_table(model_task_metrics)
+    visualizations['integrated_analysis_table'], analysis_df = create_integrated_analysis_table(model_task_metrics)
+
+
+
     visualizations['regional_performance'] = create_regional_performance_analysis(df)
     
     # Add TTFB histogram with normal distribution (only if sufficient data)
@@ -811,49 +815,51 @@ def generate_task_recommendations(model_task_metrics):
     return sorted(recommendations, key=lambda x: x['task'])
 
 
-def generate_ttfb_histogram_findings(df):
+def generate_histogram_findings(df, key='time_to_first_byte', label='Time to First Token'):
     """
     Generate key findings for the TTFB histogram analysis.
     Returns either meaningful findings or a message about insufficient data.
 
     Args:
         df: DataFrame containing the benchmark data
-
+        key: Key used to measure
+        label: Label used to label the findings
     Returns:
         List of finding strings or single message about insufficient data
     """
+    min_records = 1000
     # Check if we have enough data
     value_counts = df['model_name'].value_counts()
     # Get values that appear more than 2000 times
-    frequent_values = value_counts[value_counts > 2000].index
+    frequent_values = value_counts[value_counts > min_records].index
     # Filter the dataframe to only include rows where the column value is in our frequent_values list
     df_match = df[df['model_name'].isin(frequent_values)]
     if df_match.empty:
         return ["Not enough data to perform measurements (need at minimum over 2000 measurements per model)"]
 
     # Filter out any null values
-    df_clean = df_match[df_match['time_to_first_byte'].notna()].copy()
+    df_clean = df_match[df_match[key].notna()].copy()
 
     if df_clean.empty:
-        return ["No valid time_to_first_byte data found"]
+        return [f"No valid {key} data found"]
 
     findings = []
 
     for model in df_clean['model_name'].unique().tolist():
         df_model = df_clean[df_clean['model_name'] == model]
         # Overall statistics
-        overall_mean = df_model['time_to_first_byte'].mean()
-        overall_std = df_model['time_to_first_byte'].std()
-        findings.append(f"Model <b>{model}</b> TTFT: μ={overall_mean:.3f}s, σ={overall_std:.3f}s across {len(df_clean)} measurements")
+        overall_mean = df_model[key].mean()
+        overall_std = df_model[key].std()
+        findings.append(f"Model <b>{model}</b> {label}: μ={overall_mean:.3f}s, σ={overall_std:.3f}s across {len(df_model)} measurements")
 
     # Model-specific analysis
-    model_stats = df_clean.groupby('model_name')['time_to_first_byte'].agg(['mean', 'std', 'count']).reset_index()
-    model_stats = model_stats[model_stats['count'] >= 2000]  # Only models with sufficient data
+    model_stats = df_clean.groupby('model_name')[key].agg(['mean', 'std', 'count']).reset_index()
+    model_stats = model_stats[model_stats['count'] >= min_records]  # Only models with sufficient data
 
     if not model_stats.empty:
-        # Fastest model (lowest mean TTFB)
+        # Fastest model (lowest mean)
         fastest_model = model_stats.loc[model_stats['mean'].idxmin()]
-        findings.append(f"Fastest model: <b>{fastest_model['model_name']}</b> with {fastest_model['mean']:.3f}s average TTFT")
+        findings.append(f"Highest achieving model: <b>{fastest_model['model_name']}</b> with {fastest_model['mean']:.3f}s average {label}")
 
         # Most consistent model (lowest standard deviation)
         most_consistent = model_stats.loc[model_stats['std'].idxmin()]
@@ -861,7 +867,7 @@ def generate_ttfb_histogram_findings(df):
 
         # Model with highest variability
         most_variable = model_stats.loc[model_stats['std'].idxmax()]
-        findings.append(f"Most variable model: <b>{most_variable['model_name']}</b> with {most_variable['std']:.3f}s standard deviation")
+        findings.append(f"Most variable model (fat-tails): <b>{most_variable['model_name']}</b> with {most_variable['std']:.3f}s standard deviation")
 
         # Distribution characteristics
         # Check for normality using coefficient of variation
@@ -877,15 +883,15 @@ def generate_ttfb_histogram_findings(df):
         fastest_mean = model_stats['mean'].min()
         slowest_mean = model_stats['mean'].max()
         performance_spread = ((slowest_mean - fastest_mean) / fastest_mean) * 100
-        findings.append(f"Performance spread: {performance_spread:.1f}% difference between fastest and slowest models")
+        findings.append(f"Performance spread: {performance_spread:.1f}% difference between best and worst achieving models")
         for model in df_clean['model_name'].unique().tolist():
             # Outlier detection
             df_model = df_clean[df_clean['model_name'] == model]
-            q1 = df_model['time_to_first_byte'].quantile(0.25)
-            q3 = df_model['time_to_first_byte'].quantile(0.75)
+            q1 = df_model[key].quantile(0.25)
+            q3 = df_model[key].quantile(0.75)
             iqr = q3 - q1
             outlier_threshold = q3 + 1.5 * iqr
-            outliers = df_model[df_model['time_to_first_byte'] > outlier_threshold]
+            outliers = df_model[df_model[key] > outlier_threshold]
             if not outliers.empty:
                 outlier_pct = (len(outliers) / len(df_clean)) * 100
                 findings.append(f"Outliers for <b>{model}</b>: {len(outliers)} measurements ({outlier_pct:.1f}%) exceed {outlier_threshold:.3f}s")
@@ -950,13 +956,12 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
 
     logger.info("Generating recommendations...")
     task_recommendations = generate_task_recommendations(model_task_metrics)
-
-    logger.info("Generating TTFT histogram findings...")
-    ttfb_findings = generate_ttfb_histogram_findings(df)
-
+    task_level_analysis = '# Task Level Analysis:\n'
     # Prepare task analysis data for template
     task_analysis = []
     for task, chart in visualizations['task_charts'].items():
+        task_level_analysis += f'# Task Name: {task}\n\n'
+        task_level_analysis += '- ' + '\n- '.join(task_findings.get(task, ["No specific findings available."])) + '\n\n'
         task_analysis.append({
             'name': task,
             'chart': chart.to_html(full_html=False),
@@ -973,8 +978,28 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
     formatted_date = datetime_object.strftime("%B %d, %Y at %I:%M %p")
     # Add this to extract unique models
     unique_models = df['model_name'].dropna().unique().tolist()
+
+    logger.info("Generating TTFT histogram findings...")
+    time_to_first_token_findings = generate_histogram_findings(df)
+    perf_analysis = '# Performance Analysis across all models:\n- ' + '\n- '.join(time_to_first_token_findings)
+
+    logger.info("Generating Accuracy histogram findings...")
+    accuracy_findings = generate_histogram_findings(df, key='mean_scores', label="Average Accuracy")     #TODO: BY TASK??
+    acc_analysis = '# Accuracy Analysis across all models:\n- ' + '\n- '.join(time_to_first_token_findings)
+
+    recommendations = '# Recommendations:\n* ' + '\n* '.join([str(i) for i in task_recommendations])
+
+    prompt_template = report_summary_template(models=unique_models, evaluations=f'{acc_analysis}\n\n{perf_analysis}\n\n{task_level_analysis}\n\n{recommendations}')  ## Append AND Format all evals ++ rename the columns to help the model
+    inference = run_inference(model_name='bedrock/converse/us.amazon.nova-premier-v1:0',
+                              prompt_text=prompt_template,
+                              stream=False,
+                              provider_params={"maxTokens": 750,
+                                               "temperature": 0.3,
+                                               # "topP": 0.9,
+                                               "aws_region_name": 'us-west-2'})['text']
     html = Template(HTML_TEMPLATE).render(
         timestamp=formatted_date,
+        inference=inference,
 
         # Latency charts
         ttft_comparison_div=visualizations['ttft_comparison'].to_html(full_html=False),
@@ -1001,12 +1026,12 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
         
         # TTFB histogram (only if sufficient data)
         ttfb_histogram_div=visualizations['ttfb_histogram'].to_html(full_html=False) if 'ttfb_histogram' in visualizations else '',
-        ttfb_findings=ttfb_findings,
+        ttfb_findings=time_to_first_token_findings,
 
         # Accuracy histogram (only if sufficient data)
         accuracy_histogram_div=visualizations['accuracy_histogram'].to_html(
             full_html=False) if 'accuracy_histogram' in visualizations else '',
-
+        accuracy_findings=accuracy_findings,
         # Recommendations
         task_recommendations=task_recommendations,
     )
@@ -1157,7 +1182,7 @@ def create_integrated_analysis_table(model_task_metrics):
         template="ggplot2",
     )
 
-    return fig
+    return fig, table_data.to_dict(orient='records')
 
 
 def create_regional_performance_analysis(df):
