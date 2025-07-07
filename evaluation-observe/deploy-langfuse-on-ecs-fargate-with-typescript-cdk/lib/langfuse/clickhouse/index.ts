@@ -8,6 +8,7 @@ import * as cdk from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecrassets from "aws-cdk-lib/aws-ecr-assets";
 import * as ecs from "aws-cdk-lib/aws-ecs";
+import * as efs from "aws-cdk-lib/aws-efs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
@@ -51,10 +52,14 @@ export interface IClickHouseDeploymentProps {
   /**
    * Source image (including version tag) of ClickHouse to build & deploy from
    * 
+   * To avoid rate limit issues for customers without Docker Hub credentials, we use Bitnami's
+   * distribution of ClickHouse on Amazon ECR Public by default. If you configure Docker Hub tokens
+   * in the environment where you run 'cdk deploy', you could switch to e.g. 'clickhouse:25'.
+   * 
    * Note that this construct actually builds a custom (ECR Private) image from the base you
    * specify here, to configure logging for the target ECS environment.
    * 
-   * @default 'clickhouse:25.6'
+   * @default 'public.ecr.aws/bitnami/clickhouse:25'
    */
   image?: string;
   /**
@@ -75,6 +80,17 @@ export interface IClickHouseDeploymentProps {
    * AWS Tags to apply to created resources (ECS tasks, ECR images, Secrets, etc)
    */
   tags?: cdk.Tag[];
+  /**
+   * Which packaging variant of ClickHouse is provided by `image`
+   *
+   * This construct supports both the vanilla ClickHouse container (distributed via Docker Hub) and
+   * Bitnami's custom distribution (available on Amazon ECR Public). However, the two need slightly
+   * different deployment setups. If it's not clear from your `image` URI, you can use this prop to
+   * explicitly specify which distribution your chosen source is based on.
+   *
+   * @default - Inferred based on whether `image` contains 'bitnami'
+   */
+  variant?: "bitnami" | "default";
 }
 
 // Refer to: https://clickhouse.com/docs/en/guides/sre/network-ports
@@ -214,7 +230,8 @@ export class ClickHouseDeployment extends Construct {
     const cpu = props.cpu || 1024;
     const memoryLimitMiB = props.memoryLimitMiB || 8192;
     const serviceName = props.serviceName || "clickhouse";
-    const image = props.image || "clickhouse:25.6";
+    const image = props.image || "public.ecr.aws/bitnami/clickhouse:25";
+    const variant = props.variant || image.includes("bitnami") ? "bitnami" : "default";
 
     this.secret = new secretsmanager.Secret(this, "Secret", {
       generateSecretString: {
@@ -245,6 +262,7 @@ export class ClickHouseDeployment extends Construct {
     // Unfortunately the ClickHouse configuration files are baked into the container image, so we
     // need to build a custom image to make overrides for nice ECS deployment:
     const customImage = new ecrassets.DockerImageAsset(this, "CustomImage", {
+      file: variant === "bitnami" ? "bitnami.Dockerfile" : "Dockerfile",
       directory: path.join(
         __dirname,
         "..",
@@ -315,7 +333,24 @@ export class ClickHouseDeployment extends Construct {
         cdk.Tags.of(taskRole).add(tag.key, tag.value);
       });
     }
-    this.efs.fileSystem.grantRootAccess(taskRole);
+    this.efs.fileSystem.grantReadWrite(taskRole);
+
+    // Bitnami variant uses POSIX user 1001:0, which won't be able to write to EFS root. Upstream
+    // ClickHouse seems to run as root 0:0. Either way, using an Access Point will help us apply
+    // controls to how the container accesses the EFS filesystem:
+    const efsap = new efs.AccessPoint(this, "ECSAccessPoint", {
+      fileSystem: this.efs.fileSystem,
+      path: "/clickhouse-mount",
+      createAcl: {
+        ownerUid: "1001",
+        ownerGid: "0",
+        permissions: "777",
+      },
+      posixUser: {
+        uid: "1001",
+        gid: "0",
+      },
+    });
 
     const CLICKHOUSE_VOLUME_NAME = "clickhouse_data";
     const taskDefinition = new ecs.FargateTaskDefinition(this, "ECSTaskDef", {
@@ -328,8 +363,12 @@ export class ClickHouseDeployment extends Construct {
         {
           name: CLICKHOUSE_VOLUME_NAME,
           efsVolumeConfiguration: {
+            authorizationConfig: {
+              accessPointId: efsap.accessPointId,
+            },
             fileSystemId: this.efs.fileSystem.fileSystemId,
             rootDirectory: "/",
+            transitEncryption: "ENABLED",
           },
         },
       ],
@@ -391,7 +430,7 @@ export class ClickHouseDeployment extends Construct {
     });
     container.node.addDependency(deployedImage.deployment);
     container.addMountPoints({
-      containerPath: "/var/lib/clickhouse",
+      containerPath: variant === "bitnami" ? "/bitnami/clickhouse" : "/var/lib/clickhouse",
       readOnly: false,
       sourceVolume: CLICKHOUSE_VOLUME_NAME,
     });
