@@ -63,7 +63,10 @@ class ReportViewerComponent:
                 self._generate_comprehensive_report()
         
         st.divider()
-        
+
+        # No notifications or auto-refresh - just a manual refresh button
+        st.button("Refresh Report List", on_click=sync_evaluations_from_files)
+
         # Available Reports section
         st.subheader("📊 Available Reports")
         

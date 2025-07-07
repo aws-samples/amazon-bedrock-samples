@@ -8,7 +8,7 @@ import os
 from .constants import (
     DEFAULT_OUTPUT_DIR, DEFAULT_PARALLEL_CALLS, 
     DEFAULT_INVOCATIONS_PER_SCENARIO, DEFAULT_SLEEP_BETWEEN_INVOCATIONS,
-    DEFAULT_EXPERIMENT_COUNTS, DEFAULT_TEMPERATURE_VARIATIONS, STATUS_FILES_DIR
+    DEFAULT_EXPERIMENT_COUNTS, DEFAULT_TEMPERATURE_VARIATIONS, STATUS_FILES_DIR, DEFAULT_FAILURE_THRESHOLD
 )
 
 def initialize_session_state():
@@ -43,6 +43,7 @@ def initialize_session_state():
             "sleep_between_invocations": DEFAULT_SLEEP_BETWEEN_INVOCATIONS,
             "experiment_counts": DEFAULT_EXPERIMENT_COUNTS,
             "temperature_variations": DEFAULT_TEMPERATURE_VARIATIONS,
+            "failure_threshold": DEFAULT_FAILURE_THRESHOLD,
             "selected_models": [],
             "judge_models": [],
             "user_defined_metrics": "",
@@ -75,6 +76,7 @@ def create_new_evaluation():
         "sleep_between_invocations": DEFAULT_SLEEP_BETWEEN_INVOCATIONS,
         "experiment_counts": DEFAULT_EXPERIMENT_COUNTS,
         "temperature_variations": DEFAULT_TEMPERATURE_VARIATIONS,
+        "failure_threshold": DEFAULT_FAILURE_THRESHOLD,
         "selected_models": [],
         "judge_models": [],
         "user_defined_metrics": "",
@@ -217,6 +219,7 @@ def save_configuring_evaluation_to_disk(eval_config):
                 "invocations_per_scenario": eval_config.get("invocations_per_scenario"),
                 "experiment_counts": eval_config.get("experiment_counts"),
                 "temperature_variations": eval_config.get("temperature_variations"),
+                "failure_threshold": eval_config.get("failure_threshold"),
                 "user_defined_metrics": eval_config.get("user_defined_metrics"),
                 "sleep_between_invocations": eval_config.get("sleep_between_invocations"),
                 "task_type": eval_config.get("task_type"),
@@ -469,6 +472,7 @@ def load_evaluations_from_files():
                         "sleep_between_invocations": stored_config.get("sleep_between_invocations", 3),
                         "experiment_counts": stored_config.get("experiment_counts", 1),
                         "temperature_variations": stored_config.get("temperature_variations", 0),
+                        "failure_threshold": stored_config.get("failure_threshold", 3),
                         "user_defined_metrics": stored_config.get("user_defined_metrics", ""),
                         "temperature": stored_config.get("temperature"),
                         "csv_file_name": stored_config.get("csv_file_name")

@@ -269,6 +269,7 @@ class ModelConfigurationComponent:
             "sleep_between_invocations": st.session_state.current_evaluation_config["sleep_between_invocations"],
             "experiment_counts": st.session_state.current_evaluation_config["experiment_counts"],
             "temperature_variations": st.session_state.current_evaluation_config["temperature_variations"],
+            "failure_threshold": st.session_state.current_evaluation_config["failure_threshold"],
             "selected_models": [],
             "judge_models": [],
             "user_defined_metrics": "",

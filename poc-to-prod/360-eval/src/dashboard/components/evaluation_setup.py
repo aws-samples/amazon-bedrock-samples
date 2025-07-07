@@ -205,10 +205,13 @@ class EvaluationSetupComponent:
     
     def _update_experiment_counts(self):
         st.session_state.current_evaluation_config["experiment_counts"] = st.session_state.experiment_counts
-    
+
     def _update_temperature_variations(self):
         st.session_state.current_evaluation_config["temperature_variations"] = st.session_state.temperature_variations
-    
+
+    def _update_failure_threshold(self):
+        st.session_state.current_evaluation_config["temperature_variations"] = st.session_state.failure_threshold
+
     def _update_user_defined_metrics(self):
         st.session_state.current_evaluation_config["user_defined_metrics"] = st.session_state.user_defined_metrics
     
@@ -243,6 +246,17 @@ class EvaluationSetupComponent:
                 on_change=self._update_invocations_per_scenario_adv,
                 help="How many times to run each test scenario. More invocations = more reliable results but longer execution time. Use 3-5 for production testing."
             )
+
+            # Pass|Failure Threshold
+            st.number_input(
+                "Pass|Failure Threshold",
+                min_value=2,
+                max_value=4,
+                value=3,
+                key="adv_failure_threshold",
+                on_change=self._update_failure_threshold_adv,
+                help="Value used to define whether an evaluation failed to meet standards, any evaluation metric below this number will be considered failure."
+            )
         
         with col2:
             # Sleep between invocations
@@ -275,7 +289,7 @@ class EvaluationSetupComponent:
                 value=st.session_state.current_evaluation_config["temperature_variations"],
                 key="adv_temperature_variations",
                 on_change=self._update_temperature_variations_adv,
-                help="Test different creativity levels automatically. 0 = use exact temperature set per task, 1+ = test additional temperature variants. Use 0 for precise control, 2-3 for comprehensive testing."
+                help="Test different creativity levels automatically. 0 = use exact temperature set per task, 1+ = test additional temperature variants (above and below delta). Use 0 for precise control, 2-3 for comprehensive testing."
             )
         
     
@@ -294,4 +308,7 @@ class EvaluationSetupComponent:
     
     def _update_temperature_variations_adv(self):
         st.session_state.current_evaluation_config["temperature_variations"] = st.session_state.adv_temperature_variations
+
+    def _update_failure_threshold_adv(self):
+        st.session_state.current_evaluation_config["failure_threshold"] = st.session_state.adv_failure_threshold
     

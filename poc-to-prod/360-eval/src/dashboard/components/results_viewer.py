@@ -217,6 +217,7 @@ class ResultsViewerComponent:
             st.write(f"**Experiment Counts:** {eval_config.get('experiment_counts', 'Unknown')}")
         with config_col2:
             st.write(f"**Temperature Variations:** {eval_config.get('temperature_variations', 'Unknown')}")
+            st.write(f"**Failure Threshold:** {eval_config.get('failure_threshold', 'Unknown')}")
             st.write(f"**Sleep Between Invocations:** {eval_config.get('sleep_between_invocations', 'Unknown')}s")
         
         if eval_config.get('user_defined_metrics'):

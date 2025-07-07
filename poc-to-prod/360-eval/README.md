@@ -2,10 +2,10 @@
 
 A comprehensive framework for benchmarking and evaluating Large Language Models (LLMs) with a specific focus on Amazon Bedrock models.
 
-## Introduction
+## Design Introduction
 
-This framework implements the "LLM-as-a-Jury" methodology based on research from [Replacing Judges with Juries:
-Evaluating LLM Generations with a Panel of Diverse Models](https://arxiv.org/pdf/2404.18796), where multiple LLMs evaluate responses through a majority voting approach. This technique provides more reliable and balanced evaluations compared to single-judge methods.
+This framework implements a "LLM-as-a-Jury" methodology based on research from [Replacing Judges with Juries:
+Evaluating LLM Generations with a Panel of Diverse Models](https://arxiv.org/pdf/2404.18796), each evaluation is composed of an ascending ranking score of 1-5 and, where the total LLMs evaluate responses are tallied and their mean calculated, this becomes the final score (if an average of the evaluation fails to achieve a score of 3+ across any evaluation dimension is deemed to have failed, value can be changed). This technique provides more reliable and balanced evaluations compared to single-judge, PASS | FAIL methods.
 
 Our benchmarking system evaluates model outputs across six core dimensions:
 - **Correctness**: Accuracy of information provided
@@ -15,7 +15,7 @@ Our benchmarking system evaluates model outputs across six core dimensions:
 - **Coherence**: Logical flow and consistency
 - **Following instructions**: Adherence to prompt requirements
 
-Additionally, the framework supports user-defined evaluation metrics tailored to specific use cases.
+Additionally, the framework supports **user-defined** evaluation metrics tailored to specific use cases such as branding style or tone.
 
 The system is designed for scalability, automatically aggregating results from multiple benchmark runs into comprehensive reports, providing an increasingly complete picture of model latency and performance over time.
 
@@ -188,7 +188,10 @@ python src/benchmarks_run.py input_file.jsonl \
     --experiment_counts 1 \
     --experiment_name "My-Benchmark" \
     --temperature_variations 2 \
-    --user_defined_metrics "business writing style, brand adherence"
+    --user_defined_metrics "business writing style, brand adherence" \
+    --model_file_name "name of the jsonl file containing the models to evaluate" \
+    --judge_file_name "name of the jsonl file containing the judges used to evaluate" \
+    --evaluation_pass_threshold 3
 ```
 
 #### Command Line Arguments
@@ -201,7 +204,10 @@ python src/benchmarks_run.py input_file.jsonl \
 - `--experiment_counts`: Number of experiment repetitions (default: 1)
 - `--experiment_name`: Name for this benchmark run (default: "Benchmark-YYYYMMDD")
 - `--temperature_variations`: Number of pct variations in the evaluation dataset default temperature ( + - 25th percentile)
-- `--user_defined_metrics`:  Comma delimited user-defined evaluation metrics tailored to specific use cases
+- `--user_defined_metrics`:  Comma delimited user-defined evaluation metrics tailored to specific use cases 
+- `--model_file_name`: Name of the jsonl file containing the models to evaluate 
+- `--judge_file_name`: Name of the jsonl file containing the judges used to evaluate
+- `--evaluation_pass_threshold`: Number used by in the evaluation to determine Pass|Fails
 
 ### Visualizing Results
 

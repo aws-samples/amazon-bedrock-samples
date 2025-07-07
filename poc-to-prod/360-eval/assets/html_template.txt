@@ -219,7 +219,7 @@
   <div class="section">
     <div class="card">
       <h2>Executive Summary</h2>
-      <p>{{ inference }}</p>
+      <p style="font-size: 20px;font-family: Arial, sans-serif;">{{ inference }}</p>
     </div>
   </div>
 

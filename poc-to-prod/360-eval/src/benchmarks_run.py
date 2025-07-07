@@ -31,8 +31,8 @@ def evaluate_with_llm_judge(judge_model_id,
                             golden_answer,
                             task_types,
                             task_criteria,
-                            custom_metrics=None
-                            ):
+                            custom_metrics=None,
+                            yard_stick=3):
     """
      Runs the target model on `prompt`, then has three jury models
      evaluate its response against `golden_response` using the
@@ -66,7 +66,7 @@ def evaluate_with_llm_judge(judge_model_id,
                     "scores": {"score": "NULL"}}
 
         judgment = "PASS"
-        explanation = [key for key, val in eval_results["scores"].items() if val < 3]
+        explanation = [key for key, val in eval_results["scores"].items() if val < yard_stick]
         if len(explanation) > 0:
             judgment = "FAIL"
 
@@ -94,8 +94,8 @@ def evaluate_with_judges(judges,
                          golden_answer,
                          task_types,
                          task_criteria,
-                         user_defined_metrics
-                         ):
+                         user_defined_metrics,
+                         yard_stick=3):
 
     results = []
     for j in judges:
@@ -109,7 +109,8 @@ def evaluate_with_judges(judges,
                 golden_answer=golden_answer,
                 task_types=task_types,
                 task_criteria=task_criteria,
-                custom_metrics=user_defined_metrics
+                custom_metrics=user_defined_metrics,
+                yard_stick = yard_stick
             )
             
             # Check for various error indicators
@@ -153,7 +154,8 @@ def benchmark(
         in_cost, out_cost,
         temperature, top_p,
         judge_models,
-        user_defined_metrics
+        user_defined_metrics,
+        yard_stick=3
 ):
     logging.debug(f"Starting benchmark for model: {model_id} in region: {region}")
     status                  = "Success"
@@ -210,7 +212,8 @@ def benchmark(
                 golden_answer,
                 task_types,
                 task_criteria,
-                user_defined_metrics
+                user_defined_metrics,
+                yard_stick=yard_stick
             )
             perf["judge_success"]     = (multi["majority_judgment"] == "PASS")
             perf["judge_explanation"] = ";".join(list(set(multi["majority_explanations"])))
@@ -280,7 +283,7 @@ def expand_scenarios(raw, cfg):
 # ----------------------------------------
 # Parallel execution
 # ----------------------------------------
-def execute_benchmark(scenarios, cfg, unprocessed_dir):
+def execute_benchmark(scenarios, cfg, unprocessed_dir, yard_stick=3):
     all_recs = []
     unprocessed_records = []
     lock = Lock()
@@ -313,7 +316,8 @@ def execute_benchmark(scenarios, cfg, unprocessed_dir):
                     scn["TEMPERATURE"],
                     cfg["TOP_P"],
                     cfg["judge_models"],
-                    user_metrics
+                    user_metrics,
+                    yard_stick=yard_stick
                 )
                 
                 # Check if the record was processed successfully
@@ -388,7 +392,8 @@ def main(
     experiment_name,
     user_defined_metrics=None,
     model_file_name=None,
-    judge_file_name=None
+    judge_file_name=None,
+    yard_stick=3
 ):
     user_defined_metrics_list = None
     if user_defined_metrics:
@@ -477,7 +482,7 @@ def main(
     for run in range(1, experiment_counts+1):
         logging.info(f"=== Run {run}/{experiment_counts} ===")
         try:
-            results = execute_benchmark(scenarios, cfg, unprocessed_dir)
+            results = execute_benchmark(scenarios, cfg, unprocessed_dir, yard_stick=int(yard_stick))
             
             if not results:
                 logging.error(f"Run {run}/{experiment_counts} produced no results. Check the unprocessed records file.")
@@ -534,6 +539,7 @@ if __name__ == "__main__":
     p.add_argument("--user_defined_metrics",      default=None)
     p.add_argument("--model_file_name",           default=None)
     p.add_argument("--judge_file_name",           default=None)
+    p.add_argument("--evaluation_pass_threshold", default=3)
     args = p.parse_args()
     main(
         args.input_file,
@@ -547,5 +553,6 @@ if __name__ == "__main__":
         args.experiment_name,
         args.user_defined_metrics,
         args.model_file_name,
-        args.judge_file_name
+        args.judge_file_name,
+        args.evaluation_pass_threshold
     )

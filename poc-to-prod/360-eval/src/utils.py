@@ -337,7 +337,7 @@ def report_summary_template(models, evaluations):
     models_str = '\n'.join(models)
     return f"""
 ## Task
-Your task is to summarize the key findings from the provided LLM model evaluation dataset in a single, objective paragraph. The dataset contains information on performance metrics (speed, tokens per minute, throttle errors), accuracy, and cost.
+Your task is to summarize the key findings from the provided LLM model/s evaluation dataset in a single, objective paragraph. The dataset contains information on performance (speed, tokens per minute, throttle errors), accuracy, and cost metrics across one-to-many #Task/s#.
 
 ## Guidelines
 1. Read through the dataset carefully to understand the different metrics and their values.
@@ -346,6 +346,7 @@ Your task is to summarize the key findings from the provided LLM model evaluatio
 4. Avoid subjective statements or judgments about what constitutes good/bad performance, reliability, or cost-effectiveness.
 5. Condenses the entire data into a concise overview, highlighting key findings, methodologies, and conclusions.
 6. Use plain language, when data uses explicit technical terms like "fat tails" use instead language like "highly likely to vary"
+7. Use HTML tags "<b><i>TEXT</b></i>" to highlight #Model Name# and #Task Name# across your resonse
 
 ## Models:
 {models_str}

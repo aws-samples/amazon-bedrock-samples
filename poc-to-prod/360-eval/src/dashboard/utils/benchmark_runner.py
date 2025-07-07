@@ -345,7 +345,8 @@ def run_benchmark_process(eval_id):
             "--experiment_name", composite_id,
             "--temperature_variations", str(evaluation_config["temperature_variations"]),
             "--model_file_name", model_file_name,
-            "--judge_file_name", judge_file_name
+            "--judge_file_name", judge_file_name,
+            "--evaluation_pass_threshold", str(evaluation_config["failure_threshold"])
         ]
         
         if evaluation_config["user_defined_metrics"]:
@@ -735,6 +736,7 @@ def _update_status_file(status_file, status, progress, results=None, logs_dir=No
                 "invocations_per_scenario": evaluation_config.get("invocations_per_scenario"),
                 "experiment_counts": evaluation_config.get("experiment_counts"),
                 "temperature_variations": evaluation_config.get("temperature_variations"),
+                "failure_threshold": evaluation_config.get("failure_threshold"),
                 "user_defined_metrics": evaluation_config.get("user_defined_metrics"),
                 "sleep_between_invocations": evaluation_config.get("sleep_between_invocations"),
                 "task_type": evaluation_config.get("task_type"),
