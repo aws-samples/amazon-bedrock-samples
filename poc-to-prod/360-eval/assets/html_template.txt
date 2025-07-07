@@ -202,13 +202,7 @@
 <body>
   <h1>LLM Benchmark Report</h1>
   <p>Report generated on: {{ timestamp }}</p>
-  
-  <div class="section">
-    <div class="card">
-      <h2>Executive Summary</h2>
-      <p>{{ inference }}</p>
-    </div>
-  </div>
+
   
   <div class="nav">
     <ul>
@@ -222,7 +216,14 @@
     </ul>
   </div>
 
-    <div class="section" id="recommendations">
+  <div class="section">
+    <div class="card">
+      <h2>Executive Summary</h2>
+      <p>{{ inference }}</p>
+    </div>
+  </div>
+
+  <div class="section" id="recommendations">
     <h2>Recommendations</h2>
     <div class="recommendations">
       <h3>Task-Specific Model Recommendations</h3>

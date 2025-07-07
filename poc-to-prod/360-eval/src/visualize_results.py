@@ -11,7 +11,7 @@ from jinja2 import Template
 from collections import Counter
 from datetime import datetime
 from scipy import stats
-from utils import run_inference, report_summary_template
+from utils import run_inference, report_summary_template, convert_scientific_to_decimal
 
 # Configuration
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -936,6 +936,7 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
         logger.error(f"Error loading data: {str(e)}")
         raise
 
+
     # Calculate metrics
     logger.info("Calculating model-task metrics...")
     model_task_metrics = calculate_metrics_by_model_task(df)
@@ -945,6 +946,8 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
 
     logger.info("Calculating cost metrics...")
     cost_metrics = calculate_cost_metrics(df)
+
+
 
     # Create visualizations
     logger.info("Creating visualizations...")
@@ -987,9 +990,12 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
     accuracy_findings = generate_histogram_findings(df, key='mean_scores', label="Average Accuracy")     #TODO: BY TASK??
     acc_analysis = '# Accuracy Analysis across all models:\n- ' + '\n- '.join(time_to_first_token_findings)
 
+    whole_number_cost_metrics = convert_scientific_to_decimal(cost_metrics)
+    cost_analysis = '# Cost Analysis across all models on all Task:\n' + '\n'.join([str(i) for i in whole_number_cost_metrics.to_dict(orient='records')])
+
     recommendations = '# Recommendations:\n* ' + '\n* '.join([str(i) for i in task_recommendations])
 
-    prompt_template = report_summary_template(models=unique_models, evaluations=f'{acc_analysis}\n\n{perf_analysis}\n\n{task_level_analysis}\n\n{recommendations}')  ## Append AND Format all evals ++ rename the columns to help the model
+    prompt_template = report_summary_template(models=unique_models, evaluations=f'{acc_analysis}\n\n{cost_analysis}\n\n{perf_analysis}\n\n{task_level_analysis}\n\n{recommendations}')  ## Append AND Format all evals ++ rename the columns to help the model
     inference = run_inference(model_name='bedrock/converse/us.amazon.nova-premier-v1:0',
                               prompt_text=prompt_template,
                               stream=False,

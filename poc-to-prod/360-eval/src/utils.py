@@ -345,6 +345,7 @@ Your task is to summarize the key findings from the provided LLM model evaluatio
 3. Write a concise paragraph summarizing these key findings using neutral, fact-based language.
 4. Avoid subjective statements or judgments about what constitutes good/bad performance, reliability, or cost-effectiveness.
 5. Condenses the entire data into a concise overview, highlighting key findings, methodologies, and conclusions.
+6. Use plain language, when data uses explicit technical terms like "fat tails" use instead language like "highly likely to vary"
 
 ## Models:
 {models_str}
@@ -354,3 +355,25 @@ Your task is to summarize the key findings from the provided LLM model evaluatio
 
 Please provide your summary paragraph immediately after reading the dataset, without any preamble.
     """.strip()
+
+
+def convert_scientific_to_decimal(df):
+    """
+    Converts numeric columns with scientific notation to decimal representation.
+
+    Parameters:
+        df (pandas.DataFrame): Input dataframe
+
+    Returns:
+        pandas.DataFrame: DataFrame with converted values
+    """
+    # Create a copy of the dataframe to avoid modifying the original
+    result_df = df.copy()
+    # Iterate through columns
+    for column in result_df.columns:
+        try:
+            result_df[column] = result_df[column].apply(lambda x: f"{x:.6f}" if x < 0.01 else x)
+        except:
+            pass
+
+    return result_df
