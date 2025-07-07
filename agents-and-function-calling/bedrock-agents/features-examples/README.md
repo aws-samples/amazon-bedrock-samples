@@ -13,3 +13,4 @@ In this folder we provide you example implementations for the main [Amazon Bedro
 1. [Create Agent with Memory](09-create-agent-with-memory): Example of how to create an agent with long term memory attached to it
 2. [Create Agent with Code interpretation](10-create-agent-with-code-interpreter): Example of how to create an agent with code interpretation functionalities attached to it
 1. [Create Agent with User Confirmation enabled before action execution](11-create-agents-with-action-user-confirmation): Example of how to create an agent with user confirmation enabled before action execution
+2. [Create Agent using Powertools for AWS Lambda](16-create-agent-using-powertools-for-aws-lambda): Example of how to create an agent using Powertools for AWS Lambda [Event Handler for Bedrock Agent Functions](https://s12d.com/bedrock-agents-sample-github-link)

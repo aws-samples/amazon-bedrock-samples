@@ -1,0 +1,33 @@
+{
+  "name": "bedrockagents",
+  "version": "0.1.0",
+  "bin": {
+    "infra": "bin/bedrockagents.js"
+  },
+  "type": "module",
+  "license": "MIT-0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "update:deps": "npx npm-check-updates -u"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "22.15.29",
+    "aws-cdk": "2.1017.1",
+    "cdk-nag": "^2.36.10",
+    "esbuild": "^0.25.5",
+    "typescript": "~5.8.3"
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/commons": "^2.21.0",
+    "@aws-lambda-powertools/event-handler": "^2.21.0",
+    "@aws-lambda-powertools/logger": "^2.21.0",
+    "@aws-sdk/client-geo-places": "^3.823.0",
+    "aws-cdk-lib": "2.200.1",
+    "constructs": "^10.4.2",
+    "source-map-support": "^0.5.21"
+  }
+}
