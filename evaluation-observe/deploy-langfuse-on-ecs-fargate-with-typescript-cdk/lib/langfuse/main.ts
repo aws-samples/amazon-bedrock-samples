@@ -67,11 +67,15 @@ export interface ILangfuseDeploymentProps {
   clickHouseEnvironment?: { [key: string]: string };
   /**
    * Source container image (including version) for ClickHouse
+   *
+   * To avoid rate limit issues for customers without Docker Hub credentials, we use Bitnami's
+   * distribution of ClickHouse on Amazon ECR Public by default. If you configure Docker Hub tokens
+   * in the environment where you run 'cdk deploy', you could switch to e.g. 'clickhouse:25'.
    * 
    * Note that this construct actually builds a custom (ECR Private) image from the base you
    * specify here, to configure logging for the target ECS environment.
    * 
-   * @default 'clickhouse:25.6'
+   * @default 'public.ecr.aws/bitnami/clickhouse:25'
    */
   clickHouseImage?: string;
   /**

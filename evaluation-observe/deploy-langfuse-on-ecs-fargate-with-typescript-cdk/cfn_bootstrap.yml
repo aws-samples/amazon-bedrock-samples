@@ -23,7 +23,7 @@ Parameters:
 
   ClickHouseContainerImage:
     Type: String
-    Default: 'clickhouse:25.6'
+    Default: 'public.ecr.aws/bitnami/clickhouse:25'
     Description: >-
       Source container image (including version) for ClickHouse OLAP (a dependency of Langfuse).
 
