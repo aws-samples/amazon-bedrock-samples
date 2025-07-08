@@ -336,19 +336,22 @@ export class ClickHouseDeployment extends Construct {
     this.efs.fileSystem.grantReadWrite(taskRole);
 
     // Bitnami variant uses POSIX user 1001:0, which won't be able to write to EFS root. Upstream
-    // ClickHouse seems to run as root 0:0. Either way, using an Access Point will help us apply
-    // controls to how the container accesses the EFS filesystem:
+    // ClickHouse runs as root 0:0 by default, and will fail on a 1001:0 mount because it can't
+    // chown the folder back to root. To make both work, we'll override upstream to use 1001:0 too
+    // (since nicer to run containers as non-root users when we can):
+    const clickHouseUid = "1001";
+    const clickHouseGid = "0";
     const efsap = new efs.AccessPoint(this, "ECSAccessPoint", {
       fileSystem: this.efs.fileSystem,
       path: "/clickhouse-mount",
       createAcl: {
-        ownerUid: "1001",
-        ownerGid: "0",
+        ownerUid: clickHouseUid,
+        ownerGid: clickHouseGid,
         permissions: "777",
       },
       posixUser: {
-        uid: "1001",
-        gid: "0",
+        uid: clickHouseUid,
+        gid: clickHouseGid,
       },
     });
 
@@ -427,6 +430,7 @@ export class ClickHouseDeployment extends Construct {
           hardLimit: 65535,
         },
       ],
+      user: `${clickHouseUid}:${clickHouseGid}`,
     });
     container.node.addDependency(deployedImage.deployment);
     container.addMountPoints({
