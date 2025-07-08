@@ -10,6 +10,37 @@ import { BasicCognitoUserPoolWithDomain } from "./langfuse/cognito";
 
 export interface ILangfuseDemoStackProps extends cdk.StackProps {
   /**
+   * Source container image (including version) for ClickHouse
+   *
+   * To avoid rate limit issues for customers without Docker Hub credentials, we use Bitnami's
+   * distribution of ClickHouse on Amazon ECR Public by default. If you configure Docker Hub tokens
+   * in the environment where you run 'cdk deploy', you could switch to e.g. 'clickhouse:25'.
+   * 
+   * Note that this construct actually builds a custom (ECR Private) image from the base you
+   * specify here, to configure logging for the target ECS environment.
+   * 
+   * @default 'public.ecr.aws/bitnami/clickhouse:25'
+   */
+  clickHouseImage?: string;
+  /**
+   * Source container image (including version) for main Langfuse web service container
+   *
+   * We use GitHub Container Registry by default, but you could also consider Docker Hub with e.g.
+   * 'langfuse/langfuse:3'
+   * 
+   * @default 'ghcr.io/langfuse/langfuse:3'
+   */
+  langfuseWebImage?: string;
+  /**
+   * Source container image (including version) for Langfuse background worker container
+   *
+   * We use GitHub Container Registry by default, but you could also consider Docker Hub with e.g.
+   * 'langfuse/langfuse-worker:3'
+   * 
+   * @default 'ghcr.io/langfuse/langfuse-worker:3'
+   */
+  langfuseWorkerImage?: string;
+  /**
    * Set `true` to create and use Amazon Cognito User Pool for authentication
    *
    * @default - Langfuse native auth will be used - ⚠️ with open sign-up!
@@ -46,7 +77,10 @@ export class LangfuseDemoStack extends cdk.Stack {
 
     // The code that defines your stack goes here
     const langfuse = new LangfuseDeployment(this, "Langfuse", {
+      clickHouseImage: props.clickHouseImage,
       cognitoUserPool,
+      langfuseWebImage: props.langfuseWebImage,
+      langfuseWorkerImage: props.langfuseWorkerImage,
       tags,
       vpc: vpcInfra.vpc,
     });

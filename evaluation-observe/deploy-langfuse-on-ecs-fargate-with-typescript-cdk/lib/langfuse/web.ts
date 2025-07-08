@@ -44,11 +44,11 @@ interface ILangfuseWebServiceProps extends ILangfuseServiceSharedProps {
    */
   authCognitoSecret?: secretsmanager.ISecret;
   /**
-   * Source container image name for the worker
+   * Source container image name (including version tag) for the service
    *
-   * @default 'langfuse/langfuse'
+   * @default 'ghcr.io/langfuse/langfuse:3'
    */
-  imageName?: string;
+  imageSource?: string;
 }
 
 /**
@@ -81,7 +81,7 @@ export class LangfuseWebService extends LangfuseServiceBase {
         startPeriod: cdk.Duration.minutes(3),
         timeout: cdk.Duration.seconds(15),
       },
-      imageName: props.imageName || "langfuse/langfuse",
+      imageSource: props.imageSource || "ghcr.io/langfuse/langfuse:3",
       portMappings: [
         {
           containerPort: LANGFUSE_WEB_PORT,
