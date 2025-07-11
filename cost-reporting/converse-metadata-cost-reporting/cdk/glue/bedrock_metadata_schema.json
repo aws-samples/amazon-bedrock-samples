@@ -1,0 +1,50 @@
+{
+    "columns": [
+        {
+          "name": "timestamp",
+          "type": "string"
+        },
+        {
+          "name": "requestid",
+          "type": "string"
+        },
+        {
+          "name": "accountid",
+          "type": "string"
+        },
+        {
+          "name": "metadata_key",
+          "type": "string"
+        },
+        {
+          "name": "metadata_value",
+          "type": "string"
+        },
+        {
+          "name": "parsed_timestamp",
+          "type": "timestamp"
+        }
+      ],
+    "partition_keys": [
+        {
+            "name": "year",
+            "type": "string"
+        },
+        {
+            "name": "month",
+            "type": "string"
+        },
+        {
+            "name": "date",
+            "type": "string"
+        },
+        {
+            "name": "tenantid",
+            "type": "string"
+        },
+        {
+            "name": "batchid",
+            "type": "string"
+        }
+   ]
+}
