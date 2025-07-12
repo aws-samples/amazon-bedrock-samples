@@ -4,18 +4,18 @@ This repository contains pre-built examples to help customers get started with t
 
 ## Contents
 
-- [Introduction to Bedrock](introduction-to-bedrock) - Learn the basics of the Bedrock service
+- [Introduction to Bedrock](../introduction-to-bedrock) - Learn the basics of the Bedrock service
 - [Prompt Engineering ](prompt-engineering) - Tips for crafting effective prompts 
-- [Bedrock Fine-tuning](bedrock-fine-tuning) - Fine-tune Bedrock models for your specific use case
-- [Custom Model Import](custom-models) - Import custom models into Bedrock
-- [Generative AI Solutions](generative-ai-solutions) - Example use cases for generative AI
-- [Knowledge Bases](knowledge-bases) - Build knowledge bases with Bedrock
-- [Retrival Augmented Generation (RAG)](rag-solutions) - Implementing RAG with Amazon Bedrock
-- [Agents](agents-and-function-calling) - Generative AI agents with Bedrock
-- [Security and Governance](security-and-governance) - Secure your Bedrock applications
-- [Responsible AI](responsible-ai) - Use Bedrock responsibly and ethically
-- [Operational Tooling](ops-tooling) - Helpful samples to help operationalize your useage of Amazon Bedrock
-- [Multimodal](multimodal) - Working with multimodal data using Amazon Bedrock
+- [Bedrock Fine-tuning](../custom-models/bedrock-fine-tuning) - Fine-tune Bedrock models for your specific use case
+- [Custom Model Import](../custom-models) - Import custom models into Bedrock
+- [Generative AI Solutions](../genai-use-cases) - Example use cases for generative AI
+- [Knowledge Bases](../rag/knowledge-bases) - Build knowledge bases with Bedrock
+- [Retrival Augmented Generation (RAG)](../rag) - Implementing RAG with Amazon Bedrock
+- [Agents](../agents-and-function-calling) - Generative AI agents with Bedrock
+- [Security and Governance](../security) - Secure your Bedrock applications
+- [Responsible AI](../responsible_ai) - Use Bedrock responsibly and ethically
+- [Operational Tooling](../evaluation-observe) - Helpful samples to help operationalize your useage of Amazon Bedrock
+- [Multimodal](../multi-modal) - Working with multimodal data using Amazon Bedrock
 
 ## Getting Started
 
