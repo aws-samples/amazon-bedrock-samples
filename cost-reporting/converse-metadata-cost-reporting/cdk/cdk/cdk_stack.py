@@ -1,59 +1,57 @@
 import hashlib
 import json
-from aws_cdk import (
-    Stack,
-    CfnParameter,
-    aws_iam as iam,
-    Fn,
-    aws_s3 as s3,
-    RemovalPolicy,
-    aws_glue as glue,
-    aws_s3_assets as s3_assets,
-    aws_quicksight as quicksight,
-    CfnOutput
-)
+import time
+from pathlib import Path
+
+from aws_cdk import CfnOutput, CfnParameter, Fn, RemovalPolicy, Stack
+from aws_cdk import aws_glue as glue
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_quicksight as quicksight
+from aws_cdk import aws_s3 as s3
+from aws_cdk import aws_s3_assets as s3_assets
 from constructs import Construct
+
 
 class CdkStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:  # noqa: PLR0915
         super().__init__(scope, construct_id, **kwargs)
 
         # Get current account number using Fn.ref
-        account_id = Fn.ref('AWS::AccountId')
+        account_id = Fn.ref("AWS::AccountId")
 
-        # Create a parameter for Bedrock Logs S3 bucket 
+        # Create a parameter for Bedrock Logs S3 bucket
         bedrock_logs_bucket = CfnParameter(
-            self, "BedrockLogsS3Bucket", 
+            self, "BedrockLogsS3Bucket",
             type="String",
-            description="Name of the S3 bucket where Bedrock logs will be stored."
+            description="Name of the S3 bucket where Bedrock logs will be stored.",
         )
 
-        # Create a parameter for QuickSight username 
+        # Create a parameter for QuickSight username
         quicksight_username = CfnParameter(
-            self, "QuickSightUserName", 
+            self, "QuickSightUserName",
             type="String",
-            description="Name of the QuickSight user for setting up the dataset and dashboards."
-        )    
+            description="Name of the QuickSight user for setting up the dataset and dashboards.",
+        )
 
-        # Create a parameter for QuickSight region 
+        # Create a parameter for QuickSight region
         quicksight_region = CfnParameter(
-            self, "QuickSightRegion", 
+            self, "QuickSightRegion",
             type="String",
-            description="Name of the Region where quicksight and IDC are enabled."
-        )                  
+            description="Name of the Region where quicksight and IDC are enabled.",
+        )
 
         # Create destination bucket with account number in name
         transformed_logs_bucket = s3.Bucket(
-            self, 'BedrockLogsTransformed',
+            self, "BedrockLogsTransformed",
             bucket_name=f"bedrock-logs-transformed-{self.region}-{account_id}",
-            removal_policy=RemovalPolicy.DESTROY,  
-            auto_delete_objects=True,  
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            enforce_ssl=True
+            enforce_ssl=True,
         )
-        
+
         # Add bucket policy to allow QuickSight service to access the transformed bucket
         transformed_logs_bucket.add_to_resource_policy(
             iam.PolicyStatement(
@@ -61,15 +59,15 @@ class CdkStack(Stack):
                 principals=[iam.ServicePrincipal("quicksight.amazonaws.com")],
                 actions=[
                     "s3:GetObject",
-                    "s3:ListBucket"
+                    "s3:ListBucket",
                 ],
                 resources=[
                     transformed_logs_bucket.bucket_arn,
-                    f"{transformed_logs_bucket.bucket_arn}/*"
-                ]
-            )
+                    f"{transformed_logs_bucket.bucket_arn}/*",
+                ],
+            ),
         )
-        
+
         # Create a policy for the QuickSight service role
         iam.ManagedPolicy(
             self, "QuickSightServiceRolePolicy",
@@ -80,31 +78,31 @@ class CdkStack(Stack):
                     effect=iam.Effect.ALLOW,
                     actions=[
                         "s3:GetObject",
-                        "s3:ListBucket"
+                        "s3:ListBucket",
                     ],
                     resources=[
                         transformed_logs_bucket.bucket_arn,
-                        f"{transformed_logs_bucket.bucket_arn}/*"
-                    ]
-                )
+                        f"{transformed_logs_bucket.bucket_arn}/*",
+                    ],
+                ),
             ],
             roles=[
                 iam.Role.from_role_name(
                     self, "QuickSightServiceRole",
-                    role_name="aws-quicksight-service-role-v0"
-                )
-            ]
+                    role_name="aws-quicksight-service-role-v0",
+                ),
+            ],
         )
 
         # Create IAM role for Glue
         glue_role = iam.Role(
             self, "BedrockLogs_GlueETLRole",
-            assumed_by=iam.ServicePrincipal("glue.amazonaws.com")
+            assumed_by=iam.ServicePrincipal("glue.amazonaws.com"),
         )
 
         # Add managed policy for Glue service role
         glue_role.add_managed_policy(
-            iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole")
+            iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole"),
         )
 
         # Create custom policy for S3 read access
@@ -113,12 +111,12 @@ class CdkStack(Stack):
             actions=[
                 "s3:GetObject",
                 "s3:ListBucket",
-                "s3:GetBucketLocation"
+                "s3:GetBucketLocation",
             ],
             resources=[
                 f"arn:aws:s3:::{bedrock_logs_bucket.value_as_string}",
-                f"arn:aws:s3:::{bedrock_logs_bucket.value_as_string}/*"
-            ]
+                f"arn:aws:s3:::{bedrock_logs_bucket.value_as_string}/*",
+            ],
         )
 
         # Create custom policy for S3 write access to destination bucket
@@ -129,17 +127,17 @@ class CdkStack(Stack):
                 "s3:PutObject",
                 "s3:DeleteObject",
                 "s3:ListBucket",
-                "s3:GetBucketLocation"
+                "s3:GetBucketLocation",
             ],
             resources=[
                 transformed_logs_bucket.bucket_arn,
                 f"{transformed_logs_bucket.bucket_arn}/*",
                 "arn:aws:s3:::cdk*",
                 "arn:aws:s3:::cdk*/*",
-                "*"
-            ]
-        )        
-        
+                "*",
+            ],
+        )
+
 
         # Attach the custom S3 policy to the role
         glue_role.add_to_policy(s3_read_policy)
@@ -147,19 +145,19 @@ class CdkStack(Stack):
 
         # Add managed policy for Glue service role
         glue_role.add_managed_policy(
-            iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole")
+            iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole"),
         )
 
         # Add Lake Formation Data Admin managed policy
         glue_role.add_managed_policy(
-            iam.ManagedPolicy.from_aws_managed_policy_name("AWSLakeFormationDataAdmin")
-        )        
+            iam.ManagedPolicy.from_aws_managed_policy_name("AWSLakeFormationDataAdmin"),
+        )
 
         # Create the ETL script asset
         etl_script = s3_assets.Asset(
             self,
             "ETLGlueScript",
-            path="./glue/bedrock_logs_transform.py"  # Path to your local script file
+            path="./glue/bedrock_logs_transform.py",  # Path to your local script file
         )
 
         # Create Glue ETL Job
@@ -170,7 +168,7 @@ class CdkStack(Stack):
             command=glue.CfnJob.JobCommandProperty(
                 name="glueetl",
                 python_version="3",
-                script_location=etl_script.s3_object_url
+                script_location=etl_script.s3_object_url,
             ),
             description="Job to transform and flatten Bedrock logs",
             role=glue_role.role_arn,
@@ -183,9 +181,9 @@ class CdkStack(Stack):
             default_arguments={
                 "--source_bucket": bedrock_logs_bucket.value_as_string,
                 "--target_bucket": transformed_logs_bucket.bucket_name,
-                "--job-bookmark-option": "job-bookmark-enable"
-            }
-        )   
+                "--job-bookmark-option": "job-bookmark-enable",
+            },
+        )
 
         # Create a scheduled trigger for the Glue job
         glue.CfnTrigger(
@@ -196,28 +194,28 @@ class CdkStack(Stack):
             schedule="cron(0 */3 * * ? *)",
             actions=[
                 glue.CfnTrigger.ActionProperty(
-                    job_name=glue_etl_job.name
-                )
-            ]
+                    job_name=glue_etl_job.name,
+                ),
+            ],
         )
 
         # Create Glue Database
         glue_database = glue.CfnDatabase(
-            self, 
+            self,
             "BedrockLogsDatabase",
             catalog_id=account_id,  # Using the account_id we already have
             database_input=glue.CfnDatabase.DatabaseInputProperty(
                 name=f"bedrock-{self.region}",
                 description="Database for Bedrock usage logs and analytics",
-                location_uri=f"s3://{transformed_logs_bucket.bucket_name}/"
-            )
+                location_uri=f"s3://{transformed_logs_bucket.bucket_name}/",
+            ),
         )
 
-        schema_path = './glue/bedrock_logs_schema.json'
-        with open(schema_path, 'r') as f:
+        schema_path = "./glue/bedrock_logs_schema.json"
+        with Path.open(schema_path) as f:
             schema_content = f.read()
             schema = json.loads(schema_content)
-            content_hash = hashlib.md5(schema_content.encode()).hexdigest()
+            content_hash = hashlib.md5(schema_content.encode()).hexdigest()  # noqa: S324
 
         # Create Glue Table for Bedrock logs
         bedrock_logs_table = glue.CfnTable(
@@ -232,35 +230,35 @@ class CdkStack(Stack):
                 parameters={
                     "classification": "parquet",
                     "compressionType": "snappy",
-                    "schema_hash": content_hash  
+                    "schema_hash": content_hash,
                 },
                 storage_descriptor=glue.CfnTable.StorageDescriptorProperty(
                     columns=[
                         glue.CfnTable.ColumnProperty(
                             name=col["name"],
-                            type=col["type"]
+                            type=col["type"],
                         ) for col in schema["columns"]
                     ],
                     location=f"s3://{transformed_logs_bucket.bucket_name}/main/",
                     input_format="org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
                     output_format="org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
                     serde_info=glue.CfnTable.SerdeInfoProperty(
-                        serialization_library="org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
-                    )
+                        serialization_library="org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                    ),
                 ),
                 partition_keys=[
                     glue.CfnTable.ColumnProperty(
                         name=key["name"],
-                        type=key["type"]
+                        type=key["type"],
                     ) for key in schema["partition_keys"]
-                ]
-            )
+                ],
+            ),
         )
         bedrock_logs_table.add_dependency(glue_database)
 
         # Load schema from Bedrock Logs Metadata JSON file
-        metadata_path = './glue/bedrock_metadata_schema.json'
-        with open(metadata_path, 'r') as f:
+        metadata_path = "./glue/bedrock_metadata_schema.json"
+        with Path.open(metadata_path) as f:
             metadata_content = f.read()
             metadata = json.loads(metadata_content)
 
@@ -278,31 +276,31 @@ class CdkStack(Stack):
                 parameters={
                     "classification": "parquet",
                     "compressionType": "snappy",
-                    "schema_hash": content_hash  
+                    "schema_hash": content_hash,
                 },
                 storage_descriptor=glue.CfnTable.StorageDescriptorProperty(
                     columns=[
                         glue.CfnTable.ColumnProperty(
                             name=col["name"],
-                            type=col["type"]
+                            type=col["type"],
                         ) for col in metadata["columns"]
                     ],
                     location=f"s3://{transformed_logs_bucket.bucket_name}/metadata/",
                     input_format="org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
                     output_format="org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
                     serde_info=glue.CfnTable.SerdeInfoProperty(
-                        serialization_library="org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
-                    )
+                        serialization_library="org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                    ),
                 ),
                 partition_keys=[
                     glue.CfnTable.ColumnProperty(
                         name=key["name"],
-                        type=key["type"]
+                        type=key["type"],
                     ) for key in metadata["partition_keys"]
-                ]
-            )
+                ],
+            ),
         )
-        bedrock_metadata_table.add_dependency(glue_database)      
+        bedrock_metadata_table.add_dependency(glue_database)
 
         # Create IAM role for the crawler
         crawler_role = iam.Role(
@@ -310,8 +308,8 @@ class CdkStack(Stack):
             "BedrockLogsCrawlerRole",
             assumed_by=iam.ServicePrincipal("glue.amazonaws.com"),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole")
-            ]
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole"),
+            ],
         )
 
         # Add S3 read permissions to the crawler role
@@ -320,13 +318,13 @@ class CdkStack(Stack):
                 actions=[
                     "s3:GetObject",
                     "s3:ListBucket",
-                    "s3:GetBucketLocation"
+                    "s3:GetBucketLocation",
                 ],
                 resources=[
                     transformed_logs_bucket.bucket_arn,
-                    f"{transformed_logs_bucket.bucket_arn}/*"
-                ]
-            )
+                    f"{transformed_logs_bucket.bucket_arn}/*",
+                ],
+            ),
         )
 
         # Create the Glue Crawler for Bedrock logs
@@ -340,20 +338,20 @@ class CdkStack(Stack):
                 catalog_targets=[
                     glue.CfnCrawler.CatalogTargetProperty(
                         database_name=glue_database.ref,
-                        tables=[bedrock_logs_table.ref]
-                    )
-                ]
+                        tables=[bedrock_logs_table.ref],
+                    ),
+                ],
             ),
             schema_change_policy=glue.CfnCrawler.SchemaChangePolicyProperty(
                 delete_behavior="LOG",
-                update_behavior="LOG"
+                update_behavior="LOG",
             ),
             recrawl_policy=glue.CfnCrawler.RecrawlPolicyProperty(
-                recrawl_behavior="CRAWL_EVERYTHING"
+                recrawl_behavior="CRAWL_EVERYTHING",
             ),
             schedule=glue.CfnCrawler.ScheduleProperty(
-                schedule_expression="cron(0 */3 * * ? *)"
-            )
+                schedule_expression="cron(0 */3 * * ? *)",
+            ),
         )
         bedrock_logs_crawler.add_dependency(bedrock_logs_table)
 
@@ -368,29 +366,29 @@ class CdkStack(Stack):
                 catalog_targets=[
                     glue.CfnCrawler.CatalogTargetProperty(
                         database_name=glue_database.ref,
-                        tables=[bedrock_metadata_table.ref]
-                    )
-                ]
+                        tables=[bedrock_metadata_table.ref],
+                    ),
+                ],
             ),
             schema_change_policy=glue.CfnCrawler.SchemaChangePolicyProperty(
                 delete_behavior="LOG",
-                update_behavior="LOG"
+                update_behavior="LOG",
             ),
             recrawl_policy=glue.CfnCrawler.RecrawlPolicyProperty(
-                recrawl_behavior="CRAWL_EVERYTHING"
+                recrawl_behavior="CRAWL_EVERYTHING",
             ),
             schedule=glue.CfnCrawler.ScheduleProperty(
-                schedule_expression="cron(0 */3 * * ? *)"
-            )
+                schedule_expression="cron(0 */3 * * ? *)",
+            ),
         )
-        bedrock_metadata_crawler.add_dependency(bedrock_metadata_table)        
+        bedrock_metadata_crawler.add_dependency(bedrock_metadata_table)
 
         # Load schema from Bedrock Pricing JSON file
-        pricing_schema_path = './glue/bedrock_pricing_schema.json'
-        with open(pricing_schema_path, 'r') as f:
+        pricing_schema_path = "./glue/bedrock_pricing_schema.json"
+        with Path.open(pricing_schema_path) as f:
             pricing_schema_content = f.read()
             pricing_schema = json.loads(pricing_schema_content)
-            pricing_hash = hashlib.md5(pricing_schema_content.encode()).hexdigest()
+            pricing_hash = hashlib.md5(pricing_schema_content.encode()).hexdigest()  # noqa: S324
 
         # Create Glue Table for Bedrock Pricing
         bedrock_pricing_table = glue.CfnTable(
@@ -406,13 +404,13 @@ class CdkStack(Stack):
                     "classification": "csv",
                     "delimiter": ",",
                     "skip.header.line.count": "1",
-                    "schema_hash": pricing_hash
+                    "schema_hash": pricing_hash,
                 },
                 storage_descriptor=glue.CfnTable.StorageDescriptorProperty(
                     columns=[
                         glue.CfnTable.ColumnProperty(
                             name=col["name"],
-                            type=col["type"]
+                            type=col["type"],
                         ) for col in pricing_schema["columns"]
                     ],
                     location=f"s3://{transformed_logs_bucket.bucket_name}/pricing/",
@@ -422,11 +420,11 @@ class CdkStack(Stack):
                         serialization_library="org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
                         parameters={
                             "field.delim": ",",
-                            "skip.header.line.count": "1"
-                        }
-                    )
-                )
-            )
+                            "skip.header.line.count": "1",
+                        },
+                    ),
+                ),
+            ),
         )
         bedrock_pricing_table.add_dependency(glue_database)
 
@@ -441,20 +439,20 @@ class CdkStack(Stack):
                 catalog_targets=[
                     glue.CfnCrawler.CatalogTargetProperty(
                         database_name=glue_database.ref,
-                        tables=[bedrock_pricing_table.ref]
-                    )
-                ]
+                        tables=[bedrock_pricing_table.ref],
+                    ),
+                ],
             ),
             schema_change_policy=glue.CfnCrawler.SchemaChangePolicyProperty(
                 delete_behavior="LOG",
-                update_behavior="LOG"
+                update_behavior="LOG",
             ),
             recrawl_policy=glue.CfnCrawler.RecrawlPolicyProperty(
-                recrawl_behavior="CRAWL_EVERYTHING"
+                recrawl_behavior="CRAWL_EVERYTHING",
             ),
             schedule=glue.CfnCrawler.ScheduleProperty(
-                schedule_expression="cron(0 */3 * * ? *)"
-            )
+                schedule_expression="cron(0 */3 * * ? *)",
+            ),
         )
         bedrock_pricing_crawler.add_dependency(bedrock_pricing_table)
 
@@ -486,7 +484,7 @@ class CdkStack(Stack):
                     "s3:ListAllMyBuckets",
                     "s3:ListBucketMultipartUploads",
                     "s3:ListMultipartUploadParts",
-                    "s3:AbortMultipartUpload"
+                    "s3:AbortMultipartUpload",
                 ],
                 resources=[
                     f"arn:aws:athena:{self.region}:{account_id}:workgroup/primary",
@@ -494,25 +492,25 @@ class CdkStack(Stack):
                     f"arn:aws:glue:{self.region}:{account_id}:database/{glue_database.ref}",
                     f"arn:aws:glue:{self.region}:{account_id}:table/{glue_database.ref}/*",
                     transformed_logs_bucket.bucket_arn,
-                    f"{transformed_logs_bucket.bucket_arn}/*"
-                ]
-            )
+                    f"{transformed_logs_bucket.bucket_arn}/*",
+                ],
+            ),
         )
 
         # Add managed policy for Athena access
         quicksight_role.add_managed_policy(
-            iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSQuicksightAthenaAccess")
+            iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSQuicksightAthenaAccess"),
         )
 
         data_source_permissions = [
             quicksight.CfnDataSource.ResourcePermissionProperty(
                 principal=quicksight_principal,
                 actions=[
-                    "quicksight:UpdateDataSourcePermissions", 
-                    "quicksight:DescribeDataSourcePermissions", 
-                    "quicksight:PassDataSource", 
-                    "quicksight:DescribeDataSource", 
-                    "quicksight:DeleteDataSource", 
+                    "quicksight:UpdateDataSourcePermissions",
+                    "quicksight:DescribeDataSourcePermissions",
+                    "quicksight:PassDataSource",
+                    "quicksight:DescribeDataSource",
+                    "quicksight:DeleteDataSource",
                     "quicksight:UpdateDataSource",
                 ],
             ),
@@ -522,18 +520,18 @@ class CdkStack(Stack):
             quicksight.CfnDataSet.ResourcePermissionProperty(
                 principal=quicksight_principal,
                 actions=[
-                    "quicksight:PassDataSet", 
-                    "quicksight:DescribeIngestion", 
-                    "quicksight:CreateIngestion", 
-                    "quicksight:UpdateDataSet", 
-                    "quicksight:DeleteDataSet", 
-                    "quicksight:DescribeDataSet", 
-                    "quicksight:CancelIngestion", 
-                    "quicksight:DescribeDataSetPermissions", 
-                    "quicksight:ListIngestions", 
-                    "quicksight:UpdateDataSetPermissions"
+                    "quicksight:PassDataSet",
+                    "quicksight:DescribeIngestion",
+                    "quicksight:CreateIngestion",
+                    "quicksight:UpdateDataSet",
+                    "quicksight:DeleteDataSet",
+                    "quicksight:DescribeDataSet",
+                    "quicksight:CancelIngestion",
+                    "quicksight:DescribeDataSetPermissions",
+                    "quicksight:ListIngestions",
+                    "quicksight:UpdateDataSetPermissions",
                 ],
-            )
+            ),
         ]
 
         analysis_permissions = [
@@ -541,74 +539,74 @@ class CdkStack(Stack):
                 principal=quicksight_principal,
                 actions=[
                     "quicksight:RestoreAnalysis",
-                    "quicksight:UpdateAnalysisPermissions", 
-                    "quicksight:DeleteAnalysis", 
-                    "quicksight:QueryAnalysis", 
-                    "quicksight:DescribeAnalysisPermissions", 
-                    "quicksight:DescribeAnalysis", 
-                    "quicksight:UpdateAnalysis"
+                    "quicksight:UpdateAnalysisPermissions",
+                    "quicksight:DeleteAnalysis",
+                    "quicksight:QueryAnalysis",
+                    "quicksight:DescribeAnalysisPermissions",
+                    "quicksight:DescribeAnalysis",
+                    "quicksight:UpdateAnalysis",
                 ],
-            )
+            ),
         ]
 
         template_permissions = [
             quicksight.CfnTemplate.ResourcePermissionProperty(
                 principal=quicksight_principal,
                 actions=[
-                    "quicksight:UpdateTemplatePermissions", 
-                    "quicksight:DescribeTemplatePermissions", 
-                    "quicksight:UpdateTemplateAlias", 
-                    "quicksight:DeleteTemplateAlias", 
-                    "quicksight:DescribeTemplateAlias", 
-                    "quicksight:ListTemplateAliases", 
-                    "quicksight:ListTemplates", 
-                    "quicksight:CreateTemplateAlias", 
-                    "quicksight:DeleteTemplate", 
-                    "quicksight:UpdateTemplate", 
-                    "quicksight:ListTemplateVersions", 
-                    "quicksight:DescribeTemplate", 
-                    "quicksight:CreateTemplate"
+                    "quicksight:UpdateTemplatePermissions",
+                    "quicksight:DescribeTemplatePermissions",
+                    "quicksight:UpdateTemplateAlias",
+                    "quicksight:DeleteTemplateAlias",
+                    "quicksight:DescribeTemplateAlias",
+                    "quicksight:ListTemplateAliases",
+                    "quicksight:ListTemplates",
+                    "quicksight:CreateTemplateAlias",
+                    "quicksight:DeleteTemplate",
+                    "quicksight:UpdateTemplate",
+                    "quicksight:ListTemplateVersions",
+                    "quicksight:DescribeTemplate",
+                    "quicksight:CreateTemplate",
                 ],
-            )
+            ),
         ]
 
         dashboard_permissions = [
             quicksight.CfnDashboard.ResourcePermissionProperty(
                 principal=quicksight_principal,
                 actions=[
-                    "quicksight:DescribeDashboard", 
-                    "quicksight:ListDashboardVersions", 
-                    "quicksight:UpdateDashboardPermissions", 
-                    "quicksight:QueryDashboard", 
-                    "quicksight:UpdateDashboard", 
-                    "quicksight:DeleteDashboard", 
-                    "quicksight:UpdateDashboardPublishedVersion", 
-                    "quicksight:DescribeDashboardPermissions"
+                    "quicksight:DescribeDashboard",
+                    "quicksight:ListDashboardVersions",
+                    "quicksight:UpdateDashboardPermissions",
+                    "quicksight:QueryDashboard",
+                    "quicksight:UpdateDashboard",
+                    "quicksight:DeleteDashboard",
+                    "quicksight:UpdateDashboardPublishedVersion",
+                    "quicksight:DescribeDashboardPermissions",
                 ],
-            )
-        ]        
+            ),
+        ]
 
         quicksight_datasource = quicksight.CfnDataSource(
-            scope=self, 
-            id="BedrockLogsDataSource", 
+            scope=self,
+            id="BedrockLogsDataSource",
             name="bedrock-logs-datasource",
             data_source_id="bedrock-logs-datasource",
-            aws_account_id=account_id, 
-            permissions=data_source_permissions, 
+            aws_account_id=account_id,
+            permissions=data_source_permissions,
             data_source_parameters=quicksight.CfnDataSource.DataSourceParametersProperty(
                 athena_parameters=quicksight.CfnDataSource.AthenaParametersProperty(
-                    work_group="primary"
-                )
-            ), 
-            type='ATHENA'
-        )        
+                    work_group="primary",
+                ),
+            ),
+            type="ATHENA",
+        )
 
         # Create dataset for bedrock usage logs
         bedrock_logs_dataset = quicksight.CfnDataSet(
             scope=self,
             id="BedrockLogsDataSet",
             name="bedrock-usage-logs",
-            data_set_id="bedrock-usage-logs", 
+            data_set_id="bedrock-usage-logs",
             aws_account_id=self.account,
             physical_table_map={
                 "BedrockLogsTable": quicksight.CfnDataSet.PhysicalTableProperty(
@@ -618,7 +616,7 @@ class CdkStack(Stack):
                         schema="bedrock",
                         input_columns=[
                             quicksight.CfnDataSet.InputColumnProperty(name="schematype", type="STRING"),
-                            quicksight.CfnDataSet.InputColumnProperty(name="schemaversion", type="STRING"), 
+                            quicksight.CfnDataSet.InputColumnProperty(name="schemaversion", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="timestamp", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="accountid", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="region", type="STRING"),
@@ -649,21 +647,21 @@ class CdkStack(Stack):
                             quicksight.CfnDataSet.InputColumnProperty(name="year", type="INTEGER"),
                             quicksight.CfnDataSet.InputColumnProperty(name="month", type="INTEGER"),
                             quicksight.CfnDataSet.InputColumnProperty(name="date", type="INTEGER"),
-                            quicksight.CfnDataSet.InputColumnProperty(name="batchid", type="STRING")
-                        ]
-                    )
-                )
+                            quicksight.CfnDataSet.InputColumnProperty(name="batchid", type="STRING"),
+                        ],
+                    ),
+                ),
             },
             logical_table_map={
                 "BedrockLogsLogicalTable": quicksight.CfnDataSet.LogicalTableProperty(
                     alias="bedrock_logs",
                     source=quicksight.CfnDataSet.LogicalTableSourceProperty(
-                        physical_table_id="BedrockLogsTable"
-                    )
-                )
+                        physical_table_id="BedrockLogsTable",
+                    ),
+                ),
             },
             permissions=dataset_permissions,
-            import_mode="DIRECT_QUERY"
+            import_mode="DIRECT_QUERY",
         )
         bedrock_logs_dataset.add_dependency(quicksight_datasource)
 
@@ -672,7 +670,7 @@ class CdkStack(Stack):
             scope=self,
             id="BedrockMetaDataDataSet",
             name="bedrock-usage-metadata",
-            data_set_id="bedrock-usage-metadata", 
+            data_set_id="bedrock-usage-metadata",
             aws_account_id=self.account,
             physical_table_map={
                 "BedrockMetaDataTable": quicksight.CfnDataSet.PhysicalTableProperty(
@@ -682,7 +680,7 @@ class CdkStack(Stack):
                         schema="bedrock",
                         input_columns=[
                             quicksight.CfnDataSet.InputColumnProperty(name="timestamp", type="STRING"),
-                            quicksight.CfnDataSet.InputColumnProperty(name="requestid", type="STRING"), 
+                            quicksight.CfnDataSet.InputColumnProperty(name="requestid", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="accountid", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="metadata_key", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="metadata_value", type="STRING"),
@@ -691,21 +689,21 @@ class CdkStack(Stack):
                             quicksight.CfnDataSet.InputColumnProperty(name="year", type="INTEGER"),
                             quicksight.CfnDataSet.InputColumnProperty(name="month", type="INTEGER"),
                             quicksight.CfnDataSet.InputColumnProperty(name="date", type="INTEGER"),
-                            quicksight.CfnDataSet.InputColumnProperty(name="batchid", type="STRING")
-                        ]
-                    )
-                )
+                            quicksight.CfnDataSet.InputColumnProperty(name="batchid", type="STRING"),
+                        ],
+                    ),
+                ),
             },
             logical_table_map={
                 "BedrockMetaDataLogicalTable": quicksight.CfnDataSet.LogicalTableProperty(
                     alias="bedrock_metadata",
                     source=quicksight.CfnDataSet.LogicalTableSourceProperty(
-                        physical_table_id="BedrockMetaDataTable"
-                    )
-                )
+                        physical_table_id="BedrockMetaDataTable",
+                    ),
+                ),
             },
             permissions=dataset_permissions,
-            import_mode="DIRECT_QUERY"
+            import_mode="DIRECT_QUERY",
         )
         bedrock_metadata_dataset.add_dependency(quicksight_datasource)
 
@@ -714,7 +712,7 @@ class CdkStack(Stack):
             scope=self,
             id="BedrockPricingDataSet",
             name="bedrock-pricing",
-            data_set_id="bedrock-pricing", 
+            data_set_id="bedrock-pricing",
             aws_account_id=self.account,
             physical_table_map={
                 "BedrockPricingTable": quicksight.CfnDataSet.PhysicalTableProperty(
@@ -724,26 +722,26 @@ class CdkStack(Stack):
                         schema="bedrock",
                         input_columns=[
                             quicksight.CfnDataSet.InputColumnProperty(name="model_id", type="STRING"),
-                            quicksight.CfnDataSet.InputColumnProperty(name="input_cost", type="STRING"), 
+                            quicksight.CfnDataSet.InputColumnProperty(name="input_cost", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="output_cost", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="cache_write", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="cache_read", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="start_date", type="STRING"),
-                            quicksight.CfnDataSet.InputColumnProperty(name="end_date", type="STRING")
-                        ]
-                    )
-                )
+                            quicksight.CfnDataSet.InputColumnProperty(name="end_date", type="STRING"),
+                        ],
+                    ),
+                ),
             },
             logical_table_map={
                 "BedrockPricingLogicalTable": quicksight.CfnDataSet.LogicalTableProperty(
                     alias="bedrock_pricing",
                     source=quicksight.CfnDataSet.LogicalTableSourceProperty(
-                        physical_table_id="BedrockPricingTable"
-                    )
-                )
+                        physical_table_id="BedrockPricingTable",
+                    ),
+                ),
             },
             permissions=dataset_permissions,
-            import_mode="DIRECT_QUERY"
+            import_mode="DIRECT_QUERY",
         )
         bedrock_pricing_dataset.add_dependency(quicksight_datasource)
 
@@ -752,7 +750,7 @@ class CdkStack(Stack):
             scope=self,
             id="BedrockLogsWithMetadataDataSet",
             name="bedrock-logs-with-metadata",
-            data_set_id="bedrock-logs-with-metadata", 
+            data_set_id="bedrock-logs-with-metadata",
             aws_account_id=self.account,
             physical_table_map={
                 "BedrockLogsWithMetadataTable": quicksight.CfnDataSet.PhysicalTableProperty(
@@ -760,7 +758,7 @@ class CdkStack(Stack):
                         data_source_arn=quicksight_datasource.attr_arn,
                         name="bedrock_logs_with_metadata",
                         sql_query=f"""
-                            SELECT 
+                            SELECT
                                 logs.*,
                                 MAX(CASE WHEN meta.metadata_key = 'TenantID' THEN meta.metadata_value END) AS tenant_id,
                                 MAX(CASE WHEN meta.metadata_key = 'CostCenter' THEN meta.metadata_value END) AS cost_center,
@@ -773,38 +771,38 @@ class CdkStack(Stack):
                                 (logs.usage_outputtokens / 1000000.0) * price.output_cost AS output_cost,
                                 (logs.cache_readtokens / 1000000.0) * price.cache_read AS cache_read_cost,
                                 (logs.cache_writetokens / 1000000.0) * price.cache_write AS cache_write_cost,
-                                ((logs.usage_inputtokens / 1000000.0) * price.input_cost) + 
-                                ((logs.usage_outputtokens / 1000000.0) * price.output_cost) + 
-                                ((logs.cache_readtokens / 1000000.0) * price.cache_read) + 
+                                ((logs.usage_inputtokens / 1000000.0) * price.input_cost) +
+                                ((logs.usage_outputtokens / 1000000.0) * price.output_cost) +
+                                ((logs.cache_readtokens / 1000000.0) * price.cache_read) +
                                 ((logs.cache_writetokens / 1000000.0) * price.cache_write) AS total_cost
-                            FROM 
+                            FROM
                                 "bedrock-{self.region}"."bedrock_usage_logs" logs
-                            LEFT JOIN 
+                            LEFT JOIN
                                 "bedrock-{self.region}"."bedrock_usage_metadata" meta ON logs.requestid = meta.requestid
-                                AND logs.year = meta.year 
-                                AND logs.month = meta.month 
+                                AND logs.year = meta.year
+                                AND logs.month = meta.month
                                 AND logs.date = meta.date
-                            LEFT JOIN 
-                                "bedrock-{self.region}"."bedrock_pricing" price ON 
-                                CASE 
-                                    WHEN logs.modelid LIKE '%/%' 
+                            LEFT JOIN
+                                "bedrock-{self.region}"."bedrock_pricing" price ON
+                                CASE
+                                    WHEN logs.modelid LIKE '%/%'
                                     THEN SUBSTRING(logs.modelid FROM (LENGTH(logs.modelid) - POSITION('/' IN REVERSE(logs.modelid)) + 2))
-                                    ELSE logs.modelid 
+                                    ELSE logs.modelid
                                 END = price.model_id
-                                AND DATE_PARSE(SUBSTRING(logs.timestamp, 1, 10), '%Y-%m-%d') BETWEEN 
-                                    DATE_PARSE(price.start_date, '%m-%d-%Y') 
+                                AND DATE_PARSE(SUBSTRING(logs.timestamp, 1, 10), '%Y-%m-%d') BETWEEN
+                                    DATE_PARSE(price.start_date, '%m-%d-%Y')
                                     AND COALESCE(DATE_PARSE(price.end_date, '%m-%d-%Y'), DATE_PARSE('12-31-9999', '%m-%d-%Y'))
-                            GROUP BY 
-                                logs.schematype, logs.schemaversion, logs.timestamp, logs.accountid, logs.region, 
-                                logs.requestid, logs.operation, logs.modelid, logs.identity_arn, logs.input_contenttype, 
-                                logs.task_type, logs.input_tokencount, logs.output_contenttype, logs.output_tokencount, 
+                            GROUP BY
+                                logs.schematype, logs.schemaversion, logs.timestamp, logs.accountid, logs.region,
+                                logs.requestid, logs.operation, logs.modelid, logs.identity_arn, logs.input_contenttype,
+                                logs.task_type, logs.input_tokencount, logs.output_contenttype, logs.output_tokencount,
                                 logs.output_latencyms, logs.usage_inputtokens, logs.usage_outputtokens, logs.usage_totaltokens,
-                                logs.cache_readtokens, logs.cache_writetokens, logs.image_width, logs.image_height, 
-                                logs.numberOfImages, logs.input_duration, logs.input_resolution, logs.output_duration, 
+                                logs.cache_readtokens, logs.cache_writetokens, logs.image_width, logs.image_height,
+                                logs.numberOfImages, logs.input_duration, logs.input_resolution, logs.output_duration,
                                 logs.output_FPS, logs.output_videoWidth, logs.output_videoHeight, logs.parsed_timestamp,
                                 logs.tenantid, logs.year, logs.month, logs.date, logs.batchid,
                                 price.input_cost, price.output_cost, price.cache_read, price.cache_write,price.model_id
-                        """,
+                        """,  # noqa: S608
                         columns=[
                             quicksight.CfnDataSet.InputColumnProperty(name="schematype", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="schemaversion", type="STRING"),
@@ -853,13 +851,13 @@ class CdkStack(Stack):
                             quicksight.CfnDataSet.InputColumnProperty(name="output_cost", type="DECIMAL"),
                             quicksight.CfnDataSet.InputColumnProperty(name="cache_read_cost", type="DECIMAL"),
                             quicksight.CfnDataSet.InputColumnProperty(name="cache_write_cost", type="DECIMAL"),
-                            quicksight.CfnDataSet.InputColumnProperty(name="total_cost", type="DECIMAL")                          
-                        ]
-                    )
-                )
+                            quicksight.CfnDataSet.InputColumnProperty(name="total_cost", type="DECIMAL"),
+                        ],
+                    ),
+                ),
             },
             permissions=dataset_permissions,
-            import_mode="DIRECT_QUERY"
+            import_mode="DIRECT_QUERY",
         )
         bedrock_logs_with_metadata_dataset.add_dependency(quicksight_datasource)
 
@@ -873,42 +871,42 @@ class CdkStack(Stack):
                 data_set_identifier_declarations=[
                     quicksight.CfnAnalysis.DataSetIdentifierDeclarationProperty(
                         data_set_arn=bedrock_logs_with_metadata_dataset.attr_arn,
-                        identifier="bedrock_logs_with_metadata"
-                    )
+                        identifier="bedrock_logs_with_metadata",
+                    ),
                 ],
                 parameter_declarations=[
                     # Partition-based parameters
                     quicksight.CfnAnalysis.ParameterDeclarationProperty(
                         string_parameter_declaration=quicksight.CfnAnalysis.StringParameterDeclarationProperty(
                             parameter_value_type="MULTI_VALUED",
-                            name="TenantIdParameter"
-                        )
+                            name="TenantIdParameter",
+                        ),
                     ),
                     quicksight.CfnAnalysis.ParameterDeclarationProperty(
                         integer_parameter_declaration=quicksight.CfnAnalysis.IntegerParameterDeclarationProperty(
                             parameter_value_type="SINGLE_VALUED",
-                            name="YearParameter"
-                        )
+                            name="YearParameter",
+                        ),
                     ),
                     quicksight.CfnAnalysis.ParameterDeclarationProperty(
                         integer_parameter_declaration=quicksight.CfnAnalysis.IntegerParameterDeclarationProperty(
                             parameter_value_type="SINGLE_VALUED",
-                            name="MonthParameter"
-                        )
+                            name="MonthParameter",
+                        ),
                     ),
                     quicksight.CfnAnalysis.ParameterDeclarationProperty(
                         integer_parameter_declaration=quicksight.CfnAnalysis.IntegerParameterDeclarationProperty(
                             parameter_value_type="SINGLE_VALUED",
-                            name="DayParameter"
-                        )
+                            name="DayParameter",
+                        ),
                     ),
                     # Business parameters
                     quicksight.CfnAnalysis.ParameterDeclarationProperty(
                         string_parameter_declaration=quicksight.CfnAnalysis.StringParameterDeclarationProperty(
                             parameter_value_type="MULTI_VALUED",
-                            name="ModelIdParameter"
-                        )
-                    )
+                            name="ModelIdParameter",
+                        ),
+                    ),
                 ],
                 sheets=[
                     quicksight.CfnAnalysis.SheetDefinitionProperty(
@@ -924,18 +922,18 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="year"
-                                        )
+                                            column_name="year",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -945,18 +943,18 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="month"
-                                        )
+                                            column_name="month",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -966,18 +964,18 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="date"
-                                        )
+                                            column_name="date",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             # Row 2: Business filters
                             quicksight.CfnAnalysis.ParameterControlProperty(
@@ -989,18 +987,18 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="tenant_id"
-                                        )
+                                            column_name="tenant_id",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -1011,19 +1009,19 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="modelid"
-                                        )
+                                            column_name="modelid",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
-                            )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
                         ],
                         visuals=[
                             # Bar chart for usage summary (converted from table)
@@ -1033,8 +1031,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Bedrock Usage Summary"
-                                        )
+                                            plain_text="Token Usage by Tenant",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.BarChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.BarChartFieldWellsProperty(
@@ -1045,10 +1043,10 @@ class CdkStack(Stack):
                                                             field_id="tenant_id_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="tenant_id"
-                                                            )
-                                                        )
-                                                    )
+                                                                column_name="tenant_id",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1056,20 +1054,20 @@ class CdkStack(Stack):
                                                             field_id="total_tokens_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="usage_totaltokens"
+                                                                column_name="usage_totaltokens",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
                                         ),
                                         orientation="HORIZONTAL",
                                         # Removing sort configuration as it's causing errors
-                                    )
-                                )
+                                    ),
+                                ),
                             ),
                             # Pie chart for company usage distribution
                             quicksight.CfnAnalysis.VisualProperty(
@@ -1078,8 +1076,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Token Usage by Company"
-                                        )
+                                            plain_text="Token Usage by Company",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.PieChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.PieChartFieldWellsProperty(
@@ -1090,10 +1088,10 @@ class CdkStack(Stack):
                                                             field_id="company_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="company"
-                                                            )
-                                                        )
-                                                    )
+                                                                column_name="company",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1101,18 +1099,18 @@ class CdkStack(Stack):
                                                             field_id="company_tokens_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="usage_totaltokens"
+                                                                column_name="usage_totaltokens",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
-                                        )
-                                    )
-                                )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             # Bar chart for department usage
                             quicksight.CfnAnalysis.VisualProperty(
@@ -1121,8 +1119,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Token Usage by Department"
-                                        )
+                                            plain_text="Token Usage by Department",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.BarChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.BarChartFieldWellsProperty(
@@ -1133,10 +1131,10 @@ class CdkStack(Stack):
                                                             field_id="department_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="department"
-                                                            )
-                                                        )
-                                                    )
+                                                                column_name="department",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1144,19 +1142,19 @@ class CdkStack(Stack):
                                                             field_id="department_tokens_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="usage_totaltokens"
+                                                                column_name="usage_totaltokens",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
                                         ),
-                                        orientation="HORIZONTAL"
-                                    )
-                                )
+                                        orientation="HORIZONTAL",
+                                    ),
+                                ),
                             ),
                             # Sample Donut Chart for Model Distribution
                             quicksight.CfnAnalysis.VisualProperty(
@@ -1165,8 +1163,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Model Distribution"
-                                        )
+                                            plain_text="Model Distribution",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.PieChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.PieChartFieldWellsProperty(
@@ -1177,10 +1175,10 @@ class CdkStack(Stack):
                                                             field_id="model_id_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="modelid"
-                                                            )
-                                                        )
-                                                    )
+                                                                column_name="modelid",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1188,26 +1186,26 @@ class CdkStack(Stack):
                                                             field_id="model_count_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="usage_totaltokens"
+                                                                column_name="usage_totaltokens",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="COUNT"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
+                                                                simple_numerical_aggregation="COUNT",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
                                         ),
                                         donut_options=quicksight.CfnAnalysis.DonutOptionsProperty(
                                             arc_options=quicksight.CfnAnalysis.ArcOptionsProperty(
-                                                arc_thickness="MEDIUM"
-                                            )
-                                        )
-                                    )
-                                )
+                                                arc_thickness="MEDIUM",
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
 
-                        ]
+                        ],
                     ),
                     quicksight.CfnAnalysis.SheetDefinitionProperty(
                         sheet_id="trends-sheet",
@@ -1223,11 +1221,11 @@ class CdkStack(Stack):
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -1238,11 +1236,11 @@ class CdkStack(Stack):
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -1253,11 +1251,11 @@ class CdkStack(Stack):
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             # Row 2: Business filters
                             quicksight.CfnAnalysis.ParameterControlProperty(
@@ -1269,18 +1267,18 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="tenantid"
-                                        )
+                                            column_name="tenantid",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -1291,19 +1289,19 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="modelid"
-                                        )
+                                            column_name="modelid",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
-                            )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
                         ],
                         visuals=[
                             # Line chart for usage over time
@@ -1313,8 +1311,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Token Usage Over Time"
-                                        )
+                                            plain_text="Token Usage Over Time",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.LineChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.LineChartFieldWellsProperty(
@@ -1325,11 +1323,11 @@ class CdkStack(Stack):
                                                             field_id="date_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="parsed_timestamp"
+                                                                column_name="parsed_timestamp",
                                                             ),
-                                                            date_granularity="DAY"
-                                                        )
-                                                    )
+                                                            date_granularity="DAY",
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1337,13 +1335,13 @@ class CdkStack(Stack):
                                                             field_id="daily_tokens_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="usage_totaltokens"
+                                                                column_name="usage_totaltokens",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 colors=[
                                                     quicksight.CfnAnalysis.DimensionFieldProperty(
@@ -1351,15 +1349,15 @@ class CdkStack(Stack):
                                                             field_id="model_color_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="modelid"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
-                                        )
-                                    )
-                                )
+                                                                column_name="modelid",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             # Input vs Output Tokens Stacked Bar Chart
                             quicksight.CfnAnalysis.VisualProperty(
@@ -1368,8 +1366,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Input vs Output Tokens by Day"
-                                        )
+                                            plain_text="Input vs Output Tokens by Day",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.BarChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.BarChartFieldWellsProperty(
@@ -1380,11 +1378,11 @@ class CdkStack(Stack):
                                                             field_id="date_tokens_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="parsed_timestamp"
+                                                                column_name="parsed_timestamp",
                                                             ),
-                                                            date_granularity="DAY"
-                                                        )
-                                                    )
+                                                            date_granularity="DAY",
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1392,33 +1390,33 @@ class CdkStack(Stack):
                                                             field_id="input_tokens_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="usage_inputtokens"
+                                                                column_name="usage_inputtokens",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
                                                     ),
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
                                                         numerical_measure_field=quicksight.CfnAnalysis.NumericalMeasureFieldProperty(
                                                             field_id="output_tokens_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="usage_outputtokens"
+                                                                column_name="usage_outputtokens",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
                                         ),
                                         # Removed custom color palette as it's causing validation errors
-                                        
-                                        orientation="VERTICAL"
-                                    )
-                                )
+
+                                        orientation="VERTICAL",
+                                    ),
+                                ),
                             ),
                             # Average Latency by Model
                             quicksight.CfnAnalysis.VisualProperty(
@@ -1427,8 +1425,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Average Latency by Model (ms)"
-                                        )
+                                            plain_text="Average Latency by Model (ms)",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.BarChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.BarChartFieldWellsProperty(
@@ -1439,10 +1437,10 @@ class CdkStack(Stack):
                                                             field_id="model_latency_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="modelid"
-                                                            )
-                                                        )
-                                                    )
+                                                                column_name="modelid",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1450,19 +1448,19 @@ class CdkStack(Stack):
                                                             field_id="avg_latency_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="output_latencyms"
+                                                                column_name="output_latencyms",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="AVERAGE"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
+                                                                simple_numerical_aggregation="AVERAGE",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
                                         ),
-                                        orientation="HORIZONTAL"
-                                    )
-                                )
+                                        orientation="HORIZONTAL",
+                                    ),
+                                ),
                             ),
                             # Usage by Environment Pie Chart
                             quicksight.CfnAnalysis.VisualProperty(
@@ -1471,8 +1469,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Token Usage by Environment"
-                                        )
+                                            plain_text="Token Usage by Environment",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.PieChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.PieChartFieldWellsProperty(
@@ -1483,10 +1481,10 @@ class CdkStack(Stack):
                                                             field_id="environment_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="environment"
-                                                            )
-                                                        )
-                                                    )
+                                                                column_name="environment",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1494,20 +1492,20 @@ class CdkStack(Stack):
                                                             field_id="env_tokens_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="usage_totaltokens"
+                                                                column_name="usage_totaltokens",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        ]
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ],
                     ),
                     quicksight.CfnAnalysis.SheetDefinitionProperty(
                         sheet_id="cost-trends-sheet",
@@ -1523,11 +1521,11 @@ class CdkStack(Stack):
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -1538,11 +1536,11 @@ class CdkStack(Stack):
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -1553,11 +1551,11 @@ class CdkStack(Stack):
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             # Row 2: Business filters
                             quicksight.CfnAnalysis.ParameterControlProperty(
@@ -1569,18 +1567,18 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="tenantid"
-                                        )
+                                            column_name="tenantid",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             quicksight.CfnAnalysis.ParameterControlProperty(
                                 dropdown=quicksight.CfnAnalysis.ParameterDropDownControlProperty(
@@ -1591,19 +1589,19 @@ class CdkStack(Stack):
                                     selectable_values=quicksight.CfnAnalysis.ParameterSelectableValuesProperty(
                                         link_to_data_set_column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                             data_set_identifier="bedrock_logs_with_metadata",
-                                            column_name="modelid"
-                                        )
+                                            column_name="modelid",
+                                        ),
                                     ),
                                     display_options=quicksight.CfnAnalysis.DropDownControlDisplayOptionsProperty(
                                         title_options=quicksight.CfnAnalysis.LabelOptionsProperty(
                                             visibility="VISIBLE",
                                             font_configuration=quicksight.CfnAnalysis.FontConfigurationProperty(
-                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL")
-                                            )
-                                        )
-                                    )
-                                )
-                            )
+                                                font_size=quicksight.CfnAnalysis.FontSizeProperty(relative="SMALL"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
                         ],
                         visuals=[
                             # Line chart for cost over time
@@ -1613,8 +1611,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Cost Over Time"
-                                        )
+                                            plain_text="Cost Over Time",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.LineChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.LineChartFieldWellsProperty(
@@ -1625,11 +1623,11 @@ class CdkStack(Stack):
                                                             field_id="date_cost_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="parsed_timestamp"
+                                                                column_name="parsed_timestamp",
                                                             ),
-                                                            date_granularity="DAY"
-                                                        )
-                                                    )
+                                                            date_granularity="DAY",
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1637,13 +1635,13 @@ class CdkStack(Stack):
                                                             field_id="daily_cost_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="total_cost"
+                                                                column_name="total_cost",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 colors=[
                                                     quicksight.CfnAnalysis.DimensionFieldProperty(
@@ -1651,15 +1649,15 @@ class CdkStack(Stack):
                                                             field_id="model_color_cost_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="modelid"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
-                                        )
-                                    )
-                                )
+                                                                column_name="modelid",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             ),
                             # Cost breakdown by type
                             quicksight.CfnAnalysis.VisualProperty(
@@ -1668,8 +1666,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Cost Breakdown by Type"
-                                        )
+                                            plain_text="Cost Breakdown by Type",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.BarChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.BarChartFieldWellsProperty(
@@ -1680,10 +1678,10 @@ class CdkStack(Stack):
                                                             field_id="model_breakdown_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="modelid"
-                                                            )
-                                                        )
-                                                    )
+                                                                column_name="modelid",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1691,19 +1689,19 @@ class CdkStack(Stack):
                                                             field_id="input_cost_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="input_cost"
+                                                                column_name="input_cost",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
                                         ),
-                                        orientation="HORIZONTAL"
-                                    )
-                                )
+                                        orientation="HORIZONTAL",
+                                    ),
+                                ),
                             ),
                             # Output cost breakdown
                             quicksight.CfnAnalysis.VisualProperty(
@@ -1712,8 +1710,8 @@ class CdkStack(Stack):
                                     title=quicksight.CfnAnalysis.VisualTitleLabelOptionsProperty(
                                         visibility="VISIBLE",
                                         format_text=quicksight.CfnAnalysis.ShortFormatTextProperty(
-                                            plain_text="Output Cost by Model"
-                                        )
+                                            plain_text="Output Cost by Model",
+                                        ),
                                     ),
                                     chart_configuration=quicksight.CfnAnalysis.BarChartConfigurationProperty(
                                         field_wells=quicksight.CfnAnalysis.BarChartFieldWellsProperty(
@@ -1724,10 +1722,10 @@ class CdkStack(Stack):
                                                             field_id="model_output_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="modelid"
-                                                            )
-                                                        )
-                                                    )
+                                                                column_name="modelid",
+                                                            ),
+                                                        ),
+                                                    ),
                                                 ],
                                                 values=[
                                                     quicksight.CfnAnalysis.MeasureFieldProperty(
@@ -1735,141 +1733,198 @@ class CdkStack(Stack):
                                                             field_id="output_cost_field",
                                                             column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                                                 data_set_identifier="bedrock_logs_with_metadata",
-                                                                column_name="output_cost"
+                                                                column_name="output_cost",
                                                             ),
                                                             aggregation_function=quicksight.CfnAnalysis.NumericalAggregationFunctionProperty(
-                                                                simple_numerical_aggregation="SUM"
-                                                            )
-                                                        )
-                                                    )
-                                                ]
-                                            )
+                                                                simple_numerical_aggregation="SUM",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
                                         ),
-                                        orientation="HORIZONTAL"
-                                    )
-                                )
-                            )
-                        ]
-                    )
+                                        orientation="HORIZONTAL",
+                                    ),
+                                ),
+                            ),
+                        ],
+                    ),
                 ],
                 filter_groups=[
                     quicksight.CfnAnalysis.FilterGroupProperty(
-                        filter_group_id="comprehensive-filters",
+                        filter_group_id="tenant-filter-group",
                         cross_dataset="SINGLE_DATASET",
                         filters=[
-                            # Partition-based filters for performance
                             quicksight.CfnAnalysis.FilterProperty(
                                 category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
                                     filter_id="tenant-filter",
                                     column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
                                         data_set_identifier="bedrock_logs_with_metadata",
-                                        column_name="tenant_id"
+                                        column_name="tenant_id",
                                     ),
                                     configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
                                         custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
                                             match_operator="EQUALS",
                                             parameter_name="TenantIdParameter",
-                                            null_option="ALL_VALUES"
-                                        )
-                                    )
-                                )
-                            ),
-                            quicksight.CfnAnalysis.FilterProperty(
-                                category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
-                                    filter_id="year-filter",
-                                    column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
-                                        data_set_identifier="bedrock_logs_with_metadata",
-                                        column_name="year"
+                                            null_option="ALL_VALUES",
+                                        ),
                                     ),
-                                    configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
-                                        custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
-                                            match_operator="EQUALS",
-                                            parameter_name="YearParameter",
-                                            null_option="ALL_VALUES"
-                                        )
-                                    )
-                                )
+                                ),
                             ),
-                            quicksight.CfnAnalysis.FilterProperty(
-                                category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
-                                    filter_id="month-filter",
-                                    column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
-                                        data_set_identifier="bedrock_logs_with_metadata",
-                                        column_name="month"
-                                    ),
-                                    configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
-                                        custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
-                                            match_operator="EQUALS",
-                                            parameter_name="MonthParameter",
-                                            null_option="ALL_VALUES"
-                                        )
-                                    )
-                                )
-                            ),
-                            quicksight.CfnAnalysis.FilterProperty(
-                                category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
-                                    filter_id="day-filter",
-                                    column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
-                                        data_set_identifier="bedrock_logs_with_metadata",
-                                        column_name="date"
-                                    ),
-                                    configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
-                                        custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
-                                            match_operator="EQUALS",
-                                            parameter_name="DayParameter",
-                                            null_option="ALL_VALUES"
-                                        )
-                                    )
-                                )
-                            ),
-                            # Business filters
-                            quicksight.CfnAnalysis.FilterProperty(
-                                category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
-                                    filter_id="model-filter",
-                                    column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
-                                        data_set_identifier="bedrock_logs_with_metadata",
-                                        column_name="modelid"
-                                    ),
-                                    configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
-                                        custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
-                                            match_operator="EQUALS",
-                                            parameter_name="ModelIdParameter",
-                                            null_option="ALL_VALUES"
-                                        )
-                                    )
-                                )
-                            )
                         ],
                         scope_configuration=quicksight.CfnAnalysis.FilterScopeConfigurationProperty(
                             selected_sheets=quicksight.CfnAnalysis.SelectedSheetsFilterScopeConfigurationProperty(
                                 sheet_visual_scoping_configurations=[
                                     quicksight.CfnAnalysis.SheetVisualScopingConfigurationProperty(
                                         sheet_id="main-sheet",
-                                        scope="ALL_VISUALS"
+                                        scope="ALL_VISUALS",
                                     ),
-                                    quicksight.CfnAnalysis.SheetVisualScopingConfigurationProperty(
-                                        sheet_id="trends-sheet",
-                                        scope="ALL_VISUALS"
-                                    ),
-                                    quicksight.CfnAnalysis.SheetVisualScopingConfigurationProperty(
-                                        sheet_id="cost-trends-sheet",
-                                        scope="ALL_VISUALS"
-                                    )
-                                ]
-                            )
+                                ],
+                            ),
                         ),
-                        status="ENABLED"
-                    )
-                ]
+                        status="ENABLED",
+                    ),
+                    quicksight.CfnAnalysis.FilterGroupProperty(
+                        filter_group_id="year-filter-group",
+                        cross_dataset="SINGLE_DATASET",
+                        filters=[
+                            quicksight.CfnAnalysis.FilterProperty(
+                                category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
+                                    filter_id="year-filter",
+                                    column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
+                                        data_set_identifier="bedrock_logs_with_metadata",
+                                        column_name="year",
+                                    ),
+                                    configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
+                                        custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
+                                            match_operator="EQUALS",
+                                            parameter_name="YearParameter",
+                                            null_option="ALL_VALUES",
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ],
+                        scope_configuration=quicksight.CfnAnalysis.FilterScopeConfigurationProperty(
+                            selected_sheets=quicksight.CfnAnalysis.SelectedSheetsFilterScopeConfigurationProperty(
+                                sheet_visual_scoping_configurations=[
+                                    quicksight.CfnAnalysis.SheetVisualScopingConfigurationProperty(
+                                        sheet_id="main-sheet",
+                                        scope="ALL_VISUALS",
+                                    ),
+                                ],
+                            ),
+                        ),
+                        status="ENABLED",
+                    ),
+                    quicksight.CfnAnalysis.FilterGroupProperty(
+                        filter_group_id="month-filter-group",
+                        cross_dataset="SINGLE_DATASET",
+                        filters=[
+                            quicksight.CfnAnalysis.FilterProperty(
+                                category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
+                                    filter_id="month-filter",
+                                    column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
+                                        data_set_identifier="bedrock_logs_with_metadata",
+                                        column_name="month",
+                                    ),
+                                    configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
+                                        custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
+                                            match_operator="EQUALS",
+                                            parameter_name="MonthParameter",
+                                            null_option="ALL_VALUES",
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ],
+                        scope_configuration=quicksight.CfnAnalysis.FilterScopeConfigurationProperty(
+                            selected_sheets=quicksight.CfnAnalysis.SelectedSheetsFilterScopeConfigurationProperty(
+                                sheet_visual_scoping_configurations=[
+                                    quicksight.CfnAnalysis.SheetVisualScopingConfigurationProperty(
+                                        sheet_id="main-sheet",
+                                        scope="ALL_VISUALS",
+                                    ),
+                                ],
+                            ),
+                        ),
+                        status="ENABLED",
+                    ),
+                    quicksight.CfnAnalysis.FilterGroupProperty(
+                        filter_group_id="day-filter-group",
+                        cross_dataset="SINGLE_DATASET",
+                        filters=[
+                            quicksight.CfnAnalysis.FilterProperty(
+                                category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
+                                    filter_id="day-filter",
+                                    column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
+                                        data_set_identifier="bedrock_logs_with_metadata",
+                                        column_name="date",
+                                    ),
+                                    configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
+                                        custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
+                                            match_operator="EQUALS",
+                                            parameter_name="DayParameter",
+                                            null_option="ALL_VALUES",
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ],
+                        scope_configuration=quicksight.CfnAnalysis.FilterScopeConfigurationProperty(
+                            selected_sheets=quicksight.CfnAnalysis.SelectedSheetsFilterScopeConfigurationProperty(
+                                sheet_visual_scoping_configurations=[
+                                    quicksight.CfnAnalysis.SheetVisualScopingConfigurationProperty(
+                                        sheet_id="main-sheet",
+                                        scope="ALL_VISUALS",
+                                    ),
+                                ],
+                            ),
+                        ),
+                        status="ENABLED",
+                    ),
+                    quicksight.CfnAnalysis.FilterGroupProperty(
+                        filter_group_id="model-filter-group",
+                        cross_dataset="SINGLE_DATASET",
+                        filters=[
+                            quicksight.CfnAnalysis.FilterProperty(
+                                category_filter=quicksight.CfnAnalysis.CategoryFilterProperty(
+                                    filter_id="model-filter",
+                                    column=quicksight.CfnAnalysis.ColumnIdentifierProperty(
+                                        data_set_identifier="bedrock_logs_with_metadata",
+                                        column_name="modelid",
+                                    ),
+                                    configuration=quicksight.CfnAnalysis.CategoryFilterConfigurationProperty(
+                                        custom_filter_configuration=quicksight.CfnAnalysis.CustomFilterConfigurationProperty(
+                                            match_operator="EQUALS",
+                                            parameter_name="ModelIdParameter",
+                                            null_option="ALL_VALUES",
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ],
+                        scope_configuration=quicksight.CfnAnalysis.FilterScopeConfigurationProperty(
+                            selected_sheets=quicksight.CfnAnalysis.SelectedSheetsFilterScopeConfigurationProperty(
+                                sheet_visual_scoping_configurations=[
+                                    quicksight.CfnAnalysis.SheetVisualScopingConfigurationProperty(
+                                        sheet_id="main-sheet",
+                                        scope="ALL_VISUALS",
+                                    ),
+                                ],
+                            ),
+                        ),
+                        status="ENABLED",
+                    ),
+                ],
             ),
-            permissions=analysis_permissions
+            permissions=analysis_permissions,
         )
         bedrock_analysis.add_dependency(bedrock_logs_with_metadata_dataset)
 
         # Generate a unique timestamp for this deployment
-        import time
         deployment_timestamp = str(int(time.time()))
-        
+
         bedrock_template = quicksight.CfnTemplate(
             scope=self,
             id="BedrockUsageTemplate",
@@ -1882,12 +1937,12 @@ class CdkStack(Stack):
                     data_set_references=[
                         quicksight.CfnTemplate.DataSetReferenceProperty(
                             data_set_arn=bedrock_logs_with_metadata_dataset.attr_arn,
-                            data_set_placeholder="bedrock_logs_with_metadata"
-                        )
-                    ]
-                )
+                            data_set_placeholder="bedrock_logs_with_metadata",
+                        ),
+                    ],
+                ),
             ),
-            permissions=template_permissions
+            permissions=template_permissions,
         )
         bedrock_template.add_dependency(bedrock_analysis)
 
@@ -1904,23 +1959,23 @@ class CdkStack(Stack):
                     data_set_references=[
                         quicksight.CfnDashboard.DataSetReferenceProperty(
                             data_set_arn=bedrock_logs_with_metadata_dataset.attr_arn,
-                            data_set_placeholder="bedrock_logs_with_metadata"
-                        )
-                    ]
-                )
+                            data_set_placeholder="bedrock_logs_with_metadata",
+                        ),
+                    ],
+                ),
             ),
             permissions=dashboard_permissions,
             dashboard_publish_options=quicksight.CfnDashboard.DashboardPublishOptionsProperty(
                 ad_hoc_filtering_option=quicksight.CfnDashboard.AdHocFilteringOptionProperty(
-                    availability_status="ENABLED"
+                    availability_status="ENABLED",
                 ),
                 export_to_csv_option=quicksight.CfnDashboard.ExportToCSVOptionProperty(
-                    availability_status="ENABLED"
+                    availability_status="ENABLED",
                 ),
                 sheet_controls_option=quicksight.CfnDashboard.SheetControlsOptionProperty(
-                    visibility_state="EXPANDED"
-                )
-            )
+                    visibility_state="EXPANDED",
+                ),
+            ),
         )
         bedrock_dashboard.add_dependency(bedrock_template)
 
@@ -1929,14 +1984,14 @@ class CdkStack(Stack):
         CfnOutput(
             self, "DashboardURL",
             description="URL to access the Bedrock Cost Reporting dashboard",
-            value=dashboard_url
+            value=dashboard_url,
         )
-        
+
         # Create transformed bucket name output
         CfnOutput(
             self, "TransformedBucketName",
             description="Name of the S3 bucket containing transformed Bedrock logs",
-            value=transformed_logs_bucket.bucket_name
+            value=transformed_logs_bucket.bucket_name,
         )
 
 

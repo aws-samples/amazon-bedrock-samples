@@ -126,7 +126,7 @@ check_cdk_bootstrap() {
 
 # Check Python version
 check_python_version() {
-  local min_version="3.10"
+  local min_version="3.12"
   local python_cmd=$1
   
   log "INFO" "Checking Python version..."
@@ -160,10 +160,17 @@ check_dependencies() {
   # Check CDK CLI version compatibility
   log "INFO" "Checking CDK CLI version compatibility..."
   CDK_VERSION=$(cdk --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
-  REQUIRED_VERSION="2.1019.1"
+  MIN_VERSION="2.200.0"
   
-  if [[ "$(printf '%s\n' "$REQUIRED_VERSION" "$CDK_VERSION" | sort -V | head -n1)" == "$CDK_VERSION" && "$CDK_VERSION" != "$REQUIRED_VERSION" ]]; then
-    log "WARN" "⚠️ CDK CLI version $CDK_VERSION is older than required version $REQUIRED_VERSION"
+  # Extract major.minor for comparison
+  cdk_major_minor=$(echo $CDK_VERSION | cut -d. -f1,2)
+  min_major_minor="2.200"
+  
+  # Compare major.minor versions using awk
+  if awk "BEGIN {exit !($cdk_major_minor >= $min_major_minor)}"; then
+    log "INFO" "✅ CDK CLI version $CDK_VERSION meets minimum requirement of $MIN_VERSION"
+  else
+    log "WARN" "⚠️ CDK CLI version $CDK_VERSION is older than minimum required version $MIN_VERSION"
     while true; do
       read -p "Would you like to upgrade CDK CLI now? (y/n): " upgrade_cdk
       if [[ $upgrade_cdk == "y" || $upgrade_cdk == "Y" ]]; then
@@ -178,11 +185,9 @@ check_dependencies() {
       log "INFO" "Upgrading CDK CLI..."
       sudo npm install -g aws-cdk@latest
     else
-      log "ERROR" "❌ CDK CLI version $REQUIRED_VERSION or higher is required."
+      log "ERROR" "❌ CDK CLI version $MIN_VERSION or higher is required."
       exit 1
     fi
-  else
-    log "INFO" "✅ CDK CLI version $CDK_VERSION is compatible."
   fi
   
   # Check if uv is installed
@@ -448,7 +453,7 @@ main() {
     # Find Python3 in the PATH
     PYTHON_PATH=$(which python3)
     if [ -z "$PYTHON_PATH" ]; then
-      log "ERROR" "❌ Python 3 not found in PATH. Please install Python 3.10 or later."
+      log "ERROR" "❌ Python 3 not found in PATH. Please install Python 3.12 or later."
       exit 1
     fi
     

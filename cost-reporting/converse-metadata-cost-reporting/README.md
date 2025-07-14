@@ -119,16 +119,16 @@ The deployment script will:
 1. Verify prerequisites (ensure uv sync has been run)
 2. Check required dependencies
 3. Automatically use the uv virtual environment for CDK commands
-3. Check if CDK is bootstrapped in your AWS account/region
-4. Prompt for required parameters:
+4. Check if CDK is bootstrapped in your AWS account/region
+5. Prompt for required parameters:
    - S3 bucket name where Bedrock logs are stored (with validation)
    - QuickSight region
    - QuickSight username (with validation)
-5. Option to generate sample Bedrock logs for testing (50 simulated API calls)
-6. Deploy the CDK stack with the provided parameters
-7. Upload pricing data to the transformed data bucket
-8. Optionally run the Glue ETL job and crawlers
-9. Provide the QuickSight dashboard URL upon completion
+6. Option to generate sample Bedrock logs for testing (50 simulated API calls)
+7. Deploy the CDK stack with the provided parameters
+8. Upload pricing data to the transformed data bucket
+9. Optionally run the Glue ETL job and crawlers
+10. Provide the QuickSight dashboard URL upon completion
 
 ### Post-Deployment
 
@@ -137,7 +137,7 @@ After deployment, you can access the QuickSight dashboard to view your Bedrock u
 1. Use the dashboard URL provided in the deployment output
 2. If you need to find the URL later, you can retrieve it from CloudFormation:
 
-   ```
+   ```bash
    aws cloudformation describe-stacks --stack-name BedrockCostReportingStack --query "Stacks[0].Outputs[?OutputKey=='DashboardURL'].OutputValue" --output text
    ```
 
@@ -150,7 +150,7 @@ After deployment, you can access the QuickSight dashboard to view your Bedrock u
 
 1. **CDK Bootstrap Error**: Ensure your AWS account is bootstrapped for CDK in the target region
 
-   ```
+   ```bash
    cdk bootstrap aws://ACCOUNT-NUMBER/REGION
    ```
 
@@ -164,7 +164,7 @@ After deployment, you can access the QuickSight dashboard to view your Bedrock u
 
 5. **Glue Job Failures**: Check CloudWatch logs for the Glue job for detailed error messages
 
-   ```
+   ```bash
    aws logs get-log-events --log-group-name /aws-glue/jobs/output --log-stream-name <job-run-id>
    ```
 
@@ -191,13 +191,13 @@ The pricing data is stored in `cdk/glue/pricing.csv`. To update pricing:
 1. Edit the CSV file with the latest pricing information, including cache read/write costs
 2. Upload the updated file to the transformed data S3 bucket:
 
-   ```
+   ```bash
    aws s3 cp cdk/glue/pricing.csv s3://TRANSFORMED-BUCKET-NAME/pricing/
    ```
 
 3. Run the pricing crawler to update the data catalog:
 
-   ```
+   ```bash
    aws glue start-crawler --name bedrock-pricing-crawler
    ```
 
@@ -236,13 +236,13 @@ To remove the solution from your AWS account:
 
 1. Navigate to the project directory:
 
-   ```
+   ```bash
    cd amazon-bedrock-samples/cost-reporting/converse-metadata-cost-reporting
    ```
 
 2. Use CDK to destroy all resources:
 
-   ```
+   ```bash
    cd cdk
    cdk destroy
    ```
