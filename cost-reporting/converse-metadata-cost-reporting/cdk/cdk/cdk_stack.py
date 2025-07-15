@@ -880,6 +880,9 @@ class CdkStack(Stack):
                         string_parameter_declaration=quicksight.CfnAnalysis.StringParameterDeclarationProperty(
                             parameter_value_type="MULTI_VALUED",
                             name="TenantIdParameter",
+                            default_values=quicksight.CfnAnalysis.StringDefaultValuesProperty(
+                                static_values=["All"],
+                            ),
                         ),
                     ),
                     quicksight.CfnAnalysis.ParameterDeclarationProperty(
@@ -905,6 +908,9 @@ class CdkStack(Stack):
                         string_parameter_declaration=quicksight.CfnAnalysis.StringParameterDeclarationProperty(
                             parameter_value_type="MULTI_VALUED",
                             name="ModelIdParameter",
+                            default_values=quicksight.CfnAnalysis.StringDefaultValuesProperty(
+                                static_values=["All"],
+                            ),
                         ),
                     ),
                 ],

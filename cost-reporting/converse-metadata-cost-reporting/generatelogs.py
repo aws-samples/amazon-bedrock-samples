@@ -1,4 +1,4 @@
-import argparse
+import argparse  # noqa: INP001
 import logging
 import random
 import time
@@ -21,7 +21,7 @@ def retry_with_exponential_backoff(max_retries=3, base_delay=2):
             for attempt in range(max_retries):
                 try:
                     return func(*args, **kwargs)
-                except ClientError as e:
+                except ClientError as e:  # noqa: PERF203
                     if e.response["Error"]["Code"] == "ThrottlingException":
                         if attempt == max_retries - 1:
                             logger.exception(f"Function {func.__name__} failed after {max_retries} attempts. Error: {e!s}")  # noqa: G004, TRY401

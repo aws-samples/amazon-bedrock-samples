@@ -28,15 +28,15 @@
     "partition_keys": [
         {
             "name": "year",
-            "type": "string"
+            "type": "int"
         },
         {
             "name": "month",
-            "type": "string"
+            "type": "int"
         },
         {
             "name": "date",
-            "type": "string"
+            "type": "int"
         },
         {
             "name": "tenantid",
