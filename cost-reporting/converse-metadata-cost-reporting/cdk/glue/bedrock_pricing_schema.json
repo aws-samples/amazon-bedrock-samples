@@ -1,0 +1,33 @@
+{
+    "columns": [
+        {
+            "name": "model_id",
+            "type": "string"
+        },
+        {
+            "name": "input_cost",
+            "type": "double"
+        },
+        {
+            "name": "output_cost",
+            "type": "double"
+        },
+        {
+            "name": "cache_write",
+            "type": "double"
+        },
+        {
+            "name": "cache_read",
+            "type": "double"
+        },
+        {
+            "name": "start_date",
+            "type": "string"
+        },
+        {
+            "name": "end_date",
+            "type": "string"
+        }
+    ],
+    "partition_keys": []
+}
