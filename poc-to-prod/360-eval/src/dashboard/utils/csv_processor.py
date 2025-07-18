@@ -31,7 +31,7 @@ def preview_csv_data(df, max_rows=5):
     return None
 
 
-def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria, output_dir, name, temperature=0.7, user_defined_metrics=""):
+def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria, output_dir, name, temperature=0.7, user_defined_metrics="", vision_enabled=False, image_column=None):
     """
     Convert CSV data to JSONL format for LLM benchmarking.
     
@@ -53,6 +53,11 @@ def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria
     
     if prompt_col is None or golden_answer_col is None:
         st.error("Please select both prompt and golden answer columns")
+        return None
+    
+    # Check vision model requirements
+    if vision_enabled and image_column is None:
+        st.error("Vision model enabled but no image column selected")
         return None
         
     # For merged evaluations, the column names might be different in different dataframes
@@ -101,7 +106,7 @@ def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria
             
         entry = {
             "text_prompt": prompt,
-            "expected_output_tokens": 250,  # Default value
+            "expected_output_tokens": 4500,  # Default value
             "task": {
                 "task_type": task_type,
                 "task_criteria": task_criteria
@@ -110,6 +115,12 @@ def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria
             "temperature": temperature,
             "user_defined_metrics": user_defined_metrics
         }
+        
+        # Add image data directly using the column name (like prompt and golden_answer)
+        if vision_enabled and image_column and image_column in row:
+            image_data = row[image_column]
+            if not pd.isna(image_data):
+                entry[image_column] = image_data
         jsonl_data.append(entry)
     
     # Write to JSONL file

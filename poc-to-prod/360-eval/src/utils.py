@@ -239,11 +239,24 @@ def run_inference(model_name: str,
                   input_cost: float = 0.00001,
                   output_cost: float = 0.00001,
                   provider_params: dict = dict,
-                  stream: bool = True):
+                  stream: bool = True,
+                  vision_enabled: bool = False,
+                  image_data: str = None):
 
 
     # Concatenate user prompt for token counting
-    messages = [{"content": prompt_text, "role": "user"}]
+    if vision_enabled and image_data:
+        # Create message for vision model with image and text
+        image_content = {
+            "type": "image_url",
+            "image_url": {
+                # "url": f"data:image/png;base64,{image_data}"
+                "url": image_data.strip()
+            }
+        }
+        messages = [{"role": "user", "content": [{"type": "text", "text": prompt_text}, image_content]}]
+    else:
+        messages = [{"content": prompt_text, "role": "user"}]
     start_time = time.time()
     response_chunks = []
     first = True
@@ -261,7 +274,7 @@ def run_inference(model_name: str,
             messages=messages,
             provider_params=provider_params,
             retry_tracker=retry_tracker,
-            stream=stream
+
         )
         if not stream:
             response = dict()

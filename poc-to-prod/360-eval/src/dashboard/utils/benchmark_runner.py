@@ -292,7 +292,9 @@ def run_benchmark_process(eval_id):
                 "",
                 evaluation_config["name"],
                 evaluation_config.get("temperature", 0.7),
-                evaluation_config.get("user_defined_metrics", "")
+                evaluation_config.get("user_defined_metrics", ""),
+                vision_enabled=evaluation_config.get("vision_enabled", False),
+                image_column=evaluation_config.get("image_column")
             )
             if not jsonl_path:
                 error_msg = "Failed to convert CSV data to JSONL format"
@@ -351,6 +353,10 @@ def run_benchmark_process(eval_id):
         
         if evaluation_config["user_defined_metrics"]:
             cmd.extend(["--user_defined_metrics", evaluation_config["user_defined_metrics"]])
+        
+        # Add vision model support
+        if evaluation_config.get("vision_enabled", False):
+            cmd.extend(["--vision_enabled", "True"])
 
         # Start benchmark execution
         working_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

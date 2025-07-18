@@ -155,7 +155,9 @@ def benchmark(
         temperature, top_p,
         judge_models,
         user_defined_metrics,
-        yard_stick=3
+        yard_stick=3,
+        vision_enabled=False,
+        scenario_data=None
 ):
     logging.debug(f"Starting benchmark for model: {model_id} in region: {region}")
     status                  = "Success"
@@ -187,12 +189,28 @@ def benchmark(
             params['aws_region_name'] = region
             model_id = model_id.replace("bedrock", "bedrock/converse")
 
+        # Get image data from scenario if vision is enabled
+        image_data = None
+        if vision_enabled and scenario_data:
+            # Look for image data in scenario - could be any field that's not a standard field
+            standard_fields = {"prompt", "task_types", "task_criteria", "golden_answer", "configured_output_tokens_for_request", 
+                             "region", "temperature", "user_defined_metrics", "vision_enabled", "model_id", "input_token_cost", 
+                             "output_token_cost", "TEMPERATURE", "TOP_P", "inference_profile"}
+            for key, value in scenario_data.items():
+                if key not in standard_fields and isinstance(value, str) and value.strip():
+                    # Assume this is image data if it looks like base64
+                    if len(value) > 100 and value.replace('+', '').replace('/', '').replace('=', '').isalnum():
+                        image_data = value
+                        break
+        
         r = run_inference(model_id,
                           prompt,
                           in_cost,
                           out_cost,
                           provider_params=params,
-                          stream=True)
+                          stream=True,
+                          vision_enabled=vision_enabled,
+                          image_data=image_data)
 
         resp_txt = r['model_response']
         input_tokens = r['input_tokens']
@@ -317,7 +335,9 @@ def execute_benchmark(scenarios, cfg, unprocessed_dir, yard_stick=3):
                     cfg["TOP_P"],
                     cfg["judge_models"],
                     user_metrics,
-                    yard_stick=yard_stick
+                    yard_stick=yard_stick,
+                    vision_enabled=scn.get("vision_enabled", False),
+                    scenario_data=scn
                 )
                 
                 # Check if the record was processed successfully
@@ -393,7 +413,8 @@ def main(
     user_defined_metrics=None,
     model_file_name=None,
     judge_file_name=None,
-    yard_stick=3
+    yard_stick=3,
+    vision_enabled=False
 ):
     user_defined_metrics_list = None
     if user_defined_metrics:
@@ -455,16 +476,24 @@ def main(
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f:
             js = json.loads(line)
-            raw.append({
+            scenario_data = {
                 "prompt":                               js.get("text_prompt", ""),
                 "task_types":                           js["task"]["task_type"],
                 "task_criteria":                        js["task"]["task_criteria"],
                 "golden_answer":                        js.get("golden_answer", ""),
-                "configured_output_tokens_for_request": js.get("expected_output_tokens", 200),
+                "configured_output_tokens_for_request": js.get("expected_output_tokens", 5000),
                 "region":                               js.get("region", "us-east-1"),
                 "temperature":                          js.get("temperature", 0.7),
                 "user_defined_metrics":                 js.get("user_defined_metrics", ""),
-            })
+                "vision_enabled":                       vision_enabled,
+            }
+            
+            # Copy all other fields from JSONL (including any image data columns)
+            for key, value in js.items():
+                if key not in scenario_data and key not in ["text_prompt", "task", "golden_answer", "expected_output_tokens", "region", "temperature", "user_defined_metrics"]:
+                    scenario_data[key] = value
+            
+            raw.append(scenario_data)
     if not raw:
         logging.error("No scenarios found in input.")
         return
@@ -540,6 +569,7 @@ if __name__ == "__main__":
     p.add_argument("--model_file_name",           default=None)
     p.add_argument("--judge_file_name",           default=None)
     p.add_argument("--evaluation_pass_threshold", default=3)
+    p.add_argument("--vision_enabled",            type=lambda x: x.lower() == 'true', default=False)
     args = p.parse_args()
     main(
         args.input_file,
@@ -554,5 +584,6 @@ if __name__ == "__main__":
         args.user_defined_metrics,
         args.model_file_name,
         args.judge_file_name,
-        args.evaluation_pass_threshold
+        args.evaluation_pass_threshold,
+        args.vision_enabled
     )

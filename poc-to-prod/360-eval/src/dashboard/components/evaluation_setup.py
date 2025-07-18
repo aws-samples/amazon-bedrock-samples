@@ -59,6 +59,31 @@ class EvaluationSetupComponent:
                     help="Select the column containing the correct/expected answers that the AI model's responses will be compared against."
                 )
             
+            # Vision Model Configuration
+            st.subheader("Vision Model Configuration")
+            
+            # Vision model checkbox
+            vision_enabled = st.session_state.current_evaluation_config.get("vision_enabled", False)
+            st.checkbox(
+                "Vision Model",
+                value=vision_enabled,
+                key="vision_enabled",
+                on_change=self._update_vision_enabled,
+                help="Enable this option if you want to test vision models that can process images along with text prompts."
+            )
+            
+            # Show image column selector only if vision is enabled
+            if st.session_state.current_evaluation_config.get("vision_enabled", False):
+                image_col = st.session_state.current_evaluation_config.get("image_column")
+                st.selectbox(
+                    "Image Column",
+                    options=columns,
+                    index=None if image_col is None else columns.index(image_col) if image_col in columns else None,
+                    key="image_column",
+                    on_change=self._update_image_column,
+                    help="Select the column containing the base64-encoded images or image file paths to be used with vision models."
+                )
+            
             # Preview CSV data
             st.subheader("Data Preview")
             st.dataframe(preview_csv_data(df), hide_index=True)
@@ -188,6 +213,15 @@ class EvaluationSetupComponent:
     
     def _update_golden_answer_column(self):
         st.session_state.current_evaluation_config["golden_answer_column"] = st.session_state.golden_answer_column
+    
+    def _update_vision_enabled(self):
+        st.session_state.current_evaluation_config["vision_enabled"] = st.session_state.vision_enabled
+        # Reset image column when vision is disabled
+        if not st.session_state.vision_enabled:
+            st.session_state.current_evaluation_config["image_column"] = None
+    
+    def _update_image_column(self):
+        st.session_state.current_evaluation_config["image_column"] = st.session_state.image_column
     
     # No longer need add/remove methods - handled by number input
     
