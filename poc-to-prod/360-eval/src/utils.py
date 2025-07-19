@@ -240,18 +240,16 @@ def run_inference(model_name: str,
                   output_cost: float = 0.00001,
                   provider_params: dict = dict,
                   stream: bool = True,
-                  vision_enabled: bool = False,
-                  image_data: str = None):
+                  vision_enabled: str = None):
 
 
     # Concatenate user prompt for token counting
-    if vision_enabled and image_data:
+    if vision_enabled:
         # Create message for vision model with image and text
         image_content = {
             "type": "image_url",
             "image_url": {
-                # "url": f"data:image/png;base64,{image_data}"
-                "url": image_data.strip()
+                "url": vision_enabled.strip()
             }
         }
         messages = [{"role": "user", "content": [{"type": "text", "text": prompt_text}, image_content]}]
@@ -274,7 +272,7 @@ def run_inference(model_name: str,
             messages=messages,
             provider_params=provider_params,
             retry_tracker=retry_tracker,
-
+            stream=stream
         )
         if not stream:
             response = dict()
@@ -354,7 +352,7 @@ Your task is to summarize the key findings from the provided LLM model/s evaluat
 
 ## Guidelines
 1. Read through the dataset carefully to understand the different metrics and their values.
-2. Identify the main points and notable observations related to performance, accuracy, and cost.
+2. Identify the main points and notable observations related to performance, accuracy, and cost, but do not reference analysis we do not have data for.
 3. Write a concise paragraph summarizing these key findings using neutral, fact-based language.
 4. Avoid subjective statements or judgments about what constitutes good/bad performance, reliability, or cost-effectiveness.
 5. Condenses the entire data into a concise overview, highlighting key findings, methodologies, and conclusions.
