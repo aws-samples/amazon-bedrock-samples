@@ -213,13 +213,13 @@ def _call_llm_with_retry(model_name, messages, provider_params, retry_tracker, s
     def _api_call():
         try:
             time_ = time.time()
-            compl = completion(
-                model=model_name,
-                messages=messages,
-                stream=stream,
-                **provider_params
-            )
-            return compl,time_
+            completed = completion(
+                    model=model_name,
+                    messages=messages,
+                    stream=stream,
+                    **provider_params
+                )
+            return completed, time_
         except RETRYABLE_EXCEPTIONS as e:
             logger.warning(f"Retryable error occurred: {str(e)}")
             # Add jitter to avoid thundering herd
@@ -255,10 +255,8 @@ def run_inference(model_name: str,
         messages = [{"role": "user", "content": [{"type": "text", "text": prompt_text}, image_content]}]
     else:
         messages = [{"content": prompt_text, "role": "user"}]
-    start_time = time.time()
     response_chunks = []
     first = True
-    time_to_first_token = 0
     # Create a retry tracker
     retry_tracker = RetryTracker()
 
@@ -298,7 +296,7 @@ def run_inference(model_name: str,
 
             end = time.time()
             time_to_last_byte = round(end - start_time, 4)
-            total_runtime = time.time() - start_time
+            total_runtime = end - start_time
             full_response = "".join(response_chunks)
 
             # Token counting with error handling
@@ -311,7 +309,7 @@ def run_inference(model_name: str,
                 output_tokens = 0.0000001
                 input_tokens = 0.0000001
 
-            tokens_per_sec = input_cost / total_runtime if total_runtime > 0 else 0
+            tokens_per_sec = output_tokens / total_runtime if total_runtime > 0 else 0
             tot_input_cost = input_tokens * (input_cost / 1000)
             tot_output_cost = output_tokens * (output_cost / 1000)
 

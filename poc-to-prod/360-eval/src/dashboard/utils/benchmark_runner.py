@@ -707,10 +707,21 @@ def _update_status_file(status_file, status, progress, results=None, logs_dir=No
         output_dir: Output directory (for storing model/judge data)
         evaluation_config: Full evaluation configuration (for storing settings)
     """
+    # Read existing data to preserve created_at and other fields
+    existing_data = {}
+    if status_file.exists():
+        existing_data = _read_status_file(status_file)
+    
     status_data = {
         "status": status,
         "updated_at": time.time()
     }
+    
+    # Preserve created_at from existing data or set it now if this is a new file
+    if existing_data.get("created_at"):
+        status_data["created_at"] = existing_data["created_at"]
+    else:
+        status_data["created_at"] = time.time()
     
     # Only include progress for backward compatibility
     if progress is not None:

@@ -212,6 +212,7 @@ def save_configuring_evaluation_to_disk(eval_config):
         # Create minimal status data for configuring evaluation
         status_data = {
             "status": "configuring",
+            "created_at": time.time(),
             "updated_at": time.time(),
             "progress": 0,
             "evaluation_config": {
@@ -455,7 +456,7 @@ def load_evaluations_from_files():
                         "progress": status_data.get("progress", 0),
                         "task_type": stored_config.get("task_type") or task_info.get("task_type", "Unknown"),
                         "task_criteria": stored_config.get("task_criteria") or task_info.get("task_criteria", "Unknown"),
-                        "created_at": datetime.fromtimestamp(status_data.get("start_time", 0)).isoformat() if status_data.get("start_time") else datetime.now().isoformat(),
+                        "created_at": datetime.fromtimestamp(status_data.get("created_at", status_data.get("start_time", time.time()))).isoformat(),
                         "updated_at": datetime.fromtimestamp(status_data.get("updated_at", 0)).isoformat() if status_data.get("updated_at") else datetime.now().isoformat(),
                         "start_time": status_data.get("start_time"),
                         "end_time": status_data.get("end_time"),
