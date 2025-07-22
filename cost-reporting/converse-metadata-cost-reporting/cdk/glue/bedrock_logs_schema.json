@@ -1,0 +1,146 @@
+{
+    "columns": [
+        {
+            "name": "schematype",
+            "type": "string"
+        },
+        {
+            "name": "schemaversion",
+            "type": "string"
+        },
+        {
+            "name": "timestamp",
+            "type": "string"
+        },
+        {
+            "name": "accountid",
+            "type": "string"
+        },
+        {
+            "name": "region",
+            "type": "string"
+        },
+        {
+            "name": "requestid",
+            "type": "string"
+        },
+        {
+            "name": "operation",
+            "type": "string"
+        },
+        {
+            "name": "modelid",
+            "type": "string"
+        },
+        {
+            "name": "identity_arn",
+            "type": "string"
+        },
+        {
+            "name": "input_contenttype",
+            "type": "string"
+        },
+        {
+            "name": "task_type",
+            "type": "string"
+        },
+        {
+            "name": "input_tokencount",
+            "type": "int"
+        },
+        {
+            "name": "output_contenttype",
+            "type": "string"
+        },
+        {
+            "name": "output_tokencount",
+            "type": "int"
+        },
+        {
+            "name": "output_latencyms",
+            "type": "int"
+        },
+        {
+            "name": "usage_inputtokens",
+            "type": "int"
+        },
+        {
+            "name": "usage_outputtokens",
+            "type": "int"
+        },
+        {
+            "name": "usage_totaltokens",
+            "type": "int"
+        },
+        {
+            "name": "cache_readtokens",
+            "type": "int"
+        },
+        {
+            "name": "cache_writetokens",
+            "type": "int"
+        },
+        {
+            "name": "image_width",
+            "type": "string"
+        },
+        {
+            "name": "image_height",
+            "type": "string"
+        },
+        {
+            "name": "numberOfImages",
+            "type": "int" 
+        },
+        {
+            "name": "input_duration",
+            "type": "string"
+        },
+        {
+            "name": "input_resolution",
+            "type": "string"
+        },
+        {
+            "name": "output_duration",
+            "type": "string"
+        },
+        {
+            "name": "output_FPS",
+            "type": "string"
+        },
+        {
+            "name": "output_videoWidth",
+            "type": "string"
+        },
+        {
+            "name": "output_videoHeight",
+            "type": "string"
+        },
+        {
+            "name": "parsed_timestamp",
+            "type": "timestamp"
+        }
+    ],
+    "partition_keys": [
+        {
+            "name": "year",
+            "type": "int"
+        },
+        {
+            "name": "month",
+            "type": "int"
+        },
+        {
+            "name": "date",
+            "type": "int"
+        },
+        {
+            "name": "tenantid",
+            "type": "string"
+        },
+        {
+            "name": "batchid",
+            "type": "string"
+        }
+    ]
+}
