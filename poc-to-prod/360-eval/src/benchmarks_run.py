@@ -12,8 +12,6 @@ from botocore.exceptions import ClientError
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 
-from pandas.io.sas.sas_constants import row_count_offset_multiplier
-
 from utils import (get_timestamp,
                    setup_logging,
                    calculate_average_scores,

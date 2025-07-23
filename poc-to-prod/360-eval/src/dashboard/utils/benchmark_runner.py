@@ -618,6 +618,12 @@ def run_benchmark_process(eval_id):
         _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
         return False
     finally:
+        # Clean up StringIO objects to prevent memory leaks
+        if 'stdout_capture' in locals():
+            stdout_capture.close()
+        if 'stderr_capture' in locals():
+            stderr_capture.close()
+        
         # Clean up thread-local storage
         if eval_id in _thread_local_evaluations:
             del _thread_local_evaluations[eval_id]
@@ -851,18 +857,3 @@ def sync_evaluations_from_files():
     dashboard_logger.info("Status sync completed")
 
 
-def get_evaluation_progress(eval_id):
-    """Get the progress of an evaluation."""
-    # First try to get from session state
-    if "evaluations" in st.session_state:
-        for eval_config in st.session_state.evaluations:
-            if eval_config["id"] == eval_id:
-                return eval_config["progress"]
-    
-    # If not in session state, try status file (now in logs directory)
-    status_file = Path(STATUS_FILES_DIR) / f"eval_{eval_id}_status.json"
-    if status_file.exists():
-        status_data = _read_status_file(status_file)
-        return status_data.get("progress", 0)
-    
-    return 0

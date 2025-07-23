@@ -13,8 +13,40 @@ from datetime import datetime
 from scipy import stats
 from utils import run_inference, report_summary_template, convert_scientific_to_decimal
 
-# Configuration
+# Configuration constants
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+# Analysis constants
+MIN_RECORDS_FOR_ANALYSIS = 1000
+MIN_RECORDS_FOR_HISTOGRAM = 2000
+EPSILON_DIVISION = 0.001  # Small value to prevent division by zero
+VALUE_RATIO_MULTIPLIER = 10
+
+# Statistical constants
+PERCENTILES = [0.50, 0.90, 0.95, 0.99]
+NORMAL_DISTRIBUTION_RANGE_MULTIPLIER = 0.5
+NORMAL_DISTRIBUTION_POINTS = 100
+
+# Visualization constants
+COEFFICIENT_VARIATION_THRESHOLD = 0.3  # CV < 30% indicates good consistency
+GRID_OPACITY = 0.3
+COMPOSITE_SCORE_WEIGHTS = {
+    'latency': 0.5,
+    'cost': 0.5
+}
+
+# Performance thresholds
+PERFORMANCE_THRESHOLDS = {
+    'success_rate': {'good': 0.95, 'medium': 0.85},
+    'avg_latency': {'good': 0.6, 'medium': 1.2},
+    'avg_cost': {'good': 0.5, 'medium': 1.0},
+    'avg_otps': {'good': 100, 'medium': 35},
+}
+
+# LLM inference settings
+INFERENCE_MAX_TOKENS = 750
+INFERENCE_TEMPERATURE = 0.3
+INFERENCE_REGION = 'us-west-2'
 
 # Get project root directory
 PROJECT_ROOT = Path(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -125,9 +157,10 @@ def load_data(directory, evaluation_names=None):
     df = pd.concat(dataframes, ignore_index=True)
     logger.info(f"Combined data has {len(df)} rows")
 
-    # Clean and prepare data
-    df = df[df['api_call_status'] == 'Success'].reset_index(drop=True)
-    df['model_name'] = df['model_id'].apply(extract_model_name)
+    # Clean and prepare data (optimized with method chaining)
+    df = (df[df['api_call_status'] == 'Success']
+          .reset_index(drop=True)
+          .assign(model_name=lambda x: x['model_id'].apply(extract_model_name)))
     parsed_dicts = df['performance_metrics'].apply(parse_json_string)
     del df['performance_metrics']
     # Convert the Series of dictionaries to a DataFrame
@@ -135,27 +168,26 @@ def load_data(directory, evaluation_names=None):
     df = pd.concat([df, unpacked_findings], axis=1)
     df['task_success'] = df['judge_success']
     # Calculate tokens per second
-    df['OTPS'] = df['output_tokens'] / (df['time_to_last_byte'] + 0.001)
+    df['OTPS'] = df['output_tokens'] / (df['time_to_last_byte'] + EPSILON_DIVISION)
 
     judge_scores = pd.DataFrame(df['judge_scores'].to_dict()).transpose()
     # Identify numeric index values
     numeric_index_mask = pd.to_numeric(judge_scores.index, errors='coerce').notna()
-    # Filter the DataFrame based on the mask
-    df_scores = judge_scores[numeric_index_mask]
-    # Reset the index of the filtered DataFrame
-    judge_scores_df = df_scores.reset_index(drop=True)
-    judge_scores_df['mean_scores'] = judge_scores_df.mean(axis=1)
+    # Filter and process judge scores (optimized with method chaining)
+    judge_scores_df = (judge_scores[numeric_index_mask]
+                       .reset_index(drop=True)
+                       .assign(mean_scores=lambda x: x.mean(axis=1)))
     df = pd.concat([df, judge_scores_df], axis=1)
     # ── Cost summary ───────────────────────────────────────────────────────────
     cost_stats = (
-        df.groupby(["model_id"])["response_cost"]
+        df.groupby(["model_name"])["response_cost"]
           .agg(avg_cost="mean", total_cost="sum", num_invocations="count")
     )
 
     # ── Latency percentiles (50/90/95/99) ──────────────────────────────────────
     latency_stats = (
-        df.groupby(["model_id"])["time_to_last_byte"]
-          .quantile([0.50, 0.90, 0.95, 0.99])         # returns MultiIndex
+        df.groupby(["model_name"])["time_to_last_byte"]
+          .quantile(PERCENTILES)         # returns MultiIndex
           .unstack(level=-1)                          # percentiles → columns
     )
     latency_stats.columns = [f"p{int(q*100)}" for q in latency_stats.columns]
@@ -202,8 +234,8 @@ def calculate_metrics_by_model_task(df):
         'input_tokens_mean': 'avg_input_tokens'
     })
 
-    max_raw_ratio = metrics['success_rate'].max() / (metrics['avg_cost'].min() + 0.001)
-    metrics['value_ratio'] = 10 * (metrics['success_rate'] / (metrics['avg_cost'] + 0.001)) / max_raw_ratio
+    max_raw_ratio = metrics['success_rate'].max() / (metrics['avg_cost'].min() + EPSILON_DIVISION)
+    metrics['value_ratio'] = VALUE_RATIO_MULTIPLIER * (metrics['success_rate'] / (metrics['avg_cost'] + EPSILON_DIVISION)) / max_raw_ratio
 
     return metrics.reset_index()
 
@@ -265,7 +297,7 @@ def create_normal_distribution_histogram(df,
     Returns:
         Plotly figure or None if insufficient data
     """
-    min_vals = 1000
+    min_vals = MIN_RECORDS_FOR_ANALYSIS
     # Check if we have enough data
     # Check if we have enough data
     value_counts = df['model_name'].value_counts()
@@ -275,7 +307,7 @@ def create_normal_distribution_histogram(df,
     df_match = df[df['model_name'].isin(frequent_values)]
 
     if df_match.empty:
-        logger.info(f"Insufficient data for {label} Distribution by Model histogram: {len(df)} records (need >2000)")
+        logger.info(f"Insufficient data for {label} Distribution by Model histogram: {len(df)} records (need >{MIN_RECORDS_FOR_HISTOGRAM})")
         return None
 
     # Filter out any null values
@@ -317,9 +349,9 @@ def create_normal_distribution_histogram(df,
         
         # Generate points for normal distribution curve
         x_range = np.linspace(
-            model_data.min() - 0.5 * std,
-            model_data.max() + 0.5 * std,
-            100
+            model_data.min() - NORMAL_DISTRIBUTION_RANGE_MULTIPLIER * std,
+            model_data.max() + NORMAL_DISTRIBUTION_RANGE_MULTIPLIER * std,
+            NORMAL_DISTRIBUTION_POINTS
         )
         normal_curve = stats.norm.pdf(x_range, mean, std)
         
@@ -363,8 +395,8 @@ def create_normal_distribution_histogram(df,
     )
 
     # Update x and y axes
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.3)')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.3)')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor=f'rgba(128,128,128,{GRID_OPACITY})')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor=f'rgba(128,128,128,{GRID_OPACITY})')
     
     return fig
 
@@ -418,9 +450,9 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
     )
 
     visualizations['otps_comparison'] = otps_fig
-    average_cost_round = cost_metrics
-    average_cost_round = average_cost_round.sort_values('avg_cost')
-    average_cost_round = average_cost_round.round({'avg_cost': 5})
+    average_cost_round = (cost_metrics
+                          .sort_values('avg_cost')
+                          .round({'avg_cost': 5}))
     # 3. Cost Comparison
     cost_fig = px.bar(
         average_cost_round.sort_values('avg_cost'),
@@ -672,7 +704,7 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
                 subplot_titles=("Success Rate", "Latency (Secs)", 'Cost per Response (USD)<br><span style="font-size: 12px;">Using μ (Micro) Symbol for Small Numbers</span>', "Tokens per Second")
             )
 
-            # Sort data for each subplot
+            # Sort data for each subplot (using method chaining for efficiency)
             by_success = task_data.sort_values('success_rate', ascending=False)
             by_latency = task_data.sort_values('avg_latency')
             by_cost = task_data.sort_values('avg_cost')
@@ -827,7 +859,7 @@ def generate_histogram_findings(df, key='time_to_first_byte', label='Time to Fir
     Returns:
         List of finding strings or single message about insufficient data
     """
-    min_records = 1000
+    min_records = MIN_RECORDS_FOR_ANALYSIS
     # Check if we have enough data
     value_counts = df['model_name'].value_counts()
     # Get values that appear more than 2000 times
@@ -835,7 +867,7 @@ def generate_histogram_findings(df, key='time_to_first_byte', label='Time to Fir
     # Filter the dataframe to only include rows where the column value is in our frequent_values list
     df_match = df[df['model_name'].isin(frequent_values)]
     if df_match.empty:
-        return ["Not enough data to perform measurements (need at minimum over 2000 measurements per model)"]
+        return [f"Not enough data to perform measurements (need at minimum over {MIN_RECORDS_FOR_HISTOGRAM} measurements per model)"]
 
     # Filter out any null values
     df_clean = df_match[df_match[key].notna()].copy()
@@ -852,9 +884,11 @@ def generate_histogram_findings(df, key='time_to_first_byte', label='Time to Fir
         overall_std = df_model[key].std()
         findings.append(f"Model <b>{model}</b> {label}: μ={overall_mean:.3f}s, σ={overall_std:.3f}s across {len(df_model)} measurements")
 
-    # Model-specific analysis
-    model_stats = df_clean.groupby('model_name')[key].agg(['mean', 'std', 'count']).reset_index()
-    model_stats = model_stats[model_stats['count'] >= min_records]  # Only models with sufficient data
+    # Model-specific analysis (optimized with method chaining)
+    model_stats = (df_clean.groupby('model_name')[key]
+                   .agg(['mean', 'std', 'count'])
+                   .reset_index()
+                   .query(f'count >= {min_records}'))  # Only models with sufficient data
 
     if not model_stats.empty:
         # Fastest model (lowest mean)
@@ -874,7 +908,7 @@ def generate_histogram_findings(df, key='time_to_first_byte', label='Time to Fir
         model_stats['cv'] = model_stats['std'] / model_stats['mean']  # Coefficient of variation
 
         # Models with good normal distribution characteristics (low CV)
-        well_distributed = model_stats[model_stats['cv'] < 0.3]  # CV < 30% indicates good consistency
+        well_distributed = model_stats[model_stats['cv'] < COEFFICIENT_VARIATION_THRESHOLD]  # CV < 30% indicates good consistency
         if not well_distributed.empty:
             best_distributed = well_distributed.loc[well_distributed['cv'].idxmin()]
             findings.append(f"Best distribution characteristics: <b>{best_distributed['model_name']}</b> (Coefficient of Variation/CV={best_distributed['cv']:.2f})")
@@ -988,7 +1022,7 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
 
     logger.info("Generating Accuracy histogram findings...")
     accuracy_findings = generate_histogram_findings(df, key='mean_scores', label="Average Accuracy")     #TODO: BY TASK??
-    acc_analysis = '# Accuracy Analysis across all models:\n- ' + '\n- '.join(time_to_first_token_findings)
+    acc_analysis = '# Accuracy Analysis across all models:\n- ' + '\n- '.join(accuracy_findings)
 
     whole_number_cost_metrics = convert_scientific_to_decimal(cost_metrics)
     cost_analysis = '# Cost Analysis across all models on all Task:\n' + '\n'.join([str(i) for i in whole_number_cost_metrics.to_dict(orient='records')])
@@ -999,10 +1033,10 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
     inference = run_inference(model_name='bedrock/converse/us.amazon.nova-premier-v1:0',
                               prompt_text=prompt_template,
                               stream=False,
-                              provider_params={"maxTokens": 750,
-                                               "temperature": 0.3,
+                              provider_params={"maxTokens": INFERENCE_MAX_TOKENS,
+                                               "temperature": INFERENCE_TEMPERATURE,
                                                # "topP": 0.9,
-                                               "aws_region_name": 'us-west-2'})['text']
+                                               "aws_region_name": INFERENCE_REGION})['text']
     html = Template(HTML_TEMPLATE).render(
         timestamp=formatted_date,
         inference=inference,
@@ -1082,13 +1116,8 @@ def create_integrated_analysis_table(model_task_metrics):
     Creates an interactive table that integrates performance, speed, and cost metrics
     for each model and task type with optimal range highlighting using a green/yellow/red color scheme.
     """
-    # Define thresholds for each metric (good, medium, poor)
-    thresholds = {
-        'success_rate': {'good': 0.95, 'medium': 0.85},  # >=95% good, >=85% medium, <85% poor
-        'avg_latency': {'good': 0.6, 'medium': 1.2},  # <=1s good, <=2s medium, >2s poor
-        'avg_cost': {'good': 0.5, 'medium': 1.0},  # <=\$0.5 good, <=\$1 medium, >\$1 poor
-        'avg_otps': {'good': 100, 'medium': 35},
-    }
+    # Use predefined thresholds for each metric (good, medium, poor)
+    thresholds = PERFORMANCE_THRESHOLDS
 
     # Define colors
     colors = {
@@ -1113,8 +1142,8 @@ def create_integrated_analysis_table(model_task_metrics):
 
     table_data['composite_score'] = (
             table_data['success_rate'] +
-            (1 - (table_data['avg_latency'] / max_latency)) * 0.5 +
-            (1 - (table_data['avg_cost'] / max_cost)) * 0.5
+            (1 - (table_data['avg_latency'] / max_latency)) * COMPOSITE_SCORE_WEIGHTS['latency'] +
+            (1 - (table_data['avg_cost'] / max_cost)) * COMPOSITE_SCORE_WEIGHTS['cost']
     )
 
     # Create figure

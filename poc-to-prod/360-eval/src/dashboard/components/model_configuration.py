@@ -96,7 +96,7 @@ class ModelConfigurationComponent:
                 disabled=not is_valid,
             ):
                 save_current_evaluation()
-                st.success(f"Configuration '{st.session_state.current_evaluation_config['name']}' saved successfully!")
+                st.success(f"Configuration profile saved successfully!")
                 # Debug information
                 print(f"Saved configuration to session state. Total evaluations: {len(st.session_state.evaluations)}")
                 print(f"Evaluation IDs: {[e['id'] for e in st.session_state.evaluations]}")

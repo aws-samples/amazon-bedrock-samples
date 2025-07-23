@@ -244,7 +244,7 @@ class EvaluationSetupComponent:
         st.session_state.current_evaluation_config["temperature_variations"] = st.session_state.temperature_variations
 
     def _update_failure_threshold(self):
-        st.session_state.current_evaluation_config["temperature_variations"] = st.session_state.failure_threshold
+        st.session_state.current_evaluation_config["failure_threshold"] = st.session_state.failure_threshold
 
     def _update_user_defined_metrics(self):
         st.session_state.current_evaluation_config["user_defined_metrics"] = st.session_state.user_defined_metrics

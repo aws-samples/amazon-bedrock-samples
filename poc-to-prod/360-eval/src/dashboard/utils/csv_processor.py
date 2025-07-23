@@ -124,9 +124,12 @@ def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria
         jsonl_data.append(entry)
     
     # Write to JSONL file
-    with open(jsonl_path, 'w', encoding='utf-8') as f:
-        for entry in jsonl_data:
-            f.write(json.dumps(entry) + '\n')
+    try:
+        with open(jsonl_path, 'w', encoding='utf-8') as f:
+            for entry in jsonl_data:
+                f.write(json.dumps(entry) + '\n')
+    except IOError as e:
+        raise Exception(f"Failed to write JSONL file to {jsonl_path}: {e}")
     
     # Return both the absolute path and the filename for CLI compatibility
     return str(jsonl_path)
@@ -150,16 +153,19 @@ def create_model_profiles_jsonl(models, output_dir, custom_filename=None):
     
     jsonl_path = prompt_eval_dir / (custom_filename or "model_profiles.jsonl")
     
-    with open(jsonl_path, 'w', encoding='utf-8') as f:
-        for model in models:
-            entry = {
-                "model_id": model["id"],
-                "region": model["region"],
-                "inference_profile": "standard",
-                "input_token_cost": model["input_cost"],
-                "output_token_cost": model["output_cost"]
-            }
-            f.write(json.dumps(entry) + '\n')
+    try:
+        with open(jsonl_path, 'w', encoding='utf-8') as f:
+            for model in models:
+                entry = {
+                    "model_id": model["id"],
+                    "region": model["region"],
+                    "inference_profile": "standard",
+                    "input_token_cost": model["input_cost"],
+                    "output_token_cost": model["output_cost"]
+                }
+                f.write(json.dumps(entry) + '\n')
+    except IOError as e:
+        raise Exception(f"Failed to write model profiles to {jsonl_path}: {e}")
     
     return str(jsonl_path)
 
@@ -182,14 +188,17 @@ def create_judge_profiles_jsonl(judges, output_dir, custom_filename=None):
     
     jsonl_path = prompt_eval_dir / (custom_filename or "judge_profiles.jsonl")
     
-    with open(jsonl_path, 'w', encoding='utf-8') as f:
-        for judge in judges:
-            entry = {
-                "model_id": judge["id"],
-                "region": judge["region"],
-                "input_cost_per_1k": judge["input_cost"],  # Field is already 1k
-                "output_cost_per_1k": judge["output_cost"]  # Field is already 1k
-            }
-            f.write(json.dumps(entry) + '\n')
+    try:
+        with open(jsonl_path, 'w', encoding='utf-8') as f:
+            for judge in judges:
+                entry = {
+                    "model_id": judge["id"],
+                    "region": judge["region"],
+                    "input_cost_per_1k": judge["input_cost"],  # Field is already 1k
+                    "output_cost_per_1k": judge["output_cost"]  # Field is already 1k
+                }
+                f.write(json.dumps(entry) + '\n')
+    except IOError as e:
+        raise Exception(f"Failed to write judge profiles to {jsonl_path}: {e}")
     
     return str(jsonl_path)

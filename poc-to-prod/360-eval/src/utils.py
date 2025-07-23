@@ -1,6 +1,5 @@
 import pytz
 import datetime
-import boto3
 import json
 import tiktoken
 import re
@@ -13,7 +12,6 @@ from tenacity import retry, stop_after_delay, wait_exponential, retry_if_excepti
 from litellm import completion, RateLimitError, ServiceUnavailableError, APIError, APIConnectionError
 from litellm import token_counter
 from botocore.exceptions import ClientError
-from botocore.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +19,6 @@ logger = logging.getLogger(__name__)
 # ----------------------------------------
 # Request Builders
 # ----------------------------------------
-def get_body(prompt, max_tokens, temperature, top_p):
-    sys = ""
-    body = [{"role": "user", "content": [{"text": f"{sys}\n##USER:{prompt}"}]}]
-    cfg = {"maxTokens": max_tokens, "temperature": temperature, "topP": top_p}
-    return body, cfg
 
 
 def setup_logging(log_dir='logs', experiment='none'):
@@ -58,9 +51,6 @@ def setup_logging(log_dir='logs', experiment='none'):
     return ts, log_file
 
 
-def get_bedrock_client(region):
-    cfg = Config(retries={"max_attempts": 10})
-    return boto3.client("bedrock-runtime", region_name=region, config=cfg)
 
 
 def get_timestamp():
