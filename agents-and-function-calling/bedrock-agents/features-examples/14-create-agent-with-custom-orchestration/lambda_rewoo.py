@@ -5,6 +5,10 @@ import json
 import re
 import uuid
 import xml.etree.ElementTree as ET
+import boto3
+
+# Ensure all boto3 clients use us-west-2 region
+boto3.setup_default_session(region_name="us-west-2")
 
 tool_state = {
     "plan": None,
