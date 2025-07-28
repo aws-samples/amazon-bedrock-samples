@@ -188,6 +188,9 @@ def benchmark(
         elif "bedrock" in model_id:
             params['aws_region_name'] = region
             model_id = model_id.replace("bedrock", "bedrock/converse")
+        else:
+            # Sagemaker
+            params['aws_region_name'] = region
         
         r = run_inference(model_id,
                           prompt,
