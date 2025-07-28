@@ -1,0 +1,3 @@
+{"model_id": "bedrock/us.anthropic.claude-3-7-sonnet-20250219-v1:0", "region": "us-west-2", "input_cost_per_1k": 0.003, "output_cost_per_1k": 0.015}
+{"model_id": "bedrock/us.meta.llama4-maverick-17b-instruct-v1:0", "region": "us-east-2", "input_cost_per_1k": 0.00024, "output_cost_per_1k": 0.00097}
+{"model_id": "bedrock/us.amazon.nova-premier-v1:0", "region": "us-east-2", "input_cost_per_1k": 0.0025, "output_cost_per_1k": 0.0125}
