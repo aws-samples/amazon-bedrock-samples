@@ -26,7 +26,7 @@ def retry_with_exponential_backoff(max_retries=3, base_delay=2):
                         if attempt == max_retries - 1:
                             logger.exception(f"Function {func.__name__} failed after {max_retries} attempts. Error: {e!s}")  # noqa: G004, TRY401
                             raise
-                        wait_time = (base_delay * (2 ** attempt)) + (random.random() * 0.1)
+                        wait_time = (base_delay * (2 ** attempt)) + (random.random() * 0.1) #nosec not being used for security/cryptographic purposes
                         logger.warning(f"Attempt {attempt + 1} failed. Retrying in {wait_time:.2f} seconds...")  # noqa: G004
                         time.sleep(wait_time)
                     else:
@@ -179,12 +179,12 @@ model_id = "us.amazon.nova-micro-v1:0"  # Use a model available in your account
 
 # Function to generate random metadata
 def generate_random_metadata():
-    tenant_id = random.choice(tenants)
-    company = random.choice(companies)
-    department = random.choice(departments)
-    cost_center = random.choice(cost_centers)
-    use_case = random.choice(use_cases)
-    environment = random.choice(environments)
+    tenant_id = random.choice(tenants) #nosec not being used for security/cryptographic purposes
+    company = random.choice(companies) #nosec not being used for security/cryptographic purposes
+    department = random.choice(departments) #nosec not being used for security/cryptographic purposes
+    cost_center = random.choice(cost_centers) #nosec not being used for security/cryptographic purposes
+    use_case = random.choice(use_cases) #nosec not being used for security/cryptographic purposes
+    environment = random.choice(environments) #nosec not being used for security/cryptographic purposes
 
     return {
         "TenantID": tenant_id,
@@ -194,7 +194,7 @@ def generate_random_metadata():
         "UseCase": use_case,
         "Environment": environment,
         "ApplicationID": f"{department.lower()}-app",
-        "Region": random.choice(["us-east-1", "us-west-2", "eu-west-1"]),
+        "Region": random.choice(["us-east-1", "us-west-2", "eu-west-1"]), #nosec not being used for security/cryptographic purposes
         "requestId": str(uuid.uuid4()),
         "timestamp": datetime.now().isoformat(),  # noqa: DTZ005
     }
@@ -211,8 +211,8 @@ def run_multiple_calls(n=2):
         metadata = generate_random_metadata()
 
         # Select a random prompt and system prompt
-        prompt = random.choice(prompts)
-        system_prompt = random.choice(system_prompts)
+        prompt = random.choice(prompts) #nosec not being used for security/cryptographic purposes
+        system_prompt = random.choice(system_prompts) #nosec not being used for security/cryptographic purposes
 
         try:
             # Display progress
@@ -250,7 +250,7 @@ def run_multiple_calls(n=2):
             })
 
             # Add a small delay between requests to avoid rate limiting
-            delay = random.uniform(0.5, 2.0)
+            delay = random.uniform(0.5, 2.0) #nosec not being used for security/cryptographic purposes
             print(f"Waiting {delay:.2f} seconds before next request...")
             time.sleep(delay)
 

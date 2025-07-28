@@ -9,6 +9,7 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_quicksight as quicksight
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_s3_assets as s3_assets
+from cdk_nag import NagSuppressions
 from constructs import Construct
 
 
@@ -69,7 +70,7 @@ class CdkStack(Stack):
         )
 
         # Create a policy for the QuickSight service role
-        iam.ManagedPolicy(
+        quicksight_policy = iam.ManagedPolicy(
             self, "QuickSightServiceRolePolicy",
             managed_policy_name="QuickSightS3AccessPolicy",
             description="Policy to allow QuickSight service role to access S3 bucket",
@@ -92,6 +93,18 @@ class CdkStack(Stack):
                     role_name="aws-quicksight-service-role-v0",
                 ),
             ],
+        )
+        
+        # Add specific suppression for the QuickSightServiceRolePolicy resource
+        NagSuppressions.add_resource_suppressions(
+            quicksight_policy,
+            [
+                {
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "Wildcard permissions are required for S3 bucket access patterns in QuickSight integration",
+                    "appliesTo": ["Resource::<BedrockLogsTransformed01DD90B4.Arn>/*"]
+                }
+            ]
         )
 
         # Create IAM role for Glue
@@ -134,7 +147,6 @@ class CdkStack(Stack):
                 f"{transformed_logs_bucket.bucket_arn}/*",
                 "arn:aws:s3:::cdk*",
                 "arn:aws:s3:::cdk*/*",
-                "*",
             ],
         )
 
@@ -215,7 +227,7 @@ class CdkStack(Stack):
         with Path.open(schema_path) as f:
             schema_content = f.read()
             schema = json.loads(schema_content)
-            content_hash = hashlib.md5(schema_content.encode()).hexdigest()  # noqa: S324
+            content_hash = hashlib.md5(schema_content.encode()).hexdigest()  #nosec noqa: S324 Hash is being used only for comparing file changes during cdk runs
 
         # Create Glue Table for Bedrock logs
         bedrock_logs_table = glue.CfnTable(
@@ -388,7 +400,7 @@ class CdkStack(Stack):
         with Path.open(pricing_schema_path) as f:
             pricing_schema_content = f.read()
             pricing_schema = json.loads(pricing_schema_content)
-            pricing_hash = hashlib.md5(pricing_schema_content.encode()).hexdigest()  # noqa: S324
+            pricing_hash = hashlib.md5(pricing_schema_content.encode()).hexdigest()  #nosec noqa: S324 Hash is being used only for comparing file changes during cdk runs
 
         # Create Glue Table for Bedrock Pricing
         bedrock_pricing_table = glue.CfnTable(
@@ -756,7 +768,7 @@ class CdkStack(Stack):
                 "BedrockLogsWithMetadataTable": quicksight.CfnDataSet.PhysicalTableProperty(
                     custom_sql=quicksight.CfnDataSet.CustomSqlProperty(
                         data_source_arn=quicksight_datasource.attr_arn,
-                        name="bedrock_logs_with_metadata",
+                        name="bedrock_logs_with_metadata", 
                         sql_query=f"""
                             SELECT
                                 logs.*,
@@ -802,7 +814,7 @@ class CdkStack(Stack):
                                 logs.output_FPS, logs.output_videoWidth, logs.output_videoHeight, logs.parsed_timestamp,
                                 logs.tenantid, logs.year, logs.month, logs.date, logs.batchid,
                                 price.input_cost, price.output_cost, price.cache_read, price.cache_write,price.model_id
-                        """,  # noqa: S608
+                        """,  # noqa: S608 #nosec non-user facing sql
                         columns=[
                             quicksight.CfnDataSet.InputColumnProperty(name="schematype", type="STRING"),
                             quicksight.CfnDataSet.InputColumnProperty(name="schemaversion", type="STRING"),
@@ -1999,5 +2011,4 @@ class CdkStack(Stack):
             description="Name of the S3 bucket containing transformed Bedrock logs",
             value=transformed_logs_bucket.bucket_name,
         )
-
 
