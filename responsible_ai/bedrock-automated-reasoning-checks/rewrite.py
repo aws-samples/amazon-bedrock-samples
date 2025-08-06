@@ -1,6 +1,6 @@
 from pathlib import Path
 from enum import IntEnum
-from finding_utils import extract_reasoning_findings 
+from findings_utils import extract_reasoning_findings 
 
 # Define enums for clarity and consistency - Using IntEnum for proper comparison
 class FindingType(IntEnum):
