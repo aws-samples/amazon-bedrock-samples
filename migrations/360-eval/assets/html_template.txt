@@ -208,11 +208,11 @@
     <ul>
       <li><a onclick="scrollToSection('recommendations')">Recommendations</a></li>
       <li><a onclick="scrollToSection('latency-metrics')">Latency Metrics</a></li>
-      <li><a onclick="scrollToSection('ttfb-distribution')">TTFT Distribution</a></li>
+      <li><a onclick="scrollToSection('ttfb-distribution')">Normal Distributions</a></li>
       <li><a onclick="scrollToSection('cost-metrics')">Cost Metrics</a></li>
       <li><a onclick="scrollToSection('task-analysis')">Task Analysis</a></li>
-      <li><a onclick="scrollToSection('model-task-performance')">Model-Task Performance</a></li>
-      <li><a onclick="scrollToSection('regional-analysis')">Regional Analysis</a></li>
+      <li><a onclick="scrollToSection('model-task-performance')">Task Level Performance</a></li>
+      <li><a onclick="scrollToSection('regional-analysis')">Region Level Analysis</a></li>
     </ul>
   </div>
 

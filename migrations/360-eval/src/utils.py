@@ -1,15 +1,16 @@
 import pytz
 import datetime
 import json
-import tiktoken
 import re
 import time
 import os
 import random
 import logging
+import base64
+import requests
 import requests.exceptions
 from tenacity import retry, stop_after_delay, wait_exponential, retry_if_exception_type
-from litellm import completion, RateLimitError, ServiceUnavailableError, APIError, APIConnectionError
+from litellm import completion, RateLimitError, ServiceUnavailableError, APIError, APIConnectionError, BadRequestError
 from litellm import token_counter
 from botocore.exceptions import ClientError
 
@@ -49,8 +50,6 @@ def setup_logging(log_dir='logs', experiment='none'):
     module_logger.info(f"Logging initialized. Log file: {log_file}")
 
     return ts, log_file
-
-
 
 
 def get_timestamp():
@@ -169,7 +168,7 @@ def llm_judge_template(all_metrics,
 
 # Define which exceptions should trigger a retry
 RETRYABLE_EXCEPTIONS = (
-    Exception,
+
     RateLimitError,
     ServiceUnavailableError,
     APIConnectionError,
@@ -204,12 +203,31 @@ def _call_llm_with_retry(model_name, messages, provider_params, retry_tracker, s
         try:
             time_ = time.time()
             completed = completion(
-                    model=model_name,
-                    messages=messages,
-                    stream=stream,
-                    **provider_params
-                )
+                model=model_name,
+                messages=messages,
+                stream=stream,
+                **provider_params
+            )
             return completed, time_
+        except BadRequestError as e:
+            error_msg = str(e)
+            has_image_content = any(
+                isinstance(msg.get('content'), list) and
+                any(part.get('type') == 'image_url' for part in msg.get('content', []))
+                for msg in messages if isinstance(msg, dict)
+            )
+
+            if has_image_content and ("doesn't support the image content block" in error_msg or
+                                      "image content block" in error_msg or
+                                      "vision" in error_msg.lower() or
+                                      "multimodal" in error_msg.lower()):
+                logger.error(f"Model {model_name} does not support vision/image inputs: {error_msg}")
+                # Create a more informative error message and don't retry
+                raise
+            else:
+                # Other BadRequestErrors should not be retried either
+                logger.error(f"BadRequestError (non-retryable): {error_msg}")
+                raise
         except RETRYABLE_EXCEPTIONS as e:
             logger.warning(f"Retryable error occurred: {str(e)}")
             # Add jitter to avoid thundering herd
@@ -223,6 +241,163 @@ def _call_llm_with_retry(model_name, messages, provider_params, retry_tracker, s
     return _api_call()
 
 
+def encode_image(image_path):
+    """Encode a local image file to base64 string."""
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
+
+def validate_image_url(url, timeout=10):
+    """
+    Validate that a web URL is accessible and points to an image.
+
+    Args:
+        url: The URL to validate
+        timeout: Request timeout in seconds
+
+    Returns:
+        bool: True if URL is valid and accessible
+
+    Raises:
+        ValueError: If URL is not accessible or not an image
+    """
+    try:
+        logger.debug(f"Validating image URL: {url}")
+        response = requests.head(url, timeout=timeout, allow_redirects=True)
+
+        # Check if request was successful
+        if response.status_code != 200:
+            raise ValueError(f"URL returned status code {response.status_code}")
+
+        # Check Content-Type header if available
+        content_type = response.headers.get('Content-Type', '')
+        if content_type and not content_type.startswith(('image/', 'application/octet-stream')):
+            logger.warning(f"URL may not be an image. Content-Type: {content_type}")
+
+        logger.debug(f"URL validation successful for: {url}")
+        return True
+
+    except requests.exceptions.Timeout:
+        raise ValueError(f"URL request timed out after {timeout} seconds")
+    except requests.exceptions.ConnectionError:
+        raise ValueError(f"Failed to connect to URL: {url}")
+    except requests.exceptions.RequestException as e:
+        raise ValueError(f"Error accessing URL: {str(e)}")
+
+
+def validate_local_image(file_path):
+    """
+    Validate that a local file exists and is a supported image format.
+
+    Args:
+        file_path: Path to the local image file
+
+    Returns:
+        str: The file extension (without dot)
+
+    Raises:
+        ValueError: If file doesn't exist or has unsupported format
+    """
+    # Check if file exists
+    if not os.path.exists(file_path):
+        raise ValueError(f"Image file not found: {file_path}")
+
+    # Check if it's a file (not directory)
+    if not os.path.isfile(file_path):
+        raise ValueError(f"Path is not a file: {file_path}")
+
+    # Check file extension
+    file_extension = os.path.splitext(file_path)[1].lower()
+    if file_extension.startswith('.'):
+        file_extension = file_extension[1:]
+
+    supported_formats = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
+    if file_extension not in supported_formats:
+        raise ValueError(
+            f"Unsupported image format: {file_extension}. Supported formats: {', '.join(supported_formats)}")
+
+    # Check if file is readable
+    if not os.access(file_path, os.R_OK):
+        raise ValueError(f"Image file is not readable: {file_path}")
+
+    # Check file size (warn if too large)
+    file_size = os.path.getsize(file_path)
+    max_size_mb = 20
+    if file_size > max_size_mb * 1024 * 1024:
+        logger.warning(f"Image file is large ({file_size / 1024 / 1024:.2f} MB): {file_path}")
+
+    logger.debug(f"Local image validation successful: {file_path}")
+    return file_extension
+
+
+def handle_vision(prompt_text, vision_enabled):
+    image_path = vision_enabled.strip()
+
+    if not image_path:
+        logger.error("Empty image path provided for vision model")
+        raise ValueError("Image path cannot be empty when vision is enabled")
+
+    logger.info(f"Processing image for vision model: {image_path}")
+
+    # Check if the image is a web URL using regex
+    url_pattern = r'^https?://'
+
+    if re.match(url_pattern, image_path):
+        # It's a web URL, validate it's accessible
+        logger.debug("Detected web URL for image")
+        try:
+            validate_image_url(image_path)
+            image_url = image_path
+            logger.info(f"Successfully validated web image URL: {image_path}")
+        except ValueError as e:
+            logger.error(f"Failed to validate image URL {image_path}: {e}")
+            raise ValueError(f"Invalid or inaccessible image URL: {e}")
+    else:
+        # It's a local file, validate and encode it
+        logger.debug("Detected local file path for image")
+        try:
+            # Validate the local image file
+            file_extension = validate_local_image(image_path)
+
+            # Map common extensions to MIME types
+            mime_type_map = {
+                'jpg': 'jpeg',
+                'jpeg': 'jpeg',
+                'png': 'png',
+                'gif': 'gif',
+                'webp': 'webp',
+                'bmp': 'bmp'
+            }
+            mime_type = mime_type_map.get(file_extension, 'jpeg')
+
+            # Encode the image
+            logger.debug(f"Encoding local image file: {image_path}")
+            base64_image = encode_image(image_path)
+            image_url = f"data:image/{mime_type};base64,{base64_image}"
+            logger.info(f"Successfully encoded local image: {image_path} (size: {len(base64_image)} bytes)")
+
+        except ValueError as e:
+            logger.error(f"Image validation failed for {image_path}: {e}")
+            raise
+        except IOError as e:
+            logger.error(f"Failed to read image file {image_path}: {e}")
+            raise ValueError(f"Failed to read image file: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error processing image {image_path}: {e}")
+            raise ValueError(f"Failed to process image file: {e}")
+
+    # Create message for vision model with image and text
+    image_content = {
+        "type": "image_url",
+        "image_url": {
+            "url": image_url
+        }
+    }
+    messages = [{"role": "user", "content": [{"type": "text", "text": prompt_text}, image_content]}]
+    logger.debug("Created multimodal message with image and text")
+    return messages
+
+
 # Run streaming inference and collect metrics
 def run_inference(model_name: str,
                   prompt_text: str,
@@ -231,18 +406,9 @@ def run_inference(model_name: str,
                   provider_params: dict = dict,
                   stream: bool = True,
                   vision_enabled: str = None):
-
-
     # Concatenate user prompt for token counting
     if vision_enabled:
-        # Create message for vision model with image and text
-        image_content = {
-            "type": "image_url",
-            "image_url": {
-                "url": vision_enabled.strip()
-            }
-        }
-        messages = [{"role": "user", "content": [{"type": "text", "text": prompt_text}, image_content]}]
+        messages = handle_vision(prompt_text, vision_enabled)
     else:
         messages = [{"content": prompt_text, "role": "user"}]
     response_chunks = []
@@ -291,7 +457,7 @@ def run_inference(model_name: str,
 
             # Token counting with error handling
             try:
-                counter_id = model_name.replace('converse/', '') # Converse is needed for inference only
+                counter_id = model_name.replace('converse/', '')  # Converse is needed for inference only
                 output_tokens = token_counter(model=counter_id, messages=[{"user": "role", "content": full_response}])
                 input_tokens = token_counter(model=counter_id, messages=[{"user": "role", "content": prompt_text}])
             except Exception as e:

@@ -168,6 +168,20 @@ Example:
 }
 ```
 
+### 📝 Vision Model Compatibility Important Notes
+
+When using the vision functionality (--vision_enabled flag or enabling "Vision Model" in the dashboard), ensure you're using a model that supports image inputs. 
+
+
+1. **Error Handling**: If you send image content to a non-vision model, the evaluation will continue but the incorrectly configured evaluations will be stored in the logs as: "Model 'model_name' does not support vision capabilities"
+
+2. **Image Formats**: Supported formats include JPG, PNG, GIF, WebP, and BMP
+
+3. **Image Sources**: You can use either:
+   - Local image files (will be automatically base64 encoded)
+   - Web URLs pointing to images
+
+4. **Model Selection**: Always verify your chosen model supports vision before enabling vision mode in your evaluation
 
 
 ## Usage
