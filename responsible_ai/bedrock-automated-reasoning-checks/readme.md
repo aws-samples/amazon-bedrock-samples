@@ -35,7 +35,6 @@ bedrock-automated-reasoning-checks/
 ├── uploads/                       # Sample policies and reference files
 │   └── sample_medical_policy.pdf  # Example medical policy document
 ├── findings_utils.py              # Utilities to extract and format reasoning findings
-├── lambda_function.py             # Lambda function for deployment
 ├── policy_definition.py           # Tools for retrieving policy definitions
 ├── rewrite.py                     # Core response rewriting functionality
 ├── requirements.txt               # Python dependencies
