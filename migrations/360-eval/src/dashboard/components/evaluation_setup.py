@@ -325,6 +325,34 @@ class EvaluationSetupComponent:
                 on_change=self._update_temperature_variations_adv,
                 help="Test different creativity levels automatically. 0 = use exact temperature set per task, 1+ = test additional temperature variants (above and below delta). Use 0 for precise control, 2-3 for comprehensive testing."
             )
+            
+            # Experiment wait time dropdown
+            wait_time_options = {
+                "No wait (0 minutes)": 0,
+                "30 minutes": 1800,
+                "1 hour": 3600,
+                "1.5 hours": 5400,
+                "2 hours": 7200,
+                "2.5 hours": 9000,
+                "3 hours": 10800
+            }
+            
+            # Find current selection
+            current_wait_time = st.session_state.current_evaluation_config.get("experiment_wait_time", 0)
+            current_selection = "No wait (0 minutes)"
+            for label, value in wait_time_options.items():
+                if value == current_wait_time:
+                    current_selection = label
+                    break
+            
+            selected_wait_time = st.selectbox(
+                "Experiment Wait Time",
+                options=list(wait_time_options.keys()),
+                index=list(wait_time_options.keys()).index(current_selection),
+                key="adv_experiment_wait_time_dropdown",
+                on_change=self._update_experiment_wait_time_adv,
+                help="Time to wait between experiment runs. Useful for rate limiting or allowing system recovery between intensive evaluations. Select from 30-minute intervals up to 3 hours."
+            )
         
     
     # Advanced configuration event handlers with different keys
@@ -345,4 +373,18 @@ class EvaluationSetupComponent:
 
     def _update_failure_threshold_adv(self):
         st.session_state.current_evaluation_config["failure_threshold"] = st.session_state.adv_failure_threshold
+
+    def _update_experiment_wait_time_adv(self):
+        """Update experiment wait time based on dropdown selection."""
+        wait_time_options = {
+            "No wait (0 minutes)": 0,
+            "30 minutes": 1800,
+            "1 hour": 3600,
+            "1.5 hours": 5400,
+            "2 hours": 7200,
+            "2.5 hours": 9000,
+            "3 hours": 10800
+        }
+        selected_label = st.session_state.adv_experiment_wait_time_dropdown
+        st.session_state.current_evaluation_config["experiment_wait_time"] = wait_time_options[selected_label]
     

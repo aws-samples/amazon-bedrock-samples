@@ -346,6 +346,7 @@ def run_benchmark_process(eval_id):
             "--experiment_counts", str(evaluation_config["experiment_counts"]),
             "--experiment_name", composite_id,
             "--temperature_variations", str(evaluation_config["temperature_variations"]),
+            "--experiment_wait_time", str(evaluation_config.get("experiment_wait_time", 0)),
             "--model_file_name", model_file_name,
             "--judge_file_name", judge_file_name,
             "--evaluation_pass_threshold", str(evaluation_config["failure_threshold"])
@@ -762,6 +763,7 @@ def _update_status_file(status_file, status, progress, results=None, logs_dir=No
                 "failure_threshold": evaluation_config.get("failure_threshold"),
                 "user_defined_metrics": evaluation_config.get("user_defined_metrics"),
                 "sleep_between_invocations": evaluation_config.get("sleep_between_invocations"),
+                "experiment_wait_time": evaluation_config.get("experiment_wait_time", 0),
                 "task_type": evaluation_config.get("task_type"),
                 "task_criteria": evaluation_config.get("task_criteria"),
                 "temperature": evaluation_config.get("temperature"),

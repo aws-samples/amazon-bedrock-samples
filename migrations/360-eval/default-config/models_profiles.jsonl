@@ -5,3 +5,4 @@
 {"model_id":"bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0","region": "us-east-1", "input_token_cost": 0.003, "output_token_cost": 0.015}
 {"model_id":"bedrock/us.meta.llama3-3-70b-instruct-v1:0", "region": "us-east-2", "input_token_cost": 0.00072, "output_token_cost": 0.00072}
 {"model_id":"bedrock/us.mistral.mixtral-8x7b-instruct-v0:1", "region": "us-east-2", "input_token_cost": 0.00045, "output_token_cost": 0.0007}
+{"model_id":"bedrock/us.mistral.pixtral-large-2502-v1:0", "region": "us-east-1", "input_token_cost": 0.002, "output_token_cost": 0.006}

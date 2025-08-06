@@ -44,6 +44,7 @@ def initialize_session_state():
             "experiment_counts": DEFAULT_EXPERIMENT_COUNTS,
             "temperature_variations": DEFAULT_TEMPERATURE_VARIATIONS,
             "failure_threshold": DEFAULT_FAILURE_THRESHOLD,
+            "experiment_wait_time": 0,  # Wait time in seconds between experiments
             "selected_models": [],
             "judge_models": [],
             "user_defined_metrics": "",
@@ -77,6 +78,7 @@ def create_new_evaluation():
         "experiment_counts": DEFAULT_EXPERIMENT_COUNTS,
         "temperature_variations": DEFAULT_TEMPERATURE_VARIATIONS,
         "failure_threshold": DEFAULT_FAILURE_THRESHOLD,
+        "experiment_wait_time": 0,  # Wait time in seconds between experiments
         "selected_models": [],
         "judge_models": [],
         "user_defined_metrics": "",
@@ -223,6 +225,7 @@ def save_configuring_evaluation_to_disk(eval_config):
                 "failure_threshold": eval_config.get("failure_threshold"),
                 "user_defined_metrics": eval_config.get("user_defined_metrics"),
                 "sleep_between_invocations": eval_config.get("sleep_between_invocations"),
+                "experiment_wait_time": eval_config.get("experiment_wait_time", 0),
                 "task_type": eval_config.get("task_type"),
                 "task_criteria": eval_config.get("task_criteria"),
                 "temperature": eval_config.get("temperature"),
@@ -474,6 +477,7 @@ def load_evaluations_from_files():
                         "experiment_counts": stored_config.get("experiment_counts", 1),
                         "temperature_variations": stored_config.get("temperature_variations", 0),
                         "failure_threshold": stored_config.get("failure_threshold", 3),
+                        "experiment_wait_time": stored_config.get("experiment_wait_time", 0),
                         "user_defined_metrics": stored_config.get("user_defined_metrics", ""),
                         "temperature": stored_config.get("temperature"),
                         "csv_file_name": stored_config.get("csv_file_name")
