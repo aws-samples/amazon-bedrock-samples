@@ -8,6 +8,7 @@ import * as cdk from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecrassets from "aws-cdk-lib/aws-ecr-assets";
 import * as ecs from "aws-cdk-lib/aws-ecs";
+import * as efs from "aws-cdk-lib/aws-efs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
@@ -49,6 +50,19 @@ export interface IClickHouseDeploymentProps {
    */
   environment?: { [key: string]: string };
   /**
+   * Source image (including version tag) of ClickHouse to build & deploy from
+   * 
+   * To avoid rate limit issues for customers without Docker Hub credentials, we use Bitnami's
+   * distribution of ClickHouse on Amazon ECR Public by default. If you configure Docker Hub tokens
+   * in the environment where you run 'cdk deploy', you could switch to e.g. 'clickhouse:25'.
+   * 
+   * Note that this construct actually builds a custom (ECR Private) image from the base you
+   * specify here, to configure logging for the target ECS environment.
+   * 
+   * @default 'public.ecr.aws/bitnami/clickhouse:25'
+   */
+  image?: string;
+  /**
    * ECS Fargate CPU allocation for the ClickHouse container.
    *
    * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html#fargate-tasks-size
@@ -67,11 +81,16 @@ export interface IClickHouseDeploymentProps {
    */
   tags?: cdk.Tag[];
   /**
-   * Released version of ClickHouse to deploy
+   * Which packaging variant of ClickHouse is provided by `image`
    *
-   * @default "25.1"
+   * This construct supports both the vanilla ClickHouse container (distributed via Docker Hub) and
+   * Bitnami's custom distribution (available on Amazon ECR Public). However, the two need slightly
+   * different deployment setups. If it's not clear from your `image` URI, you can use this prop to
+   * explicitly specify which distribution your chosen source is based on.
+   *
+   * @default - Inferred based on whether `image` contains 'bitnami'
    */
-  version?: string;
+  variant?: "bitnami" | "default";
 }
 
 // Refer to: https://clickhouse.com/docs/en/guides/sre/network-ports
@@ -211,7 +230,8 @@ export class ClickHouseDeployment extends Construct {
     const cpu = props.cpu || 1024;
     const memoryLimitMiB = props.memoryLimitMiB || 8192;
     const serviceName = props.serviceName || "clickhouse";
-    const version = props.version || "25.1";
+    const image = props.image || "public.ecr.aws/bitnami/clickhouse:25";
+    const variant = props.variant || image.includes("bitnami") ? "bitnami" : "default";
 
     this.secret = new secretsmanager.Secret(this, "Secret", {
       generateSecretString: {
@@ -242,6 +262,7 @@ export class ClickHouseDeployment extends Construct {
     // Unfortunately the ClickHouse configuration files are baked into the container image, so we
     // need to build a custom image to make overrides for nice ECS deployment:
     const customImage = new ecrassets.DockerImageAsset(this, "CustomImage", {
+      file: variant === "bitnami" ? "bitnami.Dockerfile" : "Dockerfile",
       directory: path.join(
         __dirname,
         "..",
@@ -252,7 +273,7 @@ export class ClickHouseDeployment extends Construct {
       ),
       platform: ecrassets.Platform.LINUX_AMD64,
       buildArgs: {
-        BASE_IMAGE: `clickhouse:${version}`,
+        BASE_IMAGE: image,
       },
     });
 
@@ -260,7 +281,7 @@ export class ClickHouseDeployment extends Construct {
       // If the custom image config overrides aren't needed, a straight `clickhouse:${version}`
       // dockerImageName would work here:
       dockerImageName: customImage.imageUri,
-      ecrImageTag: version,
+      ecrImageTag: image.split(":").pop(),
       tags: props.tags,
     });
 
@@ -312,7 +333,27 @@ export class ClickHouseDeployment extends Construct {
         cdk.Tags.of(taskRole).add(tag.key, tag.value);
       });
     }
-    this.efs.fileSystem.grantRootAccess(taskRole);
+    this.efs.fileSystem.grantReadWrite(taskRole);
+
+    // Bitnami variant uses POSIX user 1001:0, which won't be able to write to EFS root. Upstream
+    // ClickHouse runs as root 0:0 by default, and will fail on a 1001:0 mount because it can't
+    // chown the folder back to root. To make both work, we'll override upstream to use 1001:0 too
+    // (since nicer to run containers as non-root users when we can):
+    const clickHouseUid = "1001";
+    const clickHouseGid = "0";
+    const efsap = new efs.AccessPoint(this, "ECSAccessPoint", {
+      fileSystem: this.efs.fileSystem,
+      path: "/clickhouse-mount",
+      createAcl: {
+        ownerUid: clickHouseUid,
+        ownerGid: clickHouseGid,
+        permissions: "777",
+      },
+      posixUser: {
+        uid: clickHouseUid,
+        gid: clickHouseGid,
+      },
+    });
 
     const CLICKHOUSE_VOLUME_NAME = "clickhouse_data";
     const taskDefinition = new ecs.FargateTaskDefinition(this, "ECSTaskDef", {
@@ -325,8 +366,12 @@ export class ClickHouseDeployment extends Construct {
         {
           name: CLICKHOUSE_VOLUME_NAME,
           efsVolumeConfiguration: {
+            authorizationConfig: {
+              accessPointId: efsap.accessPointId,
+            },
             fileSystemId: this.efs.fileSystem.fileSystemId,
             rootDirectory: "/",
+            transitEncryption: "ENABLED",
           },
         },
       ],
@@ -385,10 +430,11 @@ export class ClickHouseDeployment extends Construct {
           hardLimit: 65535,
         },
       ],
+      user: `${clickHouseUid}:${clickHouseGid}`,
     });
     container.node.addDependency(deployedImage.deployment);
     container.addMountPoints({
-      containerPath: "/var/lib/clickhouse",
+      containerPath: variant === "bitnami" ? "/bitnami/clickhouse" : "/var/lib/clickhouse",
       readOnly: false,
       sourceVolume: CLICKHOUSE_VOLUME_NAME,
     });
