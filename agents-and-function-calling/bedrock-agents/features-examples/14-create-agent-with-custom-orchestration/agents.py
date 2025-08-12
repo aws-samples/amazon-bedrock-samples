@@ -8,18 +8,26 @@ import pprint
 import os
 import subprocess
 from pathlib import Path
+from datetime import datetime
 
 print(f"Boto3 version: {boto3.__version__}")
 
-iam_client = boto3.client('iam')
-sts_client = boto3.client('sts')
-s3_client = boto3.client('s3')
-session = boto3.session.Session()
+# Custom JSON encoder to handle datetime objects in trace data
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
+iam_client = boto3.client('iam', region_name="us-west-2")
+sts_client = boto3.client('sts', region_name="us-west-2")
+s3_client = boto3.client('s3', region_name="us-west-2")
+session = boto3.session.Session(region_name="us-west-2")
 region = session.region_name
 account_id = sts_client.get_caller_identity()["Account"]
-dynamodb_client = boto3.client('dynamodb')
-dynamodb_resource = boto3.resource('dynamodb')
-lambda_client = boto3.client('lambda')
+dynamodb_client = boto3.client('dynamodb', region_name="us-west-2")
+dynamodb_resource = boto3.resource('dynamodb', region_name="us-west-2")
+lambda_client = boto3.client('lambda', region_name="us-west-2")
 # bedrock_agent_client = boto3.client('bedrock-agent')
 bedrock_agent_client = boto3.client(
     'bedrock-agent',
@@ -728,13 +736,23 @@ def invoke_agent_helper(
                     for key in event['chunk']:
                         if key != 'bytes':
                             logger.info(f"Chunck {key}:\n")
-                            logger.info(json.dumps(event['chunk'][key], indent=3))
+                            try:
+                                logger.info(json.dumps(event['chunk'][key], indent=3, cls=DateTimeEncoder))
+                            except Exception as chunk_error:
+                                logger.warning(f"Could not serialize chunk data: {chunk_error}")
+                                logger.info(f"Chunk data: {str(event['chunk'][key])}")
                 agent_answer = data.decode('utf8')
                 return agent_answer
                 # End event indicates that the request finished successfully
             elif 'trace' in event:
                 if enable_trace:
-                    logger.info(json.dumps(event['trace'], indent=2))
+                    try:
+                        logger.info(json.dumps(event['trace'], indent=2, cls=DateTimeEncoder))
+                    except Exception as trace_error:
+                        logger.warning(f"Could not serialize trace data: {trace_error}")
+                        logger.info(f"Trace event type: {type(event['trace'])}")
+                        # Fallback to string representation
+                        logger.info(f"Trace data: {str(event['trace'])}")
             else:
                 raise Exception("unexpected event.", event)
     except Exception as e:
@@ -772,7 +790,7 @@ def create_lambda_layer(agent_name, requirements):
     ], cwd="layer")
 
     # Create Lambda layer
-    lambda_client = boto3.client('lambda')
+    lambda_client = boto3.client('lambda', region_name="us-west-2")
 
     try:
         with open("layer/layer.zip", 'rb') as zip_file:
