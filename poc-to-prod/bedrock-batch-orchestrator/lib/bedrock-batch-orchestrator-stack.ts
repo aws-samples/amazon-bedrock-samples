@@ -46,9 +46,9 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       actions: ['bedrock:InvokeModel'],
       resources: [
-          'anthropic.claude-3-haiku-20240307-v1:0',
-          'us.anthropic.claude-3-5-haiku-20241022-v1:0',
-          'amazon.titan-embed-text-v2:0',
+          'arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-20240307-v1:0',
+          'arn:aws:bedrock:*::foundation-model/us.anthropic.claude-3-5-haiku-20241022-v1:0',
+          'arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v2:0',
       ],
     }));
 
