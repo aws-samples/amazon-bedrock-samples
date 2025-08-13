@@ -166,10 +166,14 @@ class ModelConfigurationComponent:
                 key="judge_model_select"
             )
         
+        # Handle case where selectbox returns index instead of value
+        if isinstance(selected_judge, int):
+            selected_judge = judge_options[selected_judge] if selected_judge < len(judge_options) else judge_options[0]
+        
         # Get default costs
         default_input_cost = DEFAULT_JUDGES_COST.get(selected_judge, {"input": 0.001, "output": 0.002})["input"]
         default_output_cost = DEFAULT_JUDGES_COST.get(selected_judge, {"input": 0.001, "output": 0.002})["output"]
-        region = judge_regions[selected_judge]
+        region = judge_regions.get(selected_judge, "us-east-1")
         with col2:
             judge_input_cost = st.number_input(
                 "Input Cost",

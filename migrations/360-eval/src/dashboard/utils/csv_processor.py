@@ -60,9 +60,6 @@ def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria
         st.error("Vision model enabled but no image column selected")
         return None
         
-    # For merged evaluations, the column names might be different in different dataframes
-    # Handle the case where prompt_col or golden_answer_col might not be in all columns
-    # But ensure at least one row has these columns
     all_columns = df.columns.tolist()
     if prompt_col not in all_columns or golden_answer_col not in all_columns:
         # Check if this is potentially a merged dataframe with different column names

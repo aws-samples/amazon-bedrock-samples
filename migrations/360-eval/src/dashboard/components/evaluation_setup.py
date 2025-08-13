@@ -207,6 +207,9 @@ class EvaluationSetupComponent:
                 # Reset column selections to ensure user explicitly chooses them
                 st.session_state.current_evaluation_config["prompt_column"] = None
                 st.session_state.current_evaluation_config["golden_answer_column"] = None
+                
+                # Note: CSV will be saved to disk when configuration is saved
+                # This ensures we have a persistent copy for resuming evaluations
     
     def _update_prompt_column(self):
         st.session_state.current_evaluation_config["prompt_column"] = st.session_state.prompt_column

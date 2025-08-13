@@ -6,3 +6,8 @@
 {"model_id":"bedrock/us.meta.llama3-3-70b-instruct-v1:0", "region": "us-east-2", "input_token_cost": 0.00072, "output_token_cost": 0.00072}
 {"model_id":"bedrock/us.mistral.mixtral-8x7b-instruct-v0:1", "region": "us-east-2", "input_token_cost": 0.00045, "output_token_cost": 0.0007}
 {"model_id":"bedrock/us.mistral.pixtral-large-2502-v1:0", "region": "us-east-1", "input_token_cost": 0.002, "output_token_cost": 0.006}
+{"model_id":"bedrock/openai.gpt-oss-120b-1:0", "region": "us-west-2", "input_token_cost": 0.00015, "output_token_cost": 0.0006}
+{"model_id":"bedrock/openai.gpt-oss-20b-1:0", "region": "us-west-2", "input_token_cost": 0.00007, "output_token_cost": 0.0003}
+{"model_id":"openai/gpt-4o", "inference_profile": "NA","input_token_cost": 0.005, "output_token_cost": 0.02}
+{"model_id":"openai/gpt-4o-mini", "inference_profile": "NA","input_token_cost": 0.0006, "output_token_cost": 0.0024}
+{"model_id":"gemini/gemini-2.0-flash", "region": "NA", "inference_profile": "NA", "input_token_cost": 0.00015, "output_token_cost": 0.0006}
