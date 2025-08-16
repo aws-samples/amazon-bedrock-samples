@@ -39,18 +39,18 @@ bedrock-automated-reasoning-checks/
 ├── rewrite.py                     # Core response rewriting functionality
 ├── requirements.txt               # Python dependencies
 └── Jupyter Notebooks:
-    ├── automated_reasoning_guardrail_validation_playground.ipynb
-    ├── automated_reasoning_policy_creator_playground.ipynb
-    ├── automated_reasoning_rewrite_playground.ipynb
-    ├── automated_reasoning_test_creator_playground.ipynb
-    └── automated_reasoning_valid_at_n_playground.ipynb
+    ├── lab_1_automated_reasoning_guardrail_validation_playground.ipynb
+    ├── lab_2_automated_reasoning_policy_creator_playground.ipynb
+    ├── lab_3_automated_reasoning_rewrite_playground.ipynb
+    ├── lab_4_automated_reasoning_test_creator_playground.ipynb
+    └── lab_5_automated_reasoning_valid_at_n_playground.ipynb
 ```
 
 ## Interactive Notebooks
 
 The repository includes five Jupyter notebooks that demonstrate different aspects of working with Automated Reasoning checks:
 
-### automated_reasoning_guardrail_validation_playground.ipynb
+### lab_1_automated_reasoning_guardrail_validation_playground.ipynb
 
 **Primary notebook for testing and validating existing policies.** This notebook allows you to validate LLM responses against policies created either programmatically or through the AWS console. Key features:
 
@@ -60,7 +60,7 @@ The repository includes five Jupyter notebooks that demonstrate different aspect
 - Understand why specific responses pass or fail validation
 - Works seamlessly with console-created policies
 
-### automated_reasoning_policy_creator_playground.ipynb
+### lab_2_automated_reasoning_policy_creator_playground.ipynb
 
 Demonstrates how to programmatically create Automated Reasoning policies from source documents. Features:
 
@@ -69,7 +69,7 @@ Demonstrates how to programmatically create Automated Reasoning policies from so
 - Create and deploy policies programmatically
 - Test policy creation with the sample medical document
 
-### automated_reasoning_rewrite_playground.ipynb
+### lab_3_automated_reasoning_rewrite_playground.ipynb
 
 Shows how to automatically rewrite non-compliant LLM responses to align with policy requirements. Features:
 
@@ -78,7 +78,7 @@ Shows how to automatically rewrite non-compliant LLM responses to align with pol
 - Leverage foundation models to generate policy-compliant rewrites
 - Compare original and rewritten responses
 
-### automated_reasoning_test_creator_playground.ipynb
+### lab_4_automated_reasoning_test_creator_playground.ipynb
 
 Helps you create comprehensive test suites for your policies. Features:
 
@@ -87,7 +87,7 @@ Helps you create comprehensive test suites for your policies. Features:
 - Create boundary condition tests
 - Build regression test suites
 
-### automated_reasoning_valid_at_n_playground.ipynb
+### lab_5_automated_reasoning_valid_at_n_playground.ipynb
 
 Demonstrates how to measure policy effectiveness through iterative validation. Features:
 
@@ -148,11 +148,11 @@ The repository includes a sample medical policy document (`uploads/sample_medica
 
 To experiment with this example:
 
-1. Open the `automated_reasoning_policy_creator_playground.ipynb` notebook
+1. Open the `lab_2_automated_reasoning_policy_creator_playground.ipynb` notebook
 2. Follow the step-by-step guide to create a policy based on the sample medical document
-3. Use the `automated_reasoning_test_creator_playground.ipynb` notebook to create test cases
-4. Explore the `automated_reasoning_rewrite_playground.ipynb` to see how non-compliant responses are rewritten
-5. Use the `automated_reasoning_guardrail_validation_playground.ipynb` to validate responses against your policy
+3. Use the `lab_4_automated_reasoning_test_creator_playground.ipynb` notebook to create test cases
+4. Use the `lab_1_automated_reasoning_guardrail_validation_playground.ipynb` to validate responses against your policy
+5. Explore the `lab_3_automated_reasoning_rewrite_playground.ipynb` to see how non-compliant responses are rewritten
 
 ## Key Components
 
@@ -170,7 +170,7 @@ Provides utilities to retrieve policy definitions from your AWS account, making 
 
 ## Valid at N Experiments
 
-The `automated_reasoning_valid_at_n_playground.ipynb` notebook demonstrates how to conduct "Valid at N" experiments, which:
+The `lab_5_automated_reasoning_valid_at_n_playground.ipynb` notebook demonstrates how to conduct "Valid at N" experiments, which:
 
 1. Start with an initial LLM response
 2. Apply automated reasoning checks
@@ -197,7 +197,7 @@ You can integrate these tools into your existing AI application workflows:
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0
 
 ## 🔄 Updates
 
