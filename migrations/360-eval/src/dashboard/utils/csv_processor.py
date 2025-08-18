@@ -191,8 +191,8 @@ def create_judge_profiles_jsonl(judges, output_dir, custom_filename=None):
                 entry = {
                     "model_id": judge["id"],
                     "region": judge["region"],
-                    "input_cost_per_1k": judge["input_cost"],  # Field is already 1k
-                    "output_cost_per_1k": judge["output_cost"]  # Field is already 1k
+                    "input_cost_per_1k": judge["input_cost"],
+                    "output_cost_per_1k": judge["output_cost"]
                 }
                 f.write(json.dumps(entry) + '\n')
     except IOError as e:

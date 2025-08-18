@@ -439,9 +439,9 @@ class EvaluationSetupComponent:
             "temperature": source_config.get("temperature", 0.7),
             "user_defined_metrics": source_config.get("user_defined_metrics", ""),
             
-            # Copy model and judge configurations
-            "selected_models": source_config.get("selected_models", []).copy() if source_config.get("selected_models") else [],
-            "judge_models": source_config.get("judge_models", []).copy() if source_config.get("judge_models") else [],
+            # Copy model and judge configurations - normalize the data structure
+            "selected_models": self._normalize_models(source_config.get("selected_models", [])),
+            "judge_models": self._normalize_judges(source_config.get("judge_models", [])),
             
             # Copy advanced parameters
             "output_dir": source_config.get("output_dir", DEFAULT_OUTPUT_DIR),
@@ -463,3 +463,29 @@ class EvaluationSetupComponent:
         
         # Also update the num_tasks to match the loaded task_evaluations
         st.session_state.num_tasks = len(task_evaluations)
+    
+    def _normalize_models(self, models):
+        """Normalize model data structure from loaded configuration."""
+        normalized = []
+        for model in models:
+            # Handle both old format (from loaded profiles) and new format
+            normalized.append({
+                "id": model.get("model_id") or model.get("id"),
+                "region": model.get("region", ""),
+                "input_cost": model.get("input_token_cost") or model.get("input_cost", 0),
+                "output_cost": model.get("output_token_cost") or model.get("output_cost", 0)
+            })
+        return normalized
+    
+    def _normalize_judges(self, judges):
+        """Normalize judge data structure from loaded configuration."""
+        normalized = []
+        for judge in judges:
+            # Handle both old format (from loaded profiles) and new format
+            normalized.append({
+                "id": judge.get("model_id") or judge.get("id"),
+                "region": judge.get("region", ""),
+                "input_cost": judge.get("input_cost_per_1k") or judge.get("input_cost", 0),
+                "output_cost": judge.get("output_cost_per_1k") or judge.get("output_cost", 0)
+            })
+        return normalized
