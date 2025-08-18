@@ -94,10 +94,10 @@ def main():
             
             # Check if we need to navigate to Setup tab
             if "navigate_to_setup" in st.session_state and st.session_state.navigate_to_setup:
-                active_tab = st.radio("Navigation", tab_names, index=0, key="nav_radio")
-                del st.session_state.navigate_to_setup  # Clear the flag after using it
-            else:
-                active_tab = st.radio("Navigation", tab_names, key="nav_radio")
+                st.session_state.nav_radio = "Setup"
+                del st.session_state.navigate_to_setup
+            
+            active_tab = st.radio("Navigation", tab_names, key="nav_radio")
             logger.info(f"Selected tab: {active_tab}")
         
         # Main area - show different components based on active tab

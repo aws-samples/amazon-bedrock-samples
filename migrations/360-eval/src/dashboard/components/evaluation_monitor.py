@@ -153,27 +153,6 @@ class EvaluationMonitorComponent:
             eval_df = pd.DataFrame(eval_data)
             st.dataframe(eval_df, hide_index=True)
 
-            # Add section to load configuration from existing evaluations
-            st.subheader("Load Configuration")
-            
-            # All evaluations can have their config loaded
-            if available_evals:
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    selected_load_eval = st.selectbox(
-                        "Select an evaluation to load its configuration",
-                        options=[e["id"] for e in available_evals],
-                        format_func=lambda x: next((f"{e['name']} ({e['status']})" for e in available_evals if e["id"] == x), x),
-                        help="Load configuration from any evaluation to create a new one"
-                    )
-                with col2:
-                    if st.button("📋 Load Config", key="load_config_btn"):
-                        eval_to_load = next((e for e in available_evals if e["id"] == selected_load_eval), None)
-                        if eval_to_load:
-                            st.session_state.load_from_eval_config = eval_to_load.copy()
-                            st.session_state.navigate_to_setup = True
-                            st.rerun()
-
             # Add section to run selected evaluations
             st.subheader("Run Evaluations")
 
