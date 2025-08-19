@@ -295,7 +295,7 @@ class EvaluationSetupComponent:
                 "Pass|Failure Threshold",
                 min_value=2,
                 max_value=4,
-                value=3,
+                value=st.session_state.current_evaluation_config["failure_threshold"],
                 key="adv_failure_threshold",
                 on_change=self._update_failure_threshold_adv,
                 help="Value used to define whether an evaluation failed to meet standards, any evaluation metric below this number will be considered failure."
@@ -463,6 +463,15 @@ class EvaluationSetupComponent:
         
         # Also update the num_tasks to match the loaded task_evaluations
         st.session_state.num_tasks = len(task_evaluations)
+        
+        # Synchronize widget session state keys with loaded config
+        # This ensures the Advanced Configuration tab displays the correct values
+        st.session_state.adv_parallel_calls = new_config["parallel_calls"]
+        st.session_state.adv_invocations_per_scenario = new_config["invocations_per_scenario"]
+        st.session_state.adv_sleep_between_invocations = new_config["sleep_between_invocations"]
+        st.session_state.adv_experiment_counts = new_config["experiment_counts"]
+        st.session_state.adv_temperature_variations = new_config["temperature_variations"]
+        st.session_state.adv_failure_threshold = new_config["failure_threshold"]
     
     def _normalize_models(self, models):
         """Normalize model data structure from loaded configuration."""
