@@ -552,3 +552,38 @@ def convert_scientific_to_decimal(df):
             pass
 
     return result_df
+
+
+def check_model_access(provider_params, model_id):
+    """
+    Check if we have access to invoke a specific model
+    """
+    try:
+        messages = [{"content": 'HI', "role": "user"}]
+        completed = completion(
+            model=model_id,
+            messages=messages,
+            stream=True,
+            **provider_params
+        )
+
+        # If we get a response without error, access is granted
+        return 'granted'
+
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', '')
+        error_message = e.response.get('Error', {}).get('Message', '')
+
+        if error_code == 'AccessDeniedException':
+            return 'denied'
+        elif error_code == 'ValidationException':
+            return 'denied'
+        elif error_code == 'ThrottlingException':
+            # Throttling means we have access but hit rate limits
+            return 'granted'
+        else:
+            return 'denied'
+    except Exception:
+        return 'denied'
+
+

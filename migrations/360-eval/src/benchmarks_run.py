@@ -191,11 +191,11 @@ def benchmark(
             params['api_key'] = os.getenv('GOOGLE_API')
         elif 'azure' in model_id:
             params['api_key'] = os.getenv('AZURE_API_KEY')
-        elif 'openai' in model_id:
-            params['api_key'] = os.getenv('OPENAI_API')
         elif "bedrock" in model_id:
             params['aws_region_name'] = region
             model_id = model_id.replace("bedrock", "bedrock/converse")
+        elif 'openai/' in model_id:
+            params['api_key'] = os.getenv('OPENAI_API')
         else:
             # Sagemaker
             params['aws_region_name'] = region
@@ -400,6 +400,36 @@ def execute_benchmark(scenarios, cfg, unprocessed_dir, yard_stick=3):
     return all_recs
 
 
+def model_sanity_check(models):
+    from utils import check_model_access
+
+    params = {"max_tokens": 10,
+              "temperature": 1,
+              }
+
+    distilled = []
+    failed = []
+    for model in models:
+        model_id = model['model_id']
+        if "gemini" in model_id:
+            params['api_key'] = os.getenv('GOOGLE_API')
+        elif 'azure' in model_id:
+            params['api_key'] = os.getenv('AZURE_API_KEY')
+            model_id = model_id.replace("bedrock", "bedrock/converse")
+        elif 'openai/' in model_id:
+            params['api_key'] = os.getenv('OPENAI_API')
+        else:
+            params['aws_region_name'] = model['region']
+
+        access = check_model_access(params, model_id)
+        if access == 'granted':
+            distilled.append(model)
+        else:
+            failed.append(model['model_id'])
+
+    return distilled, failed
+
+
 # ----------------------------------------
 # Main entrypoint
 # ----------------------------------------
@@ -527,11 +557,20 @@ def main(
         return
 
     raw_with_models = []
+    raw_models = []
     with open(model_path, 'r', encoding='utf-8') as f:
         for line in f:
-            js = json.loads(line)
+            raw_models.append(json.loads(line))
+
+        models, failed = model_sanity_check(raw_models)
+        if len(models) == 0:
+            logging.error('The following models failed to generate inference, please check Permissions and Access:\n'  + '\n'.join(failed))
+            raise
+        if len(failed) > 0:
+            logging.warning('The following models failed to generate inference, please check Permissions and Access:\n'  + '\n'.join(failed))
+        for model in models:
             for s in raw:
-                raw_with_models.append({**s, **js})
+                raw_with_models.append({**s, **model})
 
     scenarios = expand_scenarios(raw_with_models, cfg)
     logging.info(f"Expanded to {len(scenarios)} scenarios")
@@ -624,38 +663,45 @@ def main(
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser(description="Advanced Unified LLM Benchmarking Tool")
-    p.add_argument("input_file", help="JSONL file with scenarios")
-    p.add_argument("--output_dir", default="benchmark-results")
-    p.add_argument("--report", type=lambda x: x.lower() == 'true', default=True)
-    p.add_argument("--parallel_calls", type=int, default=4)
-    p.add_argument("--invocations_per_scenario", type=int, default=2)
-    p.add_argument("--sleep_between_invocations", type=int, default=3)
-    p.add_argument("--experiment_counts", type=int, default=2)
-    p.add_argument("--experiment_name", default=f"Benchmark-{datetime.now().strftime('%Y%m%d')}")
-    p.add_argument("--experiment_wait_time", type=int, default=0,
-                   help="Wait time in seconds between experiments (0 = no wait)")
-    p.add_argument("--temperature_variations", type=int, default=0)
-    p.add_argument("--user_defined_metrics", default=None)
-    p.add_argument("--model_file_name", default=None)
-    p.add_argument("--judge_file_name", default=None)
-    p.add_argument("--evaluation_pass_threshold", default=3)
-    p.add_argument("--vision_enabled", type=lambda x: x.lower() == 'true', default=False)
-    args = p.parse_args()
-    main(
-        args.input_file,
-        args.output_dir,
-        args.report,
-        args.parallel_calls,
-        args.invocations_per_scenario,
-        args.sleep_between_invocations,
-        args.temperature_variations,
-        args.experiment_counts,
-        args.experiment_name,
-        args.user_defined_metrics,
-        args.model_file_name,
-        args.judge_file_name,
-        args.evaluation_pass_threshold,
-        args.vision_enabled,
-        args.experiment_wait_time
-    )
+    # p = argparse.ArgumentParser(description="Advanced Unified LLM Benchmarking Tool")
+    # p.add_argument("input_file", help="JSONL file with scenarios")
+    # p.add_argument("--output_dir", default="benchmark-results")
+    # p.add_argument("--report", type=lambda x: x.lower() == 'true', default=True)
+    # p.add_argument("--parallel_calls", type=int, default=4)
+    # p.add_argument("--invocations_per_scenario", type=int, default=2)
+    # p.add_argument("--sleep_between_invocations", type=int, default=3)
+    # p.add_argument("--experiment_counts", type=int, default=2)
+    # p.add_argument("--experiment_name", default=f"Benchmark-{datetime.now().strftime('%Y%m%d')}")
+    # p.add_argument("--experiment_wait_time", type=int, default=0,
+    #                help="Wait time in seconds between experiments (0 = no wait)")
+    # p.add_argument("--temperature_variations", type=int, default=0)
+    # p.add_argument("--user_defined_metrics", default=None)
+    # p.add_argument("--model_file_name", default=None)
+    # p.add_argument("--judge_file_name", default=None)
+    # p.add_argument("--evaluation_pass_threshold", default=3)
+    # p.add_argument("--vision_enabled", type=lambda x: x.lower() == 'true', default=False)
+    # args = p.parse_args()
+    # main(
+    #     args.input_file,
+    #     args.output_dir,
+    #     args.report,
+    #     args.parallel_calls,
+    #     args.invocations_per_scenario,
+    #     args.sleep_between_invocations,
+    #     args.temperature_variations,
+    #     args.experiment_counts,
+    #     args.experiment_name,
+    #     args.user_defined_metrics,
+    #     args.model_file_name,
+    #     args.judge_file_name,
+    #     args.evaluation_pass_threshold,
+    #     args.vision_enabled,
+    #     args.experiment_wait_time
+    # )
+    with open('/Users/claumazz/TEST_MODEL_EVAL/amazon-bedrock-samples/migrations/360-eval/default-config/models_profiles.jsonl', 'r', encoding='utf-8') as f:
+        lines = []
+        for line in f:
+            js = json.loads(line)
+            lines.append(js)
+        pass_lines = model_sanity_check(lines)
+        print(pass_lines)
