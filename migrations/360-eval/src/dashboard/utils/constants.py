@@ -27,6 +27,8 @@ def generate_model_info(filename='models_profiles.jsonl'):
         bedrock_models = []
         openai_models = []
         cost_map = {}
+        model_to_regions = {}
+        region_to_models = {}
         
         # Read and process the JSONL file
         with open(file_path, 'r') as file:
@@ -44,6 +46,20 @@ def generate_model_info(filename='models_profiles.jsonl'):
                         openai_models.append([model_id, region])
                     else:
                         bedrock_models.append([model_id, region])
+                        
+                        # Build region/model mappings for Bedrock models
+                        if region and region != "N/A":
+                            # Add to model_to_regions mapping
+                            if model_id not in model_to_regions:
+                                model_to_regions[model_id] = []
+                            if region not in model_to_regions[model_id]:
+                                model_to_regions[model_id].append(region)
+                            
+                            # Add to region_to_models mapping
+                            if region not in region_to_models:
+                                region_to_models[region] = []
+                            if model_id not in region_to_models[region]:
+                                region_to_models[region].append(model_id)
 
                     # Build cost map entry
                     # Handle the case where 'input_token_cost' might be misspelled as 'input'
@@ -62,15 +78,17 @@ def generate_model_info(filename='models_profiles.jsonl'):
         return {
             "DEFAULT_BEDROCK_MODELS": bedrock_models,
             "DEFAULT_OPENAI_MODELS": openai_models,
-            "DEFAULT_COST_MAP": cost_map
+            "DEFAULT_COST_MAP": cost_map,
+            "MODEL_TO_REGIONS": model_to_regions,
+            "REGION_TO_MODELS": region_to_models
         }
 
     except FileNotFoundError:
         print(f"Error: File '{file_path}' not found.")
-        return {"DEFAULT_BEDROCK_MODELS": [], "DEFAULT_OPENAI_MODELS": [], "DEFAULT_COST_MAP": {}}
+        return {"DEFAULT_BEDROCK_MODELS": [], "DEFAULT_OPENAI_MODELS": [], "DEFAULT_COST_MAP": {}, "MODEL_TO_REGIONS": {}, "REGION_TO_MODELS": {}}
     except Exception as e:
         print(f"Error: {str(e)}")
-        return {"DEFAULT_BEDROCK_MODELS": [], "DEFAULT_OPENAI_MODELS": [], "DEFAULT_COST_MAP": {}}
+        return {"DEFAULT_BEDROCK_MODELS": [], "DEFAULT_OPENAI_MODELS": [], "DEFAULT_COST_MAP": {}, "MODEL_TO_REGIONS": {}, "REGION_TO_MODELS": {}}
 
 """Constants for the Streamlit dashboard."""
 
@@ -160,8 +178,12 @@ defaults = generate_model_info('models_profiles.jsonl')
 DEFAULT_BEDROCK_MODELS = defaults['DEFAULT_BEDROCK_MODELS']
 DEFAULT_OPENAI_MODELS = defaults['DEFAULT_OPENAI_MODELS']
 DEFAULT_COST_MAP = defaults['DEFAULT_COST_MAP']
+MODEL_TO_REGIONS = defaults['MODEL_TO_REGIONS']
+REGION_TO_MODELS = defaults['REGION_TO_MODELS']
 
 # Load judge data
 judges = generate_model_info('judge_profiles.jsonl')
 DEFAULT_JUDGES = judges['DEFAULT_BEDROCK_MODELS']
 DEFAULT_JUDGES_COST = judges['DEFAULT_COST_MAP']
+JUDGE_MODEL_TO_REGIONS = judges['MODEL_TO_REGIONS']
+JUDGE_REGION_TO_MODELS = judges['REGION_TO_MODELS']

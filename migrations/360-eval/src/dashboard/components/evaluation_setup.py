@@ -273,7 +273,7 @@ class EvaluationSetupComponent:
                 "Parallel API Calls",
                 min_value=1,
                 max_value=20,
-                value=st.session_state.current_evaluation_config["parallel_calls"],
+                # value=st.session_state.current_evaluation_config["parallel_calls"],
                 key="adv_parallel_calls",
                 on_change=self._update_parallel_calls_adv,
                 help="How many API calls to run simultaneously. Higher values = faster execution but may hit rate limits. Start with 4 for most use cases."

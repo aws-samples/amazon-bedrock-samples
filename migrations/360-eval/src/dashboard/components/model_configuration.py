@@ -8,7 +8,11 @@ from ..utils.constants import (
     DEFAULT_COST_MAP,
     DEFAULT_JUDGES_COST,
     DEFAULT_JUDGES,
-    AWS_REGIONS
+    AWS_REGIONS,
+    MODEL_TO_REGIONS,
+    REGION_TO_MODELS,
+    JUDGE_MODEL_TO_REGIONS,
+    JUDGE_REGION_TO_MODELS
 )
 from ..utils.state_management import save_current_evaluation
 
@@ -16,22 +20,61 @@ from ..utils.state_management import save_current_evaluation
 class ModelConfigurationComponent:
     """Component for configuring models and judge models."""
     
+    def __init__(self):
+        # Initialize session state for model/region filtering
+        if 'selected_bedrock_model' not in st.session_state:
+            st.session_state.selected_bedrock_model = None
+        if 'filtered_regions' not in st.session_state:
+            st.session_state.filtered_regions = list(REGION_TO_MODELS.keys()) if REGION_TO_MODELS else AWS_REGIONS
+        if 'filtered_models' not in st.session_state:
+            st.session_state.filtered_models = {}
+    
+    def _on_region_change(self):
+        """Handle region selection change and auto-correct model selection."""
+        selected_region = st.session_state.aws_region
+        if selected_region in REGION_TO_MODELS:
+            available_models = REGION_TO_MODELS[selected_region]
+            # Auto-select first available model if current selection is invalid
+            if st.session_state.selected_bedrock_model not in available_models and available_models:
+                st.session_state.selected_bedrock_model = available_models[0]
+            st.session_state.filtered_models = available_models
+    
+    def _on_model_change(self):
+        """Handle model selection change and auto-correct region selection."""
+        selected_model = st.session_state.bedrock_model_select
+        if selected_model in MODEL_TO_REGIONS:
+            available_regions = MODEL_TO_REGIONS[selected_model]
+            # Auto-select first available region if current selection is invalid
+            if st.session_state.aws_region not in available_regions and available_regions:
+                st.session_state.aws_region = available_regions[0]
+            st.session_state.filtered_regions = available_regions
+    
     def render(self):
         """Render the model configuration component."""
         
-        # Region selection
+        # Determine available regions based on selected model
+        available_regions = st.session_state.filtered_regions if hasattr(st.session_state, 'filtered_regions') else list(REGION_TO_MODELS.keys())
+        if not available_regions:
+            available_regions = AWS_REGIONS
+        
+        # Region selection with dynamic filtering
         selected_region = st.selectbox(
             "AWS Region",
-            options=AWS_REGIONS,
-            index=1,  # Default to us-east-2
-            key="aws_region"
+            options=available_regions,
+            index=0 if available_regions else 0,
+            key="aws_region",
+            on_change=self._on_region_change
         )
         
         # Available models tabs (Bedrock, OpenAI)
         tab1, tab2 = st.tabs(["Bedrock Models", "Other Models"])
         
         with tab1:
-            bedrock_models = [model[0] for model in DEFAULT_BEDROCK_MODELS]
+            # Get models available in selected region
+            if selected_region in REGION_TO_MODELS:
+                bedrock_models = REGION_TO_MODELS[selected_region]
+            else:
+                bedrock_models = [model[0] for model in DEFAULT_BEDROCK_MODELS]
             self._render_model_dropdown(bedrock_models, "bedrock", selected_region)
         
         with tab2:
@@ -112,11 +155,22 @@ class ModelConfigurationComponent:
         col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
         
         with col1:
-            selected_model = st.selectbox(
-                "Select Model",
-                options=model_list,
-                key=f"{prefix}_model_select"
-            )
+            if prefix == "bedrock":
+                # For Bedrock models, add on_change callback
+                selected_model = st.selectbox(
+                    "Select Model",
+                    options=model_list if model_list else ["No models available in this region"],
+                    key=f"{prefix}_model_select",
+                    on_change=self._on_model_change if model_list else None,
+                    disabled=not model_list
+                )
+            else:
+                # For non-Bedrock models, no region filtering
+                selected_model = st.selectbox(
+                    "Select Model",
+                    options=model_list,
+                    key=f"{prefix}_model_select"
+                )
         
         # Get default costs
         default_input_cost = DEFAULT_COST_MAP.get(selected_model, {"input": 0.001, "output": 0.002})["input"]
@@ -154,7 +208,7 @@ class ModelConfigurationComponent:
     
     def _render_judge_selection(self, region):
         """Render the judge model selection UI."""
-        # Use Claude models as default judges
+        # Ignore the passed region parameter - use judge's own regions from config
         judge_options = [m[0] for m in DEFAULT_JUDGES]
         judge_regions = {m[0]: m[1] for m in DEFAULT_JUDGES}
         col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
@@ -170,10 +224,11 @@ class ModelConfigurationComponent:
         if isinstance(selected_judge, int):
             selected_judge = judge_options[selected_judge] if selected_judge < len(judge_options) else judge_options[0]
         
-        # Get default costs
+        # Get default costs and region from judge config
         default_input_cost = DEFAULT_JUDGES_COST.get(selected_judge, {"input": 0.001, "output": 0.002})["input"]
         default_output_cost = DEFAULT_JUDGES_COST.get(selected_judge, {"input": 0.001, "output": 0.002})["output"]
-        region = judge_regions.get(selected_judge, "us-east-1")
+        # Use the judge's predefined region from the config file
+        judge_region = judge_regions.get(selected_judge, "us-east-1")
         with col2:
             judge_input_cost = st.number_input(
                 "Input Cost",
@@ -201,7 +256,7 @@ class ModelConfigurationComponent:
                 "Add Judge",
                 key="add_judge",
                 on_click=self._add_judge_model,
-                args=(selected_judge, region, judge_input_cost, judge_output_cost)
+                args=(selected_judge, judge_region, judge_input_cost, judge_output_cost)
             )
     
     def _add_model(self, model_id, region, input_cost, output_cost):
