@@ -572,14 +572,11 @@ def check_model_access(provider_params, model_id):
 
     except ClientError as e:
         error_code = e.response.get('Error', {}).get('Code', '')
-        error_message = e.response.get('Error', {}).get('Message', '')
-
         if error_code == 'AccessDeniedException':
             return 'denied'
         elif error_code == 'ValidationException':
             return 'denied'
         elif error_code == 'ThrottlingException':
-            # Throttling means we have access but hit rate limits
             return 'granted'
         else:
             return 'denied'
