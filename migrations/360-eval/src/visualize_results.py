@@ -1035,7 +1035,6 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
                               stream=False,
                               provider_params={"maxTokens": INFERENCE_MAX_TOKENS,
                                                "temperature": INFERENCE_TEMPERATURE,
-                                               # "topP": 0.9,
                                                "aws_region_name": INFERENCE_REGION})['text']
     html = Template(HTML_TEMPLATE).render(
         timestamp=formatted_date,

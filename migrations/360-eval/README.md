@@ -227,6 +227,9 @@ python src/benchmarks_run.py input_file.jsonl \
 
 The benchmarking tool automatically generates interactive HTML reports when it completes. These reports can be found in the output directory specified (default: `benchmark_results/`).
 
+**⚠️ Report Generation Requirement:**
+HTML report generation requires access to the `us.amazon.nova-premier-v1:0` model in your AWS account. This model is used to analyze evaluation results and create the report content. If this model is not accessible, evaluations will complete successfully but HTML reports will not be generated.
+
 The reports include:
 - Performance comparisons across models
 - Latency and throughput metrics
@@ -254,6 +257,7 @@ The reports include:
 - Streamlit
 - Scipy
 - AWS account, Amazon Bedrock access & credentials stored
+- Access to `us.amazon.nova-premier-v1:0` model (required for HTML report generation)
 
 ## License
 
