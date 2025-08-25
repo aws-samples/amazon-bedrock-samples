@@ -231,7 +231,7 @@ class ResponseRewriter:
         
         template_vars.update(self.finding_processor.process_finding_data(finding_type, relevant_findings))
         return template.format(**template_vars)
-    
+
     def rewrite_response(self, user_query, llm_response, ar_findings, model_id, bedrock_runtime_client):
         """Rewrite response handling multiple finding types"""
         result = {
@@ -251,8 +251,17 @@ class ResponseRewriter:
         if not priority_types:
             return result
         
-        # If VALID or TOO_COMPLEX are the only findings, skip rewriting
-        if priority_types == [FindingType.VALID] or priority_types == [FindingType.TOO_COMPLEX]:
+        # Special handling for TOO_COMPLEX as the only finding
+        if priority_types == [FindingType.TOO_COMPLEX]:
+            result["finding_types"] = [FindingType.TOO_COMPLEX.key]
+            result["findings_count"] = len(findings_by_type.get(FindingType.TOO_COMPLEX, []))
+            result["rewritten"] = True
+            result["rewritten_response"] = "This question contains too much information to process accurately. Please break it down into simpler, more focused questions."
+            result["message"] = "Replaced with generic TOO_COMPLEX message"
+            return result
+        
+        # If VALID is the only finding, skip rewriting
+        if priority_types == [FindingType.VALID]:
             result["finding_types"] = [priority_types[0].key]
             result["message"] = f"No rewrite needed. Finding type: {priority_types[0].key}"
             result["findings_count"] = len(findings_by_type.get(priority_types[0], []))
@@ -293,9 +302,7 @@ Your task is to combine multiple corrected answers into a single coherent respon
 
 Original Question: {user_query}
 Original Answer: {llm_response}
-
 The following are corrected versions addressing different issues:
-
 """
                 for i, rewrite in enumerate(rewrites):
                     combine_prompt += f"Correction {i+1}: {rewrite['rewritten_text']}\n\n"
