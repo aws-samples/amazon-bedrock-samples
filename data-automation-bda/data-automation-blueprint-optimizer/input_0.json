@@ -1,0 +1,60 @@
+{
+  "project_arn": "arn:aws:bedrock:us-west-2:883228185105:data-automation-project/56c93a45338c",
+  "blueprint_id": "1ca4815619be",
+  "document_name": "20250815_142905_4b3c5379_2024-Shareholder-Letter-Final.pdf",
+  "dataAutomation_profilearn": "arn:aws:bedrock:us-west-2:883228185105:data-automation-profile/us.data-automation-v1",
+  "project_stage": "LIVE",
+  "input_document": "s3://bedrock-bda-us-west-2-6f47d00e-eb0a-4f9b-93df-357deeb24d8b/bda-optimizer/documents/20250815_142905_4b3c5379_2024-Shareholder-Letter-Final.pdf",
+  "bda_s3_output_location": "s3://bedrock-bda-us-west-2-6f47d00e-eb0a-4f9b-93df-357deeb24d8b/output/",
+  "inputs": [
+    {
+      "instruction": "Extract revenue growth",
+      "data_point_in_document": true,
+      "field_name": "revenue_growth",
+      "expected_output": "11%",
+      "inference_type": "explicit"
+    },
+    {
+      "instruction": "Extract total revenue",
+      "data_point_in_document": true,
+      "field_name": "total_revenue",
+      "expected_output": "$638B",
+      "inference_type": "explicit"
+    },
+    {
+      "instruction": "Extract the name of the company mentioned in the document",
+      "data_point_in_document": true,
+      "field_name": "company_name",
+      "expected_output": "Amazon",
+      "inference_type": "explicit"
+    },
+    {
+      "instruction": "Extract document type",
+      "data_point_in_document": true,
+      "field_name": "document_type",
+      "expected_output": "Shareholder Letter",
+      "inference_type": "explicit"
+    },
+    {
+      "instruction": "Extract the name listed as the document's author",
+      "data_point_in_document": true,
+      "field_name": "author",
+      "expected_output": "Andy Jassy",
+      "inference_type": "explicit"
+    },
+    {
+      "instruction": "Extract operating income",
+      "data_point_in_document": true,
+      "field_name": "operating_income",
+      "expected_output": "$68.8B",
+      "inference_type": "explicit"
+    },
+    {
+      "instruction": "Extract free cash flow",
+      "data_point_in_document": true,
+      "field_name": "free_cash_flow",
+      "expected_output": "$35.5B",
+      "inference_type": "explicit"
+    }
+  ]
+}
