@@ -12,6 +12,12 @@ class EvaluationSetupComponent:
     def render(self):
         """Render the evaluation setup component."""
         
+        # Check if we need to load configuration from another evaluation
+        if "load_from_eval_config" in st.session_state:
+            self._load_configuration(st.session_state.load_from_eval_config)
+            del st.session_state.load_from_eval_config
+            st.success("Configuration loaded! Please upload a CSV file and enter evaluation name.")
+        
         # Evaluation name
         st.text_input(
             "Evaluation Name",
@@ -207,6 +213,9 @@ class EvaluationSetupComponent:
                 # Reset column selections to ensure user explicitly chooses them
                 st.session_state.current_evaluation_config["prompt_column"] = None
                 st.session_state.current_evaluation_config["golden_answer_column"] = None
+                
+                # Note: CSV will be saved to disk when configuration is saved
+                # This ensures we have a persistent copy for resuming evaluations
     
     def _update_prompt_column(self):
         st.session_state.current_evaluation_config["prompt_column"] = st.session_state.prompt_column
@@ -264,7 +273,7 @@ class EvaluationSetupComponent:
                 "Parallel API Calls",
                 min_value=1,
                 max_value=20,
-                value=st.session_state.current_evaluation_config["parallel_calls"],
+                # value=st.session_state.current_evaluation_config["parallel_calls"],
                 key="adv_parallel_calls",
                 on_change=self._update_parallel_calls_adv,
                 help="How many API calls to run simultaneously. Higher values = faster execution but may hit rate limits. Start with 4 for most use cases."
@@ -286,7 +295,7 @@ class EvaluationSetupComponent:
                 "Pass|Failure Threshold",
                 min_value=2,
                 max_value=4,
-                value=3,
+                value=st.session_state.current_evaluation_config["failure_threshold"],
                 key="adv_failure_threshold",
                 on_change=self._update_failure_threshold_adv,
                 help="Value used to define whether an evaluation failed to meet standards, any evaluation metric below this number will be considered failure."
@@ -388,3 +397,104 @@ class EvaluationSetupComponent:
         selected_label = st.session_state.adv_experiment_wait_time_dropdown
         st.session_state.current_evaluation_config["experiment_wait_time"] = wait_time_options[selected_label]
     
+    def _load_configuration(self, source_config):
+        """Load configuration from another evaluation."""
+        from datetime import datetime
+        from ..utils.constants import (
+            DEFAULT_OUTPUT_DIR, DEFAULT_PARALLEL_CALLS,
+            DEFAULT_INVOCATIONS_PER_SCENARIO, DEFAULT_SLEEP_BETWEEN_INVOCATIONS,
+            DEFAULT_EXPERIMENT_COUNTS, DEFAULT_TEMPERATURE_VARIATIONS, DEFAULT_FAILURE_THRESHOLD
+        )
+        
+        # Just use the single task fields directly
+        task_evaluations = [{
+            "task_type": source_config.get("task_type", ""),
+            "task_criteria": source_config.get("task_criteria", ""),
+            "temperature": source_config.get("temperature", 0.7),
+            "user_defined_metrics": source_config.get("user_defined_metrics", "")
+        }]
+        
+        # Create a new evaluation config with loaded parameters
+        new_config = {
+            # New evaluation metadata
+            "id": None,  # New evaluation
+            "name": f"Benchmark-{datetime.now().strftime('%Y%m%d-%H%M%S')}",  # New default name
+            "status": "configuring",
+            "progress": 0,
+            "created_at": None,
+            "updated_at": None,
+            "results": None,
+            
+            # Data fields - need new upload
+            "csv_data": None,
+            "csv_path": None,
+            "csv_file_name": None,
+            "prompt_column": None,  # User will select after upload
+            "golden_answer_column": None,  # User will select after upload
+            
+            # Copy all configuration parameters
+            "task_type": source_config.get("task_type", ""),
+            "task_criteria": source_config.get("task_criteria", ""),
+            "task_evaluations": task_evaluations,
+            "temperature": source_config.get("temperature", 0.7),
+            "user_defined_metrics": source_config.get("user_defined_metrics", ""),
+            
+            # Copy model and judge configurations - normalize the data structure
+            "selected_models": self._normalize_models(source_config.get("selected_models", [])),
+            "judge_models": self._normalize_judges(source_config.get("judge_models", [])),
+            
+            # Copy advanced parameters
+            "output_dir": source_config.get("output_dir", DEFAULT_OUTPUT_DIR),
+            "parallel_calls": source_config.get("parallel_calls", DEFAULT_PARALLEL_CALLS),
+            "invocations_per_scenario": source_config.get("invocations_per_scenario", DEFAULT_INVOCATIONS_PER_SCENARIO),
+            "sleep_between_invocations": source_config.get("sleep_between_invocations", DEFAULT_SLEEP_BETWEEN_INVOCATIONS),
+            "experiment_counts": source_config.get("experiment_counts", DEFAULT_EXPERIMENT_COUNTS),
+            "temperature_variations": source_config.get("temperature_variations", DEFAULT_TEMPERATURE_VARIATIONS),
+            "failure_threshold": source_config.get("failure_threshold", DEFAULT_FAILURE_THRESHOLD),
+            "experiment_wait_time": source_config.get("experiment_wait_time", 0),
+            
+            # Copy vision settings
+            "vision_enabled": source_config.get("vision_enabled", False),
+            "image_column": None  # User will select after upload if vision is enabled
+        }
+        
+        # Update the current evaluation config
+        st.session_state.current_evaluation_config = new_config
+        
+        # Also update the num_tasks to match the loaded task_evaluations
+        st.session_state.num_tasks = len(task_evaluations)
+        
+        # Synchronize widget session state keys with loaded config
+        # This ensures the Advanced Configuration tab displays the correct values
+        st.session_state.adv_parallel_calls = new_config["parallel_calls"]
+        st.session_state.adv_invocations_per_scenario = new_config["invocations_per_scenario"]
+        st.session_state.adv_sleep_between_invocations = new_config["sleep_between_invocations"]
+        st.session_state.adv_experiment_counts = new_config["experiment_counts"]
+        st.session_state.adv_temperature_variations = new_config["temperature_variations"]
+        st.session_state.adv_failure_threshold = new_config["failure_threshold"]
+    
+    def _normalize_models(self, models):
+        """Normalize model data structure from loaded configuration."""
+        normalized = []
+        for model in models:
+            # Handle both old format (from loaded profiles) and new format
+            normalized.append({
+                "id": model.get("model_id") or model.get("id"),
+                "region": model.get("region", ""),
+                "input_cost": model.get("input_token_cost") or model.get("input_cost", 0),
+                "output_cost": model.get("output_token_cost") or model.get("output_cost", 0)
+            })
+        return normalized
+    
+    def _normalize_judges(self, judges):
+        """Normalize judge data structure from loaded configuration."""
+        normalized = []
+        for judge in judges:
+            # Handle both old format (from loaded profiles) and new format
+            normalized.append({
+                "id": judge.get("model_id") or judge.get("id"),
+                "region": judge.get("region", ""),
+                "input_cost": judge.get("input_cost_per_1k") or judge.get("input_cost", 0),
+                "output_cost": judge.get("output_cost_per_1k") or judge.get("output_cost", 0)
+            })
+        return normalized

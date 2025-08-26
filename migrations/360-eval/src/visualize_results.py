@@ -38,7 +38,7 @@ COMPOSITE_SCORE_WEIGHTS = {
 # Performance thresholds
 PERFORMANCE_THRESHOLDS = {
     'success_rate': {'good': 0.95, 'medium': 0.85},
-    'avg_latency': {'good': 0.6, 'medium': 1.2},
+    'avg_latency': {'good': 0.6, 'medium': 1.5},
     'avg_cost': {'good': 0.5, 'medium': 1.0},
     'avg_otps': {'good': 100, 'medium': 35},
 }
@@ -1035,7 +1035,6 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
                               stream=False,
                               provider_params={"maxTokens": INFERENCE_MAX_TOKENS,
                                                "temperature": INFERENCE_TEMPERATURE,
-                                               # "topP": 0.9,
                                                "aws_region_name": INFERENCE_REGION})['text']
     html = Template(HTML_TEMPLATE).render(
         timestamp=formatted_date,

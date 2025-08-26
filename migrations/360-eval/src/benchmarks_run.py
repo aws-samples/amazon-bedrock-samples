@@ -191,11 +191,11 @@ def benchmark(
             params['api_key'] = os.getenv('GOOGLE_API')
         elif 'azure' in model_id:
             params['api_key'] = os.getenv('AZURE_API_KEY')
-        elif 'openai' in model_id:
-            params['api_key'] = os.getenv('OPENAI_API')
         elif "bedrock" in model_id:
             params['aws_region_name'] = region
             model_id = model_id.replace("bedrock", "bedrock/converse")
+        elif 'openai/' in model_id:
+            params['api_key'] = os.getenv('OPENAI_API')
         else:
             # Sagemaker
             params['aws_region_name'] = region
@@ -400,6 +400,81 @@ def execute_benchmark(scenarios, cfg, unprocessed_dir, yard_stick=3):
     return all_recs
 
 
+def model_sanity_check(models):
+    from utils import check_model_access
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from threading import Lock
+    
+    def check_single_model(model):
+        """Check access for a single model"""
+        params = {"max_tokens": 10, "temperature": 1}
+        model_id = model['model_id']
+        
+        # Setup params based on model type
+        if "gemini" in model_id:
+            params['api_key'] = os.getenv('GOOGLE_API')
+        elif 'azure' in model_id:
+            params['api_key'] = os.getenv('AZURE_API_KEY')
+            model_id = model_id.replace("bedrock", "bedrock/converse")
+        elif 'openai/' in model_id:
+            params['api_key'] = os.getenv('OPENAI_API')
+        else:
+            params['aws_region_name'] = model['region']
+        
+        try:
+            access = check_model_access(params, model_id)
+            return model, access, None
+        except Exception as e:
+            return model, 'failed', str(e)
+    
+    logging.info(f"Checking access for {len(models)} models...")
+    
+    distilled = []
+    failed = []
+    lock = Lock()
+    
+    # Run checks in parallel with ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=min(10, len(models))) as executor:
+        # Submit all model checks
+        future_to_model = {
+            executor.submit(check_single_model, model): model 
+            for model in models
+        }
+        
+        completed = 0
+        total = len(models)
+        
+        # Process results as they complete
+        for future in as_completed(future_to_model):
+            completed += 1
+            original_model = future_to_model[future]
+            
+            try:
+                model, access, error = future.result(timeout=30)  # 30 second timeout per model
+                
+                with lock:
+                    if access == 'granted':
+                        distilled.append(model)
+                        region = model.get('region', 'N/A')
+                        logging.debug(f"✓ Model access granted: {model['model_id']} @ {region} ({completed}/{total})")
+                    else:
+                        region = model.get('region', 'N/A')
+                        failed.append(f"{model['model_id']} @ {region}")
+                        if error:
+                            logging.debug(f"✗ Model access failed: {model['model_id']} @ {region} - {error} ({completed}/{total})")
+                        else:
+                            logging.debug(f"✗ Model access denied: {model['model_id']} @ {region} ({completed}/{total})")
+                            
+            except Exception as e:
+                with lock:
+                    region = original_model.get('region', 'N/A')
+                    failed.append(f"{original_model['model_id']} @ {region}")
+                    logging.error(f"✗ Exception checking model {original_model['model_id']} @ {region}: {str(e)} ({completed}/{total})")
+    
+    logging.info(f"Model access check complete: {len(distilled)} accessible, {len(failed)} failed")
+    return distilled, failed
+
+
 # ----------------------------------------
 # Main entrypoint
 # ----------------------------------------
@@ -527,11 +602,22 @@ def main(
         return
 
     raw_with_models = []
+    raw_models = []
     with open(model_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            js = json.loads(line)
+        for _line in f:
+            raw_models.append(json.loads(_line))
+
+        models, failed = model_sanity_check(raw_models)
+
+        if len(models) == 0:
+            logging.error('The following models failed to generate inference, please check Permissions and Access:\n'  + '\n'.join([str(fail) for fail in failed]))
+            raise
+        if len(failed) > 0:
+            logging.warning('The following models failed to generate inference, please check Permissions and Access:\n'  + '\n'.join([str(fail) for fail in failed]))
+
+        for model in models:
             for s in raw:
-                raw_with_models.append({**s, **js})
+                raw_with_models.append({**s, **model})
 
     scenarios = expand_scenarios(raw_with_models, cfg)
     logging.info(f"Expanded to {len(scenarios)} scenarios")

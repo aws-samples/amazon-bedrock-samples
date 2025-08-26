@@ -23,6 +23,28 @@ def initialize_session_state():
     if "completed_evaluations" not in st.session_state:
         st.session_state.completed_evaluations = []
     
+    # Initialize advanced config widget keys to prevent KeyError
+    if "adv_parallel_calls" not in st.session_state:
+        st.session_state.adv_parallel_calls = DEFAULT_PARALLEL_CALLS
+    
+    if "adv_invocations_per_scenario" not in st.session_state:
+        st.session_state.adv_invocations_per_scenario = DEFAULT_INVOCATIONS_PER_SCENARIO
+    
+    if "adv_sleep_between_invocations" not in st.session_state:
+        st.session_state.adv_sleep_between_invocations = DEFAULT_SLEEP_BETWEEN_INVOCATIONS
+    
+    if "adv_experiment_counts" not in st.session_state:
+        st.session_state.adv_experiment_counts = DEFAULT_EXPERIMENT_COUNTS
+    
+    if "adv_temperature_variations" not in st.session_state:
+        st.session_state.adv_temperature_variations = DEFAULT_TEMPERATURE_VARIATIONS
+    
+    if "adv_failure_threshold" not in st.session_state:
+        st.session_state.adv_failure_threshold = DEFAULT_FAILURE_THRESHOLD
+    
+    if "adv_experiment_wait_time" not in st.session_state:
+        st.session_state.adv_experiment_wait_time = 0
+    
     # Load evaluations from status files for persistence
     load_evaluations_from_files()
     
@@ -201,6 +223,7 @@ def save_configuring_evaluation_to_disk(eval_config):
     try:
         import json
         from pathlib import Path
+        import pandas as pd
         
         # Create status file for configuring evaluation
         status_dir = Path(STATUS_FILES_DIR)
@@ -210,6 +233,15 @@ def save_configuring_evaluation_to_disk(eval_config):
         eval_name = eval_config["name"]
         composite_id = f"{eval_id}_{eval_name}"
         status_file = status_dir / f"eval_{composite_id}_status.json"
+        
+        # Save CSV data to disk if present
+        csv_path = None
+        if eval_config.get("csv_data") is not None and eval_config.get("csv_file_name"):
+            csv_filename = f"eval_{composite_id}_data.csv"
+            csv_path = status_dir / csv_filename
+            # Save the DataFrame to CSV
+            eval_config["csv_data"].to_csv(csv_path, index=False)
+            csv_path = str(csv_path)  # Convert to string for JSON serialization
         
         # Create minimal status data for configuring evaluation
         status_data = {
@@ -229,7 +261,12 @@ def save_configuring_evaluation_to_disk(eval_config):
                 "task_type": eval_config.get("task_type"),
                 "task_criteria": eval_config.get("task_criteria"),
                 "temperature": eval_config.get("temperature"),
-                "csv_file_name": eval_config.get("csv_file_name")
+                "csv_file_name": eval_config.get("csv_file_name"),
+                "prompt_column": eval_config.get("prompt_column"),
+                "golden_answer_column": eval_config.get("golden_answer_column"),
+                "vision_enabled": eval_config.get("vision_enabled", False),
+                "image_column": eval_config.get("image_column"),
+                "csv_path": csv_path  # Store the path to the saved CSV file
             },
             # Store models and judges data for configuring evaluations
             "models_data": eval_config.get("selected_models", []),
@@ -261,6 +298,18 @@ def delete_evaluation_from_disk(eval_id, eval_name):
         # Try composite format first
         status_file = status_dir / f"eval_{composite_id}_status.json"
         if status_file.exists():
+            # Read status file to get CSV path before deleting
+            try:
+                import json
+                with open(status_file, 'r') as f:
+                    status_data = json.load(f)
+                csv_path = status_data.get("evaluation_config", {}).get("csv_path")
+                if csv_path and Path(csv_path).exists():
+                    Path(csv_path).unlink()
+                    deleted_files.append(f"CSV data: {csv_path}")
+            except Exception:
+                pass  # Continue with deletion even if we can't read the file
+            
             status_file.unlink()
             deleted_files.append(f"Status: {status_file}")
         
@@ -269,6 +318,12 @@ def delete_evaluation_from_disk(eval_id, eval_name):
         if legacy_status_file.exists():
             legacy_status_file.unlink()
             deleted_files.append(f"Legacy status: {legacy_status_file}")
+        
+        # Also try to delete CSV file with composite naming
+        csv_file = status_dir / f"eval_{composite_id}_data.csv"
+        if csv_file.exists():
+            csv_file.unlink()
+            deleted_files.append(f"CSV data: {csv_file}")
         
         # 2. Delete CSV invocation files from benchmark-results directory
         benchmark_results_dir = Path(DEFAULT_OUTPUT_DIR)
@@ -451,6 +506,17 @@ def load_evaluations_from_files():
                     stored_config = status_data.get("evaluation_config", {})
                     task_info = extract_task_info_from_jsonl_simple(eval_name)
                     
+                    # Try to reload CSV data if path exists
+                    csv_data = None
+                    csv_path = stored_config.get("csv_path")
+                    if csv_path and Path(csv_path).exists():
+                        try:
+                            import pandas as pd
+                            csv_data = pd.read_csv(csv_path)
+                        except Exception as e:
+                            import logging
+                            logging.warning(f"Could not reload CSV from {csv_path}: {str(e)}")
+                    
                     # Create evaluation config
                     eval_config = {
                         "id": eval_id,
@@ -480,7 +546,15 @@ def load_evaluations_from_files():
                         "experiment_wait_time": stored_config.get("experiment_wait_time", 0),
                         "user_defined_metrics": stored_config.get("user_defined_metrics", ""),
                         "temperature": stored_config.get("temperature"),
-                        "csv_file_name": stored_config.get("csv_file_name")
+                        "csv_file_name": stored_config.get("csv_file_name"),
+                        # CSV data is reloaded from saved file if available
+                        "csv_data": csv_data,  # Will be DataFrame if CSV was reloaded, None otherwise
+                        # Retrieve actual column names from stored config
+                        "prompt_column": stored_config.get("prompt_column"),
+                        "golden_answer_column": stored_config.get("golden_answer_column"),
+                        "vision_enabled": stored_config.get("vision_enabled", False),
+                        "image_column": stored_config.get("image_column"),
+                        "csv_path": csv_path  # Keep the path for reference
                     }
                     
                     st.session_state.evaluations.append(eval_config)

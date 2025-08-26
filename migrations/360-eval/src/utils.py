@@ -183,10 +183,19 @@ RETRYABLE_EXCEPTIONS = (
 class RetryTracker:
     def __init__(self):
         self.attempts = 0
+        self.had_300_second_wait = False
 
     def increment(self, retry_state):
         self.attempts = retry_state.attempt_number
-        logger.info(f"Retry attempt {self.attempts}, sleeping for {retry_state.next_action.sleep} seconds")
+        wait_time = retry_state.next_action.sleep if retry_state.next_action else 0
+        logger.info(f"Retry attempt {self.attempts}, sleeping for {wait_time} seconds")
+        
+        # If we're about to wait 300 seconds and already had one 300s wait, stop retrying
+        if wait_time >= 300:
+            if self.had_300_second_wait:
+                logger.info("Already waited 300 seconds once, stopping retries")
+                raise Exception("Max wait time reached - stopping after one 300-second retry")
+            self.had_300_second_wait = True
 
 
 # Retry decorator with exponential backoff
@@ -543,3 +552,35 @@ def convert_scientific_to_decimal(df):
             pass
 
     return result_df
+
+
+def check_model_access(provider_params, model_id):
+    """
+    Check if we have access to invoke a specific model
+    """
+    try:
+        messages = [{"content": 'HI', "role": "user"}]
+        completed = completion(
+            model=model_id,
+            messages=messages,
+            stream=True,
+            **provider_params
+        )
+
+        # If we get a response without error, access is granted
+        return 'granted'
+
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', '')
+        if error_code == 'AccessDeniedException':
+            return 'denied'
+        elif error_code == 'ValidationException':
+            return 'denied'
+        elif error_code == 'ThrottlingException':
+            return 'granted'
+        else:
+            return 'denied'
+    except Exception:
+        return 'denied'
+
+
