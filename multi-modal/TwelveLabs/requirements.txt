@@ -1,0 +1,9 @@
+boto3>=1.28.0
+opensearch-py>=2.3.0
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.0.0
+ipython>=7.0.0 
+numpy>=1.21.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
