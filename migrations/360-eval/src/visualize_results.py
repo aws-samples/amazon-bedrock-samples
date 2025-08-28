@@ -1254,7 +1254,7 @@ def create_integrated_analysis_table(model_task_metrics):
         header_height = 45  # Height for table header
         row_height = 30     # Height per data row
         title_height = 10   # Space for title and subtitle
-        margin_height = 10  # Top and bottom margins
+        margin_height = 30  # Top and bottom margins
         
         total_height = header_height + (len(task_data) * row_height) + title_height + margin_height
         

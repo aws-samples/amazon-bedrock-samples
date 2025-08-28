@@ -13,6 +13,10 @@ from tenacity import retry, stop_after_delay, wait_exponential, retry_if_excepti
 from litellm import completion, RateLimitError, ServiceUnavailableError, APIError, APIConnectionError, BadRequestError
 from litellm import token_counter
 from botocore.exceptions import ClientError
+import litellm
+
+litellm.drop_params = True
+
 
 logger = logging.getLogger(__name__)
 

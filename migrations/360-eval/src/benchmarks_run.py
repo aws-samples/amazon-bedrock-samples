@@ -589,7 +589,7 @@ def main(
                 "task_types": js["task"]["task_type"],
                 "task_criteria": js["task"]["task_criteria"],
                 "golden_answer": js.get("golden_answer", ""),
-                "configured_output_tokens_for_request": js.get("expected_output_tokens", 200),
+                "configured_output_tokens_for_request": js.get("expected_output_tokens", 5000),
                 "region": js.get("region", "us-east-1"),
                 "temperature": js.get("temperature", 0.7),
                 "user_defined_metrics": js.get("user_defined_metrics", ""),
