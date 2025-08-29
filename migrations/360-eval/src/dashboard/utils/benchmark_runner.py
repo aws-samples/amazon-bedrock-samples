@@ -282,20 +282,37 @@ def run_benchmark_process(eval_id):
         # Setup evaluation files (JSONL, model profiles, judge profiles)
         dashboard_logger.info(f"Setting up evaluation files for {eval_id}: JSONL conversion, model profiles, judge profiles")
         try:
-            # Convert CSV data to JSONL
-            jsonl_path = convert_to_jsonl(
-                evaluation_config["csv_data"],
-                evaluation_config["prompt_column"],
-                evaluation_config["golden_answer_column"],
-                evaluation_config["task_type"],
-                evaluation_config["task_criteria"],
-                "",
-                evaluation_config["name"],
-                evaluation_config.get("temperature", 0.7),
-                evaluation_config.get("user_defined_metrics", ""),
-                vision_enabled=evaluation_config.get("vision_enabled", False),
-                image_column=evaluation_config.get("image_column")
-            )
+            # Check if JSONL file already exists (for resumed evaluations)
+            from .constants import PROJECT_ROOT
+            prompt_eval_dir = Path(PROJECT_ROOT) / "prompt-evaluations"
+            jsonl_path = prompt_eval_dir / f"{eval_name}.jsonl"
+            
+            if jsonl_path.exists():
+                dashboard_logger.info(f"JSONL file already exists for {eval_name}, using existing file")
+            else:
+                # Convert CSV data to JSONL only if csv_data exists
+                if "csv_data" not in evaluation_config:
+                    error_msg = "Cannot create new evaluation without CSV data. This evaluation may have been created in a previous session."
+                    dashboard_logger.error(f"File setup failed for {eval_id}: {error_msg}")
+                    _update_status_file(status_file, "failed", 0, error=error_msg)
+                    update_evaluation_status(eval_id, "failed", 0, error=error_msg)
+                    _cleanup_evaluation_logs(eval_id, preserve_on_failure=True)
+                    return False
+                    
+                jsonl_path = convert_to_jsonl(
+                    evaluation_config["csv_data"],
+                    evaluation_config["prompt_column"],
+                    evaluation_config["golden_answer_column"],
+                    evaluation_config["task_type"],
+                    evaluation_config["task_criteria"],
+                    "",
+                    evaluation_config["name"],
+                    evaluation_config.get("temperature", 0.7),
+                    evaluation_config.get("user_defined_metrics", ""),
+                    vision_enabled=evaluation_config.get("vision_enabled", False),
+                    image_column=evaluation_config.get("image_column")
+                )
+            
             if not jsonl_path:
                 error_msg = "Failed to convert CSV data to JSONL format"
                 dashboard_logger.error(f"File setup failed for {eval_id}: {error_msg}")
@@ -556,6 +573,21 @@ def run_benchmark_process(eval_id):
                                    evaluation_config=evaluation_config)
                 update_evaluation_status(eval_id, "completed", 100, results=results_path)
                 dashboard_logger.info(f"Evaluation completed successfully. Results: {'; '.join(results_info)}")
+                
+                # Clean up temporary CSV file after successful completion
+                try:
+                    csv_path = evaluation_config.get("csv_path")
+                    if not csv_path:
+                        # Try to construct the path from composite ID
+                        csv_file = Path(STATUS_FILES_DIR) / f"eval_{composite_id}_data.csv"
+                        if csv_file.exists():
+                            csv_path = str(csv_file)
+                    
+                    if csv_path and Path(csv_path).exists():
+                        Path(csv_path).unlink()
+                        dashboard_logger.info(f"Cleaned up temporary CSV file: {csv_path}")
+                except Exception as e:
+                    dashboard_logger.warning(f"Could not clean up CSV file: {str(e)}")
             else:
                 # CSV exists but contains no valid data - treat as failure
                 error_msg = f"Evaluation failed: CSV file generated but contains no successful model responses. All invocations appear to have failed."

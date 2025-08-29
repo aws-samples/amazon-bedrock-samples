@@ -91,6 +91,11 @@ The benchmarking tool requires input data in JSONL format, with each line contai
   - Critical for objective evaluation metrics
   - Should represent a high-quality answer that meets all task criteria
 
+- `url_image` (optional): URL or path to an image for vision-enabled evaluations
+  - Required when using `--vision_enabled true`
+  - Can be a web URL or local file path
+  - Supports JPG, PNG, GIF, WebP, and BMP formats
+
 Example:
 ```json
 {
@@ -101,6 +106,20 @@ Example:
     "task_criteria": "Summarize the text provided ensuring that the main message is not diluted nor changed"
   },
   "golden_answer": "Edge computing is a distributed computing paradigm that brings computation and data storage closer to the location where it is needed, improving response times and saving bandwidth by processing data near the source rather than relying on a central data center."
+}
+```
+
+Example with vision:
+```json
+{
+  "text_prompt": "Describe what you see in this image.",
+  "expected_output_tokens": 250,
+  "task": {
+    "task_type": "Image Description", 
+    "task_criteria": "Provide a detailed description of the image content"
+  },
+  "golden_answer": "A detailed description of the expected image content.",
+  "url_image": "https://example.com/image.jpg"
 }
 ```
 
@@ -118,15 +137,15 @@ The benchmarking tool requires to input the model profiles in JSONL format, with
 
 - `region`: AWS region for Bedrock models (example: "us-east-1")
   - Region where the Bedrock model is available
+  - Not required for third-party models
 
-- `inference_profile`: Performance profile (example: "standard")
-  - Controls inference settings like batch size, throughput, etc.
-
-- `input_token_cost`: Cost per 1,000 input tokens (example: 0.0008)
+- `input_token_cost` or `input_cost_per_1k`: Cost per 1,000 input tokens (example: 0.0008)
   - Used for cost calculation and reporting
+  - Both field names are supported
 
-- `output_token_cost`: Cost per 1,000 output tokens (example: 0.0032)
+- `output_token_cost` or `output_cost_per_1k`: Cost per 1,000 output tokens (example: 0.0032)
   - Used for cost calculation and reporting
+  - Both field names are supported
 
 Example:
 ```json
@@ -170,7 +189,7 @@ Example:
 
 ### 📝 Vision Model Compatibility Important Notes
 
-When using the vision functionality (--vision_enabled flag or enabling "Vision Model" in the dashboard), ensure you're using a model that supports image inputs. 
+When using the vision functionality (`--vision_enabled true` flag or enabling "Vision Model" in the dashboard), ensure you're using a model that supports image inputs. Vision mode allows models to process both text prompts and images together. 
 
 
 1. **Error Handling**: If you send image content to a non-vision model, the evaluation will continue but the incorrectly configured evaluations will be stored in the logs as: "Model 'model_name' does not support vision capabilities"
@@ -186,10 +205,18 @@ When using the vision functionality (--vision_enabled flag or enabling "Vision M
 
 ## Usage
 
+### File Path Resolution
+
+- **Input evaluation files**: Should be placed in the `prompt-evaluations/` directory. The tool will automatically look for input files in this directory.
+- **Model profiles**: If not specified, defaults to `default-config/models_profiles.jsonl`
+- **Judge profiles**: If not specified, defaults to `default-config/judge_profiles.jsonl`
+- **Output files**: Saved to the directory specified by `--output_dir` (default: `benchmark-results/`)
+
 ### Running Benchmarks
 
 ```bash
 # Basic usage
+# Note: Input files should be placed in the prompt-evaluations/ directory
 python src/benchmarks_run.py input_file.jsonl
 ```
 ```bash
@@ -197,35 +224,44 @@ python src/benchmarks_run.py input_file.jsonl
 python src/benchmarks_run.py input_file.jsonl \
     --output_dir benchmark_results \
     --parallel_calls 4 \
-    --invocations_per_scenario 5 \
-    --sleep_between_invocations 60 \
-    --experiment_counts 1 \
+    --invocations_per_scenario 2 \
+    --sleep_between_invocations 3 \
+    --experiment_counts 2 \
     --experiment_name "My-Benchmark" \
+    --experiment_wait_time 0 \
     --temperature_variations 2 \
     --user_defined_metrics "business writing style, brand adherence" \
     --model_file_name "name of the jsonl file containing the models to evaluate" \
     --judge_file_name "name of the jsonl file containing the judges used to evaluate" \
-    --evaluation_pass_threshold 3
+    --evaluation_pass_threshold 3 \
+    --report true \
+    --vision_enabled false
 ```
 
 #### Command Line Arguments
 
-- `input_file`: JSONL file with benchmark scenarios (required)
+- `input_file`: JSONL file with benchmark scenarios (required) - should be placed in `prompt-evaluations/` directory
 - `--output_dir`: Directory to save results (default: "benchmark-results")
 - `--parallel_calls`: Number of parallel API calls (default: 4)
-- `--invocations_per_scenario`: Invocations per scenario (default: 5)
-- `--sleep_between_invocations`: Sleep time in seconds between invocations (default: 60)
-- `--experiment_counts`: Number of experiment repetitions (default: 1)
+- `--invocations_per_scenario`: Invocations per scenario (default: 2)
+- `--sleep_between_invocations`: Sleep time in seconds between invocations (default: 3)
+- `--experiment_counts`: Number of experiment repetitions (default: 2)
 - `--experiment_name`: Name for this benchmark run (default: "Benchmark-YYYYMMDD")
+- `--experiment_wait_time`: Wait time in seconds between experiments (default: 0, no wait)
 - `--temperature_variations`: Number of pct variations in the evaluation dataset default temperature ( + - 25th percentile)
 - `--user_defined_metrics`:  Comma delimited user-defined evaluation metrics tailored to specific use cases 
-- `--model_file_name`: Name of the jsonl file containing the models to evaluate 
-- `--judge_file_name`: Name of the jsonl file containing the judges used to evaluate
-- `--evaluation_pass_threshold`: Number used by in the evaluation to determine Pass|Fails
+- `--model_file_name`: Name of the jsonl file containing the models to evaluate (defaults to `default-config/models_profiles.jsonl`)
+- `--judge_file_name`: Name of the jsonl file containing the judges used to evaluate (defaults to `default-config/judge_profiles.jsonl`)
+- `--evaluation_pass_threshold`: Number used by in the evaluation to determine Pass|Fails (default: 3)
+- `--report`: Generate HTML report after benchmarking (default: true)
+- `--vision_enabled`: Enable vision model capabilities for image inputs (default: false)
 
 ### Visualizing Results
 
 The benchmarking tool automatically generates interactive HTML reports when it completes. These reports can be found in the output directory specified (default: `benchmark_results/`).
+
+**⚠️ Report Generation Requirement:**
+HTML report generation requires access to the `us.amazon.nova-premier-v1:0` model in your AWS account. This model is used to analyze evaluation results and create the report content. If this model is not accessible, evaluations will complete successfully but HTML reports will not be generated.
 
 The reports include:
 - Performance comparisons across models
@@ -254,6 +290,7 @@ The reports include:
 - Streamlit
 - Scipy
 - AWS account, Amazon Bedrock access & credentials stored
+- Access to `us.amazon.nova-premier-v1:0` model (required for HTML report generation)
 
 ## License
 

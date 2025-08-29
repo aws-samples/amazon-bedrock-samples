@@ -222,5 +222,15 @@ class ResultsViewerComponent:
         
         if eval_config.get('user_defined_metrics'):
             st.write(f"**User-Defined Metrics:** {eval_config['user_defined_metrics']}")
+        
+        # Add Load Config button
+        st.divider()
+        col1, col2, col3 = st.columns([1, 1, 2])
+        with col1:
+            if st.button("📋 Load Config", key=f"load_config_{eval_id}", 
+                        help="Load this evaluation's configuration to create a new evaluation"):
+                st.session_state.load_from_eval_config = eval_config.copy()
+                st.session_state.navigate_to_setup = True
+                st.rerun()
 
     

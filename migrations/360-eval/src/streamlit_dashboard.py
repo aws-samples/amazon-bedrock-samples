@@ -91,7 +91,13 @@ def main():
             
             # Navigation tabs in sidebar - always include Reports tab
             tab_names = ["Setup", "Monitor", "Evaluations", "Reports"]
-            active_tab = st.radio("Navigation", tab_names)
+            
+            # Check if we need to navigate to Setup tab
+            if "navigate_to_setup" in st.session_state and st.session_state.navigate_to_setup:
+                st.session_state.nav_radio = "Setup"
+                del st.session_state.navigate_to_setup
+            
+            active_tab = st.radio("Navigation", tab_names, key="nav_radio")
             logger.info(f"Selected tab: {active_tab}")
         
         # Main area - show different components based on active tab
