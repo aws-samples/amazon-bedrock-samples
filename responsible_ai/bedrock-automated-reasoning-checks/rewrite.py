@@ -201,11 +201,11 @@ class FindingProcessor:
                 if true_stmts and false_stmts:
                     scenario_group = []
                     scenario_group.append("Scenario True:")
-                    for stmt in true_stmts[:3]:  
+                    for stmt in true_stmts:  
                         scenario_group.append(f"- {stmt['naturalLanguage']}")
                     
                     scenario_group.append("\nScenario False:")
-                    for stmt in false_stmts[:3]:  
+                    for stmt in false_stmts:  
                         scenario_group.append(f"- {stmt['naturalLanguage']}")
                     
                     all_scenarios.append("\n".join(scenario_group))
@@ -299,7 +299,6 @@ class ResponseRewriter:
             else:
                 combine_prompt = f"""
 Your task is to combine multiple corrected answers into a single coherent response.
-
 Original Question: {user_query}
 Original Answer: {llm_response}
 The following are corrected versions addressing different issues:
@@ -314,7 +313,6 @@ Create a single unified response that:
 3. Does NOT include phrases like "here's a comprehensive response" or "addressing both issues"
 4. Does NOT add any new information beyond what's in the corrections
 5. Maintains a natural, conversational tone
-
 Your response should begin immediately with the answer.
 """
                 
