@@ -43,7 +43,8 @@ bedrock-automated-reasoning-checks/
     ├── automated_reasoning_policy_creator_playground.ipynb
     ├── automated_reasoning_rewrite_playground.ipynb
     ├── automated_reasoning_test_creator_playground.ipynb
-    └── automated_reasoning_valid_at_n_playground.ipynb
+    ├── automated_reasoning_valid_at_n_playground.ipynb
+    └── automated_reasoning_policy_refinement.ipynb
 ```
 
 ## Interactive Notebooks
@@ -68,6 +69,15 @@ Demonstrates how to programmatically create Automated Reasoning policies from so
 - Define variables, types, and logical expressions
 - Create and deploy policies programmatically
 - Test policy creation with the sample medical document
+
+### automated_reasoning_policy_refinement.ipynb
+
+Demonstrates how to programmatically refine Automated Reasoning policies. Features:
+
+- Analyse rules, variables and types and create an annotation to update them
+- Generate scenarios from a created Automated Reasoning policy and test the scenario
+- Apply annotations to the Automated Reasoning policy through the Policy Repair Asset
+- Update the Automated Reasoning Policy with the updated one created through annotations
 
 ### automated_reasoning_rewrite_playground.ipynb
 
@@ -150,9 +160,10 @@ To experiment with this example:
 
 1. Open the `automated_reasoning_policy_creator_playground.ipynb` notebook
 2. Follow the step-by-step guide to create a policy based on the sample medical document
-3. Use the `automated_reasoning_test_creator_playground.ipynb` notebook to create test cases
-4. Use the `automated_reasoning_guardrail_validation_playground.ipynb` to validate responses against your policy
-5. Explore the `automated_reasoning_rewrite_playground.ipynb` to see how non-compliant responses are rewritten
+3. Use the `automated_reasoning_policy_refinement.ipynb` notebook to edit definitions in the Automated Reasoning Policy
+4. Use the `automated_reasoning_test_creator_playground.ipynb` notebook to create test cases
+5. Use the `automated_reasoning_guardrail_validation_playground.ipynb` to validate responses against your policy
+6. Explore the `automated_reasoning_rewrite_playground.ipynb` to see how non-compliant responses are rewritten
 
 ## Key Components
 
