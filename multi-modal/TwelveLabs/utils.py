@@ -283,11 +283,12 @@ class OpenSearchServerlessHelper:
 
 class BedrockTwelvelabsHelper():
     def __init__(self, bedrock_client, 
-                s3_client, aws_account_id: str, model_id: str, s3_bucket_name: str, region: str="us-east-1"):
+                s3_client, aws_account_id: str, model_id: str, cris_model_id: str, s3_bucket_name: str, region: str="us-east-1"):
 
         self.region = region
         self.aws_account_id = aws_account_id
         self.model_id = model_id
+        self.cris_model_id = cris_model_id
         self.bedrock_client = bedrock_client
         self.s3_client= s3_client
         self.s3_bucket_name = s3_bucket_name
@@ -357,9 +358,9 @@ class BedrockTwelvelabsHelper():
 
 
     # Create text embedding
-    def create_text_embedding(self, text_query: str) -> list:
+    def create_text_embedding_async(self, text_query: str) -> list:
         """
-        Create embeddings for text using Marengo on Bedrock
+        Create embeddings for text asynchronously using Marengo on Bedrock using asynchronous API
 
         Args:
             text_query (str): The text query to create an embedding for
@@ -395,10 +396,69 @@ class BedrockTwelvelabsHelper():
         
         return embedding_data
 
+    def create_text_embedding(self, text_query: str) -> list:
+        """
+        Create embeddings for text synchronously using Marengo on Bedrock
+
+        Args:
+            text_query (str): The text query to create an embedding for
+            
+        Returns:
+            list: A list of embedding data
+        """
+        
+        modelInput={
+                "inputType": "text",
+                "inputText": text_query
+        }
+        response = self.bedrock_client.invoke_model(
+            modelId=self.cris_model_id,
+            body=json.dumps(modelInput)
+        )
+        
+        result = json.loads(response["body"].read())
+        return result["data"]
+
     # Create image embedding
     def create_image_embedding(self, image_path: str) -> list:
         """
-        Create embeddings for image using Marengo on Bedrock
+        Create embeddings for image synchronously using Marengo on Bedrock
+        
+        Args:
+            image_path (str): The path to the image to create an embedding for
+            
+        Returns:
+            list: A list of embedding data
+        """
+
+        image_path_basename = os.path.basename(image_path)
+        # Upload image to S3
+        self.s3_client.upload_file(
+            Filename=image_path,
+            Bucket=self.s3_bucket_name,
+            Key=f"{self.s3_images_path}/{image_path_basename}"
+        )
+        s3_image_uri = f's3://{self.s3_bucket_name}/{self.s3_images_path}/{image_path_basename}'
+        modelInput={
+                "inputType": "image",
+                "mediaSource": {
+                    "s3Location": {
+                        "uri": s3_image_uri,
+                        "bucketOwner": self.aws_account_id
+                    }
+                }
+            }
+        response = self.bedrock_client.invoke_model(
+            modelId=self.cris_model_id,
+            body=json.dumps(modelInput),
+        )
+        
+        result = json.loads(response["body"].read())
+        return result["data"]
+
+    def create_image_embedding_async(self, image_path: str) -> list:
+        """
+        Create embeddings for image asynchronously using Marengo on Bedrock using asynchronous API
         
         Args:
             image_path (str): The path to the image to create an embedding for
@@ -446,7 +506,7 @@ class BedrockTwelvelabsHelper():
             return None
         
         return embedding_data
-
+        
     # Create video embedding
     def create_video_embedding(self, video_s3_uri: str) -> list:
         """
