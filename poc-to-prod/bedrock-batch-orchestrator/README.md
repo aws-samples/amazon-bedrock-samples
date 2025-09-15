@@ -134,7 +134,7 @@ To generate embeddings with a model like Titan-V2 embeddings, you do not need to
 
 ![Step Function Execution](static/step-function-console.png)
 
-Monitor your step function as it runs the job(s). **The max number of concurrent jobs is controlled by a CDK context variable in [`cdk.json`](cdk.json) (key: `maxConcurrentJobs`)**. The paths to your resulting CSV file(s) will be aggregated in the outputs from the execution.
+Monitor your step function as it runs the job(s). **The max number of submitted and in-progress jobs is controlled by a CDK context variable in [`cdk.json`](cdk.json) (key: `maxSubmittedAndInProgressJobs`)**. The paths to your resulting CSV file(s) will be aggregated in the outputs from the execution.
 
 The output CSV file(s) will contain all the same columns as your input file.
 
