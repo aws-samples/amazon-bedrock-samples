@@ -17,7 +17,7 @@
     ]
   },
   "context": {
-    "bedrockBatchInferenceMaxConcurrency": 20,
+    "maxSubmittedAndInProgressJobs": 20,
     "bedrockBatchInferenceTimeoutHours": 24,
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
