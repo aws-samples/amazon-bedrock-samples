@@ -137,8 +137,8 @@ public class ConverseMessage {
                 System.out.println("🔧 Tool: " + toolUse.name());
                 System.out.println("   Input: " + toolUse.input());
 
-                // Simulate realistic tool execution
-                String toolResult = executeToolRealistic(toolUse);
+                // Simulate tool execution
+                String toolResult = executeTools(toolUse);
                 System.out.println("   Result: " + toolResult);
 
                 // Add tool result back to conversation
@@ -153,7 +153,7 @@ public class ConverseMessage {
         }
     }
 
-    private static String executeToolRealistic(ToolUseBlock toolUse) {
+    private static String executeTools(ToolUseBlock toolUse) {
         Document input = toolUse.input();
         Map<String, Document> params = input.asMap();
 
