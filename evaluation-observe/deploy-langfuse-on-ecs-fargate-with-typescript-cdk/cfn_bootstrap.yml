@@ -211,11 +211,13 @@ Resources:
           env:
             shell: bash
           phases:
-            pre_build:
+            install:
               commands:
                 - set -ex
                 # Up-front install to fail early (but we reinst later in case it's overwritten):
                 - pip3 install "requests>=2.27,<3"
+              runtime-versions:
+                nodejs: 22  # Update from default (v18) to latest supported NodeJS runtime
             build:
               commands:
                 - set -ex
