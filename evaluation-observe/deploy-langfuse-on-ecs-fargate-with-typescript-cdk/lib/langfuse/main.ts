@@ -305,7 +305,7 @@ export class LangfuseDeployment extends Construct {
         description:
           "Langfuse ENCRYPTION_KEY (Used to encrypt sensitive data. Must be 256 bits, 64 string characters in hex format)",
         generateSecretString: {
-          excludeCharacters: "ghijklmnopqrstuvxyz",
+          excludeCharacters: "ghijklmnopqrstuvwxyz",
           excludePunctuation: true,
           includeSpace: false,
           excludeUppercase: true,
