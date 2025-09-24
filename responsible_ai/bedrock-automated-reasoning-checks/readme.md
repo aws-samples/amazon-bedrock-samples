@@ -10,6 +10,7 @@ Amazon Bedrock Automated Reasoning checks applies formal verification techniques
 This repository provides tools and utilities for working with Automated Reasoning checks in Amazon Bedrock Guardrails capabilities, helping you create, test, validate, and leverage logical reasoning in your guardrail policies to ensure LLM responses adhere to business rules and policies.
 
 ![How to use feedback from Automated Reasoning checks](uploads/feedback_with_ar.png)
+Automated Reasoning checks does not block content like a traditional guardrail. Instead, it provides feedback to steer an LLM towards a correct answer. Developers can use the feedback to iterate with an LLM to rewrite answers. **To implement feedback rewriting, see [Automated Reasoning Rewrite Playground](automated_reasoning_rewrite_playground.ipynb).**
 
 ## Overview
 
