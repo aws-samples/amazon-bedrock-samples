@@ -38,7 +38,7 @@ COMPOSITE_SCORE_WEIGHTS = {
 # Performance thresholds
 PERFORMANCE_THRESHOLDS = {
     'success_rate': {'good': 0.95, 'medium': 0.85},
-    'avg_latency': {'good': 0.6, 'medium': 1.2},
+    # 'avg_latency': {'good': 1.5, 'medium': 2},
     'avg_cost': {'good': 0.5, 'medium': 1.0},
     'avg_otps': {'good': 100, 'medium': 35},
 }
@@ -1107,6 +1107,37 @@ def extract_judge_scores(json_str):
         return {}
 
 
+from collections import defaultdict
+import numpy as np
+def build_task_latency_thresholds(records, method="percentile", value=0.75, round_ndigits=3):
+    """
+    Build latency thresholds per task across models.
+    Parameters
+    ----------
+    """
+    by_task = defaultdict(list)
+    # group latencies by task
+    for r in records:
+        tt = r.get("task_types")
+        lat = r.get("avg_latency")
+        if tt and isinstance(lat, (int, float)) and lat > 0:
+            by_task[tt].append(float(lat))
+    out = {}
+    for tt, lats in by_task.items():
+        arr = np.array(lats, dtype=float)
+        med = float(np.median(arr))
+        if method == "percentile":
+            medium_cutoff = float(np.quantile(arr, value))
+        elif method == "tolerance":
+            medium_cutoff = med * (1 + value)
+        else:
+            raise ValueError("method must be 'percentile' or 'tolerance'")
+        out[tt] = {
+                "good": round(med, round_ndigits),
+                "medium": round(medium_cutoff, round_ndigits)
+        }
+    return out
+
 
 ##############################
 ##############################
@@ -1127,6 +1158,11 @@ def create_integrated_analysis_table(model_task_metrics):
 
     # Prepare the data for the table
     table_data = model_task_metrics.copy()
+
+    thresholds['avg_latency'] = build_task_latency_thresholds(table_data[['model_name', 'task_types', 'avg_latency']].to_dict(orient='records'))
+    # ['avg_output_tokens'].median()
+    # Format Model Name
+    table_data['model_name'] = table_data['model_name'].apply(lambda x: x.split('/')[-1])
 
     # Format metrics for display
     table_data['success_rate_fmt'] = table_data['success_rate'].apply(lambda x: f"{x:.1%}")
@@ -1157,6 +1193,11 @@ def create_integrated_analysis_table(model_task_metrics):
                 return colors['medium']
             else:
                 return colors['poor']
+        elif metric == 'avg_latency':
+            if value['avg_latency'] <= thresholds[metric][value['task_types']]['good']:
+                return colors['good']
+            else:
+                return colors['medium']
         else:  # For latency and cost, lower is better
             if value <= thresholds[metric]['good']:
                 return colors['good']
@@ -1192,7 +1233,7 @@ def create_integrated_analysis_table(model_task_metrics):
                 # Success rate coloring (three-color)
                 [get_color(sr, 'success_rate') for sr in table_data['success_rate']],
                 # Latency coloring (three-color)
-                [get_color(lt, 'avg_latency') for lt in table_data['avg_latency']],
+                [get_color(lt, 'avg_latency') for lt in table_data[['avg_latency','task_types']].to_dict(orient='records')],
                 # Cost coloring (three-color)
                 [get_color(cost, 'avg_cost') for cost in table_data['avg_cost']],
                 # OTPS coloring (just use white)

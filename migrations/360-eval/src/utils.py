@@ -7,6 +7,7 @@ import os
 import random
 import logging
 import base64
+import litellm
 import requests
 import requests.exceptions
 from tenacity import retry, stop_after_delay, wait_exponential, retry_if_exception_type
@@ -15,7 +16,7 @@ from litellm import token_counter
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
-
+litellm.drop_params = True
 
 # ----------------------------------------
 # Request Builders

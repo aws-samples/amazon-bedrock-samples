@@ -50,7 +50,7 @@ def evaluate_with_llm_judge(judge_model_id,
                                        model_response,
                                        golden_answer)
 
-    cfg = {"maxTokens": 1500, "temperature": 0.3, "topP": 0.9, "aws_region_name": judge_region}
+    cfg = {"maxTokens": 1500, "topP": 0.9, "aws_region_name": judge_region}
     try:
         resp = run_inference(model_name=judge_model_id,
                              prompt_text=eval_template,
@@ -105,8 +105,11 @@ def evaluate_with_judges(judges,
     for j in judges:
         try:
             logging.debug(f"Evaluating with judge model {j['model_id']}")
+            model_identification = j["model_id"]
+            if "bedrock" in j["model_id"]:
+                model_identification = model_identification.replace("bedrock", "bedrock/converse")
             r = evaluate_with_llm_judge(
-                judge_model_id=j["model_id"],
+                judge_model_id=model_identification,
                 judge_region=j["region"],
                 prompt=prompt,
                 model_response=model_response,
@@ -193,7 +196,8 @@ def benchmark(
             params['api_key'] = os.getenv('AZURE_API_KEY')
         elif "bedrock" in model_id:
             params['aws_region_name'] = region
-            model_id = model_id.replace("bedrock", "bedrock/converse")
+            if 'converse' not in model_id:
+                model_id = model_id.replace("bedrock", "bedrock/converse")
         elif 'openai/' in model_id:
             params['api_key'] = os.getenv('OPENAI_API')
         else:
@@ -415,7 +419,8 @@ def model_sanity_check(models):
             params['api_key'] = os.getenv('GOOGLE_API')
         elif 'azure' in model_id:
             params['api_key'] = os.getenv('AZURE_API_KEY')
-            model_id = model_id.replace("bedrock", "bedrock/converse")
+        elif 'bedrock' in model_id and 'converse' not in model_id:
+                model_id = model_id.replace("bedrock", "bedrock/converse")
         elif 'openai/' in model_id:
             params['api_key'] = os.getenv('OPENAI_API')
         else:
@@ -589,7 +594,7 @@ def main(
                 "task_types": js["task"]["task_type"],
                 "task_criteria": js["task"]["task_criteria"],
                 "golden_answer": js.get("golden_answer", ""),
-                "configured_output_tokens_for_request": js.get("expected_output_tokens", 200),
+                "configured_output_tokens_for_request": js.get("expected_output_tokens", 4500),
                 "region": js.get("region", "us-east-1"),
                 "temperature": js.get("temperature", 0.7),
                 "user_defined_metrics": js.get("user_defined_metrics", ""),
