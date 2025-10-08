@@ -743,7 +743,7 @@ def create_visualizations(df, model_task_metrics, latency_metrics, cost_metrics)
             task_charts[task] = fig
 
     visualizations['task_charts'] = task_charts
-    visualizations['integrated_analysis_table'], analysis_df = create_integrated_analysis_table(model_task_metrics)
+    visualizations['integrated_analysis_tables'], analysis_df = create_integrated_analysis_table(model_task_metrics)
 
 
 
@@ -1060,7 +1060,8 @@ def create_html_report(output_dir, timestamp, evaluation_names=None):
 
         # Error and regional Analysis
         error_analysis_div=visualizations['error_analysis'],
-        integrated_analysis_table_div=visualizations['integrated_analysis_table'].to_html(full_html=False),
+        integrated_analysis_tables={task: table.to_html(full_html=False) for task, table in visualizations['integrated_analysis_tables'].items()},
+        unique_tasks=list(visualizations['integrated_analysis_tables'].keys()),
         regional_performance_div=visualizations['regional_performance'].to_html(full_html=False),
         
         # TTFB histogram (only if sufficient data)
@@ -1143,17 +1144,17 @@ def build_task_latency_thresholds(records, method="percentile", value=0.75, roun
 ##############################
 def create_integrated_analysis_table(model_task_metrics):
     """
-    Creates an interactive table that integrates performance, speed, and cost metrics
-    for each model and task type with optimal range highlighting using a green/yellow/red color scheme.
+    Creates interactive tables for each task with distance-from-best color coding.
+    Colors are based on how far each model is from the best performer.
     """
-    # Use predefined thresholds for each metric (good, medium, poor)
-    thresholds = PERFORMANCE_THRESHOLDS
-
-    # Define colors
+    # Define colors - now with more gradations for distance-based coloring
     colors = {
-        'good': '#c6efce',  # green
-        'medium': '#ffffcc',  # yellow
-        'poor': '#ffcccc'  # red
+        'best': '#2ecc71',      # Dark green - the best performer
+        'excellent': '#52d68a',  # Medium green - within 5% of best
+        'good': '#c6efce',      # Light green - within 10% of best
+        'medium': '#ffffcc',    # Yellow - within 20% of best
+        'below': '#ffd4a3',     # Orange - within 30% of best
+        'poor': '#ffcccc'       # Light red - more than 30% behind
     }
 
     # Prepare the data for the table
@@ -1245,19 +1246,12 @@ def create_integrated_analysis_table(model_task_metrics):
                  colors['poor'] for score in table_data['composite_score']]
             ]
         )
-    ))
-
-    # Update layout with title and size
-    fig.update_layout(
-        title='Integrated Analysis: Performance vs Speed vs Cost',
-        title_font=dict(size=16),
-        width=900,
-        height=len(table_data) * 25 + 100,  # Dynamic height based on number of rows
-        margin=dict(l=20, r=20, b=20, t=40),
-        template="ggplot2",
-    )
-
-    return fig, table_data.to_dict(orient='records')
+        
+        # Store the table for this task
+        task_tables[task] = fig
+    
+    # Return dictionary of tables for dropdown display
+    return task_tables, model_task_metrics.to_dict(orient='records')
 
 
 def create_regional_performance_analysis(df):

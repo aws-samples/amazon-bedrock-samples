@@ -149,6 +149,15 @@
       text-align: center;
     }
 
+    .task-table {
+      width: 100%;
+    }
+
+    .task-tables-container {
+      position: relative;
+      min-height: 100px;
+    }
+
     .radar-chart-single {
       display: flex;
       justify-content: center;
@@ -254,15 +263,35 @@
 
   <div class="card">
     <h3>Recommendation Analysis: Performance vs Speed vs Cost</h3>
-    {{ integrated_analysis_table_div | safe }}
+    <div class="highlight">
+      <p>The tables below show model performance for each task with color-coded metrics. Thresholds are dynamically adjusted based on the average token size of each task.</p>
+      <div class="model-selector">
+        <label for="taskTableSelect">Select Task: </label>
+        <select id="taskTableSelect" onchange="showTaskTable(this.value)">
+          {% for task in unique_tasks %}
+          <option value="{{ task|replace('.', '_')|replace(':', '_')|replace(' ', '_')|replace('-', '_') }}" {% if loop.first %}selected{% endif %}>{{ task }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="task-tables-container">
+      {% for task, table_html in integrated_analysis_tables.items() %}
+      <div id="table-{{ task|replace('.', '_')|replace(':', '_')|replace(' ', '_')|replace('-', '_') }}" class="task-table"
+           style="{% if not loop.first %}display: none;{% endif %}">
+        {{ table_html | safe }}
+      </div>
+      {% endfor %}
+    </div>
     <div class="highlight">
       <h4>Key</h4>
       <ul>
-        <li><span class="good-key">Good</span>: Optimal performance</li>
-        <li><span class="moderate-key">Moderate</span>: Average performance</li>
-        <li><span class="needs-improvement-key">Needs Improvement</span>: Below optimal thresholds</li>
+        <li><span class="good-key">Dark Green</span>: Best performer in this metric</li>
+        <li><span class="moderate-key">Light Green</span>: Within 5-10% of best</li>
+        <li><span class="moderate-key">Yellow</span>: Within 10-20% of best</li>
+        <li><span class="needs-improvement-key">Orange</span>: Within 20-30% of best</li>
+        <li><span class="needs-improvement-key">Red</span>: More than 30% behind best</li>
       </ul>
-      <p>Score combines success rate (weight: 1.0), speed (weight: 0.5), and cost efficiency (weight: 0.5)</p>
+      <p>Colors show relative performance distance from the task's best performer. Score combines success rate (weight: 1.0), speed (weight: 0.5), and cost efficiency (weight: 0.5)</p>
     </div>
   </div>
 
@@ -440,6 +469,74 @@
         selectedChart.style.display = 'block';
         // Force Plotly to resize
         window.dispatchEvent(new Event('resize'));
+      }
+    }
+    
+    function showTaskTable(taskName) {
+      console.log('Switching to table:', taskName); // Debug logging
+      
+      // Hide all task tables
+      document.querySelectorAll('.task-table').forEach(function (el) {
+        el.style.display = 'none';
+      });
+      
+      // Show selected task's table - match the ID pattern used in HTML template
+      const selectedTable = document.getElementById('table-' + taskName);
+      console.log('Found table element:', selectedTable); // Debug logging
+      
+      if (selectedTable) {
+        selectedTable.style.display = 'block';
+        
+        // Force Plotly tables to re-render properly
+        setTimeout(function() {
+          // Try multiple approaches to re-render Plotly content
+          const plotlyElements = selectedTable.querySelectorAll('div[class*="plotly"]');
+          console.log('Found Plotly elements:', plotlyElements.length); // Debug logging
+          
+          plotlyElements.forEach(function(element) {
+            // Method 1: Standard Plotly resize
+            if (window.Plotly && element._fullLayout) {
+              try {
+                window.Plotly.Plots.resize(element);
+              } catch (e) {
+                console.log('Plotly resize failed:', e);
+              }
+            }
+            
+            // Method 2: Force redraw by manipulating the element
+            if (window.Plotly && element._fullData) {
+              try {
+                window.Plotly.redraw(element);
+              } catch (e) {
+                console.log('Plotly redraw failed:', e);
+              }
+            }
+          });
+          
+          // Method 3: Force reflow by temporarily changing display
+          selectedTable.style.display = 'none';
+          setTimeout(function() {
+            selectedTable.style.display = 'block';
+            
+            // Final resize event
+            window.dispatchEvent(new Event('resize'));
+            
+            // Method 4: Force text repaint by touching font styles
+            const textElements = selectedTable.querySelectorAll('text, span, div');
+            textElements.forEach(function(el) {
+              if (el.style) {
+                const originalColor = el.style.color || '';
+                el.style.color = '#333333';
+                setTimeout(function() {
+                  el.style.color = originalColor || '#333333';
+                }, 1);
+              }
+            });
+          }, 10);
+          
+        }, 100); // Increased delay for better stability
+      } else {
+        console.log('Table not found with ID: table-' + taskName);
       }
     }
     

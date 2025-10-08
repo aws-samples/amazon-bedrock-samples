@@ -21,6 +21,24 @@ Parameters:
       We recommend 'cognito' to manage your Langfuse users through Amazon Cognito. The 'langfuse'
       native auth will have public user sign-up enabled by default through the web UI!
 
+  ClickHouseContainerImage:
+    Type: String
+    Default: 'public.ecr.aws/bitnami/clickhouse:25'
+    Description: >-
+      Source container image (including version) for ClickHouse OLAP (a dependency of Langfuse).
+
+  LangfuseWebContainerImage:
+    Type: String
+    Default: 'ghcr.io/langfuse/langfuse:3'
+    Description: >-
+      Source container image (including version) for main Langfuse web service container.
+
+  LangfuseWorkerContainerImage:
+    Type: String
+    Default: 'ghcr.io/langfuse/langfuse-worker:3'
+    Description: >-
+      Source container image (including version) for main Langfuse background worker container.
+
   CodeRepo:
     Type: String
     Default: https://github.com/aws-samples/amazon-bedrock-samples
@@ -48,6 +66,9 @@ Metadata:
           default: Solution Settings
         Parameters:
           - AuthType
+          - LangfuseWebContainerImage
+          - LangfuseWorkerContainerImage
+          - ClickHouseContainerImage
       - Label:
           default: Source Code Location
         Parameters:
@@ -157,9 +178,18 @@ Resources:
         ComputeType: BUILD_GENERAL1_LARGE
         EnvironmentVariables:
           # Pass CFn stack parameters through to the deploy job:
+          - Name: CLICKHOUSE_IMAGE
+            Type: PLAINTEXT
+            Value: !Ref ClickHouseContainerImage
           - Name: LANGFUSE_AUTH_TYPE
             Type: PLAINTEXT
             Value: !Ref AuthType
+          - Name: LANGFUSE_WEB_IMAGE
+            Type: PLAINTEXT
+            Value: !Ref LangfuseWebContainerImage
+          - Name: LANGFUSE_WORKER_IMAGE
+            Type: PLAINTEXT
+            Value: !Ref LangfuseWorkerContainerImage
           - Name: PUBLIC_REPO
             Type: PLAINTEXT
             Value: !Ref CodeRepo
@@ -181,11 +211,13 @@ Resources:
           env:
             shell: bash
           phases:
-            pre_build:
+            install:
               commands:
                 - set -ex
                 # Up-front install to fail early (but we reinst later in case it's overwritten):
                 - pip3 install "requests>=2.27,<3"
+              runtime-versions:
+                nodejs: 22  # Update from default (v18) to latest supported NodeJS runtime
             build:
               commands:
                 - set -ex
@@ -233,17 +265,45 @@ Resources:
                   import os
                   import requests  # (You'll need to install this!)
                   resp_url = os.environ.get("CFN_EVENT_RESPONSE_URL")
+
+                  def flatten(d, parent_key="", sep="."):
+                      """Flatten nested JSON dicts (basic, doesn't touch arrays)
+
+                      CFn allows us to return complex attribute data types, but doesn't have good
+                      ways to reference nested fields in the template - so best for us to flatten.
+                      This way e.g. `!GetAtt MyDeployment.StackName.MyStackOutput` will work.
+                      """
+                      items = []
+                      for key, value in d.items():
+                          new_key = sep.join((parent_key, key)) if parent_key else key
+                          if isinstance(value, dict):
+                              items.extend(flatten(value, new_key, sep=sep).items())
+                          else:
+                              items.append((new_key, value))
+                      return dict(items)
+
                   if not resp_url:
                       print("No CloudFormation response URL provided")
                       exit(0)
                   try:
                       data = json.loads(os.environ["CFN_EVENT_DATA"])
-                      data["Status"] = "SUCCESS" if int(os.environ["CODEBUILD_BUILD_SUCCEEDING"]) else "FAILED"
+                      if int(os.environ["CODEBUILD_BUILD_SUCCEEDING"]):
+                          data["Status"] = "SUCCESS"
+                          try:
+                              # Pass CDK deploy outputs as attributes of this CFn resource:
+                              with open("cdk.outputs.json") as fouts:
+                                  outputs = json.load(fouts)
+                                  data["Data"] = flatten(outputs)
+                          except FileNotFoundError:
+                              print(
+                                  "No cdk.outputs.json found: Have your deploy job create this "
+                                  "file if you want to pass outputs back to the bootstrap stack."
+                              )
+                      else:
+                          data["Status"] = "FAILED"
                       build_arn = os.environ["CODEBUILD_BUILD_ARN"]
-                      data["PhysicalResourceId"] = build_arn
-                      log_stream = f"/aws/codebuild/{build_arn.partition('/')[2]}"
-                      data["Reason"] = "See details in " + (
-                          f"CloudWatch Log Stream {log_stream}" if log_stream else f"AWS CodeBuild {build_arn}"
+                      data["Reason"] = "See details in CloudWatch Log Stream /aws/codebuild/" + (
+                          build_arn.partition("/")[2]
                       )
                       response = requests.put(resp_url, data=json.dumps(data))
                       print(f"Notified CloudFormation of {data['Status']}")
@@ -351,7 +411,8 @@ Resources:
                           event,
                           context,
                           cfnresponse.FAILED,
-                          { "Reason": f"Unsupported CFN RequestType '{request_type}'" },
+                          {},
+                          reason=f"Unsupported CFN RequestType '{request_type}'",
                       )
               except Exception as e:
                   logging.error("Uncaught exception in CFN custom resource handler - reporting failure")
@@ -360,7 +421,8 @@ Resources:
                       event,
                       context,
                       cfnresponse.FAILED,
-                      { "Reason": str(e) },
+                      {},
+                      reason=f"See CloudWatch {context.log_group_name} > {context.log_stream_name} - {str(e)}",
                   )
                   raise e
 
@@ -377,6 +439,7 @@ Resources:
                           "type": "PLAINTEXT",
                           "value": json.dumps({
                               "LogicalResourceId": event["LogicalResourceId"],
+                              "PhysicalResourceId": event["LogicalResourceId"],
                               "RequestId": event["RequestId"],
                               "StackId": event["StackId"],
                               "NoEcho": event["ResourceProperties"].get("NoEcho", False),
@@ -406,7 +469,11 @@ Resources:
                       context,
                       cfnresponse.SUCCESS,
                       { "Reason": f"Started CodeBuild #{result['build']['buildNumber']}" },
-                      physicalResourceId=result["build"]["arn"],
+                      # Changing physical ID would look like a 'replacement' to CloudFormation,
+                      # causing it to send a delete/CDK destroy request to the old physical ID
+                      # after running CDK deploy on the new one - which is pretty much never what
+                      # we want.
+                      physicalResourceId=event["LogicalResourceId"],
                   )
 
           def handle_delete(event, context):
@@ -462,6 +529,10 @@ Resources:
       Runtime: python3.10
       Timeout: 900
 
+  # IF you enable CodeBuildCallback AND your deployment script creates 'cdk.outputs.json', the
+  # contents should be passed through as output attributes on this CFn resource to use how you want
+  # For example, re-exposing them as outputs of this CFn bootstrap stack) with a reference like:
+  #     !GetAtt SampleDeployment.MyStackName.SomeOutput
   SampleDeployment:
     Type: "Custom::CodeBuildTrigger"
     Properties:
@@ -470,8 +541,8 @@ Resources:
       BuildOnDelete: true
       # NOTE: If CDK deployment takes longer than 1 hour, this CodeBuild-based callback to
       # CloudFormation *will not work* because CFn will time out. In that case can comment out /
-      # unset `CodeBuildCallback`, and the ATTP stack will "succeed" as soon as the CodeBuild job
-      # is triggered, without waiting for it to complete.
+      # unset `CodeBuildCallback`, and the bootstrap stack will "succeed" as soon as the CodeBuild
+      # job is triggered, without waiting for it to complete.
       CodeBuildCallback: true
 
 Outputs:
@@ -484,3 +555,6 @@ Outputs:
   CodeBuildConsoleLink:
     Description: Link to project in AWS CodeBuild Console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/codesuite/codebuild/${AWS::AccountId}/projects/${CodeBuildProject}"
+  LangfuseUrl:
+    Description: Link to deployed Langfuse service
+    Value: !GetAtt SampleDeployment.LangfuseDemo.LangfuseUrl

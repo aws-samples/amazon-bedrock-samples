@@ -84,12 +84,6 @@ export interface ILangfuseServiceSharedProps {
    */
   environment?: { [key: string]: string };
   /**
-   * Source container image tag (version) for the service
-   *
-   * @default '3'
-   */
-  imageTag?: string;
-  /**
    * Memory allocation for the service's ECS Fargate container(s)
    *
    * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html#fargate-tasks-size
@@ -136,9 +130,9 @@ export interface ILangfuseServiceBaseProps extends ILangfuseServiceSharedProps {
    */
   healthCheck: ecs.HealthCheck;
   /**
-   * Source container image name for the service
+   * Source container image (including version tag) for the service
    */
-  imageName: string;
+  imageSource: string;
   /**
    * Port mappings required for this service
    */
@@ -166,7 +160,6 @@ export class LangfuseServiceBase extends Construct {
     super(scope, id);
 
     const cpu = props.cpu || 2048;
-    const imageTag = props.imageTag || "3";
     const memoryLimitMiB = props.memoryLimitMiB || 4096;
     const numReplicas = props.numReplicas || 1;
     const s3EventUploadPrefix = props.s3EventUploadPrefix || "langfuse-events/";
@@ -178,8 +171,8 @@ export class LangfuseServiceBase extends Construct {
     }
 
     const image = new ECRRepoAndDockerImage(this, "ECR", {
-      dockerImageName: `${props.imageName}:${imageTag}`,
-      ecrImageTag: imageTag,
+      dockerImageName: props.imageSource,
+      ecrImageTag: props.imageSource.split(":").pop(),
       tags: props.tags,
     });
 

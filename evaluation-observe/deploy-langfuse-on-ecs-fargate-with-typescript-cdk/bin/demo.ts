@@ -18,6 +18,10 @@ new LangfuseDemoStack(app, "LangfuseDemo", {
   // env: { account: '123456789012', region: 'us-east-1' },
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 
+  // Support setting configurations via env vars, for CFn bootstrap:
+  clickHouseImage: process.env.CLICKHOUSE_IMAGE,
+  langfuseWebImage: process.env.LANGFUSE_WEB_IMAGE,
+  langfuseWorkerImage: process.env.LANGFUSE_WORKER_IMAGE,
   // Env var is expected to be 'cognito' or 'langfuse' - with cognito as the default:
   useCognitoAuth:
     (process.env.LANGFUSE_AUTH_TYPE || "cognito").toLowerCase() == "cognito",

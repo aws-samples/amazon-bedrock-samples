@@ -14,7 +14,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 
 
 export interface BedrockBatchOrchestratorStackProps extends cdk.StackProps {
-  bedrockBatchInferenceMaxConcurrency: number;
+  maxSubmittedAndInProgressJobs: number;
   bedrockBatchInferenceTimeoutHours?: number;
 }
 
@@ -41,10 +41,15 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
     bucket.grantReadWrite(bedrockServiceRole);
 
     // allow cross-region inference: https://docs.aws.amazon.com/bedrock/latest/userguide/batch-iam-sr.html#batch-iam-sr-identity
+    // add permissions for additional models as needed
     bedrockServiceRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ['bedrock:InvokeModel'],
-      resources: ['*'],
+      resources: [
+          'arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-20240307-v1:0',
+          'arn:aws:bedrock:*::inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0',
+          'arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v2:0',
+      ],
     }));
 
     // lambda functions
@@ -151,7 +156,7 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
     });
 
     const postprocessMap = new sfn.Map(this, 'postprocessMap', {
-      maxConcurrency: props.bedrockBatchInferenceMaxConcurrency,
+      maxConcurrency: props.maxSubmittedAndInProgressJobs,
       itemsPath: sfn.JsonPath.stringAt('$.completed_jobs'),
       resultPath: '$.output_paths',
     });
@@ -163,7 +168,7 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
 
     // step function
     const batchProcessingMap = new sfn.Map(this, 'batchProcessingMap', {
-      maxConcurrency: props.bedrockBatchInferenceMaxConcurrency,
+      maxConcurrency: props.maxSubmittedAndInProgressJobs,
       itemsPath: sfn.JsonPath.stringAt('$.jobs'),
       resultPath: '$.completed_jobs',
     });

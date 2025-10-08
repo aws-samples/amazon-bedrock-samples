@@ -7,6 +7,7 @@ This repository contains examples and use-cases to get you started with Function
 This folder contains information on how to use function calling with Amazon Bedrock capabilities.
 The examples are divided as following:
 * [Function calling with the Converse API](function_calling_with_converse): examples on how to set up function call with the [Bedrock Converse API](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html)
+* [Function calling with the Java Converse API](function_calling_with_converse_java)
 * [Function calling with Invoke Model](function_calling_with_invoke): examples on how to set up function call with the [Bedrock invoke model API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html)
 * [Function calling with Bedrock Agents Return of Control functionality](return_of_control): In this folder we provide an example on how to make Bedrock Agents behave like the native LLM function calling using the [return of control](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-returncontrol.html) functionality
 * [Function calling using LangChain tool binding functionality](tool_binding): in this folder we provide an example on how to provide tools descriptions to [LangChain framework](https://blog.langchain.dev/tool-calling-with-langchain/) using the `bind_tools` functionality 

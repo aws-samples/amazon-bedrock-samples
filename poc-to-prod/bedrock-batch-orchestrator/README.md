@@ -37,9 +37,9 @@ Follow these steps to deploy the CDK stack to your AWS environment.
 - `node` & `npm`
 - AWS CDK (`npm install -g aws-cdk`)
 
-1. Clone this repository into your local development environment.
+1. Clone this repository into your local development environment and `cd` into this folder.
 
-`git clone https://github.com/evandiewald/bedrock-batch-orchestrator.git`
+`git clone https://github.com/aws-samples/amazon-bedrock-samples.git && cd amazon-bedrock-samples/poc-to-prod/bedrock-batch-orchestrator`
 
 2. Install the required packages.
 
@@ -100,7 +100,7 @@ e.g. for Anthropic Models with an S3 Input:
 }
 ```
 
-Note that the `prompt_id` of `joke_about_topic` maps to a prompt template in [`prompt_templates.py`](lambda/prompt_template.py) which has a formatting key for `topic`, which must be one of the columns in the input CSV file.
+Note that the `prompt_id` of `joke_about_topic` maps to a prompt template in [`prompt_templates.py`](lambda/prompt_templates.py) which has a formatting key for `topic`, which must be one of the columns in the input CSV file.
 
 e.g. for a Hugging Face dataset
 
@@ -115,7 +115,7 @@ e.g. for a Hugging Face dataset
 }
 ```
 
-Note that we supplied a `dataset_id` and `split` to reference. The `question_answering` prompt template in [`prompt_templates.py`](lambda/prompt_template.py) has a formatting key called `source` to match the name of the appropriate column in the referenced [dataset](https://huggingface.co/datasets/w601sxs/simpleCoT).
+Note that we supplied a `dataset_id` and `split` to reference. The `question_answering` prompt template in [`prompt_templates.py`](lambda/prompt_templates.py) has a formatting key called `source` to match the name of the appropriate column in the referenced [dataset](https://huggingface.co/datasets/w601sxs/simpleCoT).
 
 We also have optional keys for `max_num_jobs` (to limit the total number of jobs - useful for testing on a smaller scale) and `max_records_per_batch`.
 
@@ -134,7 +134,7 @@ To generate embeddings with a model like Titan-V2 embeddings, you do not need to
 
 ![Step Function Execution](static/step-function-console.png)
 
-Monitor your step function as it runs the job(s). **The max number of concurrent jobs is controlled by a CDK context variable in [`cdk.json`](cdk.json) (key: `maxConcurrentJobs`)**. The paths to your resulting CSV file(s) will be aggregated in the outputs from the execution.
+Monitor your step function as it runs the job(s). **The max number of submitted and in-progress jobs is controlled by a CDK context variable in [`cdk.json`](cdk.json) (key: `maxSubmittedAndInProgressJobs`)**. The paths to your resulting CSV file(s) will be aggregated in the outputs from the execution.
 
 The output CSV file(s) will contain all the same columns as your input file.
 
