@@ -10,6 +10,7 @@ Amazon Bedrock Automated Reasoning checks applies formal verification techniques
 This repository provides tools and utilities for working with Automated Reasoning checks in Amazon Bedrock Guardrails capabilities, helping you create, test, validate, and leverage logical reasoning in your guardrail policies to ensure LLM responses adhere to business rules and policies.
 
 ![How to use feedback from Automated Reasoning checks](uploads/feedback_with_ar.png)
+Automated Reasoning checks does not block content like a traditional guardrail. Instead, it provides feedback to steer an LLM towards a correct answer. Developers can use the feedback to iterate with an LLM to rewrite answers. **To implement feedback rewriting, see [Automated Reasoning Rewrite Playground](automated_reasoning_rewrite_playground.ipynb).**
 
 ## Overview
 
@@ -43,7 +44,8 @@ bedrock-automated-reasoning-checks/
     ├── automated_reasoning_policy_creator_playground.ipynb
     ├── automated_reasoning_rewrite_playground.ipynb
     ├── automated_reasoning_test_creator_playground.ipynb
-    └── automated_reasoning_valid_at_n_playground.ipynb
+    ├── automated_reasoning_valid_at_n_playground.ipynb
+    └── automated_reasoning_policy_refinement.ipynb
 ```
 
 ## Interactive Notebooks
@@ -68,6 +70,15 @@ Demonstrates how to programmatically create Automated Reasoning policies from so
 - Define variables, types, and logical expressions
 - Create and deploy policies programmatically
 - Test policy creation with the sample medical document
+
+### automated_reasoning_policy_refinement.ipynb
+
+Demonstrates how to programmatically refine Automated Reasoning policies. Features:
+
+- Analyse rules, variables and types and create an annotation to update them
+- Generate scenarios from a created Automated Reasoning policy and test the scenario
+- Apply annotations to the Automated Reasoning policy through the Policy Repair Asset
+- Update the Automated Reasoning Policy with the updated one created through annotations
 
 ### automated_reasoning_rewrite_playground.ipynb
 
@@ -150,9 +161,10 @@ To experiment with this example:
 
 1. Open the `automated_reasoning_policy_creator_playground.ipynb` notebook
 2. Follow the step-by-step guide to create a policy based on the sample medical document
-3. Use the `automated_reasoning_test_creator_playground.ipynb` notebook to create test cases
-4. Explore the `automated_reasoning_rewrite_playground.ipynb` to see how non-compliant responses are rewritten
+3. Use the `automated_reasoning_policy_refinement.ipynb` notebook to edit definitions in the Automated Reasoning Policy
+4. Use the `automated_reasoning_test_creator_playground.ipynb` notebook to create test cases
 5. Use the `automated_reasoning_guardrail_validation_playground.ipynb` to validate responses against your policy
+6. Explore the `automated_reasoning_rewrite_playground.ipynb` to see how non-compliant responses are rewritten
 
 ## Key Components
 
@@ -197,7 +209,7 @@ You can integrate these tools into your existing AI application workflows:
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0
 
 ## 🔄 Updates
 

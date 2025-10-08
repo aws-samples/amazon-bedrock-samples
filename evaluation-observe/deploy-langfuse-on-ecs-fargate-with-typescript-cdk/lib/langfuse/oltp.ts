@@ -116,7 +116,7 @@ export class OLTPDatabase extends Construct {
     const rdsCredentials = rds.Credentials.fromSecret(dbSecret);
 
     const rdsEngine = rds.DatabaseClusterEngine.auroraPostgres({
-      version: rds.AuroraPostgresEngineVersion.VER_15_4,
+      version: rds.AuroraPostgresEngineVersion.VER_17_5,
     });
 
     const clusterParamGroup = new rds.ParameterGroup(

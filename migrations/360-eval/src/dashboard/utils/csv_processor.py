@@ -103,7 +103,7 @@ def convert_to_jsonl(df, prompt_col, golden_answer_col, task_type, task_criteria
             
         entry = {
             "text_prompt": prompt,
-            "expected_output_tokens": 4500,  # Default value
+            "expected_output_tokens": 5000,  # Default value
             "task": {
                 "task_type": task_type,
                 "task_criteria": task_criteria
