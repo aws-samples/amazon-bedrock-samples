@@ -1,0 +1,55 @@
+{
+  "pipeline_name": "clothing-full-analysis-pipeline",
+  "presigned_url_expiry_days": 7,
+  "stages": [
+    {
+      "stage_name": "classify_category",
+      "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+      "input_s3_uri": "s3://batch-inference-bucket-YOUR_ACCOUNT_ID/inputs/clothing-images/",
+      "input_type": "image",
+      "job_name_prefix": "stage1-classify",
+      "prompt_config": {
+        "mode": "single",
+        "prompt_id": "classify_clothing_category"
+      },
+      "max_num_jobs": 1,
+      "max_records_per_job": 100
+    },
+    {
+      "stage_name": "extract_metadata",
+      "model_id": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+      "use_previous_output": true,
+      "input_type": "image",
+      "job_name_prefix": "stage2-metadata",
+      "prompt_config": {
+        "mode": "mapped",
+        "column_name": "metadata_prompt_id"
+      },
+      "category_to_prompt_mapping": {
+        "shorts": "extract_shorts_metadata",
+        "shoes": "extract_shoes_metadata",
+        "pants": "extract_pants_metadata",
+        "dress": "extract_dress_metadata",
+        "t-shirt": "extract_tshirt_metadata"
+      },
+      "max_num_jobs": 1,
+      "max_records_per_job": 100
+    },
+    {
+      "stage_name": "generate_listing",
+      "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+      "use_previous_output": true,
+      "input_type": "text",
+      "job_name_prefix": "stage3-listing",
+      "prompt_config": {
+        "mode": "single",
+        "prompt_id": "generate_product_listing"
+      },
+      "column_mappings": {
+        "metadata": "response"
+      },
+      "max_num_jobs": 1,
+      "max_records_per_job": 100
+    }
+  ]
+}
