@@ -375,7 +375,9 @@ class BedrockTwelvelabsHelper():
             modelId=self.model_id,
             modelInput={
                 "inputType": "text",
-                "inputText": text_query
+                "text": {
+                    "inputText": text_query
+                }
             },
             outputDataConfig={
                 "s3OutputDataConfig": {
@@ -409,7 +411,9 @@ class BedrockTwelvelabsHelper():
         
         modelInput={
                 "inputType": "text",
-                "inputText": text_query
+                "text": {
+                    "inputText": text_query
+                }
         }
         response = self.bedrock_client.invoke_model(
             modelId=self.cris_model_id,
@@ -441,10 +445,12 @@ class BedrockTwelvelabsHelper():
         s3_image_uri = f's3://{self.s3_bucket_name}/{self.s3_images_path}/{image_path_basename}'
         modelInput={
                 "inputType": "image",
-                "mediaSource": {
-                    "s3Location": {
-                        "uri": s3_image_uri,
-                        "bucketOwner": self.aws_account_id
+                "image" : {
+                    "mediaSource": {
+                        "s3Location": {
+                            "uri": s3_image_uri,
+                            "bucketOwner": self.aws_account_id
+                        }
                     }
                 }
             }
@@ -526,10 +532,12 @@ class BedrockTwelvelabsHelper():
             modelId=self.model_id,
             modelInput={
                 "inputType": "video",
-                "mediaSource": {
-                    "s3Location": {
-                        "uri": video_s3_uri,
-                        "bucketOwner": self.aws_account_id
+                "video" : {
+                    "mediaSource": {
+                        "s3Location": {
+                            "uri": video_s3_uri,
+                            "bucketOwner": self.aws_account_id
+                        }
                     }
                 }
             },
@@ -577,7 +585,7 @@ class BedrockTwelvelabsHelper():
                 "properties": {
                     "embedding": {
                         "type": "knn_vector",
-                        "dimension": 1024,
+                        "dimension": 512,
                         "method": {
                             "engine": "faiss",
                             "name": "hnsw",
@@ -622,7 +630,7 @@ class BedrockTwelvelabsHelper():
                 "end_time": segment["endSec"],
                 "video_id": video_id,
                 "segment_id": i,
-                "embedding_option": segment.get("embeddingOption", "visual-text")
+                "embedding_option": segment.get("embeddingOption", "visual")
             }
             documents.append(document)
         
@@ -662,40 +670,61 @@ class BedrockTwelvelabsHelper():
         print(f"Generating embedding for query: '{query_text}'")
         query_embedding_data = self.create_text_embedding(query_text)
         query_embedding = query_embedding_data[0]["embedding"]
-        
-        # Search OpenSearch index
+
         search_body = {
-            "query": {
-                "knn": {
-                    "embedding": {
-                        "vector": query_embedding,
-                        "k": top_k
+                        "query": {
+                            "script_score": {
+                            "query": {
+                                "bool": {
+                                    "filter": {
+                                        "bool": {
+                                            "must": [
+                                                {
+                                                    "term": {
+                                                        "embedding_option": "visual"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            "script": {
+                                    "source": "knn_score",
+                                    "lang": "knn",
+                                    "params": {
+                                    "field": "embedding",
+                                    "query_value": query_embedding,
+                                    "space_type": "l2"
+                                }
+                            }
+                        }
+                    },
+                        "_source": ["start_time", "end_time", "video_id", "segment_id", "embedding_option"],
+                        "size": top_k,
                     }
-                }
-            },
-            "size": top_k,
-            "_source": ["start_time", "end_time", "video_id", "segment_id"]
-        }
-        
+
         response = self.opensearch_client.search(index=self.index_name, body=search_body)
-        
+
         print(f"\n✅ Found {len(response['hits']['hits'])} matching segments:")
         results = []
-        
+
         for hit in response['hits']['hits']:
+            print(hit)
             result = {
                 "score": hit["_score"],
                 "video_id": hit["_source"]["video_id"],
                 "segment_id": hit["_source"]["segment_id"],
                 "start_time": hit["_source"]["start_time"],
-                "end_time": hit["_source"]["end_time"]
+                "end_time": hit["_source"]["end_time"],
+                "embedding_option": hit["_source"]["embedding_option"]
             }
             results.append(result)
             
             print(f" Score: {result['score']:.4f} | Video: {self.video_embedding_mapping[result['video_id']]} | "
-                f"Segment: {result['segment_id']} | Time: {result['start_time']:.1f}s - {result['end_time']:.1f}s")
-        
+                f"Segment: {result['segment_id']} | Embedding Option: {result["embedding_option"]} | Time: {result['start_time']:.1f}s - {result['end_time']:.1f}s")
         return results
+
 
     # Image Query Search Function
     def search_videos_by_image(self, image_path: str, top_k: int=5) -> list:
