@@ -14,7 +14,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 
 
 export interface BedrockBatchOrchestratorStackProps extends cdk.StackProps {
-  bedrockBatchInferenceMaxConcurrency: number;
+  maxSubmittedAndInProgressJobs: number;
   bedrockBatchInferenceTimeoutHours?: number;
 }
 
@@ -156,7 +156,7 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
     });
 
     const postprocessMap = new sfn.Map(this, 'postprocessMap', {
-      maxConcurrency: props.bedrockBatchInferenceMaxConcurrency,
+      maxConcurrency: props.maxSubmittedAndInProgressJobs,
       itemsPath: sfn.JsonPath.stringAt('$.completed_jobs'),
       resultPath: '$.output_paths',
     });
@@ -168,7 +168,7 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
 
     // step function
     const batchProcessingMap = new sfn.Map(this, 'batchProcessingMap', {
-      maxConcurrency: props.bedrockBatchInferenceMaxConcurrency,
+      maxConcurrency: props.maxSubmittedAndInProgressJobs,
       itemsPath: sfn.JsonPath.stringAt('$.jobs'),
       resultPath: '$.completed_jobs',
     });

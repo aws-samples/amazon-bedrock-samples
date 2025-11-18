@@ -66,6 +66,19 @@ export interface ILangfuseDeploymentProps {
    */
   clickHouseEnvironment?: { [key: string]: string };
   /**
+   * Source container image (including version) for ClickHouse
+   *
+   * To avoid rate limit issues for customers without Docker Hub credentials, we use Bitnami's
+   * distribution of ClickHouse on Amazon ECR Public by default. If you configure Docker Hub tokens
+   * in the environment where you run 'cdk deploy', you could switch to e.g. 'clickhouse:25'.
+   * 
+   * Note that this construct actually builds a custom (ECR Private) image from the base you
+   * specify here, to configure logging for the target ECS environment.
+   * 
+   * @default 'public.ecr.aws/bitnami/clickhouse:25'
+   */
+  clickHouseImage?: string;
+  /**
    * Memory allocation for the ECS Fargate container running Langfuse's (ClickHouse) OLAP RDBMS
    *
    * @see https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html#fargate-tasks-size
@@ -86,6 +99,24 @@ export interface ILangfuseDeploymentProps {
    * Extra environment variables to configure on Langfuse services' containers
    */
   langfuseEnvironment?: { [key: string]: string };
+  /**
+   * Source container image (including version) for main Langfuse web service container
+   *
+   * We use GitHub Container Registry by default, but you could also consider Docker Hub with e.g.
+   * 'langfuse/langfuse:3'
+   * 
+   * @default 'ghcr.io/langfuse/langfuse:3'
+   */
+  langfuseWebImage?: string;
+  /**
+   * Source container image (including version) for Langfuse background worker container
+   *
+   * We use GitHub Container Registry by default, but you could also consider Docker Hub with e.g.
+   * 'langfuse/langfuse-worker:3'
+   * 
+   * @default 'ghcr.io/langfuse/langfuse-worker:3'
+   */
+  langfuseWorkerImage?: string;
   /**
    * Name to use for the private DNS namespace created for service discovery
    *
@@ -261,6 +292,7 @@ export class LangfuseDeployment extends Construct {
       cloudMapService: clickHouseService,
       cpu: props.clickHouseCpu,
       environment: props.clickHouseEnvironment,
+      image: props.clickHouseImage,
       memoryLimitMiB: props.clickHouseMemoryMiB,
       vpc: props.vpc,
       tags: props.tags,
@@ -273,7 +305,7 @@ export class LangfuseDeployment extends Construct {
         description:
           "Langfuse ENCRYPTION_KEY (Used to encrypt sensitive data. Must be 256 bits, 64 string characters in hex format)",
         generateSecretString: {
-          excludeCharacters: "ghijklmnopqrstuvxyz",
+          excludeCharacters: "ghijklmnopqrstuvwxyz",
           excludePunctuation: true,
           includeSpace: false,
           excludeUppercase: true,
@@ -355,6 +387,7 @@ export class LangfuseDeployment extends Construct {
       cpu: props.workerCpu,
       encryptionKeySecret,
       environment: props.langfuseEnvironment,
+      imageSource: props.langfuseWorkerImage,
       memoryLimitMiB: props.workerMemoryMiB,
       oltpDb,
       s3Bucket: bucket,
@@ -371,6 +404,7 @@ export class LangfuseDeployment extends Construct {
       cpu: props.webServiceCpu,
       encryptionKeySecret,
       environment: props.langfuseEnvironment,
+      imageSource: props.langfuseWebImage,
       loadBalancer: this.loadBalancer,
       memoryLimitMiB: props.webServiceMemoryMiB,
       nextAuthSecret,
