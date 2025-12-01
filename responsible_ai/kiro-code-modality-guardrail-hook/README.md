@@ -2,7 +2,7 @@
 
 Complete integration of Amazon Bedrock Guardrails with Kiro agent to automatically prevent harmful code generation.
 
-**Status**: 🟢 Active and Protecting | **Guardrail ID**: `h7t5aokrpe1n` | **Version**: DRAFT | **Region**: us-east-1
+**Status**: 🟢 Active and Protecting | **Guardrail ID**: `your-guardrail-id` | **Version**: DRAFT | **Region**: your-aws-region
 
 ---
 
@@ -40,7 +40,7 @@ cd responsible_ai/kiro-code-modality-guardrail-hook
 python3 demo_guardrail_integration.py
 
 # Test manually
-cat test_guardrail_examples.py | python3 ../../.kiro/hooks/code_safety_guardrail.py
+cat test_guardrail_examples.py | python3 kiro-hooks/code_safety_guardrail.py
 ```
 
 ### Test Results
@@ -158,6 +158,8 @@ Try these prompts in Kiro:
 - "Create a secure password hashing function using bcrypt"
 - "Build a data processing pipeline with error handling"
 
+**For more test prompts**, see [KIRO_TEST_PROMPTS.md](KIRO_TEST_PROMPTS.md) - includes 20+ examples with expected results.
+
 ---
 
 ## 🧪 Testing
@@ -192,13 +194,13 @@ Shows 6 test cases with real-time validation:
 
 ```bash
 # Test combined examples
-cat test_guardrail_examples.py | python3 ../../.kiro/hooks/code_safety_guardrail.py
+cat test_guardrail_examples.py | python3 kiro-hooks/code_safety_guardrail.py
 
 # Test safe code section only
-head -30 test_guardrail_examples.py | python3 ../../.kiro/hooks/code_safety_guardrail.py
+head -30 test_guardrail_examples.py | python3 kiro-hooks/code_safety_guardrail.py
 
 # Test custom code
-echo "your code here" | python3 ../../.kiro/hooks/code_safety_guardrail.py
+echo "your code here" | python3 kiro-hooks/code_safety_guardrail.py
 ```
 
 ---
@@ -208,14 +210,14 @@ echo "your code here" | python3 ../../.kiro/hooks/code_safety_guardrail.py
 ### Environment Variables
 
 ```bash
-export BEDROCK_GUARDRAIL_ID="h7t5aokrpe1n"      # Your guardrail ID
+export BEDROCK_GUARDRAIL_ID="your-guardrail-id"      # Your guardrail ID
 export BEDROCK_GUARDRAIL_VERSION="DRAFT"        # Version: DRAFT or 1, 2, etc.
-export AWS_REGION="us-east-1"                   # AWS region
+export AWS_REGION="your-aws-region"                   # AWS region
 ```
 
 ### Hook Configuration
 
-Located at: `.kiro/hooks/code-safety-guardrail.kiro.hook`
+Located at: `kiro-hooks/agent-code-safety-guardrail.kiro.hook`
 
 ```json
 {
@@ -259,7 +261,7 @@ Edit in AWS Console or via notebook:
 
 ### Disable Hook Temporarily
 
-Edit `.kiro/hooks/code-safety-guardrail.kiro.hook`:
+Edit `kiro-hooks/agent-code-safety-guardrail.kiro.hook`:
 ```json
 {
   "enabled": false,
@@ -293,7 +295,7 @@ aws bedrock get-guardrail \
 
 ```bash
 # Test validation script
-echo "test code" | python3 ../../.kiro/hooks/code_safety_guardrail.py
+echo "test code" | python3 ../../.kiro-hooks/code_safety_guardrail.py
 echo $?  # 0 = passed, 1 = blocked
 
 # Check environment
