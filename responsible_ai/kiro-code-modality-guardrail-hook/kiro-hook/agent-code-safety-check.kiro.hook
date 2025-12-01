@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Agent Code Safety Validation",
+  "description": "Automatically runs a Python script to validate the safety of generated content after each agent response",
+  "version": "1",
+  "when": {
+    "type": "agentResponse"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "python3 .kiro/hooks/code_safety_guardrail.py"
+  }
+}
