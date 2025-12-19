@@ -409,3 +409,377 @@ def create_bedrock_execution_role(unique_id, region_name, bucket_name, multimoda
 
     print(f"✅ IAM role created successfully: {bedrock_kb_execution_role['Role']['RoleName']}")
     return bedrock_kb_execution_role
+
+
+    """
+    Download images from Amazon Berkeley Objects S3 bucket.
+    
+    Downloads one or more product images from the public ABO dataset bucket.
+    Supports concurrent downloads for better performance with multiple images.
+    
+    Args:
+        image_ids (str or list): Single image ID (str) or list of image IDs to download
+        output_dir (str, optional): Directory where images will be saved. 
+                                   Defaults to "downloaded_images"
+        max_workers (int, optional): Maximum number of concurrent downloads. 
+                                    Defaults to 5
+        bucket_name (str, optional): S3 bucket name. 
+                                    Defaults to "amazon-berkeley-objects"
+        subfolder (str, optional): Image size subfolder in S3. 
+                                  Options: "small", "medium", "large", "original"
+                                  Defaults to "small"
+    
+    Returns:
+        tuple: (successful_downloads, failed_downloads) - counts of each
+        
+    Raises:
+        ValueError: If image_ids is empty or invalid type
+        
+    Example:
+        >>> # Download a single image
+        >>> download_abo_images("6d00d6b4")
+        ✅ Successfully downloaded 6d00d6b4.jpg
+        (1, 0)
+        
+        >>> # Download multiple images concurrently
+        >>> image_list = ["6d00d6b4", "6d00dc87", "6d00e3f2"]
+        >>> success, failed = download_abo_images(image_list, output_dir="my_images")
+        ✅ Download complete: 3 successful, 0 failed
+        (3, 0)
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from pathlib import Path
+    
+    # Validate and normalize input
+    if isinstance(image_ids, str):
+        image_ids = [image_ids]
+    elif not isinstance(image_ids, list):
+        raise ValueError("image_ids must be a string or list of strings")
+    
+    if not image_ids:
+        raise ValueError("image_ids cannot be empty")
+    
+    # Create output directory
+    output_path = Path(output_dir)
+    output_path.mkdir(exist_ok=True, parents=True)
+    
+    # Initialize S3 client (no credentials needed for public bucket)
+    s3_client = boto3.client('s3', config=boto3.session.Config(signature_version='UNSIGNED'))
+    
+    def _download_single_image(image_id):
+        """Internal helper function to download a single image"""
+        # Construct the S3 key based on the ABO dataset structure
+        s3_key = f"images/{subfolder}/{image_id}.jpg"
+        local_path = output_path / f"{image_id}.jpg"
+        
+        try:
+            s3_client.download_file(bucket_name, s3_key, str(local_path))
+            print(f"✅ Successfully downloaded {image_id}.jpg")
+            return True
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            print(f"❌ Failed to download {image_id}.jpg: {error_code}")
+            return False
+        except Exception as e:
+            print(f"❌ Failed to download {image_id}.jpg: {str(e)}")
+            return False
+    
+    # Download images
+    successful_downloads = 0
+    failed_downloads = 0
+    
+    if len(image_ids) == 1:
+        # Single image - no need for threading
+        success = _download_single_image(image_ids[0])
+        successful_downloads = 1 if success else 0
+        failed_downloads = 0 if success else 1
+    else:
+        # Multiple images - use concurrent downloads
+        print(f"Downloading {len(image_ids)} images with {max_workers} workers...")
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all download tasks
+            future_to_id = {
+                executor.submit(_download_single_image, image_id): image_id 
+                for image_id in image_ids
+            }
+            
+            # Process completed downloads
+            for future in as_completed(future_to_id):
+                image_id = future_to_id[future]
+                try:
+                    success = future.result()
+                    if success:
+                        successful_downloads += 1
+                    else:
+                        failed_downloads += 1
+                except Exception as e:
+                    print(f"❌ Exception occurred for {image_id}: {str(e)}")
+                    failed_downloads += 1
+        
+        print(f"✅ Download complete: {successful_downloads} successful, {failed_downloads} failed")
+    
+    return successful_downloads, failed_download
+
+def download_abo_images(image_ids, output_dir="downloaded_images", max_workers=5, bucket_name="amazon-berkeley-objects", subfolder="small"):
+    """
+    Download images from Amazon Berkeley Objects S3 bucket.
+    
+    Downloads one or more product images from the public ABO dataset bucket.
+    Supports concurrent downloads for better performance with multiple images.
+    
+    Args:
+        image_ids (str or list): Single image ID (str) or list of image IDs to download
+        output_dir (str, optional): Directory where images will be saved. 
+                                   Defaults to "downloaded_images"
+        max_workers (int, optional): Maximum number of concurrent downloads. 
+                                    Defaults to 5
+        bucket_name (str, optional): S3 bucket name. 
+                                    Defaults to "amazon-berkeley-objects"
+        subfolder (str, optional): Image size subfolder in S3. 
+                                  Options: "small", "medium", "large", "original"
+                                  Defaults to "small"
+    
+    Returns:
+        tuple: (successful_downloads, failed_downloads, not_found_count) - counts of each
+        
+    Example:
+        >>> download_abo_images("6d00d6b4")
+        ✅ Successfully downloaded 6d00d6b4.jpg
+        (1, 0, 0)
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from pathlib import Path
+    from botocore.config import Config
+    from botocore import UNSIGNED
+    
+    # Validate and normalize input
+    if isinstance(image_ids, str):
+        image_ids = [image_ids]
+    elif not isinstance(image_ids, list):
+        raise ValueError("image_ids must be a string or list of strings")
+    
+    if not image_ids:
+        raise ValueError("image_ids cannot be empty")
+    
+    # Create output directory
+    output_path = Path(output_dir)
+    output_path.mkdir(exist_ok=True, parents=True)
+    
+    # Initialize S3 client (no credentials needed for public bucket)
+    s3_client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
+    
+    def _download_single_image(image_id):
+        """Internal helper function to download a single image"""
+        # Extract first 2 characters for partitioning folder
+        partition = image_id[:2]
+        
+        # Construct the S3 key with partition: images/small/6d/6d0f65cf.jpg
+        s3_key = f"images/{subfolder}/{partition}/{image_id}.jpg"
+        local_path = output_path / f"{image_id}.jpg"
+        
+        try:
+            s3_client.download_file(bucket_name, s3_key, str(local_path))
+            print(f"✅ Successfully downloaded {image_id}.jpg")
+            return 'success'
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            if error_code == '404' or error_code == 'NoSuchKey':
+                print(f"⚠️  Image not found: {image_id}.jpg (skipped)")
+                return 'not_found'
+            else:
+                print(f"❌ Failed to download {image_id}.jpg: {error_code}")
+                return 'failed'
+        except Exception as e:
+            print(f"❌ Failed to download {image_id}.jpg: {str(e)}")
+            return 'failed'
+    
+    # Download images
+    successful_downloads = 0
+    failed_downloads = 0
+    not_found_count = 0
+    
+    if len(image_ids) == 1:
+        # Single image - no need for threading
+        result = _download_single_image(image_ids[0])
+        if result == 'success':
+            successful_downloads = 1
+        elif result == 'not_found':
+            not_found_count = 1
+        else:
+            failed_downloads = 1
+    else:
+        # Multiple images - use concurrent downloads
+        print(f"Downloading {len(image_ids)} images with {max_workers} workers...")
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all download tasks
+            future_to_id = {
+                executor.submit(_download_single_image, image_id): image_id 
+                for image_id in image_ids
+            }
+            
+            # Process completed downloads
+            for future in as_completed(future_to_id):
+                image_id = future_to_id[future]
+                try:
+                    result = future.result()
+                    if result == 'success':
+                        successful_downloads += 1
+                    elif result == 'not_found':
+                        not_found_count += 1
+                    else:
+                        failed_downloads += 1
+                except Exception as e:
+                    print(f"❌ Exception occurred for {image_id}: {str(e)}")
+                    failed_downloads += 1
+        
+        print(f"✅ Download complete: {successful_downloads} successful, {not_found_count} not found, {failed_downloads} failed")
+    
+    return successful_downloads, failed_downloads, not_found_count
+
+def download_abo_images_from_file(file_path, output_dir="downloaded_images", max_workers=5):
+    """
+    Download ABO images from a list in a text file.
+    
+    Reads image IDs from a text file (one ID per line) and downloads them
+    from the Amazon Berkeley Objects S3 bucket.
+    
+    Args:
+        file_path (str): Path to text file containing image IDs (one per line)
+        output_dir (str, optional): Directory where images will be saved.
+                                   Defaults to "downloaded_images"
+        max_workers (int, optional): Maximum number of concurrent downloads.
+                                    Defaults to 5
+    
+    Returns:
+        tuple: (successful_downloads, failed_downloads) - counts of each
+        
+    Example:
+        >>> # Create a file with image IDs
+        >>> with open("image_list.txt", "w") as f:
+        ...     f.write("6d00d6b4\\n6d00dc87\\n6d00e3f2\\n")
+        
+        >>> # Download all images from the file
+        >>> download_abo_images_from_file("image_list.txt", output_dir="products")
+        Found 3 image IDs in image_list.txt
+        ✅ Download complete: 3 successful, 0 failed
+        (3, 0)
+    """
+    try:
+        with open(file_path, 'r') as f:
+            image_ids = [line.strip() for line in f if line.strip()]
+        
+        if not image_ids:
+            print(f"⚠️  No image IDs found in {file_path}")
+            return 0, 0
+        
+        print(f"Found {len(image_ids)} image IDs in {file_path}")
+        return download_abo_images(image_ids, output_dir, max_workers)
+    
+    except FileNotFoundError:
+        print(f"❌ File {file_path} not found")
+        return 0, 0
+    except Exception as e:
+        print(f"❌ Error reading file {file_path}: {str(e)}")
+        return 0, 0
+
+def download_product_catalog_data(image_list_file="file_list.txt", max_workers=5):
+    """
+    Download complete product catalog data including ABO images, videos, and test image.
+    
+    This function downloads:
+    1. Product images from ABO dataset (from file_list.txt) → product-catalog/
+    2. Two demonstration videos → product-catalog/
+    3. A test phone image → test-image/
+    
+    Args:
+        image_list_file (str, optional): Path to text file containing ABO image IDs.
+                                        Defaults to "file_list.txt"
+        max_workers (int, optional): Maximum concurrent downloads for images.
+                                    Defaults to 5
+    
+    Returns:
+        dict: Summary of downloads with counts and status
+    """
+    import urllib.request
+    from pathlib import Path
+    
+    print("📦 Downloading Product Catalog Data")
+    print("=" * 50)
+    
+    summary = {
+        'images': {'success': 0, 'failed': 0},
+        'videos': 0,
+        'test_image': 0,
+        'status': 'complete'
+    }
+    
+    # Create directories
+    catalog_dir = Path("product-catalog")
+    test_dir = Path("test-image")
+    catalog_dir.mkdir(exist_ok=True)
+    test_dir.mkdir(exist_ok=True)
+    
+    # 1. Download ABO images from file_list.txt
+    print("\n📸 Step 1: Downloading ABO product images...")
+    print("-" * 50)
+    try:
+        success, failed = download_abo_images_from_file(
+            image_list_file, 
+            output_dir=str(catalog_dir),
+            max_workers=max_workers
+        )
+        summary['images']['success'] = success
+        summary['images']['failed'] = failed
+        print(f"✅ Downloaded {success} images to product-catalog/")
+        if failed > 0:
+            print(f"⚠️  {failed} images failed to download")
+    except Exception as e:
+        print(f"❌ Error downloading images: {str(e)}")
+        summary['status'] = 'partial'
+    
+    # 2. Download videos
+    print("\n🎥 Step 2: Downloading demonstration videos...")
+    print("-" * 50)
+    videos = [
+        ("https://d2908q01vomqb2.cloudfront.net/artifacts/DBSBlogs/ML-20078/ML-20078-video-1.mp4", "cellphone-1.mp4"),
+        ("https://d2908q01vomqb2.cloudfront.net/artifacts/DBSBlogs/ML-20078/ML-20078-video-2.mp4", "cellphone-2.mp4")
+    ]
+    
+    for url, filename in videos:
+        try:
+            output_path = catalog_dir / filename
+            print(f"Downloading {filename}...")
+            urllib.request.urlretrieve(url, output_path)
+            print(f"✅ Downloaded {filename} to product-catalog/")
+            summary['videos'] += 1
+        except Exception as e:
+            print(f"❌ Failed to download {filename}: {str(e)}")
+            summary['status'] = 'partial'
+    
+    # 3. Download test image
+    print("\n🖼️  Step 3: Downloading test image...")
+    print("-" * 50)
+    try:
+        test_image_url = "https://d2908q01vomqb2.cloudfront.net/artifacts/DBSBlogs/ML-20078/phone.png"
+        test_image_path = test_dir / "phone.png"
+        print(f"Downloading phone.png...")
+        urllib.request.urlretrieve(test_image_url, test_image_path)
+        print(f"✅ Downloaded phone.png to test-image/")
+        summary['test_image'] = 1
+    except Exception as e:
+        print(f"❌ Failed to download test image: {str(e)}")
+        summary['status'] = 'partial'
+    
+    # Print summary
+    print("\n" + "=" * 50)
+    print("📊 Download Summary")
+    print("=" * 50)
+    print(f"Product Images:  {summary['images']['success']} successful, {summary['images']['failed']} failed")
+    print(f"Videos:          {summary['videos']} downloaded")
+    print(f"Test Image:      {summary['test_image']} downloaded")
+    print(f"Status:          {summary['status'].upper()}")
+    print("=" * 50)
+    
+    return summary
