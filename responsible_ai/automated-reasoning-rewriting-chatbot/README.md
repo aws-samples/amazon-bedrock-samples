@@ -59,6 +59,6 @@ The backend APIs in charge of communicating with LLMs through Bedrock, calling B
 
 An in-depth overview of the design is available in [`DESIGN.md`](DESIGN.md).
 
-[!NOTE]
-To easily support any Automated Reasoning policy without requiring document uploads, this project includes the policy content in the generation prompts to the LLMs. In a production deployment, you would use RAG content or feed the LLM the original, natural language document instead of the Automated Reasoning policy source code.
+> [!NOTE]
+> To easily support any Automated Reasoning policy without requiring document uploads, this project includes the policy content in the generation prompts to the LLMs. In a production deployment, you would use RAG content or feed the LLM the original, natural language document instead of the Automated Reasoning policy source code.
 
