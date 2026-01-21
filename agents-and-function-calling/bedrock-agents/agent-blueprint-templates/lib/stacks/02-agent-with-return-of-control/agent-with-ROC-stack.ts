@@ -1,7 +1,7 @@
 import { Stack, StackProps } from 'aws-cdk-lib'; 
 import { Construct } from 'constructs';
 import { VacationAPILambdaSetup } from './vacation-api-lambda-construct';
-import {BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, AgentActionGroup} from '@aws/agents-and-function-calling-for-amazon-bedrock-blueprints';
+import {BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, AgentActionGroup} from '@aws/agents-for-amazon-bedrock-blueprints';
 
 export class AgentWithROCStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
