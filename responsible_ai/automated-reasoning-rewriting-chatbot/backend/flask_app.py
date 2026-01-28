@@ -9,6 +9,7 @@ This module provides REST API endpoints for:
 import logging
 import os
 import threading
+import boto3
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from typing import Dict, Any
@@ -691,6 +692,31 @@ def create_app(config: Dict[str, Any] = None) -> Flask:
     logger.info("Flask application created and configured")
     return app
 
+
+def check_aws_credentials():
+    try:
+        session = boto3.Session()
+        credentials = session.get_credentials()
+        if credentials:
+            try:
+                sts_client = session.client("sts")
+                identity = sts_client.get_caller_identity()
+                return True
+            except (ClientError, NoCredentialsError) as e:
+                print(f"AWS credentials found, but validation failed (network or permissions error): {e}")
+                return False
+        else:
+            print("No AWS credentials found in the environment.")
+            return False
+
+    except NoCredentialsError:
+        print("No AWS credentials found in the environment.")
+        return False
+
+
+if not check_aws_credentials():
+    print("Configure AWS credentials to run the application: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html")
+    exit(1)
 
 # Create the application instance
 app = create_app()

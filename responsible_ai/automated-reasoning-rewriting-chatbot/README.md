@@ -4,7 +4,7 @@ This application shows how you can use Automated Reasoning checks in Amazon Bedr
 ## Prerequisites and dependencies
 The first step is to configure the chatbot to use an Automated Reasoning policy from your AWS account. If you have not created an automated reasoning policy before, you can use the sample policy from [the AWS console](https://console.aws.amazon.com/bedrock/home#/automated-reasoning/policies).
 
-To run the application, you will need the latest version of Python and Node JS.
+To run the application, you will need the latest version of Python and Node JS. You will also need to [configure AWS credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html).
 
 ## Installing dependencies and starting the application
 
