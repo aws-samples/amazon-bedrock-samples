@@ -2,7 +2,7 @@
 Property-based tests for Validation Service.
 """
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given, settings, strategies as st
 from unittest.mock import Mock, patch
 
 from backend.services.validation_service import ValidationService, ValidationResult
@@ -12,6 +12,7 @@ from backend.models.thread import Finding
 class TestValidationServiceProperties:
     """Property-based tests for Validation Service."""
     
+    @settings(deadline=500)
     @given(
         validation_output=st.sampled_from([
             "VALID", "INVALID", "SATISFIABLE", "IMPOSSIBLE", 

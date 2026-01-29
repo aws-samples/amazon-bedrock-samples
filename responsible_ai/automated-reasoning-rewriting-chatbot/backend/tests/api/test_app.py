@@ -39,6 +39,8 @@ def test_chat_post_returns_thread_id(client, prompt):
     
     Validates: Requirements 11.2
     """
+    from backend.flask_app import service_container
+    
     # Mock the config manager to have a valid configuration
     with patch('backend.flask_app.config_manager') as mock_config_manager:
         mock_config = Config(
@@ -49,15 +51,15 @@ def test_chat_post_returns_thread_id(client, prompt):
         )
         mock_config_manager.get_current_config.return_value = mock_config
         
-        # Mock thread manager to avoid actual thread creation
-        with patch('backend.flask_app.service_container.thread_manager') as mock_thread_manager:
+        # Mock thread manager using patch.object on the actual instance
+        with patch.object(service_container, 'thread_manager') as mock_thread_manager:
             # Create a mock thread
             mock_thread = Mock(spec=Thread)
             mock_thread.thread_id = "test-thread-id"
             mock_thread_manager.create_thread.return_value = mock_thread
             
             # Mock the background processing to avoid actual AWS calls
-            with patch('backend.flask_app.threading.Thread'):
+            with patch('backend.flask_app._process_thread_sync'):
                 # Send POST request
                 response = client.post(
                     '/api/chat',
