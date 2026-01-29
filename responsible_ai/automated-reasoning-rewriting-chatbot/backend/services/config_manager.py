@@ -145,10 +145,8 @@ class ConfigManager:
             return filtered_models
             
         except ClientError as e:
-            logger.error(f"Failed to retrieve available models: {str(e)}")
             raise Exception(f"Failed to retrieve available models: {str(e)}")
         except Exception as e:
-            logger.error(f"Unexpected error retrieving models: {str(e)}")
             raise Exception(f"Failed to retrieve available models: {str(e)}")
     
     def get_available_policies(self) -> List[ARPolicy]:
@@ -303,7 +301,6 @@ class ConfigManager:
                 return self._create_guardrail(policy_arn)
                 
         except Exception as e:
-            logger.error(f"Failed to ensure guardrail: {str(e)}")
             raise Exception(f"Failed to ensure guardrail: {str(e)}")
     
     def _find_existing_guardrail(self) -> Optional[Dict]:
@@ -326,7 +323,8 @@ class ConfigManager:
             return None
             
         except ClientError as e:
-            logger.error(f"Failed to list guardrails: {str(e)}")
+            # Log as warning since we're re-raising the original exception for the caller to handle
+            logger.warning(f"Failed to list guardrails: {str(e)}")
             raise
     
     def _create_guardrail(self, policy_arn: str) -> Tuple[str, str]:
@@ -369,7 +367,8 @@ class ConfigManager:
             return guardrail_id, guardrail_version
             
         except ClientError as e:
-            logger.error(f"Failed to create guardrail: {str(e)}")
+            # Log as warning since we're re-raising the original exception for the caller to handle
+            logger.warning(f"Failed to create guardrail: {str(e)}")
             raise
     
     def _update_guardrail(self, guardrail_id: str, policy_arn: str) -> Tuple[str, str]:
@@ -413,5 +412,6 @@ class ConfigManager:
             return guardrail_id, guardrail_version
             
         except ClientError as e:
-            logger.error(f"Failed to update guardrail: {str(e)}")
+            # Log as warning since we're re-raising the original exception for the caller to handle
+            logger.warning(f"Failed to update guardrail: {str(e)}")
             raise

@@ -355,7 +355,6 @@ class PromptTemplateManager:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return f.read()
         except FileNotFoundError:
-            logger.error(f"Template file not found: {filepath}")
             raise FileNotFoundError(f"Template file not found: {template_name}")
     
     def render_template(

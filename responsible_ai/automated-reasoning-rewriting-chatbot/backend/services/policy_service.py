@@ -110,10 +110,8 @@ class PolicyService:
             return policies
             
         except ClientError as e:
-            logger.error(f"Failed to retrieve available AR policies: {str(e)}")
             raise Exception(f"Failed to retrieve available AR policies: {str(e)}")
         except Exception as e:
-            logger.error(f"Unexpected error retrieving AR policies: {str(e)}")
             raise Exception(f"Failed to retrieve available AR policies: {str(e)}")
     
     def get_policy_definition(self, policy_arn: str) -> Dict:
@@ -147,7 +145,6 @@ class PolicyService:
             
             workflows = list_response.get("automatedReasoningPolicyBuildWorkflowSummaries", [])
             if not workflows:
-                logger.error(f"No build workflows found. Response was: {list_response}")
                 raise Exception(f"No build workflows found for policy: {policy_arn}")
             
             logger.info(f"Found {len(workflows)} build workflows")
@@ -164,13 +161,11 @@ class PolicyService:
                     break
             
             if not successful_build:
-                logger.error(f"No successful build found. All workflows: {workflows}")
                 raise Exception(f"No successful build workflow found for policy: {policy_arn}")
             
             # Try both possible field names for build ID
             build_id = successful_build.get("buildWorkflowId") or successful_build.get("buildId")
             if not build_id:
-                logger.error(f"No build ID found in successful build: {successful_build}")
                 raise Exception(f"Could not extract build ID from workflow: {successful_build}")
             
             logger.info(f"Found successful build: {build_id}")
@@ -194,13 +189,10 @@ class PolicyService:
             return policy_definition
             
         except ClientError as e:
-            logger.error(f"Failed to retrieve policy definition: {str(e)}")
             raise Exception(f"Failed to retrieve policy definition: {str(e)}")
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse policy definition JSON: {str(e)}")
             raise Exception(f"Failed to parse policy definition: {str(e)}")
         except Exception as e:
-            logger.error(f"Unexpected error retrieving policy definition: {str(e)}")
             raise Exception(f"Failed to retrieve policy definition: {str(e)}")
     
     def get_mock_policy_definition(self) -> Dict:

@@ -187,7 +187,6 @@ def get_models():
         models = [{"id": model_id, "name": model_id} for model_id in model_ids]
         return jsonify({"models": models}), 200
     except Exception as e:
-        logger.error(f"Failed to retrieve models: {e}")
         raise ConfigError("Failed to retrieve available models", details=str(e))
 
 
@@ -207,7 +206,6 @@ def get_policies():
             ]
         }), 200
     except Exception as e:
-        logger.error(f"Failed to retrieve policies: {e}")
         raise ConfigError("Failed to retrieve available policies", details=str(e))
 
 
@@ -236,7 +234,6 @@ def get_config():
         }), 200
         
     except Exception as e:
-        logger.error(f"Failed to retrieve configuration: {e}")
         raise ConfigError("Failed to retrieve configuration", details=str(e))
 
 
@@ -284,7 +281,6 @@ def update_config():
             config.guardrail_id = guardrail_id
             config.guardrail_version = guardrail_version
         except Exception as e:
-            logger.error(f"Failed to ensure guardrail: {e}")
             raise APIException(
                 "Failed to create or update guardrail",
                 code="GUARDRAIL_ERROR",
@@ -305,7 +301,6 @@ def update_config():
     except APIException:
         raise  # Re-raise API exceptions
     except Exception as e:
-        logger.error(f"Failed to update configuration: {e}")
         raise ConfigError("Failed to update configuration", details=str(e))
 
 
@@ -444,7 +439,6 @@ def create_chat():
         return jsonify({"thread_id": thread_id}), 200
         
     except Exception as e:
-        logger.error(f"Failed to create chat thread: {e}")
         raise APIException(
             "Failed to create chat thread",
             code="CHAT_ERROR",
@@ -470,7 +464,6 @@ def get_thread(thread_id: str):
     except NotFoundError:
         raise  # Re-raise NotFoundError
     except Exception as e:
-        logger.error(f"Failed to retrieve thread {thread_id}: {e}")
         raise APIException(
             "Failed to retrieve thread",
             code="THREAD_ERROR",
@@ -486,7 +479,6 @@ def list_threads():
         threads = service_container.thread_manager.list_threads()
         return jsonify({"threads": [thread.to_dict() for thread in threads]}), 200
     except Exception as e:
-        logger.error(f"Failed to list threads: {e}")
         raise APIException(
             "Failed to list threads",
             code="THREAD_ERROR",
@@ -649,7 +641,6 @@ def submit_answers(thread_id: str):
         }), 200
         
     except Exception as e:
-        logger.error(f"Failed to submit answers for thread {thread_id}: {e}")
         raise APIException(
             "Failed to submit answers",
             code="ANSWER_SUBMISSION_ERROR",

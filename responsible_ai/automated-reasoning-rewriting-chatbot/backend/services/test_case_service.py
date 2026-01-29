@@ -107,15 +107,12 @@ class TestCaseService:
                 raise Exception(f"Failed to fetch test cases: {error_message}")
             
             except NoCredentialsError as e:
-                logger.error(f"AWS credentials not found: {str(e)}")
                 raise Exception("AWS credentials not configured. Please configure your AWS credentials.")
             
             except EndpointConnectionError as e:
-                logger.error(f"Cannot connect to AWS Bedrock endpoint: {str(e)}")
                 raise Exception("AWS Bedrock service is temporarily unavailable. Please try again later.")
             
             except Exception as e:
-                logger.error(f"Unexpected error calling Bedrock: {str(e)}")
                 raise Exception(f"Failed to fetch test cases: {str(e)}")
         
         # Should not reach here, but just in case

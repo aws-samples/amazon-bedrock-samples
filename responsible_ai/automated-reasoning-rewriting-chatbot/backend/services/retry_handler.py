@@ -80,11 +80,9 @@ def with_retry(
                         time.sleep(delay)
                         continue
                     
-                    logger.error(f"AWS {operation_name} failed: {str(e)}")
                     raise Exception(f"Failed to {operation_name}: {str(e)}")
                 
                 except Exception as e:
-                    logger.error(f"Unexpected error during {operation_name}: {str(e)}")
                     raise Exception(f"Failed to {operation_name}: {str(e)}")
             
             # Should not reach here, but handle edge case
@@ -143,11 +141,9 @@ def retry_api_call(
                 time.sleep(delay)
                 continue
             
-            logger.error(f"AWS {operation_name} failed: {str(e)}")
             raise Exception(f"Failed to {operation_name}: {str(e)}")
         
         except Exception as e:
-            logger.error(f"Unexpected error during {operation_name}: {str(e)}")
             raise Exception(f"Failed to {operation_name}: {str(e)}")
     
     if last_exception:
