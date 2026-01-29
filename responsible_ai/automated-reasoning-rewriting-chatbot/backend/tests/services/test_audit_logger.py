@@ -44,7 +44,7 @@ class TestAuditLogger:
         # Assert
         assert audit_log_path.exists()
         
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         assert log_entry["event_type"] == "VALID_RESPONSE"
@@ -76,7 +76,7 @@ class TestAuditLogger:
         logger.log_valid_response(thread, findings)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         # Verify all required fields are present
@@ -121,7 +121,7 @@ class TestAuditLogger:
         # Assert
         assert audit_log_path.exists()
         
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         assert log_entry["event_type"] == "MAX_ITERATIONS_REACHED"
@@ -154,7 +154,7 @@ class TestAuditLogger:
         logger.log_max_iterations(thread, iteration_summaries, last_finding)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         # Verify all required fields are present
@@ -194,7 +194,7 @@ class TestAuditLogger:
         logger.log_valid_response(thread2, findings)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             lines = f.readlines()
         
         assert len(lines) == 2
@@ -293,7 +293,7 @@ class TestAuditLogger:
         assert audit_log_path.exists()
         
         # Audit log should contain JSON entry
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             audit_content = f.read()
         
         assert "thread-separate" in audit_content
@@ -336,7 +336,7 @@ class TestAuditLogger:
         logger.log_valid_response(thread, findings)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         assert len(log_entry["findings"]) == 3
@@ -387,7 +387,7 @@ class TestAuditLogger:
         logger.log_valid_response(thread, findings)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         assert "qa_exchanges" in log_entry
@@ -451,7 +451,7 @@ class TestAuditLogger:
         logger.log_valid_response(thread, findings)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         assert "qa_exchanges" in log_entry
@@ -498,7 +498,7 @@ class TestAuditLogger:
         logger.log_valid_response(thread, findings)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         # Should not include qa_exchanges field when there are none
@@ -583,7 +583,7 @@ class TestAuditLogger:
         logger.log_max_iterations(thread, iteration_summaries, last_finding)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         assert "qa_exchanges" in log_entry
@@ -639,7 +639,7 @@ class TestAuditLogger:
         logger.log_max_iterations(thread, iteration_summaries, last_finding)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         # Should not include qa_exchanges field when there are none
@@ -687,7 +687,7 @@ class TestAuditLogger:
         logger.log_valid_response(thread, findings)
         
         # Assert
-        with open(audit_log_path, 'r') as f:
+        with open(audit_log_path, 'r', encoding='UTF-8') as f:
             log_entry = json.loads(f.readline())
         
         qa_entry = log_entry["qa_exchanges"][0]
