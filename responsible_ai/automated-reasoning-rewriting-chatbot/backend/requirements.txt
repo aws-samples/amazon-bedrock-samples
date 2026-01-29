@@ -1,0 +1,5 @@
+Flask==3.0.0
+flask-cors==4.0.0
+boto3==1.41.2
+pytest==7.4.3
+hypothesis==6.92.0

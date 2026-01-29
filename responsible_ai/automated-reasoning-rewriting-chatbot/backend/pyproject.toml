@@ -1,0 +1,2 @@
+[tool.bandit]
+skips = ["B101"]
