@@ -14,7 +14,6 @@ Validates: Requirements 2.1, 5.1, 5.4, 7.4, 10.3, 12.2
 """
 
 import pytest
-import time
 from unittest.mock import Mock, patch, MagicMock
 from backend.flask_app import create_app
 from backend.models.thread import ThreadStatus, Finding
@@ -142,10 +141,8 @@ class TestQAIntegrationFlow:
             assert 'thread_id' in data
             thread_id = data['thread_id']
             
-            # Wait for processing to detect questions
-            time.sleep(2)
-            
             # Step 3: Verify thread status is AWAITING_USER_INPUT (Requirement 5.1)
+            # Processing is synchronous in test mode
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             data = response.get_json()
@@ -181,10 +178,7 @@ class TestQAIntegrationFlow:
             data = response.get_json()
             assert data['status'] == 'success'
             
-            # Wait for validation to resume and complete
-            time.sleep(2)
-            
-            # Step 6: Verify validation resumed and completed
+            # Step 6: Verify validation resumed and completed (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             data = response.get_json()
@@ -286,10 +280,7 @@ class TestQAIntegrationFlow:
             response = client.post('/api/chat', json={'prompt': 'Test prompt'})
             thread_id = response.get_json()['thread_id']
             
-            # Wait for questions
-            time.sleep(2)
-            
-            # Verify AWAITING_USER_INPUT
+            # Verify AWAITING_USER_INPUT (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             thread = response.get_json()['thread']
             assert thread['status'] == ThreadStatus.AWAITING_USER_INPUT.value
@@ -302,10 +293,7 @@ class TestQAIntegrationFlow:
             response = client.post(f'/api/thread/{thread_id}/answer', json=skip_data)
             assert response.status_code == 200
             
-            # Wait for completion
-            time.sleep(2)
-            
-            # Verify completion
+            # Verify completion (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             thread = response.get_json()['thread']
             assert thread['status'] == ThreadStatus.COMPLETED.value
@@ -376,10 +364,7 @@ class TestQAIntegrationFlow:
             response = client.post('/api/chat', json={'prompt': 'Test prompt'})
             thread_id = response.get_json()['thread_id']
             
-            # Wait for completion
-            time.sleep(2)
-            
-            # Verify completed without Q&A pause
+            # Verify completed without Q&A pause (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             thread = response.get_json()['thread']
             assert thread['status'] == ThreadStatus.COMPLETED.value
@@ -433,9 +418,8 @@ class TestQAIntegrationFlow:
             
             response = client.post('/api/chat', json={'prompt': 'Test'})
             thread_id = response.get_json()['thread_id']
-            
-            time.sleep(2)
-            
+
+            # Processing is synchronous in test mode
             # Try to submit wrong number of answers
             wrong_answers = {
                 'answers': ['Only one answer'],  # Should be 2
@@ -484,10 +468,8 @@ class TestQAIntegrationFlow:
             
             response = client.post('/api/chat', json={'prompt': 'Test'})
             thread_id = response.get_json()['thread_id']
-            
-            time.sleep(2)
-            
-            # Thread should be COMPLETED, not AWAITING_USER_INPUT
+
+            # Thread should be COMPLETED, not AWAITING_USER_INPUT (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             thread = response.get_json()['thread']
             assert thread['status'] == ThreadStatus.COMPLETED.value

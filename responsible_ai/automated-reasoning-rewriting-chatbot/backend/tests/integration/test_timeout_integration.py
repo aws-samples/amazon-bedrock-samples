@@ -1,7 +1,6 @@
 """
 Integration test for timeout handling in the complete system.
 """
-import time
 from datetime import datetime, timedelta
 import datetime as dt_module
 from unittest.mock import Mock, patch, MagicMock

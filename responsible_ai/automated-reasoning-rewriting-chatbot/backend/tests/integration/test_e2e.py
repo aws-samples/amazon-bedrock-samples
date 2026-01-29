@@ -11,7 +11,6 @@ Tests the following workflows:
 """
 
 import pytest
-import time
 import threading
 from unittest.mock import Mock, patch, MagicMock
 from backend.flask_app import create_app
@@ -190,10 +189,7 @@ class TestE2EWorkflows:
             assert 'thread_id' in data
             thread_id = data['thread_id']
             
-            # Wait for processing
-            time.sleep(2)
-            
-            # Get thread status
+            # Get thread status (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             data = response.get_json()
@@ -247,10 +243,7 @@ class TestE2EWorkflows:
             # Verify all threads are unique
             assert len(thread_ids) == len(set(thread_ids))
             
-            # Wait for processing
-            time.sleep(2)
-            
-            # Verify all threads exist and are independent
+            # Verify all threads exist and are independent (processing is synchronous in test mode)
             for thread_id in thread_ids:
                 response = client.get(f'/api/thread/{thread_id}')
                 assert response.status_code == 200
@@ -290,10 +283,7 @@ class TestE2EWorkflows:
             assert response.status_code == 200
             thread_id = response.get_json()['thread_id']
             
-            # Wait for processing
-            time.sleep(2)
-            
-            # Get thread with iterations (debug panel data)
+            # Get thread with iterations (debug panel data, processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             data = response.get_json()
@@ -391,10 +381,7 @@ class TestE2EWorkflows:
             assert response.status_code == 200
             thread_id = response.get_json()['thread_id']
             
-            # Wait for processing
-            time.sleep(2)
-            
-            # Get thread status
+            # Get thread status (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             data = response.get_json()
@@ -445,10 +432,7 @@ class TestE2EWorkflows:
             assert response.status_code == 200
             thread_id = response.get_json()['thread_id']
             
-            # Wait for processing
-            time.sleep(2)
-            
-            # Get thread status
+            # Get thread status (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             data = response.get_json()

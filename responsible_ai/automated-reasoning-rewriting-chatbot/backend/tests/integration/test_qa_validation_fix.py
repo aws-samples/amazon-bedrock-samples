@@ -7,7 +7,6 @@ answer instead of the rewritten answer after user clarification.
 """
 
 import pytest
-import time
 from unittest.mock import Mock, patch, MagicMock
 from backend.flask_app import create_app
 from backend.models.thread import ThreadStatus, Finding
@@ -133,10 +132,7 @@ class TestQAValidationFix:
             assert response.status_code == 200
             thread_id = response.get_json()['thread_id']
             
-            # Wait for questions
-            time.sleep(2)
-            
-            # Verify AWAITING_USER_INPUT
+            # Verify AWAITING_USER_INPUT (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             thread = response.get_json()['thread']
             assert thread['status'] == ThreadStatus.AWAITING_USER_INPUT.value
@@ -149,10 +145,7 @@ class TestQAValidationFix:
             response = client.post(f'/api/thread/{thread_id}/answer', json=answers_data)
             assert response.status_code == 200
             
-            # Wait for completion
-            time.sleep(2)
-            
-            # Verify completion
+            # Verify completion (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             thread = response.get_json()['thread']
             

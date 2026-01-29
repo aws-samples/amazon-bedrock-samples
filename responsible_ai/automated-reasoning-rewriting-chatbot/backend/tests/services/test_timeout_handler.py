@@ -1,7 +1,6 @@
 """
 Tests for the timeout handler service.
 """
-import time
 from datetime import datetime, timedelta
 import datetime as dt_module
 from unittest.mock import Mock, patch
@@ -39,8 +38,9 @@ def test_timeout_handler_start_stop():
     handler.stop()
     assert not handler._running
     
-    # Give it a moment to stop
-    time.sleep(0.1)
+    # Wait for thread to actually stop (join is deterministic)
+    handler._thread.join(timeout=1.0)
+    assert not handler._thread.is_alive()
 
 
 def test_get_stale_awaiting_threads():

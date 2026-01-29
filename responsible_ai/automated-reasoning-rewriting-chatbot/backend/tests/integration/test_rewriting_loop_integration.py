@@ -13,7 +13,6 @@ Validates: Requirements from rewriting-loop-fix spec
 """
 
 import pytest
-import time
 from unittest.mock import Mock, patch, MagicMock
 from backend.flask_app import create_app
 from backend.models.thread import ThreadStatus, Finding
@@ -148,10 +147,7 @@ class TestRewritingLoopIntegration:
             assert 'thread_id' in data
             thread_id = data['thread_id']
             
-            # Wait for processing
-            time.sleep(2)
-            
-            # Verify thread completed successfully
+            # Verify thread completed successfully (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             data = response.get_json()
@@ -254,10 +250,7 @@ class TestRewritingLoopIntegration:
             assert response.status_code == 200
             thread_id = response.get_json()['thread_id']
             
-            # Wait for processing to detect questions
-            time.sleep(2)
-            
-            # Verify thread status is AWAITING_USER_INPUT
+            # Verify thread status is AWAITING_USER_INPUT (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             thread = response.get_json()['thread']
@@ -284,10 +277,7 @@ class TestRewritingLoopIntegration:
             response = client.post(f'/api/thread/{thread_id}/answer', json=answers_data)
             assert response.status_code == 200
             
-            # Wait for validation to resume and complete
-            time.sleep(2)
-            
-            # Verify validation resumed and completed
+            # Verify validation resumed and completed (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             thread = response.get_json()['thread']
@@ -379,10 +369,7 @@ class TestRewritingLoopIntegration:
             assert response.status_code == 200
             thread_id = response.get_json()['thread_id']
             
-            # Wait for processing
-            time.sleep(3)
-            
-            # Verify thread completed with max iterations warning
+            # Verify thread completed with max iterations warning (processing is synchronous in test mode)
             response = client.get(f'/api/thread/{thread_id}')
             assert response.status_code == 200
             thread = response.get_json()['thread']
