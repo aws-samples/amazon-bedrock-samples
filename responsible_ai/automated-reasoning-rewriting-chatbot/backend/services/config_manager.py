@@ -340,7 +340,7 @@ class ConfigManager:
         try:
             policy_arn_parts = policy_arn.split(':')
             if len(policy_arn_parts) < 6:
-                raise ValueError(f"Invalid Policy ARN format: {arn}")
+                raise ValueError(f"Invalid Policy ARN format: {policy_arn}")
     
             response = self.bedrock_client.create_guardrail(
                 name=self.GUARDRAIL_NAME,

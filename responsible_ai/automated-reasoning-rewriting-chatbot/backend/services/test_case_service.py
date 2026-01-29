@@ -100,7 +100,7 @@ class TestCaseService:
                     continue
                 
                 # Non-transient error or final attempt - log and raise with detailed info
-                logger.error(
+                logger.warning(
                     f"AWS Bedrock API call failed after {attempt + 1} attempts. "
                     f"Error code: {error_code}, Message: {error_message}, Policy ARN: {policy_arn}"
                 )

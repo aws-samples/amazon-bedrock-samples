@@ -8,6 +8,7 @@ This module provides REST API endpoints for:
 """
 import logging
 import os
+import sys
 import threading
 import boto3
 from flask import Blueprint, Flask, jsonify, request, send_from_directory, current_app
@@ -737,7 +738,7 @@ def check_aws_credentials():
 
 if not check_aws_credentials():
     print("Configure AWS credentials to run the application: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html")
-    exit(1)
+    sys.exit(1)
 
 # Create the application instance
 app = create_app()

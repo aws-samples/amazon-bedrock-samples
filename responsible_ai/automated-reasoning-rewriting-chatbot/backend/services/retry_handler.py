@@ -37,6 +37,58 @@ def is_transient_error(error_code: str) -> bool:
     return error_code in TRANSIENT_ERROR_CODES
 
 
+def _execute_with_retry(
+    func: Callable[..., T],
+    args: tuple,
+    kwargs: dict,
+    max_retries: int,
+    base_delay: float,
+    operation_name: str
+) -> T:
+    """
+    Core retry logic shared by decorator and standalone function.
+    
+    Args:
+        func: The function to execute
+        args: Positional arguments for the function
+        kwargs: Keyword arguments for the function
+        max_retries: Maximum retry attempts
+        base_delay: Base delay for exponential backoff
+        operation_name: Name for logging
+        
+    Returns:
+        The function's return value
+        
+    Raises:
+        Exception: If all retries fail
+    """
+    last_exception = None
+    
+    for attempt in range(max_retries):
+        try:
+            return func(*args, **kwargs)
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', '')
+            last_exception = e
+            
+            if is_transient_error(error_code) and attempt < max_retries - 1:
+                delay = base_delay * (2 ** attempt)
+                logger.warning(
+                    f"Transient error on attempt {attempt + 1}/{max_retries}: {error_code}. "
+                    f"Retrying {operation_name} in {delay}s..."
+                )
+                time.sleep(delay)
+                continue
+            
+            raise Exception(f"Failed to {operation_name}: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Failed to {operation_name}: {str(e)}")
+    
+    if last_exception:
+        raise Exception(f"Failed to {operation_name} after {max_retries} retries")
+    raise Exception(f"Failed to {operation_name} after all retries")
+
+
 def with_retry(
     max_retries: int = 3,
     base_delay: float = 1.0,
@@ -61,35 +113,7 @@ def with_retry(
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(*args, **kwargs) -> T:
-            last_exception = None
-            
-            for attempt in range(max_retries):
-                try:
-                    return func(*args, **kwargs)
-                    
-                except ClientError as e:
-                    error_code = e.response.get('Error', {}).get('Code', '')
-                    last_exception = e
-                    
-                    if is_transient_error(error_code) and attempt < max_retries - 1:
-                        delay = base_delay * (2 ** attempt)
-                        logger.warning(
-                            f"Transient error on attempt {attempt + 1}/{max_retries}: {error_code}. "
-                            f"Retrying {operation_name} in {delay}s..."
-                        )
-                        time.sleep(delay)
-                        continue
-                    
-                    raise Exception(f"Failed to {operation_name}: {str(e)}")
-                
-                except Exception as e:
-                    raise Exception(f"Failed to {operation_name}: {str(e)}")
-            
-            # Should not reach here, but handle edge case
-            if last_exception:
-                raise Exception(f"Failed to {operation_name} after {max_retries} retries")
-            raise Exception(f"Failed to {operation_name} after all retries")
-        
+            return _execute_with_retry(func, args, kwargs, max_retries, base_delay, operation_name)
         return wrapper
     return decorator
 
@@ -122,30 +146,4 @@ def retry_api_call(
     Raises:
         Exception: If the function fails after all retries
     """
-    last_exception = None
-    
-    for attempt in range(max_retries):
-        try:
-            return func(*args, **kwargs)
-            
-        except ClientError as e:
-            error_code = e.response.get('Error', {}).get('Code', '')
-            last_exception = e
-            
-            if is_transient_error(error_code) and attempt < max_retries - 1:
-                delay = base_delay * (2 ** attempt)
-                logger.warning(
-                    f"Transient error on attempt {attempt + 1}/{max_retries}: {error_code}. "
-                    f"Retrying {operation_name} in {delay}s..."
-                )
-                time.sleep(delay)
-                continue
-            
-            raise Exception(f"Failed to {operation_name}: {str(e)}")
-        
-        except Exception as e:
-            raise Exception(f"Failed to {operation_name}: {str(e)}")
-    
-    if last_exception:
-        raise Exception(f"Failed to {operation_name} after {max_retries} retries")
-    raise Exception(f"Failed to {operation_name} after all retries")
+    return _execute_with_retry(func, args, kwargs, max_retries, base_delay, operation_name)
