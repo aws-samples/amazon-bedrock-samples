@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedrock Guardrails Optimizer</title>
+    <style>
+        /* AWS Cloudscape-inspired Design System */
+        :root {
+            /* Light mode - AWS Console colors */
+            --color-background-layout-main: #f2f3f3;
+            --color-background-container-content: #ffffff;
+            --color-background-container-header: #fafafa;
+            --color-border-container-top: #e9ebed;
+            --color-border-divider-default: #e9ebed;
+            --color-text-body-default: #000716;
+            --color-text-body-secondary: #5f6b7a;
+            --color-text-heading-default: #000716;
+            --color-text-link-default: #0972d3;
+            --color-background-button-primary-default: #0972d3;
+            --color-background-button-primary-hover: #033160;
+            --color-background-button-normal-default: #ffffff;
+            --color-border-button-normal-default: #7d8998;
+            --color-background-status-info: #f2f8fd;
+            --color-background-status-success: #f2fcf3;
+            --color-background-status-error: #fff7f7;
+            --color-background-status-warning: #fffce9;
+            --color-text-status-info: #0972d3;
+            --color-text-status-success: #037f0c;
+            --color-text-status-error: #d91515;
+            --color-text-status-warning: #8d6605;
+            --color-background-input-default: #ffffff;
+            --color-border-input-default: #7d8998;
+            --color-border-input-focused: #0972d3;
+            --color-background-badge-blue: #0972d3;
+            --color-charts-orange: #ec7211;
+            --awsui-color-background-home-header: #0f1b2a;
+        }
+        
+        [data-theme="dark"] {
+            --color-background-layout-main: #0f1b2a;
+            --color-background-container-content: #192534;
+            --color-background-container-header: #1a2634;
+            --color-border-container-top: #354150;
+            --color-border-divider-default: #354150;
+            --color-text-body-default: #d1d5db;
+            --color-text-body-secondary: #8d99a8;
+            --color-text-heading-default: #d1d5db;
+            --color-text-link-default: #539fe5;
+            --color-background-button-primary-default: #539fe5;
+            --color-background-button-primary-hover: #89bcf0;
+            --color-background-button-normal-default: #192534;
+            --color-border-button-normal-default: #5f6b7a;
+            --color-background-status-info: #0f1b2a;
+            --color-background-status-success: #0f1b2a;
+            --color-background-status-error: #1a0f0f;
+            --color-background-status-warning: #1a1a0f;
+            --color-text-status-info: #539fe5;
+            --color-text-status-success: #29ad32;
+            --color-text-status-error: #eb6f6f;
+            --color-text-status-warning: #e0ca57;
+            --color-background-input-default: #0f1b2a;
+            --color-border-input-default: #5f6b7a;
+            --awsui-color-background-home-header: #0f1b2a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: "Amazon Ember", "Helvetica Neue", Roboto, Arial, sans-serif; 
+            background: var(--color-background-layout-main); 
+            color: var(--color-text-body-default); 
+            line-height: 1.5; 
+            font-size: 14px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* Header - AWS Console style */
+        header { 
+            background: var(--awsui-color-background-home-header); 
+            color: #ffffff; 
+            padding: 16px 0; 
+            margin-bottom: 24px;
+            border-bottom: 1px solid #354150;
+        }
+        header .header-content { display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 18px; font-weight: 700; }
+        header p { opacity: 0.8; font-size: 12px; margin-top: 4px; }
+        
+        /* Header buttons */
+        .header-btn { 
+            background: transparent; 
+            border: 1px solid #5f6b7a; 
+            color: #d1d5db; 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 12px;
+        }
+        .header-btn:hover { background: rgba(255,255,255,0.1); }
+        
+        /* Cards - Cloudscape Container */
+        .card { 
+            background: var(--color-background-container-content); 
+            border-radius: 8px; 
+            box-shadow: 0 1px 1px 0 rgba(0,28,36,0.1); 
+            border: 1px solid var(--color-border-container-top);
+            margin-bottom: 20px; 
+        }
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--color-border-divider-default);
+            background: var(--color-background-container-header);
+            border-radius: 8px 8px 0 0;
+        }
+        .card-header h2 { 
+            font-size: 18px; 
+            font-weight: 700; 
+            color: var(--color-text-heading-default); 
+        }
+        .card-body { padding: 20px; }
+        
+        /* Tabs - Cloudscape style */
+        .tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid var(--color-border-divider-default); }
+        .tab { 
+            padding: 12px 16px; 
+            background: transparent; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 14px; 
+            color: var(--color-text-body-secondary);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.15s;
+        }
+        .tab.active { 
+            color: var(--color-text-link-default); 
+            border-bottom-color: var(--color-text-link-default);
+            font-weight: 600;
+        }
+        .tab:hover:not(.active) { color: var(--color-text-body-default); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Form elements - Cloudscape style */
+        label { 
+            display: block; 
+            font-weight: 600; 
+            margin-bottom: 4px; 
+            font-size: 14px; 
+            color: var(--color-text-body-default);
+        }
+        .form-field { margin-bottom: 16px; }
+        .form-description { font-size: 12px; color: var(--color-text-body-secondary); margin-top: 4px; }
+        
+        input, select, textarea { 
+            width: 100%; 
+            padding: 8px 12px; 
+            border: 2px solid var(--color-border-input-default); 
+            border-radius: 8px; 
+            font-size: 14px; 
+            background: var(--color-background-input-default);
+            color: var(--color-text-body-default);
+        }
+        input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--color-border-input-focused); 
+            box-shadow: 0 0 0 1px var(--color-border-input-focused);
+        }
+        textarea { min-height: 200px; font-family: Monaco, Consolas, monospace; font-size: 12px; resize: vertical; }
+        
+        /* Buttons - Cloudscape style */
+        .btn { 
+            padding: 8px 16px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: 600; 
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary { 
+            background: var(--color-background-button-primary-default); 
+            color: #ffffff; 
+        }
+        .btn-primary:hover { background: var(--color-background-button-primary-hover); }
+        .btn-normal { 
+            background: var(--color-background-button-normal-default); 
+            border: 2px solid var(--color-border-button-normal-default);
+            color: var(--color-text-body-default);
+        }
+        .btn-normal:hover { border-color: var(--color-text-body-default); }
+        .btn-link {
+            background: transparent;
+            color: var(--color-text-link-default);
+            padding: 4px 8px;
+        }
+        .btn-link:hover { text-decoration: underline; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* Grid layout */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        
+        /* Input list */
+        .input-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-start; }
+        .input-row input { margin-bottom: 0; flex: 1; }
+        .input-row select { width: 100px; margin-bottom: 0; }
+        #inputsList { max-height: 280px; overflow-y: auto; border: 1px solid var(--color-border-divider-default); border-radius: 8px; }
+        .input-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 12px; 
+            border-bottom: 1px solid var(--color-border-divider-default);
+            font-size: 13px; 
+        }
+        .input-item:last-child { border-bottom: none; }
+        .input-item .expected { 
+            font-size: 11px; 
+            padding: 2px 8px; 
+            border-radius: 4px; 
+            font-weight: 600;
+        }
+        .input-item .expected.pass { background: var(--color-background-status-success); color: var(--color-text-status-success); }
+        .input-item .expected.reject { background: var(--color-background-status-error); color: var(--color-text-status-error); }
+        .input-item .remove { background: none; border: none; color: var(--color-text-status-error); cursor: pointer; font-size: 16px; padding: 4px 8px; }
+        
+        /* Status alerts - Cloudscape style */
+        .status { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .status.info { background: var(--color-background-status-info); color: var(--color-text-status-info); border-left: 4px solid var(--color-text-status-info); }
+        .status.success { background: var(--color-background-status-success); color: var(--color-text-status-success); border-left: 4px solid var(--color-text-status-success); }
+        .status.error { background: var(--color-background-status-error); color: var(--color-text-status-error); border-left: 4px solid var(--color-text-status-error); }
+        .status.loading { background: var(--color-background-status-warning); color: var(--color-text-status-warning); border-left: 4px solid var(--color-text-status-warning); }
+        
+        /* File list */
+        .file-list { list-style: none; border: 1px solid var(--color-border-divider-default); border-radius: 8px; max-height: 200px; overflow-y: auto; }
+        .file-list li { padding: 10px 12px; border-bottom: 1px solid var(--color-border-divider-default); font-size: 13px; }
+        .file-list li:last-child { border-bottom: none; }
+        .file-list li:hover { background: var(--color-background-container-header); }
+        .file-list a { color: var(--color-text-link-default); text-decoration: none; }
+        .file-list a:hover { text-decoration: underline; }
+        
+        /* Metrics - Cloudscape Key Value Pairs */
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .metric { text-align: center; padding: 16px; background: var(--color-background-container-header); border-radius: 8px; }
+        .metric .value { font-size: 28px; font-weight: 700; color: var(--color-text-heading-default); }
+        .metric .label { font-size: 12px; color: var(--color-text-body-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* Checkbox/Radio - Cloudscape style */
+        .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .checkbox-row input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--color-background-button-primary-default); }
+        .checkbox-row label { margin: 0; font-weight: normal; cursor: pointer; }
+        .checkbox-group { display: flex; gap: 20px; flex-wrap: wrap; }
+        .checkbox-group .checkbox-row { margin-bottom: 0; }
+        
+        /* Config editor sections */
+        .config-section { border: 1px solid var(--color-border-divider-default); border-radius: 8px; margin-bottom: 16px; }
+        .config-section-header { 
+            padding: 12px 16px; 
+            background: var(--color-background-container-header); 
+            border-bottom: 1px solid var(--color-border-divider-default);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+        }
+        .config-section-body { padding: 16px; }
+        .config-section.collapsed .config-section-body { display: none; }
+        .config-section.collapsed .config-section-header { border-radius: 8px; border-bottom: none; }
+        
+        /* Filter row */
+        .filter-row { display: grid; grid-template-columns: 1fr 120px 120px; gap: 12px; padding: 12px; background: var(--color-background-container-header); border-radius: 8px; margin-bottom: 8px; }
+        .filter-row label { font-size: 12px; margin-bottom: 2px; }
+        .filter-row select { padding: 6px 8px; }
+        
+        /* Topic editor */
+        .topic-editor { border: 1px solid var(--color-border-divider-default); border-radius: 8px; padding: 16px; margin-bottom: 12px; background: var(--color-background-container-header); }
+        .topic-editor h4 { font-size: 14px; margin-bottom: 12px; color: var(--color-text-heading-default); }
+        .topic-editor .form-field { margin-bottom: 12px; }
+        .topic-editor .form-field:last-of-type { margin-bottom: 0; }
+        
+        .hidden { display: none !important; }
+        
+        /* Logs Panel */
+        .logs-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            width: 400px;
+            min-width: 280px;
+            max-width: 80vw;
+            background: var(--color-background-container-content);
+            border-left: 1px solid var(--color-border-container-top);
+            box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+        .logs-panel.open { transform: translateX(0); }
+        .logs-panel-header {
+            padding: 16px;
+            background: var(--awsui-color-background-home-header);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logs-panel-header h3 { font-size: 14px; font-weight: 600; }
+        .logs-panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-family: Monaco, Consolas, monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            background: var(--color-background-layout-main);
+        }
+        .log-entry {
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            word-break: break-word;
+            background: var(--color-background-container-content);
+            border-left: 3px solid var(--color-border-input-default);
+        }
+        .log-entry.info { border-left-color: var(--color-text-status-info); }
+        .log-entry.success { border-left-color: var(--color-text-status-success); }
+        .log-entry.error { border-left-color: var(--color-text-status-error); }
+        .log-entry .timestamp { color: var(--color-text-body-secondary); font-size: 10px; }
+        
+        /* Resize handle for logs panel */
+        .logs-resize-handle {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 6px;
+            height: 100%;
+            cursor: ew-resize;
+            background: transparent;
+            z-index: 10;
+        }
+        .logs-resize-handle:hover,
+        .logs-resize-handle.dragging {
+            background: var(--color-text-link-default);
+        }
+        
+        /* Logs toggle button - more visible */
+        .logs-toggle {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            padding: 12px 20px;
+            border-radius: 24px;
+            background: var(--color-background-button-primary-default);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logs-toggle:hover { background: var(--color-background-button-primary-hover); }
+        .logs-toggle .badge {
+            background: var(--color-text-status-error);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+        .logs-panel-footer {
+            padding: 12px;
+            border-top: 1px solid var(--color-border-divider-default);
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* Adjust main content when panel is open */
+        body.logs-open .container { margin-right: 420px; }
+        
+        @media (max-width: 768px) { 
+            .grid { grid-template-columns: 1fr; } 
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .btn-group { flex-direction: column; }
+            .logs-panel { width: 100%; }
+            body.logs-open .container { margin-right: 0; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div>
+                <h1>🛡️ Amazon Bedrock Guardrails Optimizer</h1>
+                <p>Evaluate and optimize guardrail configurations for your AI assistant</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html" target="_blank" class="header-btn" style="text-decoration:none;">📚 Guardrails Documentation</a>
+                <button class="header-btn" id="themeToggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Step 1: Test Inputs -->
+        <div class="card">
+            <div class="card-header"><h2>1. Define Test Inputs</h2></div>
+            <div class="card-body">
+                <div class="tabs">
+                    <button class="tab active" data-tab="manual">Manual Entry</button>
+                    <button class="tab" data-tab="csv">Upload CSV</button>
+                    <button class="tab" data-tab="paste">Paste CSV</button>
+                </div>
+                
+                <div id="manual" class="tab-content active">
+                    <div class="input-row">
+                        <input type="text" id="newInput" placeholder="Enter test query...">
+                        <select id="newExpected">
+                            <option value="pass">Pass</option>
+                            <option value="reject">Reject</option>
+                        </select>
+                        <button class="btn btn-normal" onclick="addInput()">Add</button>
+                    </div>
+                    <div class="btn-group" style="margin-bottom:12px;">
+                        <button class="btn btn-link" onclick="loadSampleInputs()">📥 Load Sample Inputs</button>
+                        <button class="btn btn-link" onclick="clearAllInputs()">🗑️ Clear All</button>
+                    </div>
+                    <div id="inputsList"></div>
+                    <p class="form-description" style="margin-top:10px;">
+                        <strong id="inputCount">0</strong> test inputs defined
+                    </p>
+                </div>
+                
+                <div id="csv" class="tab-content">
+                    <div class="form-field">
+                        <label>Upload CSV File</label>
+                        <input type="file" id="csvFile" accept=".csv">
+                        <p class="form-description">CSV format: input,expected (where expected is "pass" or "reject")</p>
+                    </div>
+                </div>
+                
+                <div id="paste" class="tab-content">
+                    <div class="form-field">
+                        <label>Paste CSV Content</label>
+                        <textarea id="csvContent" placeholder="input,expected&#10;&quot;What is the CPU usage?&quot;,pass&#10;&quot;Write me a poem&quot;,reject"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Guardrail Config -->
+        <div class="card">
+            <div class="card-header"><h2>2. Guardrail Configuration</h2></div>
+            <div class="card-body">
+                <div class="tabs">
+                    <button class="tab active" data-tab="useDefault">Use Default</button>
+                    <button class="tab" data-tab="existingId">Existing ID</button>
+                    <button class="tab" data-tab="uploadConfig">Upload/Paste JSON</button>
+                    <button class="tab" data-tab="editConfig">Edit Config</button>
+                </div>
+                
+                <div id="useDefault" class="tab-content active">
+                    <p class="form-description" style="margin-bottom:12px;">Use the baseline guardrail configuration defined in the project.</p>
+                    <button class="btn btn-normal" onclick="loadBaselineConfig()">Load Baseline Config</button>
+                    <div id="baselineConfigDisplay" class="hidden" style="margin-top:16px;">
+                        <label>Baseline Configuration (JSON)</label>
+                        <textarea id="baselineConfigJson" readonly style="background:var(--color-background-container-header);"></textarea>
+                    </div>
+                </div>
+                
+                <div id="existingId" class="tab-content">
+                    <div class="form-field">
+                        <label>Guardrail ID</label>
+                        <input type="text" id="guardrailId" placeholder="e.g., abc123xyz">
+                        <p class="form-description">Enter an existing guardrail ID to test against</p>
+                    </div>
+                </div>
+                
+                <div id="uploadConfig" class="tab-content">
+                    <div class="form-field">
+                        <label>Guardrail Configuration JSON</label>
+                        <textarea id="configJson" placeholder="Paste guardrail configuration JSON here..."></textarea>
+                    </div>
+                    <div class="form-field">
+                        <label>Or Upload JSON File</label>
+                        <input type="file" id="configFile" accept=".json">
+                    </div>
+                </div>
+                
+                <div id="editConfig" class="tab-content">
+                    <!-- Content Filters Section -->
+                    <div class="config-section">
+                        <div class="config-section-header" onclick="toggleSection(this)">
+                            <span>Content Filters</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="config-section-body" id="contentFiltersContainer"></div>
+                    </div>
+                    
+                    <!-- Denied Topics Section -->
+                    <div class="config-section">
+                        <div class="config-section-header" onclick="toggleSection(this)">
+                            <span>Denied Topics</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="config-section-body">
+                            <div id="topicsContainer"></div>
+                            <button class="btn btn-normal" onclick="addTopicEditor()" style="margin-top:8px;">+ Add Topic</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Word Filters Section -->
+                    <div class="config-section">
+                        <div class="config-section-header" onclick="toggleSection(this)">
+                            <span>Word Filters</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="config-section-body">
+                            <div class="form-field">
+                                <label>Blocked Words (comma-separated)</label>
+                                <textarea id="wordFilters" style="min-height:80px;" placeholder="word1, word2, word3"></textarea>
+                            </div>
+                            <div class="checkbox-row">
+                                <input type="checkbox" id="profanityFilter" checked>
+                                <label for="profanityFilter">Enable Profanity Filter</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- General Settings Section -->
+                    <div class="config-section">
+                        <div class="config-section-header" onclick="toggleSection(this)">
+                            <span>General Settings</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="config-section-body">
+                            <div class="grid grid-2">
+                                <div class="form-field">
+                                    <label>Guardrail Name</label>
+                                    <input type="text" id="configName" value="ai-assistant-guardrail">
+                                </div>
+                                <div class="form-field">
+                                    <label>Cross-Region Profile</label>
+                                    <select id="crossRegionProfile">
+                                        <option value="us.guardrail.v1:0">US (us.guardrail.v1:0)</option>
+                                        <option value="eu.guardrail.v1:0">EU (eu.guardrail.v1:0)</option>
+                                        <option value="apac.guardrail.v1:0">APAC (apac.guardrail.v1:0)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Blocked Input Message</label>
+                                <input type="text" id="blockedInputMsg" value="This query is outside the scope of this assistant.">
+                            </div>
+                            <div class="form-field">
+                                <label>Blocked Output Message</label>
+                                <input type="text" id="blockedOutputMsg" value="I cannot provide this information.">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-normal" onclick="loadBaselineIntoEditor()" style="margin-top:8px;">Load Baseline into Editor</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Evaluate -->
+        <div class="card">
+            <div class="card-header"><h2>3. Evaluate & Generate Test Files</h2></div>
+            <div class="card-body">
+                <div class="grid grid-2">
+                    <div class="form-field">
+                        <label>AWS Region</label>
+                        <select id="region">
+                            <optgroup label="US Regions">
+                                <option value="us-east-1">us-east-1 (N. Virginia)</option>
+                                <option value="us-east-2">us-east-2 (Ohio)</option>
+                                <option value="us-west-1">us-west-1 (N. California)</option>
+                                <option value="us-west-2">us-west-2 (Oregon)</option>
+                            </optgroup>
+                            <optgroup label="Europe Regions">
+                                <option value="eu-central-1">eu-central-1 (Frankfurt)</option>
+                                <option value="eu-west-1">eu-west-1 (Ireland)</option>
+                                <option value="eu-west-3">eu-west-3 (Paris)</option>
+                                <option value="eu-north-1">eu-north-1 (Stockholm)</option>
+                            </optgroup>
+                            <optgroup label="Asia Pacific Regions">
+                                <option value="ap-south-1">ap-south-1 (Mumbai)</option>
+                                <option value="ap-northeast-1">ap-northeast-1 (Tokyo)</option>
+                                <option value="ap-northeast-2">ap-northeast-2 (Seoul)</option>
+                                <option value="ap-northeast-3">ap-northeast-3 (Osaka)</option>
+                                <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
+                                <option value="ap-southeast-2">ap-southeast-2 (Sydney)</option>
+                            </optgroup>
+                            <optgroup label="Other Regions">
+                                <option value="il-central-1">il-central-1 (Tel Aviv)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+                <div id="evalStatus" class="status info hidden"></div>
+                <button class="btn btn-primary" onclick="runEvaluation()">Evaluate Inputs</button>
+                
+                <div id="evalResults" class="hidden" style="margin-top:20px;">
+                    <h3 style="font-size:16px;margin-bottom:12px;font-weight:600;">Evaluation Results</h3>
+                    <div class="metrics">
+                        <div class="metric"><div class="value" id="resAccuracy">-</div><div class="label">Accuracy</div></div>
+                        <div class="metric"><div class="value" id="resTotal">-</div><div class="label">Total Tests</div></div>
+                        <div class="metric"><div class="value" id="resFP">-</div><div class="label">False Positives</div></div>
+                        <div class="metric"><div class="value" id="resFN">-</div><div class="label">False Negatives</div></div>
+                    </div>
+                    <div class="form-field">
+                        <label>Generated Files</label>
+                        <p id="generatedFiles" class="form-description"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Optimization -->
+        <div class="card">
+            <div class="card-header"><h2>4. Run Optimization</h2></div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:100px 1fr 1fr;gap:16px;">
+                    <div class="form-field">
+                        <label>Max Iterations</label>
+                        <input type="number" id="maxIterations" value="5" min="1" max="20">
+                    </div>
+                    <div class="form-field">
+                        <label>Passed File</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="passedFile" value="passed_guardrail_results.json">
+                            <select id="passedFileSelect" onchange="if(this.value) document.getElementById('passedFile').value=this.value;">
+                                <option value="">📂</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label>Failed File</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="failedFile" value="failed_guardrail_results.json">
+                            <select id="failedFileSelect" onchange="if(this.value) document.getElementById('failedFile').value=this.value;">
+                                <option value="">📂</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>Target Metrics</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-row"><input type="checkbox" name="metrics" value="accuracy" id="m_acc" checked><label for="m_acc">Accuracy</label></div>
+                        <div class="checkbox-row"><input type="checkbox" name="metrics" value="latency" id="m_lat"><label for="m_lat">Latency</label></div>
+                        <div class="checkbox-row"><input type="checkbox" name="metrics" value="generalization" id="m_gen"><label for="m_gen">Generalization</label></div>
+                        <div class="checkbox-row"><input type="checkbox" name="metrics" value="all" id="m_all"><label for="m_all">All</label></div>
+                    </div>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="startFromBaseline">
+                    <label for="startFromBaseline">Start from baseline (instead of best previous config)</label>
+                </div>
+                <div id="optStatus" class="status info hidden" style="margin-top:16px;"></div>
+                <div class="btn-group" style="margin-top:16px;">
+                    <button class="btn btn-primary" id="startOptBtn" onclick="runOptimization()">Start Optimization</button>
+                    <button class="btn btn-normal hidden" id="stopOptBtn" onclick="stopOptimization()" style="background:var(--color-text-status-error);color:white;border:none;">⏹ Stop Optimization</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Reports -->
+        <div class="card">
+            <div class="card-header"><h2>5. View Reports</h2></div>
+            <div class="card-body">
+                <button class="btn btn-normal" onclick="refreshReports()" style="margin-bottom:16px;">🔄 Refresh Reports</button>
+                
+                <div class="grid grid-3">
+                    <div>
+                        <label style="margin-bottom:8px;">HTML Reports</label>
+                        <ul class="file-list" id="htmlReports"><li>No reports found</li></ul>
+                    </div>
+                    <div>
+                        <label style="margin-bottom:8px;">Best Configurations</label>
+                        <ul class="file-list" id="bestConfigs"><li>No configs found</li></ul>
+                    </div>
+                    <div>
+                        <label style="margin-bottom:8px;">Iteration Reports</label>
+                        <ul class="file-list" id="evalReports"><li>No reports found</li></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 6: Deploy -->
+        <div class="card">
+            <div class="card-header"><h2>6. Deploy Best Configuration</h2></div>
+            <div class="card-body">
+                <div class="form-field">
+                    <label>Select Configuration to Deploy</label>
+                    <select id="deployConfig">
+                        <option value="">Select a configuration...</option>
+                    </select>
+                </div>
+                <div id="deployStatus" class="status info hidden"></div>
+                <button class="btn btn-primary" onclick="deployBestConfig()">Deploy to AWS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Panel -->
+    <button class="logs-toggle" onclick="toggleLogsPanel()" title="Open Debug Console">
+        🖥️ Open Debug Console
+        <span class="badge hidden" id="logsBadge">0</span>
+    </button>
+    
+    <div class="logs-panel" id="logsPanel">
+        <div class="logs-resize-handle" id="logsResizeHandle"></div>
+        <div class="logs-panel-header">
+            <h3>🖥️ Console Output</h3>
+            <button class="btn btn-link" onclick="toggleLogsPanel()" style="color:white;">✕</button>
+        </div>
+        <div class="logs-panel-body" id="logsContent">
+            <div style="text-align:center;color:var(--color-text-body-secondary);padding:40px;">
+                Logs will appear here when operations run...
+            </div>
+        </div>
+        <div class="logs-panel-footer">
+            <button class="btn btn-normal" onclick="clearLogs()" style="flex:1;">Clear</button>
+            <button class="btn btn-normal" onclick="downloadLogs()" style="flex:1;">Download</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let testInputs = [];
+        let currentConfig = null;
+        let logEntries = [];
+        let unreadLogs = 0;
+        let eventSource = null;
+
+        // Initialize SSE connection for logs
+        function initLogStream() {
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource(API_BASE + '/api/logs');
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.heartbeat) return;
+                addLogEntry(data.message, data.timestamp);
+            };
+            eventSource.onerror = () => {
+                console.log('Log stream disconnected, reconnecting...');
+                setTimeout(initLogStream, 3000);
+            };
+        }
+
+        function addLogEntry(message, timestamp) {
+            const entry = { message, timestamp: timestamp || new Date().toISOString() };
+            logEntries.push(entry);
+            
+            // Determine log type
+            let type = 'info';
+            if (message.toLowerCase().includes('error') || message.toLowerCase().includes('failed')) type = 'error';
+            else if (message.toLowerCase().includes('complete') || message.toLowerCase().includes('success')) type = 'success';
+            
+            const logsContent = document.getElementById('logsContent');
+            const isEmpty = logsContent.querySelector('div[style*="text-align:center"]');
+            if (isEmpty) logsContent.innerHTML = '';
+            
+            const div = document.createElement('div');
+            div.className = 'log-entry ' + type;
+            const time = new Date(entry.timestamp).toLocaleTimeString();
+            div.innerHTML = `<span class="timestamp">${time}</span> ${escapeHtml(message)}`;
+            logsContent.appendChild(div);
+            logsContent.scrollTop = logsContent.scrollHeight;
+            
+            // Update badge if panel is closed
+            if (!document.getElementById('logsPanel').classList.contains('open')) {
+                unreadLogs++;
+                const badge = document.getElementById('logsBadge');
+                badge.textContent = unreadLogs > 99 ? '99+' : unreadLogs;
+                badge.classList.remove('hidden');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function toggleLogsPanel() {
+            const panel = document.getElementById('logsPanel');
+            const isOpen = panel.classList.toggle('open');
+            document.body.classList.toggle('logs-open', isOpen);
+            if (isOpen) {
+                unreadLogs = 0;
+                document.getElementById('logsBadge').classList.add('hidden');
+            }
+        }
+
+        // Resize functionality for logs panel
+        (function initLogsResize() {
+            const panel = document.getElementById('logsPanel');
+            const handle = document.getElementById('logsResizeHandle');
+            let isResizing = false;
+            let startX, startWidth;
+
+            handle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = panel.offsetWidth;
+                handle.classList.add('dragging');
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const diff = startX - e.clientX;
+                const newWidth = Math.min(Math.max(startWidth + diff, 280), window.innerWidth * 0.8);
+                panel.style.width = newWidth + 'px';
+                // Update body margin when panel is open
+                if (panel.classList.contains('open')) {
+                    document.querySelector('.container').style.marginRight = (newWidth + 20) + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    handle.classList.remove('dragging');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                }
+            });
+        })();
+
+        function clearLogs() {
+            logEntries = [];
+            document.getElementById('logsContent').innerHTML = '<div style="text-align:center;color:var(--color-text-body-secondary);padding:40px;">Logs cleared</div>';
+        }
+
+        function downloadLogs() {
+            const text = logEntries.map(e => `[${e.timestamp}] ${e.message}`).join('\n');
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `guardrail-logs-${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeToggle');
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                btn.textContent = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                btn.textContent = '☀️ Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            document.getElementById('themeToggle').textContent = '☀️ Light Mode';
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const parent = tab.parentElement;
+                const card = parent.closest('.card-body');
+                parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                card.querySelector('#' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Section toggle
+        function toggleSection(header) {
+            header.parentElement.classList.toggle('collapsed');
+            const arrow = header.querySelector('span:last-child');
+            arrow.textContent = header.parentElement.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
+        // Input management
+        function addInput() {
+            const input = document.getElementById('newInput').value.trim();
+            const expected = document.getElementById('newExpected').value;
+            if (!input) return;
+            testInputs.push({ input, expected });
+            document.getElementById('newInput').value = '';
+            renderInputs();
+        }
+
+        function removeInput(index) {
+            testInputs.splice(index, 1);
+            renderInputs();
+        }
+
+        function clearAllInputs() {
+            testInputs = [];
+            renderInputs();
+        }
+
+        function renderInputs() {
+            const list = document.getElementById('inputsList');
+            if (testInputs.length === 0) {
+                list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--color-text-body-secondary);">No inputs added yet</div>';
+            } else {
+                list.innerHTML = testInputs.map((item, i) => `
+                    <div class="input-item">
+                        <span>${item.input.substring(0, 70)}${item.input.length > 70 ? '...' : ''}</span>
+                        <span style="display:flex;align-items:center;gap:8px;">
+                            <span class="expected ${item.expected}">${item.expected}</span>
+                            <button class="remove" onclick="removeInput(${i})">×</button>
+                        </span>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('inputCount').textContent = testInputs.length;
+        }
+
+        // Load sample inputs
+        async function loadSampleInputs() {
+            try {
+                const res = await fetch('sample_test_inputs.csv');
+                const text = await res.text();
+                parseCSV(text);
+            } catch (e) {
+                alert('Error loading sample inputs: ' + e.message);
+            }
+        }
+
+        // CSV file handling
+        document.getElementById('csvFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => parseCSV(ev.target.result);
+            reader.readAsText(file);
+        });
+
+        function parseCSV(content) {
+            const lines = content.split('\n').filter(l => l.trim());
+            const hasHeader = lines[0].toLowerCase().includes('input');
+            const startIdx = hasHeader ? 1 : 0;
+            testInputs = [];
+            for (let i = startIdx; i < lines.length; i++) {
+                const match = lines[i].match(/^"?([^"]*)"?,\s*(pass|reject)/i);
+                if (match) {
+                    testInputs.push({ input: match[1], expected: match[2].toLowerCase() });
+                }
+            }
+            renderInputs();
+            document.querySelectorAll('.card:first-child .tab')[0].click();
+        }
+
+        // Config file handling
+        document.getElementById('configFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('configJson').value = ev.target.result;
+            };
+            reader.readAsText(file);
+        });
+
+        async function loadBaselineConfig() {
+            try {
+                const res = await fetch(API_BASE + '/api/baseline-config');
+                currentConfig = await res.json();
+                const jsonStr = JSON.stringify(currentConfig, null, 2);
+                document.getElementById('baselineConfigJson').value = jsonStr;
+                document.getElementById('baselineConfigDisplay').classList.remove('hidden');
+                document.getElementById('configJson').value = jsonStr;
+            } catch (e) {
+                alert('Error loading baseline config: ' + e.message);
+            }
+        }
+
+        async function loadBaselineIntoEditor() {
+            try {
+                const res = await fetch(API_BASE + '/api/baseline-config');
+                currentConfig = await res.json();
+                loadConfigIntoEditor(currentConfig);
+            } catch (e) {
+                alert('Error loading baseline config: ' + e.message);
+            }
+        }
+
+        function loadConfigIntoEditor(config) {
+            // Load content filters
+            const filters = config?.contentPolicyConfig?.filtersConfig || [];
+            const filtersContainer = document.getElementById('contentFiltersContainer');
+            filtersContainer.innerHTML = '';
+            const filterTypes = ['HATE', 'INSULTS', 'SEXUAL', 'VIOLENCE', 'MISCONDUCT', 'PROMPT_ATTACK'];
+            filterTypes.forEach(type => {
+                const existing = filters.find(f => f.type === type) || { type, inputStrength: 'MEDIUM', outputStrength: 'MEDIUM', inputEnabled: true, outputEnabled: true };
+                const row = document.createElement('div');
+                row.className = 'filter-row';
+                row.innerHTML = `
+                    <div>
+                        <label>${type}</label>
+                        <div class="checkbox-row" style="margin-top:4px;">
+                            <input type="checkbox" id="filter_${type}_enabled" ${existing.inputEnabled ? 'checked' : ''}>
+                            <label for="filter_${type}_enabled" style="font-size:12px;">Enabled</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Input Strength</label>
+                        <select id="filter_${type}_input">
+                            <option value="NONE" ${existing.inputStrength === 'NONE' ? 'selected' : ''}>None</option>
+                            <option value="LOW" ${existing.inputStrength === 'LOW' ? 'selected' : ''}>Low</option>
+                            <option value="MEDIUM" ${existing.inputStrength === 'MEDIUM' ? 'selected' : ''}>Medium</option>
+                            <option value="HIGH" ${existing.inputStrength === 'HIGH' ? 'selected' : ''}>High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Output Strength</label>
+                        <select id="filter_${type}_output">
+                            <option value="NONE" ${existing.outputStrength === 'NONE' ? 'selected' : ''}>None</option>
+                            <option value="LOW" ${existing.outputStrength === 'LOW' ? 'selected' : ''}>Low</option>
+                            <option value="MEDIUM" ${existing.outputStrength === 'MEDIUM' ? 'selected' : ''}>Medium</option>
+                            <option value="HIGH" ${existing.outputStrength === 'HIGH' ? 'selected' : ''}>High</option>
+                        </select>
+                    </div>
+                `;
+                filtersContainer.appendChild(row);
+            });
+
+            // Load topics
+            const topics = config?.topicPolicyConfig?.topicsConfig || [];
+            const container = document.getElementById('topicsContainer');
+            container.innerHTML = '';
+            topics.forEach(topic => addTopicEditor(topic));
+
+            // Load word filters
+            const words = config?.wordPolicyConfig?.wordsConfig || [];
+            document.getElementById('wordFilters').value = words.map(w => w.text).join(', ');
+            const profanity = config?.wordPolicyConfig?.managedWordListsConfig?.find(m => m.type === 'PROFANITY');
+            document.getElementById('profanityFilter').checked = profanity?.inputEnabled !== false;
+
+            // Load general settings
+            document.getElementById('configName').value = config?.name || 'ai-assistant-guardrail';
+            document.getElementById('blockedInputMsg').value = config?.blockedInputMessaging || '';
+            document.getElementById('blockedOutputMsg').value = config?.blockedOutputsMessaging || '';
+            const profile = config?.crossRegionConfig?.guardrailProfileIdentifier || 'us.guardrail.v1:0';
+            document.getElementById('crossRegionProfile').value = profile;
+        }
+
+        function addTopicEditor(topic = null) {
+            const container = document.getElementById('topicsContainer');
+            const div = document.createElement('div');
+            div.className = 'topic-editor';
+            div.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h4 style="margin:0;">Denied Topic</h4>
+                    <button class="btn btn-link" onclick="this.closest('.topic-editor').remove()" style="color:var(--color-text-status-error);">Remove</button>
+                </div>
+                <div class="form-field">
+                    <label>Topic Name</label>
+                    <input type="text" class="topic-name" placeholder="e.g., Competitors" value="${topic?.name || ''}">
+                </div>
+                <div class="form-field">
+                    <label>Definition</label>
+                    <textarea class="topic-def" style="min-height:60px;" placeholder="What content should be blocked">${topic?.definition || ''}</textarea>
+                </div>
+                <div class="form-field">
+                    <label>Examples (one per line)</label>
+                    <textarea class="topic-examples" style="min-height:80px;" placeholder="Example queries to block">${(topic?.examples || []).join('\n')}</textarea>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function getConfigFromEditor() {
+            // Build content filters
+            const filterTypes = ['HATE', 'INSULTS', 'SEXUAL', 'VIOLENCE', 'MISCONDUCT', 'PROMPT_ATTACK'];
+            const filtersConfig = filterTypes.map(type => ({
+                type,
+                inputStrength: document.getElementById(`filter_${type}_input`)?.value || 'MEDIUM',
+                outputStrength: document.getElementById(`filter_${type}_output`)?.value || 'MEDIUM',
+                inputEnabled: document.getElementById(`filter_${type}_enabled`)?.checked ?? true,
+                outputEnabled: type !== 'PROMPT_ATTACK'
+            }));
+
+            // Build topics
+            const topics = [];
+            document.querySelectorAll('.topic-editor').forEach(editor => {
+                const name = editor.querySelector('.topic-name').value.trim();
+                const definition = editor.querySelector('.topic-def').value.trim();
+                const examples = editor.querySelector('.topic-examples').value.split('\n').filter(e => e.trim());
+                if (name && definition) {
+                    topics.push({ name, definition, examples, type: 'DENY', inputEnabled: true, outputEnabled: true });
+                }
+            });
+
+            // Build word filters
+            const wordText = document.getElementById('wordFilters').value;
+            const wordsConfig = wordText.split(',').map(w => w.trim()).filter(w => w).map(text => ({
+                text, inputEnabled: true, outputEnabled: true
+            }));
+
+            return {
+                name: document.getElementById('configName').value,
+                description: 'Guardrail configuration',
+                blockedInputMessaging: document.getElementById('blockedInputMsg').value,
+                blockedOutputsMessaging: document.getElementById('blockedOutputMsg').value,
+                contentPolicyConfig: {
+                    tierConfig: { tierName: 'STANDARD' },
+                    filtersConfig
+                },
+                topicPolicyConfig: {
+                    tierConfig: { tierName: 'STANDARD' },
+                    topicsConfig: topics
+                },
+                wordPolicyConfig: {
+                    wordsConfig,
+                    managedWordListsConfig: [{
+                        type: 'PROFANITY',
+                        inputEnabled: document.getElementById('profanityFilter').checked,
+                        outputEnabled: document.getElementById('profanityFilter').checked
+                    }]
+                },
+                crossRegionConfig: {
+                    guardrailProfileIdentifier: document.getElementById('crossRegionProfile').value
+                }
+            };
+        }
+
+        function showStatus(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.className = 'status ' + type;
+            el.textContent = message;
+            el.classList.remove('hidden');
+        }
+
+        async function runEvaluation() {
+            let inputs = [];
+            let csvContent = null;
+
+            if (document.getElementById('manual').classList.contains('active')) {
+                inputs = testInputs;
+            } else if (document.getElementById('paste').classList.contains('active')) {
+                csvContent = document.getElementById('csvContent').value;
+            }
+
+            if (inputs.length === 0 && !csvContent) {
+                alert('Please add test inputs first');
+                return;
+            }
+
+            const configTab = document.querySelector('.card:nth-child(2) .tab.active')?.dataset.tab;
+            let guardrailId = null;
+            let guardrailConfig = null;
+
+            if (configTab === 'existingId') {
+                guardrailId = document.getElementById('guardrailId').value.trim();
+                if (!guardrailId) { alert('Please enter a guardrail ID'); return; }
+            } else if (configTab === 'uploadConfig') {
+                const json = document.getElementById('configJson').value.trim();
+                if (json) guardrailConfig = JSON.parse(json);
+            } else if (configTab === 'editConfig') {
+                guardrailConfig = getConfigFromEditor();
+            }
+
+            showStatus('evalStatus', 'Evaluating inputs...', 'loading');
+
+            try {
+                const body = {
+                    region: document.getElementById('region').value,
+                    guardrail_id: guardrailId,
+                    guardrail_config: guardrailConfig
+                };
+                if (csvContent) body.csv_content = csvContent;
+                else body.inputs = inputs;
+
+                const res = await fetch(API_BASE + '/api/evaluate-inputs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!res.ok) throw new Error((await res.json()).error);
+                const data = await res.json();
+
+                showStatus('evalStatus', 'Evaluation complete!', 'success');
+                document.getElementById('evalResults').classList.remove('hidden');
+                document.getElementById('resAccuracy').textContent = (data.accuracy * 100).toFixed(1) + '%';
+                document.getElementById('resTotal').textContent = data.total_tests;
+                document.getElementById('resFP').textContent = data.false_positives;
+                document.getElementById('resFN').textContent = data.false_negatives;
+                document.getElementById('generatedFiles').textContent = `${data.passed_file}, ${data.failed_file}`;
+                document.getElementById('passedFile').value = data.passed_file;
+                document.getElementById('failedFile').value = data.failed_file;
+            } catch (e) {
+                showStatus('evalStatus', 'Error: ' + e.message, 'error');
+            }
+        }
+
+        async function runOptimization() {
+            const metrics = Array.from(document.querySelectorAll('input[name="metrics"]:checked')).map(c => c.value);
+            if (metrics.length === 0) { alert('Select at least one metric'); return; }
+
+            showStatus('optStatus', 'Running optimization... This may take several minutes.', 'loading');
+            document.getElementById('startOptBtn').classList.add('hidden');
+            document.getElementById('stopOptBtn').classList.remove('hidden');
+
+            try {
+                const res = await fetch(API_BASE + '/api/run-optimization', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        passed_file: document.getElementById('passedFile').value,
+                        failed_file: document.getElementById('failedFile').value,
+                        max_iterations: parseInt(document.getElementById('maxIterations').value),
+                        region: document.getElementById('region').value,
+                        start_from_baseline: document.getElementById('startFromBaseline').checked,
+                        metrics: metrics
+                    })
+                });
+
+                if (!res.ok) throw new Error((await res.json()).error);
+                
+                // Poll for completion
+                pollOptimizationStatus();
+            } catch (e) {
+                showStatus('optStatus', 'Error: ' + e.message, 'error');
+                resetOptButtons();
+            }
+        }
+
+        async function stopOptimization() {
+            try {
+                const res = await fetch(API_BASE + '/api/stop-optimization', { method: 'POST' });
+                if (!res.ok) throw new Error((await res.json()).error);
+                showStatus('optStatus', 'Stopping optimization...', 'loading');
+            } catch (e) {
+                showStatus('optStatus', 'Error stopping: ' + e.message, 'error');
+            }
+        }
+
+        async function pollOptimizationStatus() {
+            try {
+                const res = await fetch(API_BASE + '/api/optimization-status');
+                const data = await res.json();
+                
+                if (data.running) {
+                    setTimeout(pollOptimizationStatus, 2000);
+                } else {
+                    showStatus('optStatus', 'Optimization complete! Check reports below.', 'success');
+                    resetOptButtons();
+                    refreshReports();
+                }
+            } catch (e) {
+                setTimeout(pollOptimizationStatus, 2000);
+            }
+        }
+
+        function resetOptButtons() {
+            document.getElementById('startOptBtn').classList.remove('hidden');
+            document.getElementById('stopOptBtn').classList.add('hidden');
+        }
+
+        async function refreshReports() {
+            try {
+                const res = await fetch(API_BASE + '/api/reports');
+                const data = await res.json();
+
+                const htmlList = document.getElementById('htmlReports');
+                const configList = document.getElementById('bestConfigs');
+                const evalList = document.getElementById('evalReports');
+                const deploySelect = document.getElementById('deployConfig');
+                const passedSelect = document.getElementById('passedFileSelect');
+                const failedSelect = document.getElementById('failedFileSelect');
+
+                htmlList.innerHTML = data.html_reports.length ? data.html_reports.map(f => 
+                    `<li><a href="${API_BASE}/api/reports/${f}" target="_blank">${f}</a></li>`
+                ).join('') : '<li>No reports found</li>';
+
+                configList.innerHTML = data.best_configs.length ? data.best_configs.map(f => 
+                    `<li><a href="${API_BASE}/api/reports/${f}" target="_blank">${f}</a></li>`
+                ).join('') : '<li>No configs found</li>';
+
+                evalList.innerHTML = data.evaluations.length ? data.evaluations.slice(0, 10).map(f => 
+                    `<li><a href="${API_BASE}/api/reports/${f}" target="_blank">${f}</a></li>`
+                ).join('') : '<li>No reports found</li>';
+
+                deploySelect.innerHTML = '<option value="">Select a configuration...</option>' +
+                    data.best_configs.map(f => `<option value="${f}">${f}</option>`).join('');
+
+                // Populate passed/failed file dropdowns
+                passedSelect.innerHTML = '<option value="">📂</option>' +
+                    (data.passed_files || []).map(f => `<option value="${f}">${f}</option>`).join('');
+                failedSelect.innerHTML = '<option value="">📂</option>' +
+                    (data.failed_files || []).map(f => `<option value="${f}">${f}</option>`).join('');
+            } catch (e) {
+                console.error('Error refreshing reports:', e);
+            }
+        }
+
+        async function deployBestConfig() {
+            const filename = document.getElementById('deployConfig').value;
+            if (!filename) { alert('Select a configuration to deploy'); return; }
+
+            showStatus('deployStatus', 'Deploying configuration...', 'loading');
+
+            try {
+                const configRes = await fetch(API_BASE + '/api/reports/' + filename);
+                const config = await configRes.json();
+
+                const res = await fetch(API_BASE + '/api/deploy-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        config: config,
+                        region: document.getElementById('region').value
+                    })
+                });
+
+                if (!res.ok) throw new Error((await res.json()).error);
+                const data = await res.json();
+                showStatus('deployStatus', `Deployed successfully! Guardrail ID: ${data.guardrail_id}, Version: ${data.version}`, 'success');
+            } catch (e) {
+                showStatus('deployStatus', 'Error: ' + e.message, 'error');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderInputs();
+            refreshReports();
+            initLogStream();
+            document.getElementById('newInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addInput();
+            });
+        });
+    </script>
+</body>
+</html>
