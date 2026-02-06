@@ -1,0 +1,6 @@
+boto3>=1.34.0
+strands-agents>=0.1.0
+strands-agents-tools>=0.1.0
+flask>=3.0.0
+flask-cors>=4.0.0
+weasyprint>=60.0  # Optional: for PDF report generation
