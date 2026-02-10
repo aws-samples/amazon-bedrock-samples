@@ -1,5 +1,4 @@
-# Single cell to preprocess GSM8K from HuggingFace into Bedrock RFT format
-# Usage: Provide HF dataset path (e.g., "openai/gsm8k") and run
+# Preprocess GSM8K from HuggingFace into Bedrock RFT format
 
 from datasets import load_dataset
 import json, re
@@ -11,13 +10,25 @@ def preprocess_gsm8k(hf_path="openai/gsm8k", train_size=256, test_size=256, outp
         match = re.search(r'####\s*(-?\d+(?:,\d+)*)', answer_text)
         return match.group(1).replace(',', '') if match else ""
     
+    def extract_steps(answer_text):
+        return [s.strip() for s in answer_text.split('\n') if s.strip() and not s.strip().startswith('####')]
+    
     def format_row(row, idx, split):
         return {
+            "messages": [
+                {"role": "system", "content": "You are a helpful math tutor who solves word problems step by step."},
+                {"role": "user", "content": f"{row['question']} Let's think step by step and output the final answer after \"####\"."}
+            ],
+            "reference_answer": {
+                "final_answer": extract_answer(row['answer']),
+                "steps": extract_steps(row['answer'])
+            },
+            "task_id": f"gsm8k_{split}_{idx}",
+            "domain": "math",
+            "difficulty_level": "grade_school",
             "data_source": hf_path,
-            "prompt": [{"content": f"{row['question']} Let's think step by step and output the final answer after \"####\".", "role": "user"}],
-            "ability": "math",
-            "reward_model": {"ground_truth": extract_answer(row['answer']), "style": "rule"},
-            "extra_info": {"answer": row['answer'], "index": idx, "question": row['question'], "split": split}
+            "original_question": row['question'],
+            "original_answer": row['answer']
         }
     
     for split, size, filename in [("train", train_size, "train.jsonl"), ("test", test_size, "test.jsonl")]:
