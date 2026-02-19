@@ -53,13 +53,12 @@ def compute_score(trajectory_id, solution_str, ground_truth, method="strict", fo
  
 def lambda_handler(event, context):
     """
-    Opal batch_invoke sends the batch as a raw JSON array of trajectory objects.
+    Receives a batch of trajectory objects as a JSON array.
     Each trajectory has: id, messages, reference_answer.
-    Must return a JSON array of: [{"id": "...", "aggregate_reward_score": float, "metrics_list": [...]}, ...]
+    Returns a JSON array of: [{"id": "...", "aggregate_reward_score": float, "metrics_list": [...]}, ...]
     """
     print("Event: ", json.dumps(event))
- 
-    # Opal sends trajectories directly as a list, not wrapped in a dict
+
     trajectories = event if isinstance(event, list) else event.get("trajectories", [])
  
     scores = []
