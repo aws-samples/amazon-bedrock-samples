@@ -38,7 +38,7 @@ COMPOSITE_SCORE_WEIGHTS = {
 # Performance thresholds
 PERFORMANCE_THRESHOLDS = {
     'success_rate': {'good': 0.95, 'medium': 0.85},
-    'avg_latency': {'good': 0.6, 'medium': 1.5},
+    # 'avg_latency': {'good': 1.5, 'medium': 2},
     'avg_cost': {'good': 0.5, 'medium': 1.0},
     'avg_otps': {'good': 100, 'medium': 35},
 }
@@ -1108,6 +1108,37 @@ def extract_judge_scores(json_str):
         return {}
 
 
+from collections import defaultdict
+import numpy as np
+def build_task_latency_thresholds(records, method="percentile", value=0.75, round_ndigits=3):
+    """
+    Build latency thresholds per task across models.
+    Parameters
+    ----------
+    """
+    by_task = defaultdict(list)
+    # group latencies by task
+    for r in records:
+        tt = r.get("task_types")
+        lat = r.get("avg_latency")
+        if tt and isinstance(lat, (int, float)) and lat > 0:
+            by_task[tt].append(float(lat))
+    out = {}
+    for tt, lats in by_task.items():
+        arr = np.array(lats, dtype=float)
+        med = float(np.median(arr))
+        if method == "percentile":
+            medium_cutoff = float(np.quantile(arr, value))
+        elif method == "tolerance":
+            medium_cutoff = med * (1 + value)
+        else:
+            raise ValueError("method must be 'percentile' or 'tolerance'")
+        out[tt] = {
+                "good": round(med, round_ndigits),
+                "medium": round(medium_cutoff, round_ndigits)
+        }
+    return out
+
 
 ##############################
 ##############################
@@ -1125,149 +1156,95 @@ def create_integrated_analysis_table(model_task_metrics):
         'below': '#ffd4a3',     # Orange - within 30% of best
         'poor': '#ffcccc'       # Light red - more than 30% behind
     }
-    
-    # Group by task and create separate tables
-    task_tables = {}
-    
-    for task in model_task_metrics['task_types'].unique():
-        task_data = model_task_metrics[model_task_metrics['task_types'] == task].copy()
-        
-        if task_data.empty:
-            continue
-        
-        # Calculate average token size for this task
-        avg_tokens =  task_data['avg_input_tokens'].mean() #task_data['avg_output_tokens'].mean() +
-        
-        # Get best values for each metric in this task
-        # best_success_rate = task_data['success_rate'].max()
-        # best_latency = task_data['avg_latency'].min()  # Lower is better
-        # best_cost = task_data['avg_cost'].min()        # Lower is better
-        # best_otps = task_data['avg_otps'].max()        # Higher is better
-        
-        # Format metrics for display
-        task_data['success_rate_fmt'] = task_data['success_rate'].apply(lambda x: f"{x:.1%}")
-        task_data['avg_latency_fmt'] = task_data['avg_latency'].apply(lambda x: f"{x:.2f}s")
-        task_data['avg_cost_fmt'] = task_data['avg_cost'].apply(lambda x: f"${x:.4f}")
-        task_data['avg_otps_fmt'] = task_data['avg_otps'].apply(lambda x: f"{x:.1f}")
-        # task_data['total_tokens_fmt'] = (task_data['avg_input_tokens'] + task_data['avg_output_tokens']).apply(lambda x: f"{x:.0f}")
-        task_data['total_tokens_fmt'] = task_data['avg_output_tokens'].apply(lambda x: f"{x:.0f}")
 
-        # Calculate composite score
-        max_latency = task_data['avg_latency'].max() or 1
-        max_cost = task_data['avg_cost'].max() or 1
-        
-        task_data['composite_score'] = (
-            task_data['success_rate'] +
-            (1 - (task_data['avg_latency'] / max_latency)) * COMPOSITE_SCORE_WEIGHTS['latency'] +
-            (1 - (task_data['avg_cost'] / max_cost)) * COMPOSITE_SCORE_WEIGHTS['cost']
-        )
-        
-        # Sort by composite score descending
-        task_data = task_data.sort_values('composite_score', ascending=False)
-        
-        # Get best composite score for coloring
-        # best_composite = task_data['composite_score'].max()
-        
-        # Helper function to get color based on distance from best
-        def get_distance_based_color(value, metric, best_value):
-            """
-            Colors based on percentage distance from the best performer.
-            For 'higher is better' metrics: distance = (best - value) / best
-            For 'lower is better' metrics: distance = (value - best) / best
-            """
-            
-            # Calculate percentage difference from best
-            if metric in ['success_rate', 'avg_otps']:  # Higher is better
-                if best_value == 0:  # Avoid division by zero
-                    distance_pct = 100
-                else:
-                    distance_pct = ((best_value - value) / best_value) * 100
-                
-                # Special case: if value equals best, it's the best
-                if value == best_value:
-                    return colors['best']
-                
-            else:  # Lower is better (latency, cost)
-                if best_value == 0:  # Avoid division by zero
-                    distance_pct = 100 if value > 0 else 0
-                else:
-                    distance_pct = ((value - best_value) / best_value) * 100
-                
-                # Special case: if value equals best, it's the best
-                if value == best_value:
-                    return colors['best']
-            
-            # Assign color based on distance from best
-            if distance_pct <= 5:
-                return colors['excellent']   # Within 5% of best
-            elif distance_pct <= 10:
-                return colors['good']        # Within 10% of best
-            elif distance_pct <= 20:
-                return colors['medium']      # Within 20% of best
-            elif distance_pct <= 30:
-                return colors['below']       # Within 30% of best
+    # Prepare the data for the table
+    table_data = model_task_metrics.copy()
+
+    thresholds['avg_latency'] = build_task_latency_thresholds(table_data[['model_name', 'task_types', 'avg_latency']].to_dict(orient='records'))
+    # ['avg_output_tokens'].median()
+    # Format Model Name
+    table_data['model_name'] = table_data['model_name'].apply(lambda x: x.split('/')[-1])
+
+    # Format metrics for display
+    table_data['success_rate_fmt'] = table_data['success_rate'].apply(lambda x: f"{x:.1%}")
+    table_data['avg_latency_fmt'] = table_data['avg_latency'].apply(lambda x: f"{x:.2f}s")
+    table_data['avg_cost_fmt'] = table_data['avg_cost'].apply(lambda x: f"${x:.4f}")
+    table_data['avg_otps_fmt'] = table_data['avg_otps'].apply(lambda x: f"{x:.1f}")
+
+    # Calculate composite score (higher is better)
+    # Normalize metrics to 0-1 range and combine them
+    max_latency = table_data['avg_latency'].max() or 1
+    max_cost = table_data['avg_cost'].max() or 1
+
+    table_data['composite_score'] = (
+            table_data['success_rate'] +
+            (1 - (table_data['avg_latency'] / max_latency)) * COMPOSITE_SCORE_WEIGHTS['latency'] +
+            (1 - (table_data['avg_cost'] / max_cost)) * COMPOSITE_SCORE_WEIGHTS['cost']
+    )
+
+    # Create figure
+    fig = go.Figure()
+
+    # Helper function to determine color based on value and thresholds
+    def get_color(value, metric):
+        if metric == 'success_rate' or metric == 'avg_otps':
+            if value >= thresholds[metric]['good']:
+                return colors['good']
+            elif value >= thresholds[metric]['medium']:
+                return colors['medium']
             else:
-                return colors['poor']        # More than 30% behind
-        
-        # Create figure for this task
-        fig = go.Figure()
-        
-        # Create table cells with conditional formatting
-        fig.add_trace(go.Table(
-            header=dict(
-                values=['Model', 'Success Rate', 'Latency', 'Cost', 'Tokens/sec', 'Avg Output Tokens', 'Score'],
-                font=dict(size=12, color='white'),
-                fill_color='#2E5A88',
-                align='left'
-            ),
-            cells=dict(
-                values=[
-                    task_data['model_name'].tolist(),
-                    task_data['success_rate_fmt'].tolist(),
-                    task_data['avg_latency_fmt'].tolist(),
-                    task_data['avg_cost_fmt'].tolist(),
-                    task_data['avg_otps_fmt'].tolist(),
-                    task_data['total_tokens_fmt'].tolist(),
-                    task_data['composite_score'].apply(lambda x: f"{x:.2f}").tolist()
-                ],
-                align='left',
-                font=dict(size=11, color='#333333', family='Arial, sans-serif'),  # Explicit dark font
-                # Conditional formatting based on distance from best performer
-                fill_color=[
-                    ['white'] * len(task_data),  # Model column (no coloring)
-                    # Success rate coloring (higher is better)
-                    [get_distance_based_color(sr, 'success_rate', task_data['success_rate'].max()) for sr in task_data['success_rate']],
-                    # Latency coloring (lower is better) 
-                    [get_distance_based_color(lt, 'avg_latency', task_data['avg_latency'].min()) for lt in task_data['avg_latency']],
-                    # Cost coloring (lower is better)
-                    [get_distance_based_color(cost, 'avg_cost', task_data['avg_cost'].min()) for cost in task_data['avg_cost']],
-                    # OTPS coloring (higher is better)
-                    [get_distance_based_color(tps, 'avg_otps', task_data['avg_otps'].max()) for tps in task_data['avg_otps']],
-                    ['#f0f0f0'] * len(task_data),  # Avg tokens column (light gray)
-                    # Composite score coloring based on distance from best
-                    [get_distance_based_color(score, 'composite_score', task_data['composite_score'].max()) for score in task_data['composite_score']]
-                ]
-            )
-        ))
-        
-        # Calculate precise height based on content
-        header_height = 45  # Height for table header
-        row_height = 30     # Height per data row
-        title_height = 10   # Space for title and subtitle
-        margin_height = 30  # Top and bottom margins
-        
-        total_height = header_height + (len(task_data) * row_height) + title_height + margin_height
-        
-        # Update layout with title showing token context
-        fig.update_layout(
-            title=f'Performance Analysis: {task}<br><sub>Average Input tokens: {avg_tokens:.0f}</sub>',
-            title_font=dict(size=16, color='#333333'),
-            width=1100,
-            height=total_height,  # Precise height calculation
-            margin=dict(l=20, r=20, b=20, t=60),
-            template="plotly_white",
-            paper_bgcolor="#ffffff",
-            font=dict(color='#333333')  # Ensure text is dark on white background
+                return colors['poor']
+        elif metric == 'avg_latency':
+            if value['avg_latency'] <= thresholds[metric][value['task_types']]['good']:
+                return colors['good']
+            else:
+                return colors['medium']
+        else:  # For latency and cost, lower is better
+            if value <= thresholds[metric]['good']:
+                return colors['good']
+            elif value <= thresholds[metric]['medium']:
+                return colors['medium']
+            else:
+                return colors['poor']
+
+    # Create table cells with conditional formatting
+    fig.add_trace(go.Table(
+        header=dict(
+            values=['Model', 'Task Type', 'Success Rate', 'Latency', 'Cost', 'Tokens/sec', 'Score'],
+            font=dict(size=12, color='white'),
+            fill_color='#2E5A88',
+            align='left'
+        ),
+        cells=dict(
+            values=[
+                table_data['model_name'],
+                table_data['task_types'],
+                table_data['success_rate_fmt'],
+                table_data['avg_latency_fmt'],
+                table_data['avg_cost_fmt'],
+                table_data['avg_otps_fmt'],
+                table_data['composite_score'].apply(lambda x: f"{x:.2f}")
+            ],
+            align='left',
+            font=dict(size=11),
+            # Conditional formatting based on thresholds
+            fill_color=[
+                ['white'] * len(table_data),  # Model column (no coloring)
+                ['white'] * len(table_data),  # Task column (no coloring)
+                # Success rate coloring (three-color)
+                [get_color(sr, 'success_rate') for sr in table_data['success_rate']],
+                # Latency coloring (three-color)
+                [get_color(lt, 'avg_latency') for lt in table_data[['avg_latency','task_types']].to_dict(orient='records')],
+                # Cost coloring (three-color)
+                [get_color(cost, 'avg_cost') for cost in table_data['avg_cost']],
+                # OTPS coloring (just use white)
+                # ['white'] * len(table_data),
+                [get_color(tps, 'avg_otps') for tps in table_data['avg_otps']],
+                # Composite score coloring based on quantiles
+                [colors['good'] if score >= table_data['composite_score'].quantile(0.67) else
+                 colors['medium'] if score >= table_data['composite_score'].quantile(0.33) else
+                 colors['poor'] for score in table_data['composite_score']]
+            ]
         )
         
         # Store the table for this task

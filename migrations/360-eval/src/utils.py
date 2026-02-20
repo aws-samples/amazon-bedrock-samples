@@ -7,6 +7,7 @@ import os
 import random
 import logging
 import base64
+import litellm
 import requests
 import requests.exceptions
 from tenacity import retry, stop_after_delay, wait_exponential, retry_if_exception_type
@@ -19,7 +20,7 @@ litellm.drop_params = True
 
 
 logger = logging.getLogger(__name__)
-
+litellm.drop_params = True
 
 # ----------------------------------------
 # Request Builders
