@@ -11,11 +11,14 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 
 
 export interface BedrockBatchOrchestratorStackProps extends cdk.StackProps {
   maxSubmittedAndInProgressJobs: number;
   bedrockBatchInferenceTimeoutHours?: number;
+  notificationEmails?: string[];
 }
 
 
@@ -46,9 +49,13 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       actions: ['bedrock:InvokeModel'],
       resources: [
-          'arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-20240307-v1:0',
-          'arn:aws:bedrock:*::inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0',
-          'arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v2:0',
+        'arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-20240307-v1:0',
+        'arn:aws:bedrock:*::inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0',
+        'arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v2:0',
+        // Amazon Nova models
+        'arn:aws:bedrock:*::foundation-model/amazon.nova-lite-v1:0',
+        'arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0',
+        'arn:aws:bedrock:*::foundation-model/amazon.nova-micro-v1:0',
       ],
     }));
 
@@ -135,6 +142,61 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
     });
     bucket.grantReadWrite(postprocessFunction);
 
+    // SNS Topic for pipeline notifications
+    const notificationTopic = new sns.Topic(this, 'pipelineNotificationTopic', {
+      displayName: 'Bedrock Batch Pipeline Notifications',
+      topicName: `bedrock-batch-pipeline-notifications-${this.account}`,
+    });
+
+    // Add email subscriptions if provided
+    const notificationEmails = props.notificationEmails || [];
+    notificationEmails.forEach((email, index) => {
+      notificationTopic.addSubscription(
+        new subscriptions.EmailSubscription(email)
+      );
+    });
+
+    // Validation Lambda for pipeline configuration
+    const validationFunction = new lambda.DockerImageFunction(this, 'validationFunction', {
+      description: 'Validate pipeline configuration before execution',
+      code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, '../lambda'), {
+        platform: assets.Platform.LINUX_AMD64,
+        cmd: ['validate_pipeline_config.lambda_handler']
+      }),
+      timeout: cdk.Duration.seconds(30),
+    });
+    bucket.grantRead(validationFunction);
+
+    // Transform Stage Lambda for column mappings
+    const transformStageFunction = new lambda.DockerImageFunction(this, 'transformStageFunction', {
+      description: 'Transform previous stage output for next stage input',
+      code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, '../lambda'), {
+        platform: assets.Platform.LINUX_AMD64,
+        cmd: ['transform_stage.lambda_handler']
+      }),
+      environment: {
+        BUCKET_NAME: bucket.bucketName,
+      },
+      memorySize: 3008,
+      timeout: cdk.Duration.minutes(5),
+    });
+    bucket.grantReadWrite(transformStageFunction);
+
+    // Notification Lambda for pipeline completion
+    const notificationFunction = new lambda.DockerImageFunction(this, 'notificationFunction', {
+      description: 'Send pipeline completion notifications',
+      code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, '../lambda'), {
+        platform: assets.Platform.LINUX_AMD64,
+        cmd: ['send_notification.lambda_handler']
+      }),
+      environment: {
+        SNS_TOPIC_ARN: notificationTopic.topicArn,
+      },
+      timeout: cdk.Duration.seconds(30),
+    });
+    bucket.grantRead(notificationFunction);
+    notificationTopic.grantPublish(notificationFunction);
+
     // step function tasks
     const preprocessTask = new tasks.LambdaInvoke(this, 'preprocessTask', {
       lambdaFunction: preprocessFunction,
@@ -174,8 +236,8 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
     });
 
     const chain = preprocessTask
-        .next(batchProcessingMap.itemProcessor(startBatchInferenceTask))
-        .next(postprocessMap.itemProcessor(postprocessTask));
+      .next(batchProcessingMap.itemProcessor(startBatchInferenceTask))
+      .next(postprocessMap.itemProcessor(postprocessTask));
 
     // state machine
     const stepFunction = new sfn.StateMachine(this, 'bedrockBatchOrchestratorSfn', {
@@ -184,12 +246,185 @@ export class BedrockBatchOrchestratorStack extends cdk.Stack {
 
     stepFunction.grantTaskResponse(getBatchInferenceFunction);
 
-    // output the state machine name & bucket name
+    // Pipeline Orchestrator Step Function
+    // This orchestrates multi-stage pipelines by chaining batch orchestrator executions
+
+    // Validation task
+    const validateConfigTask = new tasks.LambdaInvoke(this, 'validateConfigTask', {
+      lambdaFunction: validationFunction,
+      resultPath: '$.validation',
+    });
+
+    // Check validation result
+    const checkValidation = new sfn.Choice(this, 'checkValidation')
+      .when(
+        sfn.Condition.booleanEquals('$.validation.Payload.valid', false),
+        new sfn.Fail(this, 'validationFailed', {
+          error: 'ValidationError',
+          cause: 'Pipeline configuration validation failed',
+        })
+      );
+
+    // Map iterator receives the stage directly - no need to wrap it
+    // Just pass it through to maintain consistency with downstream references
+
+    // Transform input task - pass all context so Lambda can determine previous stage output
+    const transformInputTask = new tasks.LambdaInvoke(this, 'transformInputTask', {
+      lambdaFunction: transformStageFunction,
+      outputPath: '$.Payload',
+    });
+
+    // Add error handling for transform failures
+    transformInputTask.addCatch(
+      new sfn.Fail(this, 'transformFailed', {
+        error: 'TransformError',
+        cause: 'Failed to transform previous stage output for next stage',
+      }),
+      {
+        resultPath: '$.error',
+      }
+    );
+
+    // Prepare batch input for stages that used transform (use_previous_output: true)
+    const prepareBatchInputFromTransform = new sfn.Pass(this, 'prepareBatchInputFromTransform', {
+      parameters: {
+        // Transform Lambda flattens the structure, so all fields are at root level
+        'stage_name.$': '$.stage_name',
+        's3_uri.$': '$.input_s3_uri',
+        'job_name_prefix.$': '$.job_name_prefix',
+        'model_id.$': '$.model_id',
+        'prompt_config.$': '$.prompt_config',
+        'input_type.$': '$.input_type',
+        'max_num_jobs.$': '$.max_num_jobs',
+        'max_records_per_job.$': '$.max_records_per_job',
+      },
+    });
+
+    // Prepare batch input for stages with direct input_s3_uri
+    const prepareBatchInput = new sfn.Pass(this, 'prepareBatchInput', {
+      parameters: {
+        'stage_name.$': '$.$.stage_name',
+        's3_uri.$': '$.$.input_s3_uri',
+        'job_name_prefix.$': '$.$.job_name_prefix',
+        'model_id.$': '$.$.model_id',
+        'prompt_config.$': '$.$.prompt_config',
+        'input_type.$': '$.$.input_type',
+        'max_num_jobs.$': '$.$.max_num_jobs',
+        'max_records_per_job.$': '$.$.max_records_per_job',
+      },
+    });
+
+    const executeBatchJob = new tasks.StepFunctionsStartExecution(this, 'executeBatchJob', {
+      stateMachine: stepFunction,
+      integrationPattern: sfn.IntegrationPattern.RUN_JOB,
+      input: sfn.TaskInput.fromJsonPathAt('$'),
+      resultPath: '$.batch_result',
+    });
+
+    // Add retry policy for transient errors
+    executeBatchJob.addRetry({
+      errors: ['States.TaskFailed'],
+      interval: cdk.Duration.seconds(30),
+      maxAttempts: 2,
+      backoffRate: 2.0,
+    });
+
+    // Add catch for stage failures
+    executeBatchJob.addCatch(
+      new sfn.Fail(this, 'stageExecutionFailed', {
+        error: 'StageExecutionError',
+        cause: 'Batch job execution failed for stage',
+      }),
+      {
+        resultPath: '$.error',
+      }
+    );
+
+    // Extract output path from batch result
+    const extractOutputPath = new sfn.Pass(this, 'extractOutputPath', {
+      parameters: {
+        'stage_name.$': '$.stage_name',
+        'output_paths.$': '$.batch_result.Output.output_paths',
+      },
+    });
+
+    // Check if we should use previous output
+    const checkUsePreviousOutput = new sfn.Choice(this, 'checkUsePreviousOutput')
+      .when(
+        sfn.Condition.and(
+          sfn.Condition.isPresent('$.$.use_previous_output'),
+          sfn.Condition.booleanEquals('$.$.use_previous_output', true)
+        ),
+        transformInputTask.next(prepareBatchInputFromTransform)
+      )
+      .otherwise(prepareBatchInput);
+
+    // Build stage iterator - stage object is passed directly as input
+    const stageIterator = checkUsePreviousOutput;
+
+    prepareBatchInput.next(executeBatchJob);
+    prepareBatchInputFromTransform.next(executeBatchJob);
+    executeBatchJob.next(extractOutputPath);
+
+    // Map over stages
+    const executeStages = new sfn.Map(this, 'executeStages', {
+      maxConcurrency: 1,
+      itemsPath: '$.stages',
+      resultPath: '$.stage_results',
+      parameters: {
+        // Spread all stage fields (only includes fields that exist)
+        '$.$': '$$.Map.Item.Value',
+        // Add context fields
+        'pipeline_name.$': '$$.Execution.Input.pipeline_name',
+        'all_stages.$': '$$.Execution.Input.stages',
+        'stage_index.$': '$$.Map.Item.Index',
+      },
+    });
+    executeStages.itemProcessor(stageIterator);
+
+    // Send notification
+    const sendNotificationTask = new tasks.LambdaInvoke(this, 'sendNotificationTask', {
+      lambdaFunction: notificationFunction,
+      payload: sfn.TaskInput.fromObject({
+        'pipeline_name.$': '$.pipeline_name',
+        'stage_results.$': '$.stage_results',
+        'validation.$': '$.validation',
+        'presigned_url_expiry_days.$': '$.presigned_url_expiry_days',
+        'status': 'SUCCESS',
+      }),
+      outputPath: '$.Payload',
+    });
+
+    // Build pipeline orchestrator chain
+    checkValidation.otherwise(executeStages.next(sendNotificationTask));
+
+    const pipelineChain = validateConfigTask.next(checkValidation);
+
+    // Create Pipeline Orchestrator State Machine
+    const pipelineOrchestrator = new sfn.StateMachine(this, 'pipelineOrchestratorSfn', {
+      definitionBody: sfn.DefinitionBody.fromChainable(pipelineChain),
+      stateMachineName: `bedrock-pipeline-orchestrator-${this.account}`,
+    });
+
+    // Grant permissions
+    stepFunction.grantStartExecution(pipelineOrchestrator);
+    stepFunction.grantRead(pipelineOrchestrator);
+
+    // output the state machine names & bucket name
     new cdk.CfnOutput(this, 'stepFunctionName', {
       value: stepFunction.stateMachineName,
     });
+    new cdk.CfnOutput(this, 'pipelineOrchestratorName', {
+      value: pipelineOrchestrator.stateMachineName,
+    });
     new cdk.CfnOutput(this, 'bucketName', {
       value: bucket.bucketName,
+    });
+    new cdk.CfnOutput(this, 'notificationTopicArn', {
+      value: notificationTopic.topicArn,
+    });
+    new cdk.CfnOutput(this, 'validationFunctionName', {
+      value: validationFunction.functionName,
     });
   }
 }

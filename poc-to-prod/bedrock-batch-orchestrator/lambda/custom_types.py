@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Optional, Dict, Literal
+from typing import TypedDict, List, Optional, Dict, Literal, Union
 
 
 """
@@ -9,6 +9,39 @@ making it easier to follow the data structures throughout the lambda function.
 """
 
 
+# ============================================================================
+# PROMPT CONFIGURATION TYPES
+# ============================================================================
+
+class PromptConfigSingle(TypedDict):
+    """Single prompt applied to all input records"""
+    mode: Literal['single']
+    prompt_id: str
+
+
+class PromptConfigMapped(TypedDict):
+    """Prompt ID read from a CSV column for each record"""
+    mode: Literal['mapped']
+    column_name: str
+    image_column: Optional[str]  # Column containing image paths (for multimodal)
+
+
+class PromptConfigExpanded(TypedDict):
+    """Multiple prompts applied per input record based on category mapping"""
+    mode: Literal['expanded']
+    category_column: str  # Column to read category value from
+    image_column: Optional[str]  # Column containing image paths (for multimodal)
+    expansion_mapping: Dict[str, str]  # category_value -> expansion_rule_name
+
+
+# Union type for all prompt configuration modes
+PromptConfig = Union[PromptConfigSingle, PromptConfigMapped, PromptConfigExpanded]
+
+
+# ============================================================================
+# JOB INPUT TYPES
+# ============================================================================
+
 class JobInput(TypedDict):
     """Input to the step function - event structure for preprocess.py handler"""
     s3_uri: Optional[str]
@@ -16,7 +49,10 @@ class JobInput(TypedDict):
     split: Optional[str]
     job_name_prefix: str
     model_id: str
-    prompt_id: Optional[str]
+    prompt_id: Optional[str]  # For backward compatibility
+    prompt_config: Optional[PromptConfig]  # New unified prompt configuration
+    input_type: Optional[Literal['text', 'image']]  # Type of input data
+    image_column: Optional[str]  # Column name for image paths in CSV (default: 'image_path')
     max_num_jobs: Optional[int]
     max_records_per_job: Optional[int]
 
@@ -66,6 +102,42 @@ class TaskItem(TypedDict):
 class CompletedJobsList(TypedDict):
     """Collection of completed jobs - input to postprocess.py"""
     completed_jobs: List[TaskItem]
+
+
+# ============================================================================
+# PIPELINE CONFIGURATION TYPES
+# ============================================================================
+
+class PipelineStage(TypedDict):
+    """Configuration for a single stage in a multi-stage pipeline"""
+    stage_name: str
+    model_id: str
+    input_s3_uri: Optional[str]  # Explicit input S3 URI (if not using previous output)
+    input_type: Optional[Literal['text', 'image']]  # Type of input data
+    job_name_prefix: str
+    prompt_config: PromptConfig
+    use_previous_output: Optional[bool]  # If True, use output from previous stage as input
+    column_mappings: Optional[Dict[str, str]]  # Rename/transform columns from previous stage
+
+
+class PipelineConfig(TypedDict):
+    """Configuration for a multi-stage batch inference pipeline"""
+    pipeline_name: str
+    presigned_url_expiry_days: Optional[int]  # Expiry for presigned URLs in notifications (default: 7)
+    stages: List[PipelineStage]
+
+
+# ============================================================================
+# VALIDATION TYPES
+# ============================================================================
+
+class ValidationResult(TypedDict):
+    """Result of pipeline configuration validation"""
+    valid: bool
+    errors: List[str]  # List of validation error messages
+    warnings: List[str]  # List of validation warning messages
+    estimated_records: Optional[int]  # Estimated total records to process
+    estimated_cost_usd: Optional[float]  # Estimated cost in USD
 
 
 
