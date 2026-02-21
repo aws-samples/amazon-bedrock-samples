@@ -6,7 +6,7 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 // import { BedrockAgentBlueprintsConstruct } from '../../../../../agents-and-function-calling-for-amazon-bedrock-blueprints/bin/BedrockAgentBlueprintsConstruct';
 // import { BedrockGuardrailsBuilder, FilterType, ManagedWordsTypes, PIIAction, PIIType } from '../../../../../agents-and-function-calling-for-amazon-bedrock-blueprints/bin/constructs/BedrockGuardrailsBuilder';
 
-import {BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, AgentActionGroup, AgentKnowledgeBase, BedrockGuardrailsBuilder, FilterType, ManagedWordsTypes, PIIAction, PIIType} from '@aws/agents-and-function-calling-for-amazon-bedrock-blueprints';
+import {BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, AgentActionGroup, AgentKnowledgeBase, BedrockGuardrailsBuilder, FilterType, ManagedWordsTypes, PIIAction, PIIType} from '@aws/agents-for-amazon-bedrock-blueprints';
 
 import {  join } from "path";
 import { ManagedPolicy } from 'aws-cdk-lib/aws-iam';

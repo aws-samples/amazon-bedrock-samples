@@ -5,8 +5,7 @@ import { readFileSync } from 'fs';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Effect, ManagedPolicy, PolicyDocument, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { RDSDatabaseForAgentWithFD } from '../01-agent-with-function-definitions/rds-database-fd-construct';
-import {BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, AgentActionGroup} from '@aws/agents-and-function-calling-for-amazon-bedrock-blueprints';
-
+import {BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, AgentActionGroup} from '@aws/agents-for-amazon-bedrock-blueprints';
 
 export class AgentWithFunctionDefinitionStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
