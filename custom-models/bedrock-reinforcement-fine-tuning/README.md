@@ -11,6 +11,7 @@ End-to-end notebooks showing how to RFT various models on different datasets:
 | Amazon Nova Lite | GSM8K   | Math reasoning      | RLVR        | [models/nova/nova_gsm8k_rft.ipynb](models/nova/nova_gsm8k_rft.ipynb)     |
 | Amazon Nova Lite | FinQA   | Financial reasoning | RLVR        | [models/nova/nova_finqa_rft.ipynb](models/nova/nova_finqa_rft.ipynb)     |
 | Amazon Nova Lite | PandaLM | LLM evaluation      | RLAIF       | [models/nova/nova_pandalm_rft.ipynb](models/nova/nova_pandalm_rft.ipynb) |
+| GPT-OSS-20B      | GSM8K   | Math reasoning      | RLVR        | [models/gpt-oss/gptoss_gsm8k_rft.ipynb](models/gpt-oss/gptoss_gsm8k_rft.ipynb) |
 
 More coming soon—additional Nova variants, Llama models, and more datasets.
 

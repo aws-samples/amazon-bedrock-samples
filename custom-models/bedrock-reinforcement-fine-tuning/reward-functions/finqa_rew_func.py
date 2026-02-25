@@ -28,25 +28,31 @@ def extract_number(text: str) -> Optional[float]:
         except ValueError:
             pass
 
-    # Fallback: Try to find numbers anywhere in text
-    # Try to find numbers (including decimals, percentages, negatives, commas)
-    number_patterns = [
-        r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?%?",  # Number with commas (e.g., 25,000)
-        r"-?\d+\.?\d*%?",  # Basic number with optional decimal and percentage
-        r"\$?\s*-?\d+\.?\d*",  # Number with optional dollar sign
-    ]
+    # Fallback: Prioritize currency amounts (financial data)
+    multipliers = {'thousand': 1e3, 'k': 1e3, 'million': 1e6, 'm': 1e6, 'billion': 1e9, 'b': 1e9}
+    currency_match = re.search(
+        r'\$\s*(-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+\.?\d*)\s*(thousand|million|billion|k|m|b)?',
+        text, re.IGNORECASE
+    )
+    if currency_match:
+        num_str = currency_match.group(1).replace(',', '')
+        try:
+            value = float(num_str)
+            suffix = currency_match.group(2)
+            if suffix:
+                value *= multipliers.get(suffix.lower(), 1)
+            return value
+        except ValueError:
+            pass
 
-    for pattern in number_patterns:
-        matches = re.findall(pattern, text)
-        if matches:
-            # Take the last number found
-            num_str = (
-                matches[-1].replace("$", "").replace("%", "").replace(",", "").strip()
-            )
-            try:
-                return float(num_str)
-            except ValueError:
-                continue
+    # Fallback: last number found
+    matches = re.findall(r'-?\d{1,3}(?:,\d{3})+(?:\.\d+)?%?|-?\d+\.?\d*%?', text)
+    if matches:
+        num_str = matches[-1].replace('%', '').replace(',', '').strip()
+        try:
+            return float(num_str)
+        except ValueError:
+            pass
 
     return None
 
