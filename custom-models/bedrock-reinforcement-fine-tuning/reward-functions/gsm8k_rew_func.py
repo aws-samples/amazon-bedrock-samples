@@ -7,12 +7,14 @@ def lambda_handler(event, context):
     """AWS Lambda handler for GSM8K reward function."""
     results = []
     for item in event:
-        item_id = item.get("id", "unknown")
+        item_id = item.get("id") or item.get("task_id", "unknown")
         messages = item.get("messages", [])
         metadata = item.get("metadata", {})
         
-        # Get ground truth from metadata
+        # Get ground truth - check both metadata and top-level reference_answer
         ground_truth = metadata.get("reference_answer", {}).get("final_answer")
+        if not ground_truth:
+            ground_truth = item.get("reference_answer", {}).get("final_answer")
         if not ground_truth:
             print(f"No ground truth found for id: {item_id}")
         
