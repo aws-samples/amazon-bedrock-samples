@@ -8,7 +8,6 @@ Prompt caching stores portions of your conversation context so that subsequent r
 |---|---|
 | [converse_api/](./converse_api/) | Model-agnostic `cachePoint` examples — Converse + ConverseStream APIs |
 | [invoke_model_api/](./invoke_model_api/) | Model-family-specific examples — InvokeModel + InvokeModelWithResponseStream APIs |
-| [nova/](./nova/) | Amazon Nova getting-started notebook |
 
 ## Model Support Status
 
@@ -16,7 +15,7 @@ Prompt caching stores portions of your conversation context so that subsequent r
 
 | Model Family | Models | Converse API | InvokeModel API |
 |---|---|---|---|
-| Anthropic Claude | Opus 4.5/4.1/4, Sonnet 4.5/4, 3.7 Sonnet, 3.5 Haiku, 3.5 Sonnet v2 | Yes (`cachePoint`) | Yes (`cache_control`) |
+| Anthropic Claude | Opus 4.6/4.5/4.1/4, Sonnet 4.6/4.5/4, 3.7 Sonnet, 3.5 Haiku, 3.5 Sonnet v2 | Yes (`cachePoint`) | Yes (`cache_control`) |
 | Amazon Nova | Micro, Lite, Pro, Premier, 2 Lite | Yes (`cachePoint`) | Yes (Nova-native format) |
 
 ### Not yet supported
@@ -41,6 +40,7 @@ Each cache checkpoint must meet the model's minimum token threshold:
 | Claude Haiku 4.5 | 2,048 tokens |
 | Nova Micro | 1,536 tokens |
 | Nova Lite | 1,536 tokens |
+| Nova 2 Lite | 1,536 tokens |
 | Nova Pro | 1,024 tokens |
 
 ## Converse API vs InvokeModel API
@@ -52,6 +52,7 @@ The **Converse API** `cachePoint` syntax is identical across all model families.
 | Cache marker | `{"cachePoint": {"type": "default"}}` | `"cache_control": {"type": "ephemeral", "ttl": "5m"}` |
 | Placement | Standalone content block after cached content | Inside the content block being cached |
 | TTL support | `{"cachePoint": {"type": "default", "ttl": "1h"}}` | `"ttl"` field inside `cache_control` |
+| TTL ordering | Longer TTL checkpoints must appear before shorter ones (e.g., `1h` before `5m`) | Same constraint |
 | `cacheDetails` response | Yes | No |
 | Usage key format | `cacheWriteInputTokens` | `cache_creation_input_tokens` |
 

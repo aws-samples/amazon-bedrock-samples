@@ -7,6 +7,7 @@ Model-family-specific prompt caching examples using the InvokeModel and InvokeMo
 | Folder | Model Family | Cache Syntax |
 |---|---|---|
 | [anthropic/](./anthropic/) | Anthropic Claude | `"cache_control": {"type": "ephemeral", "ttl": "5m"}` |
+| [nova/](./nova/) | Amazon Nova | `"cachePoint": {"type": "default"}` |
 
 ## InvokeModelWithResponseStream Response Parsing
 

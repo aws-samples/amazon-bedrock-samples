@@ -29,6 +29,19 @@ Standalone test scripts in [scripts/](./scripts/) for automated validation. See 
 | `test_tool_definition_caching.py` | Tool definitions | InvokeModelWithResponseStream, InvokeModel |
 | `test_mixed_ttl_caching.py` | Mixed TTL (1h + 5m) | InvokeModelWithResponseStream, InvokeModel |
 
+## Required Request Fields
+
+All InvokeModel requests to Anthropic models must include `anthropic_version` in the request body:
+
+```python
+request_body = {
+    "anthropic_version": "bedrock-2023-05-31",
+    "max_tokens": 1024,
+    "system": [...],
+    "messages": [...],
+}
+```
+
 ## Anthropic `cache_control` Syntax
 
 ```python
