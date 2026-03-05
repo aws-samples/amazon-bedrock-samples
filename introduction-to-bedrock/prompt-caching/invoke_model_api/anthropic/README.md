@@ -1,0 +1,87 @@
+# Prompt Caching — InvokeModel API (Anthropic Claude)
+
+Prompt caching for Anthropic Claude models on Amazon Bedrock using the InvokeModel and InvokeModelWithResponseStream APIs with Anthropic's native `cache_control` syntax.
+
+## Model IDs
+
+| Model | Inference Profile ID |
+|---|---|
+| Claude Sonnet 4.6 (default) | `global.anthropic.claude-sonnet-4-6` |
+| Claude Opus 4.6 | `global.anthropic.claude-opus-4-6-v1` |
+| Claude Haiku 4.5 | `global.anthropic.claude-haiku-4-5-20251001-v1:0` |
+
+## Notebooks
+
+| # | Notebook | APIs | Description |
+|---|---|---|---|
+| 01 | [Message Content Caching](./notebooks/01_message_content_caching.ipynb) | InvokeModel, InvokeModelWithResponseStream | Simplified + multiple checkpoints |
+| 02 | [System Prompt Caching](./notebooks/02_system_prompt_caching.ipynb) | InvokeModel, InvokeModelWithResponseStream | Caching system prompts/persona definitions |
+| 03 | [Tool Definition Caching](./notebooks/03_tool_definition_caching.ipynb) | InvokeModel, InvokeModelWithResponseStream | `cache_control` on last tool, schema format comparison |
+
+## Scripts
+
+Standalone demo scripts in [scripts/](./scripts/) for automated validation. See [scripts/README.md](./scripts/README.md) for usage.
+
+| Script | Caching Location | APIs Tested |
+|---|---|---|
+| `demo_message_content_caching.py` | User message content | InvokeModelWithResponseStream, InvokeModel |
+| `demo_system_prompt_caching.py` | System prompt | InvokeModelWithResponseStream, InvokeModel |
+| `demo_tool_definition_caching.py` | Tool definitions | InvokeModelWithResponseStream, InvokeModel |
+| `demo_mixed_ttl_caching.py` | Mixed TTL (1h + 5m) | InvokeModelWithResponseStream, InvokeModel |
+
+## Required Request Fields
+
+All InvokeModel requests to Anthropic models must include `anthropic_version` in the request body:
+
+```python
+request_body = {
+    "anthropic_version": "bedrock-2023-05-31",
+    "max_tokens": 1024,
+    "system": [...],
+    "messages": [...],
+}
+```
+
+## Anthropic `cache_control` Syntax
+
+```python
+# Message content caching
+content = [
+    {"type": "text", "text": "<static content>", "cache_control": {"type": "ephemeral", "ttl": "5m"}},
+    {"type": "text", "text": "<user question>"}
+]
+
+# System prompt caching
+system = [
+    {"type": "text", "text": "<system prompt>", "cache_control": {"type": "ephemeral", "ttl": "5m"}}
+]
+
+# Tool definition caching — cache_control on the last tool
+tools = [
+    {"name": ..., "input_schema": ...},
+    {"name": ..., "input_schema": ..., "cache_control": {"type": "ephemeral", "ttl": "5m"}}
+]
+```
+
+## Streaming Response Parsing
+
+InvokeModelWithResponseStream returns cache metrics across multiple chunk types:
+
+```python
+for event in response["body"]:
+    chunk = json.loads(event["chunk"]["bytes"])
+    if chunk["type"] == "message_start":
+        # chunk["message"]["usage"] → cache_creation_input_tokens, cache_read_input_tokens
+    elif chunk["type"] == "message_delta":
+        # chunk["usage"] → output_tokens
+```
+
+## Configuration
+
+All notebooks and scripts default to:
+- **Model**: `global.anthropic.claude-sonnet-4-6`
+- **Region**: `us-west-2`
+- **Profile**: `default`
+- **Cache TTL**: `5m`
+
+Modify the constants at the top of each file to change these values.
