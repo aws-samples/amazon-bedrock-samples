@@ -259,7 +259,7 @@ guidelines, and static instructions. The system prompt is cached and reused
 across multiple requests with different user messages.
 
 Examples:
-  python test_system_prompt_caching.py
+  python demo_system_prompt_caching.py
         """
     )
     parser.parse_args()

@@ -20,14 +20,14 @@ Prompt caching for Anthropic Claude models on Amazon Bedrock using the InvokeMod
 
 ## Scripts
 
-Standalone test scripts in [scripts/](./scripts/) for automated validation. See [scripts/README.md](./scripts/README.md) for usage.
+Standalone demo scripts in [scripts/](./scripts/) for automated validation. See [scripts/README.md](./scripts/README.md) for usage.
 
 | Script | Caching Location | APIs Tested |
 |---|---|---|
-| `test_message_content_caching.py` | User message content | InvokeModelWithResponseStream, InvokeModel |
-| `test_system_prompt_caching.py` | System prompt | InvokeModelWithResponseStream, InvokeModel |
-| `test_tool_definition_caching.py` | Tool definitions | InvokeModelWithResponseStream, InvokeModel |
-| `test_mixed_ttl_caching.py` | Mixed TTL (1h + 5m) | InvokeModelWithResponseStream, InvokeModel |
+| `demo_message_content_caching.py` | User message content | InvokeModelWithResponseStream, InvokeModel |
+| `demo_system_prompt_caching.py` | System prompt | InvokeModelWithResponseStream, InvokeModel |
+| `demo_tool_definition_caching.py` | Tool definitions | InvokeModelWithResponseStream, InvokeModel |
+| `demo_mixed_ttl_caching.py` | Mixed TTL (1h + 5m) | InvokeModelWithResponseStream, InvokeModel |
 
 ## Required Request Fields
 

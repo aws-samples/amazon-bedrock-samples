@@ -562,7 +562,7 @@ The tool schemas are cached and reused across multiple requests with
 different user queries, reducing latency and costs for tool-heavy workloads.
 
 Examples:
-  python test_tool_definition_caching.py
+  python demo_tool_definition_caching.py
         """
     )
     parser.parse_args()

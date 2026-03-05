@@ -1,33 +1,33 @@
-# InvokeModel API Test Scripts (Anthropic)
+# InvokeModel API Demo Scripts (Anthropic)
 
-Standalone Python scripts for automated validation of prompt caching behavior using the InvokeModel and InvokeModelWithResponseStream APIs with Anthropic Claude's `cache_control` syntax. Each script tests cache write on the first request and cache read on the second, printing PASSED or FAILED for each API.
+Standalone Python scripts for validating prompt caching behavior using the InvokeModel and InvokeModelWithResponseStream APIs with Anthropic Claude's `cache_control` syntax. Each script demonstrates cache write on the first request and cache read on the second, printing PASSED or FAILED for each API.
 
 ## Scripts
 
 | Script | What it tests |
 |---|---|
-| `test_message_content_caching.py` | Caching user message content (simplified + multiple checkpoint modes) |
-| `test_system_prompt_caching.py` | Caching system prompts |
-| `test_tool_definition_caching.py` | Caching tool/function definitions |
-| `test_mixed_ttl_caching.py` | Mixed TTL checkpoints (1h + 5m) via multiple `cache_control` blocks |
+| `demo_message_content_caching.py` | Caching user message content (simplified + multiple checkpoint modes) |
+| `demo_system_prompt_caching.py` | Caching system prompts |
+| `demo_tool_definition_caching.py` | Caching tool/function definitions |
+| `demo_mixed_ttl_caching.py` | Mixed TTL checkpoints (1h + 5m) via multiple `cache_control` blocks |
 
 ## How to Run
 
 ```bash
 # Message content caching — simplified mode (default)
-python test_message_content_caching.py
+python demo_message_content_caching.py
 
 # Message content caching — multiple checkpoints
-python test_message_content_caching.py --mode multiple
+python demo_message_content_caching.py --mode multiple
 
 # System prompt caching
-python test_system_prompt_caching.py
+python demo_system_prompt_caching.py
 
 # Tool definition caching
-python test_tool_definition_caching.py
+python demo_tool_definition_caching.py
 
 # Mixed TTL caching
-python test_mixed_ttl_caching.py
+python demo_mixed_ttl_caching.py
 ```
 
 ## Configuration

@@ -1,10 +1,16 @@
 """
-Test script for Amazon Bedrock Prompt Caching - Message Content Checkpoints
+Test script for Amazon Bedrock Prompt Caching - Mixed TTL via InvokeModel API
 Tests 2 APIs: InvokeModelWithResponseStream, InvokeModel
 
-Supports two cache checkpoint modes:
-- SIMPLIFIED: Single cache checkpoint (auto-scans ~20 blocks backward)
-- MULTIPLE: 4 explicit cache checkpoints for granular control
+Demonstrates mixed-TTL cache checkpoints in a single request using InvokeModel's
+cache_control blocks with different ttl values on different content blocks.
+
+InvokeModel does not return cacheDetails per-TTL breakdown, but does support
+mixed TTL via multiple cache_control blocks with different ttl values.
+
+Notes:
+- Longer TTL checkpoints must come before shorter TTL checkpoints (API constraint)
+- Each cache checkpoint requires >=1,024 tokens (Claude Sonnet 4.6)
 
 """
 
@@ -19,17 +25,18 @@ import argparse
 MODEL_ID = "global.anthropic.claude-sonnet-4-6-v1:0"
 AWS_PROFILE = "default"
 AWS_REGION = "us-west-2"
-CACHE_TTL = "5m" # or "1h"
 
-# Cache checkpoint mode: "simplified" (1 checkpoint) or "multiple" (4 checkpoints)
-CACHE_MODE = "simplified"
+# Two TTL values for mixed-TTL demo (longer TTL must come first)
+CACHE_TTL_LONG = "1h"
+CACHE_TTL_SHORT = "5m"
 
 # ============================================================================
-# SAMPLE TEXT - Space-themed content split into 4 sections for cache checkpoints
-# Each section exceeds 1,024 tokens (minimum for Claude Sonnet 4.6)
+# SAMPLE TEXT - Space-themed content split into 2 sections for cache checkpoints
+# Each section combines 2 sub-sections to exceed 1,024 tokens per checkpoint
+# (minimum for Claude Sonnet 4.6)
 # ============================================================================
 
-# Section 1: Inner Solar System
+# Section 1: Inner + Outer Solar System (cached at 1h TTL)
 SPACE_SECTION_1 = """
 The universe is a vast and mysterious expanse that has captivated human imagination for millennia. From the earliest civilizations who looked up at the night sky and wondered about the nature of the stars, to modern astronomers using sophisticated telescopes and spacecraft to explore distant galaxies, our quest to understand the cosmos continues unabated.
 
@@ -42,10 +49,7 @@ Mars, the Red Planet, has long been a subject of fascination and speculation abo
 The asteroid belt, located between Mars and Jupiter, contains millions of rocky objects ranging from small boulders to the dwarf planet Ceres. These remnants from the early solar system provide valuable insights into planetary formation and the conditions that existed billions of years ago. Scientists study these asteroids to understand the building blocks of planets and the early solar system's chemical composition. Some asteroids contain valuable metals and minerals that may one day be mined for space-based industries.
 
 The terrestrial planets share common characteristics: rocky compositions, relatively small sizes compared to gas giants, and solid surfaces. Mercury's heavily cratered surface resembles our Moon, preserving a record of impacts from the early solar system. Venus's dense atmosphere traps heat so effectively that its surface temperature exceeds that of Mercury, despite being farther from the Sun. Earth's plate tectonics continuously reshape its surface, while Mars shows evidence of past geological activity including ancient volcanoes and water-carved channels.
-"""
 
-# Section 2: Outer Solar System
-SPACE_SECTION_2 = """
 Jupiter, the largest planet, is a gas giant composed primarily of hydrogen and helium. Its Great Red Spot, a persistent anticyclonic storm, has been observed for over 400 years. Jupiter's intense magnetic field and numerous moons, including the four Galilean satellites discovered by Galileo Galilei in 1610, make it a miniature solar system in its own right. Europa, one of these moons, is believed to have a subsurface ocean that could potentially harbor life.
 
 Saturn, famous for its spectacular ring system, is another gas giant with dozens of moons. Titan, its largest moon, has a thick atmosphere and liquid hydrocarbon lakes, making it one of the most intriguing bodies in the solar system for astrobiological research. The Cassini-Huygens mission provided unprecedented details about Saturn and its moons during its 13-year exploration.
@@ -59,8 +63,8 @@ The outer solar system remains largely unexplored compared to the inner planets.
 Gas giants and ice giants differ fundamentally in composition. While Jupiter and Saturn are primarily hydrogen and helium, Uranus and Neptune contain significant amounts of water, ammonia, and methane ices. This distinction gives the ice giants their characteristic blue-green colors and different internal structures compared to their larger neighbors.
 """
 
-# Section 3: Beyond Our Solar System
-SPACE_SECTION_3 = """
+# Section 2: Beyond Our Solar System + Space Exploration (cached at 5m TTL)
+SPACE_SECTION_2 = """
 Exoplanet research has revolutionized our understanding of planetary systems. The Kepler space telescope discovered thousands of planets orbiting other stars, revealing that planets are common throughout our galaxy. Some of these exoplanets reside in the habitable zone of their stars, where liquid water could exist on the surface.
 
 The search for extraterrestrial intelligence, known as SETI, uses radio telescopes to listen for signals from advanced civilizations. While no definitive signals have been detected, the Drake Equation provides a framework for estimating the number of communicating civilizations in our galaxy.
@@ -74,10 +78,7 @@ Dark matter and dark energy together comprise about 95% of the universe's total 
 The cosmic microwave background radiation, discovered in 1965, provides a snapshot of the universe approximately 380,000 years after the Big Bang. Detailed measurements of this radiation have confirmed the Big Bang theory and revealed information about the early universe's composition and geometry.
 
 Modern telescopes have detected exoplanets using multiple methods including transit photometry, radial velocity measurements, and direct imaging. Transit photometry measures the slight dimming of starlight when a planet passes in front of its host star. Radial velocity detects the wobble in a star's motion caused by orbiting planets. Direct imaging captures actual light from exoplanets, though this remains challenging due to the overwhelming brightness of host stars.
-"""
 
-# Section 4: Space Exploration and Future
-SPACE_SECTION_4 = """
 Stellar evolution describes how stars change over their lifetimes. Stars form in molecular clouds when gravity causes dense regions to collapse. Nuclear fusion in the core converts hydrogen to helium, releasing enormous amounts of energy. When stars exhaust their nuclear fuel, their fate depends on their mass: smaller stars become white dwarfs, medium stars may become neutron stars, and the most massive stars explode as supernovae, potentially leaving behind black holes.
 
 Galaxies, containing billions of stars, come in various shapes including spiral, elliptical, and irregular. The Milky Way is a barred spiral galaxy approximately 100,000 light-years in diameter. Galaxies often cluster together, forming groups and superclusters connected by cosmic filaments of dark matter and gas.
@@ -93,14 +94,11 @@ Space telescopes have revolutionized astronomy by observing wavelengths blocked 
 Understanding the universe requires collaboration across disciplines including physics, chemistry, biology, and engineering. International cooperation has enabled ambitious projects like the International Space Station and large-scale observatories. The quest to explore space continues to inspire new generations of scientists and engineers who will push the boundaries of human knowledge and capability.
 """
 
-# Mode-specific prefixes to ensure separate cache entries for each mode
-SIMPLIFIED_PREFIX = "[SIMPLIFIED MODE CACHE TEST]\n\n"
-MULTIPLE_PREFIX = "[MULTIPLE CHECKPOINT MODE CACHE TEST]\n\n"
-
-# Combined context for simplified mode (single checkpoint)
-SPACE_CONTEXT = SPACE_SECTION_1 + SPACE_SECTION_2 + SPACE_SECTION_3 + SPACE_SECTION_4
-
 QUESTION_PROMPT = "Based on the context above about space, what are the two ice giant planets in our solar system and what makes them unique?"
+
+# API-specific prefixes to ensure separate cache entries per test function
+STREAM_PREFIX = "[MIXED TTL - INVOKE MODEL STREAM]\n\n"
+INVOKE_PREFIX = "[MIXED TTL - INVOKE MODEL]\n\n"
 
 
 def create_bedrock_client():
@@ -109,33 +107,19 @@ def create_bedrock_client():
     return session.client("bedrock-runtime")
 
 
-def build_invoke_model_content_simplified():
-    """Build content for InvokeModel with simplified (single) cache checkpoint."""
+def build_invoke_model_content_mixed_ttl(prefix):
+    """Build content for InvokeModel API with mixed-TTL cache checkpoints.
+
+    Uses 1h TTL on section 1 and 5m TTL on section 2.
+    Longer TTL must come before shorter TTL (API constraint).
+    """
     return [
         {
             "type": "text",
-            "text": SIMPLIFIED_PREFIX + SPACE_CONTEXT,
+            "text": prefix + SPACE_SECTION_1,
             "cache_control": {
                 "type": "ephemeral",
-                "ttl": CACHE_TTL
-            }
-        },
-        {
-            "type": "text",
-            "text": QUESTION_PROMPT
-        }
-    ]
-
-
-def build_invoke_model_content_multiple():
-    """Build content for InvokeModel with multiple (4) cache checkpoints."""
-    return [
-        {
-            "type": "text",
-            "text": MULTIPLE_PREFIX + SPACE_SECTION_1,
-            "cache_control": {
-                "type": "ephemeral",
-                "ttl": CACHE_TTL
+                "ttl": CACHE_TTL_LONG
             }
         },
         {
@@ -143,23 +127,7 @@ def build_invoke_model_content_multiple():
             "text": SPACE_SECTION_2,
             "cache_control": {
                 "type": "ephemeral",
-                "ttl": CACHE_TTL
-            }
-        },
-        {
-            "type": "text",
-            "text": SPACE_SECTION_3,
-            "cache_control": {
-                "type": "ephemeral",
-                "ttl": CACHE_TTL
-            }
-        },
-        {
-            "type": "text",
-            "text": SPACE_SECTION_4,
-            "cache_control": {
-                "type": "ephemeral",
-                "ttl": CACHE_TTL
+                "ttl": CACHE_TTL_SHORT
             }
         },
         {
@@ -169,10 +137,10 @@ def build_invoke_model_content_multiple():
     ]
 
 
-def test_invoke_model_with_response_stream(client, cache_mode):
-    """Test prompt caching with InvokeModelWithResponseStream API."""
+def test_invoke_model_with_response_stream_mixed_ttl(client):
+    """Test mixed-TTL caching with InvokeModelWithResponseStream API."""
     print("\n" + "=" * 60)
-    print(f"Test 1: InvokeModelWithResponseStream ({cache_mode} mode)")
+    print("Test 1: InvokeModelWithResponseStream (mixed TTL)")
     print("=" * 60)
 
     results = {"first": {}, "second": {}}
@@ -180,10 +148,7 @@ def test_invoke_model_with_response_stream(client, cache_mode):
     for attempt, label in [(1, "first"), (2, "second")]:
         print(f"\nRequest {attempt} ({'cache write expected' if attempt == 1 else 'cache read expected'})...")
 
-        if cache_mode == "simplified":
-            content = build_invoke_model_content_simplified()
-        else:
-            content = build_invoke_model_content_multiple()
+        content = build_invoke_model_content_mixed_ttl(STREAM_PREFIX)
 
         request_body = {
             "anthropic_version": "bedrock-2023-05-31",
@@ -224,7 +189,7 @@ def test_invoke_model_with_response_stream(client, cache_mode):
 
         print(f"  Input tokens: {results[label]['input_tokens']}")
         print(f"  Output tokens: {results[label]['output_tokens']}")
-        print(f"  CacheWriteInputTokens: {results[label]['cache_write']}")
+        print(f"  CacheWriteInputTokens: {results[label]['cache_write']} (total)")
         print(f"  CacheReadInputTokens: {results[label]['cache_read']}")
 
         if attempt == 1:
@@ -239,10 +204,10 @@ def test_invoke_model_with_response_stream(client, cache_mode):
     return passed
 
 
-def test_invoke_model(client, cache_mode):
-    """Test prompt caching with InvokeModel API."""
+def test_invoke_model_mixed_ttl(client):
+    """Test mixed-TTL caching with InvokeModel API."""
     print("\n" + "=" * 60)
-    print(f"Test 2: InvokeModel ({cache_mode} mode)")
+    print("Test 2: InvokeModel (mixed TTL)")
     print("=" * 60)
 
     results = {"first": {}, "second": {}}
@@ -250,10 +215,7 @@ def test_invoke_model(client, cache_mode):
     for attempt, label in [(1, "first"), (2, "second")]:
         print(f"\nRequest {attempt} ({'cache write expected' if attempt == 1 else 'cache read expected'})...")
 
-        if cache_mode == "simplified":
-            content = build_invoke_model_content_simplified()
-        else:
-            content = build_invoke_model_content_multiple()
+        content = build_invoke_model_content_mixed_ttl(INVOKE_PREFIX)
 
         request_body = {
             "anthropic_version": "bedrock-2023-05-31",
@@ -283,7 +245,7 @@ def test_invoke_model(client, cache_mode):
 
         print(f"  Input tokens: {results[label]['input_tokens']}")
         print(f"  Output tokens: {results[label]['output_tokens']}")
-        print(f"  CacheWriteInputTokens: {results[label]['cache_write']}")
+        print(f"  CacheWriteInputTokens: {results[label]['cache_write']} (total)")
         print(f"  CacheReadInputTokens: {results[label]['cache_read']}")
 
         if attempt == 1:
@@ -299,51 +261,41 @@ def test_invoke_model(client, cache_mode):
 
 
 def main():
-    """Run all prompt caching tests."""
+    """Run mixed-TTL prompt caching tests."""
     parser = argparse.ArgumentParser(
-        description="Test Amazon Bedrock Prompt Caching",
+        description="Test Amazon Bedrock Prompt Caching - Mixed TTL via InvokeModel API",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Cache Modes:
-  simplified  - Single cache checkpoint at the end of static content
-                (auto-scans ~20 blocks backward for longest matching prefix)
-  multiple    - 4 explicit cache checkpoints for granular control
-                (each section cached independently)
+Demonstrates mixed-TTL cache checkpoints (1h + 5m) in a single request
+using InvokeModel's cache_control blocks with different ttl values.
+
+InvokeModel does not return cacheDetails per-TTL breakdown, but does
+support mixed TTL via multiple cache_control blocks with different ttl values.
 
 Examples:
-  python test_message_content_caching.py                    # Run with default mode (simplified)
-  python test_message_content_caching.py --mode simplified  # Single cache checkpoint
-  python test_message_content_caching.py --mode multiple    # 4 cache checkpoints
+  python demo_mixed_ttl_caching.py
         """
     )
-    parser.add_argument(
-        "--mode",
-        choices=["simplified", "multiple"],
-        default=CACHE_MODE,
-        help="Cache checkpoint mode: 'simplified' (1 checkpoint) or 'multiple' (4 checkpoints)"
-    )
-    args = parser.parse_args()
-
-    cache_mode = args.mode
+    parser.parse_args()
 
     print("=" * 60)
-    print("Testing Prompt Caching with Amazon Bedrock")
+    print("Testing Mixed-TTL Prompt Caching with Amazon Bedrock")
     print("=" * 60)
     print(f"Model: {MODEL_ID}")
     print(f"Region: {AWS_REGION}")
     print(f"Profile: {AWS_PROFILE}")
-    print(f"Cache TTL: {CACHE_TTL}")
-    print(f"Cache Mode: {cache_mode} ({1 if cache_mode == 'simplified' else 4} checkpoint(s))")
+    print(f"Cache TTLs: {CACHE_TTL_LONG} (section 1), {CACHE_TTL_SHORT} (section 2)")
+    print(f"APIs tested: InvokeModelWithResponseStream, InvokeModel")
 
     client = create_bedrock_client()
 
     results = {}
 
-    results["InvokeModelWithResponseStream"] = test_invoke_model_with_response_stream(client, cache_mode)
-    results["InvokeModel"] = test_invoke_model(client, cache_mode)
+    results["InvokeModelWithResponseStream"] = test_invoke_model_with_response_stream_mixed_ttl(client)
+    results["InvokeModel"] = test_invoke_model_mixed_ttl(client)
 
     print("\n" + "=" * 60)
-    print(f"SUMMARY ({cache_mode} mode)")
+    print("SUMMARY (mixed-TTL caching)")
     print("=" * 60)
 
     all_passed = True

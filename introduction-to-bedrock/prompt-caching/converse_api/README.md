@@ -15,14 +15,14 @@ Model-agnostic prompt caching examples using the Converse and ConverseStream API
 
 ## Scripts
 
-Standalone test scripts in [scripts/](./scripts/) for automated validation. See [scripts/README.md](./scripts/README.md) for usage.
+Standalone demo scripts in [scripts/](./scripts/) for automated validation. See [scripts/README.md](./scripts/README.md) for usage.
 
 | Script | Caching Location | APIs Tested |
 |---|---|---|
-| `test_message_content_caching.py` | User message content | ConverseStream, Converse |
-| `test_system_prompt_caching.py` | System prompt | ConverseStream, Converse |
-| `test_tool_definition_caching.py` | Tool definitions | ConverseStream, Converse |
-| `test_mixed_ttl_caching.py` | Mixed TTL (1h + 5m) | ConverseStream, Converse |
+| `demo_message_content_caching.py` | User message content | ConverseStream, Converse |
+| `demo_system_prompt_caching.py` | System prompt | ConverseStream, Converse |
+| `demo_tool_definition_caching.py` | Tool definitions | ConverseStream, Converse |
+| `demo_mixed_ttl_caching.py` | Mixed TTL (1h + 5m) | ConverseStream, Converse |
 
 ## ConverseStream Response Parsing
 
