@@ -36,7 +36,7 @@ response = bedrock.invoke_model(
 ## Prerequisites
 
 - Python 3.9+
-- `boto3 >= 1.35.76`
+- `pip install -r ../../requirements.txt`
 - AWS credentials configured
 - Access to Amazon Nova models on Bedrock
 

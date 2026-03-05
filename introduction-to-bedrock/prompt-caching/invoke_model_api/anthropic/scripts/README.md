@@ -46,7 +46,7 @@ Modify these values as needed before running.
 ## Requirements
 
 - Python 3.9+
-- `boto3 >= 1.35.76`
+- `pip install -r ../../../requirements.txt`
 - AWS credentials configured for the specified profile
 - Access to the specified model on Amazon Bedrock
 

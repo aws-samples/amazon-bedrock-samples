@@ -60,7 +60,7 @@ The **Converse API** `cachePoint` syntax is identical across all model families.
 
 - AWS account with Amazon Bedrock access
 - Model access enabled for the target model
-- Python 3.9+ with `boto3 >= 1.35.76`
+- Python 3.9+ with dependencies: `pip install -r requirements.txt`
 - AWS credentials configured (default profile or environment variables)
 
 ## Additional Resources
