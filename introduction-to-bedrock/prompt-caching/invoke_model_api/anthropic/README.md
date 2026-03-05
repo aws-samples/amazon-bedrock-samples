@@ -4,10 +4,10 @@ Prompt caching for Anthropic Claude models on Amazon Bedrock using the InvokeMod
 
 ## Model IDs
 
-| Model | Global Inference Endpoint |
+| Model | Inference Profile ID |
 |---|---|
-| Claude Sonnet 4.6 (default) | `global.anthropic.claude-sonnet-4-6-v1:0` |
-| Claude Opus 4.6 | `global.anthropic.claude-opus-4-6-v1:0` |
+| Claude Sonnet 4.6 (default) | `global.anthropic.claude-sonnet-4-6` |
+| Claude Opus 4.6 | `global.anthropic.claude-opus-4-6-v1` |
 | Claude Haiku 4.5 | `global.anthropic.claude-haiku-4-5-20251001-v1:0` |
 
 ## Notebooks
@@ -79,7 +79,7 @@ for event in response["body"]:
 ## Configuration
 
 All notebooks and scripts default to:
-- **Model**: `global.anthropic.claude-sonnet-4-6-v1:0`
+- **Model**: `global.anthropic.claude-sonnet-4-6`
 - **Region**: `us-west-2`
 - **Profile**: `default`
 - **Cache TTL**: `5m`

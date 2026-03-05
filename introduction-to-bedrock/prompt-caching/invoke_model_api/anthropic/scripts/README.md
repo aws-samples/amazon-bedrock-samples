@@ -35,7 +35,7 @@ python demo_mixed_ttl_caching.py
 Each script has configuration constants at the top:
 
 ```python
-MODEL_ID = "global.anthropic.claude-sonnet-4-6-v1:0"
+MODEL_ID = "global.anthropic.claude-sonnet-4-6"
 AWS_PROFILE = "default"
 AWS_REGION = "us-west-2"
 CACHE_TTL = "5m"
@@ -71,6 +71,6 @@ SUMMARY (simplified mode)
 | Issue | Cause | Fix |
 |---|---|---|
 | All tests FAILED | Model access not enabled | Enable the model in the Bedrock console |
-| `cache_creation_input_tokens = 0` on first request | Content below token threshold | Ensure content exceeds 1,024 tokens for Sonnet 4.6 |
+| `cache_creation_input_tokens = 0` on first request | Content below token threshold | Ensure content exceeds 2,048 tokens for Sonnet 4.6 |
 | `cache_read_input_tokens = 0` on second request | Cache expired or content changed | Run requests quickly; verify content is identical |
 | `AccessDeniedException` | Profile lacks Bedrock permissions | Check IAM permissions for `bedrock-runtime:InvokeModel` |

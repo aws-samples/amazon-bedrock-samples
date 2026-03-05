@@ -16,13 +16,13 @@ import argparse
 # ============================================================================
 # CONFIGURATION - Modify these values as needed
 # ============================================================================
-MODEL_ID = "global.anthropic.claude-sonnet-4-6-v1:0"
+MODEL_ID = "global.anthropic.claude-sonnet-4-6"
 AWS_PROFILE = "default"
 AWS_REGION = "us-west-2"
 CACHE_TTL = "5m"
 
 # ============================================================================
-# TOOL DEFINITIONS - Space-themed tools with comprehensive schemas (>1,024 tokens)
+# TOOL DEFINITIONS - Space-themed tools with comprehensive schemas (>2,048 tokens)
 # ============================================================================
 
 TOOL_ANALYZE_CELESTIAL_OBJECT = {

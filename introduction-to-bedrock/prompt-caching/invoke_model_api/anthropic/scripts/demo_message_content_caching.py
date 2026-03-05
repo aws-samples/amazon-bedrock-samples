@@ -16,7 +16,7 @@ import argparse
 # ============================================================================
 # CONFIGURATION - Modify these values as needed
 # ============================================================================
-MODEL_ID = "global.anthropic.claude-sonnet-4-6-v1:0"
+MODEL_ID = "global.anthropic.claude-sonnet-4-6"
 AWS_PROFILE = "default"
 AWS_REGION = "us-west-2"
 CACHE_TTL = "5m" # or "1h"
@@ -26,7 +26,7 @@ CACHE_MODE = "simplified"
 
 # ============================================================================
 # SAMPLE TEXT - Space-themed content split into 4 sections for cache checkpoints
-# Each section exceeds 1,024 tokens (minimum for Claude Sonnet 4.6)
+# Each section exceeds 2,048 tokens (minimum for Claude Sonnet 4.6)
 # ============================================================================
 
 # Section 1: Inner Solar System

@@ -10,7 +10,7 @@ mixed TTL via multiple cache_control blocks with different ttl values.
 
 Notes:
 - Longer TTL checkpoints must come before shorter TTL checkpoints (API constraint)
-- Each cache checkpoint requires >=1,024 tokens (Claude Sonnet 4.6)
+- Each cache checkpoint requires >=2,048 tokens (Claude Sonnet 4.6)
 
 """
 
@@ -22,7 +22,7 @@ import argparse
 # ============================================================================
 # CONFIGURATION - Modify these values as needed
 # ============================================================================
-MODEL_ID = "global.anthropic.claude-sonnet-4-6-v1:0"
+MODEL_ID = "global.anthropic.claude-sonnet-4-6"
 AWS_PROFILE = "default"
 AWS_REGION = "us-west-2"
 
@@ -32,7 +32,7 @@ CACHE_TTL_SHORT = "5m"
 
 # ============================================================================
 # SAMPLE TEXT - Space-themed content split into 2 sections for cache checkpoints
-# Each section combines 2 sub-sections to exceed 1,024 tokens per checkpoint
+# Each section combines 2 sub-sections to exceed 2,048 tokens per checkpoint
 # (minimum for Claude Sonnet 4.6)
 # ============================================================================
 

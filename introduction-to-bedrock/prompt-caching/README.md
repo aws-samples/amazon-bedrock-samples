@@ -35,9 +35,9 @@ Each cache checkpoint must meet the model's minimum token threshold:
 
 | Model | Threshold |
 |---|---|
-| Claude Sonnet 4.6 | 1,024 tokens |
+| Claude Sonnet 4.6 | 2,048 tokens |
 | Claude Opus 4.6 | 4,096 tokens |
-| Claude Haiku 4.5 | 2,048 tokens |
+| Claude Haiku 4.5 | 4,096 tokens |
 | Nova Micro | 1,536 tokens |
 | Nova Lite | 1,536 tokens |
 | Nova 2 Lite | 1,536 tokens |

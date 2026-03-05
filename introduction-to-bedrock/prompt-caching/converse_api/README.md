@@ -75,7 +75,7 @@ content = [
 ## Configuration
 
 All notebooks and scripts default to:
-- **Model**: `global.anthropic.claude-sonnet-4-6-v1:0`
+- **Model**: `global.anthropic.claude-sonnet-4-6`
 - **Region**: `us-west-2`
 - **Profile**: `default`
 
