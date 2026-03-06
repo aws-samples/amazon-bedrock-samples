@@ -53,9 +53,6 @@ def create_lambda_execution_role(
         )
         print("✓ Attached AWSLambdaBasicExecutionRole policy")
 
-        print(f"Waiting {wait_seconds}s for role propagation...")
-        time.sleep(wait_seconds)
-
     except iam_client.exceptions.EntityAlreadyExistsException:
         print(f"Role {role_name} already exists, using existing role")
         response = iam_client.get_role(RoleName=role_name)
@@ -146,9 +143,6 @@ def create_bedrock_rft_role(
             PolicyDocument=json.dumps(permissions_policy),
         )
         print("✓ Attached permissions policy")
-
-        print(f"Waiting {wait_seconds}s for role propagation...")
-        time.sleep(wait_seconds)
 
     except iam_client.exceptions.EntityAlreadyExistsException:
         print(f"Role {role_name} already exists, updating policy...")
