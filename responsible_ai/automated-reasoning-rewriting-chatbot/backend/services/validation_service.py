@@ -38,13 +38,13 @@ class ValidationService:
     
     # Priority order for sorting findings
     FINDING_PRIORITY = {
-        "TOO_COMPLEX": 0,           # Highest priority - cannot process
-        "TRANSLATION_AMBIGUOUS": 1,  # Ambiguous input needs clarification
+        "TRANSLATION_AMBIGUOUS": 0,  # Ambiguous input needs clarification
+        "INVALID": 1,                # Claims contradict rules
         "IMPOSSIBLE": 2,             # Contradictory premises/rules
-        "INVALID": 3,                # Claims contradict rules
-        "SATISFIABLE": 4,            # Claims could be true or false
-        "NO_TRANSLATIONS": 99,       # No logical content found
-        "VALID": 6                   # Lowest priority - everything is valid
+        "SATISFIABLE": 3,            # Claims could be true or false
+        "NO_TRANSLATIONS": 4,        # No logical content found
+        "VALID": 5,                  # Lowest priority - everything is valid
+        "TOO_COMPLEX": 6             # cannot process
     }
     
     def __init__(self, guardrail_id: str, guardrail_version: str = "DRAFT", region_name: str = "us-west-2"):
