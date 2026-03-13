@@ -1,5 +1,9 @@
 boto3>=1.35.72
+numpy<2.0.0
+pyarrow>=15.0.0,<18.0.0
 datasets
 s3fs
 aiobotocore
 awswrangler
+Pillow>=10.0.0
+jsonpath-ng>=1.6.0
