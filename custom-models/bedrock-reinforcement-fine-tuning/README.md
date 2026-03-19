@@ -11,6 +11,8 @@ End-to-end notebooks showing how to RFT various models on different datasets:
 | Amazon Nova Lite | GSM8K   | Math reasoning      | RLVR        | [models/nova/nova_gsm8k_rft.ipynb](models/nova/nova_gsm8k_rft.ipynb)     |
 | Amazon Nova Lite | FinQA   | Financial reasoning | RLVR        | [models/nova/nova_finqa_rft.ipynb](models/nova/nova_finqa_rft.ipynb)     |
 | Amazon Nova Lite | PandaLM | LLM evaluation      | RLAIF       | [models/nova/nova_pandalm_rft.ipynb](models/nova/nova_pandalm_rft.ipynb) |
+| Amazon Nova Lite | BFCL    | Tool-calling        | RLVR        | [use-cases/bfcl-tool-calling/](use-cases/bfcl-tool-calling/)             |
+| Nemotron Nano 3 30B | Codeforces | Competitive coding | RLVR     | [models/nemotron/nemotron_codeforces_rft.ipynb](models/nemotron/nemotron_codeforces_rft.ipynb) |
 | GPT-OSS-20B      | GSM8K   | Math reasoning      | RLVR        | [models/gpt-oss/gptoss_gsm8k_rft.ipynb](models/gpt-oss/gptoss_gsm8k_rft.ipynb) |
 | Qwen3 32B        | GSM8K   | Math reasoning      | RLVR        | [models/qwen/qwen_gsm8k_rft.ipynb](models/qwen/qwen_gsm8k_rft.ipynb) |
 
@@ -67,13 +69,22 @@ RLAIF uses another language model (the "judge") to evaluate outputs. Best for su
 ```
 bedrock-reinforcement-fine-tuning/
 ├── models/                  # Training notebooks organized by model
-│   └── nova/
-│       ├── nova_gsm8k_rft.ipynb
-│       ├── nova_finqa_rft.ipynb
-│       └── nova_pandalm_rft.ipynb
+│   ├── nova/
+│   │   ├── nova_gsm8k_rft.ipynb
+│   │   ├── nova_finqa_rft.ipynb
+│   │   └── nova_pandalm_rft.ipynb
+│   └── nemotron/
+│       ├── README.md
+│       └── nemotron_codeforces_rft.ipynb
+├── use-cases/               # End-to-end use-case walkthroughs
+│   └── bfcl-tool-calling/
+│       ├── README.md
+│       └── bfcl_tool_calling_rft.ipynb
 ├── reward-functions/        # Lambda functions that score model outputs
 │   ├── gsm8k_rew_func.py    # Math answer verification (RLVR)
 │   ├── finqa_rew_func.py    # Financial answer verification (RLVR)
+│   ├── bfcl_tool_call_rew_func.py  # Tool-calling verification (RLVR)
+│   ├── codeforces_rew_func.py     # Competitive coding verification (RLVR)
 │   └── pandalm_rew_func.py  # LLM-as-judge evaluation (RLAIF)
 ├── helpers/                 # Shared utilities (IAM roles, Lambda deployment, etc.)
 ├── images/                  # Architecture diagrams
