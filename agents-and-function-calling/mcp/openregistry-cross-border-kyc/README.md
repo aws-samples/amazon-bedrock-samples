@@ -10,6 +10,48 @@ This example demonstrates an agent built with **Amazon Bedrock** (Anthropic Clau
 4. **Surface AML gates honestly** — when the upstream register returns HTTP `501 alternative_url`, the agent reports the statutory channel rather than substituting commercial-aggregator data.
 5. **Cite every fact** to the registry + identifier, so the answer is auditable back to the government source.
 
+## All 30 jurisdictions covered
+
+The agent talks to a single MCP endpoint, but that endpoint covers every jurisdiction below. Each row is the native registry name + ISO code + a sample entity for testing. Eight EU jurisdictions have a CJEU C-37/20–restricted UBO register flagged with ⚠ — the agent surfaces the `alternative_url` honestly rather than substituting aggregator data.
+
+| ISO | Country | Native registry | Sample entity |
+|---|---|---|---|
+| `GB` | United Kingdom | Companies House | Tesco PLC (00445790) |
+| `IE` | Ireland | Companies Registration Office (CRO) | Apple Operations International Ltd (462571) |
+| `FR` | France | INSEE Sirene + RNE | L'Oréal SA (552120222) |
+| `DE` ⚠ | Germany | Handelsregister | Deutsche Bank AG (HRB 30000) |
+| `IT` ⚠ | Italy | Registro delle imprese (via EU BRIS) | Ferrari NV |
+| `ES` ⚠ | Spain | BORME (Boletín Oficial del Registro Mercantil) | Inditex SA |
+| `NL` ⚠ | Netherlands | KVK Handelsregister | ASML Holding NV (33002587) |
+| `BE` | Belgium | KBO/BCE (Crossroads Bank for Enterprises) | Anheuser-Busch InBev SA/NV (0417499106) |
+| `PL` | Poland | KRS (Krajowy Rejestr Sądowy) | PKO Bank Polski SA (0000033057) |
+| `CZ` | Czechia | ARES | ČEZ a.s. (45274649) |
+| `FI` | Finland | PRH (Patentti- ja rekisterihallitus, YTJ) | Nokia Oyj (0112038-9) |
+| `NO` | Norway | Brønnøysundregistrene (Enhetsregisteret) | Equinor ASA (923609016) |
+| `IS` | Iceland | Fyrirtækjaskrá (Skatturinn) | Marel hf. (4202695199) |
+| `CH` | Switzerland | Zefix (Federal Registry of Commerce) | Nestlé SA (CHE-105.916.057) |
+| `LI` | Liechtenstein | Handelsregister Liechtenstein (Amt für Justiz) | LGT Bank AG (FL-0001.090.135-8) |
+| `MC` | Monaco | RCI (Répertoire du Commerce et de l'Industrie) | Société des Bains de Mer SA |
+| `IM` | Isle of Man | IoM Companies Registry | (any IoM 2006 Act company) |
+| `CY` | Cyprus | DRCOR (Department of Registrar of Companies) | Bank of Cyprus PCL (HE190) |
+| `KR` | South Korea | OPENDART (FSS Electronic Disclosure System) | Samsung Electronics (00126380) |
+| `TW` | Taiwan | GCIS (Ministry of Economic Affairs) | TSMC (22099131) |
+| `HK` | Hong Kong SAR | Companies Registry | HSBC Holdings plc (HK branch) |
+| `MY` | Malaysia | SSM (Suruhanjaya Syarikat Malaysia) | Maybank Bhd (199301015245) |
+| `AU` | Australia | ABR (ABN Lookup) | BHP Group Limited (49004028077) |
+| `NZ` | New Zealand | NZ Companies Office | Fonterra Co-operative Group Ltd (9429038949149) |
+| `CA` | Canada (federal) | Corporations Canada (CBCA, ISED) | (any federal CBCA company) |
+| `CA-BC` | Canada · British Columbia | OrgBook BC | (any BC Limited Company) |
+| `CA-NT` | Canada · Northwest Territories | CROS-RSEL (NWT Department of Justice) | (NT-incorporated companies) |
+| `MX` | Mexico | PSM (Sistema Electrónico de Publicaciones de Sociedades Mercantiles) | (any S.A. de C.V.) |
+| `KY` 💳 | Cayman Islands | CIMA (Regulated Entities Register) | (paid-tier only — anon/Free → 402) |
+| `RU` | Russia | ЕГРЮЛ / ЕГРИП (FNS Federal Tax Service) + ГИР БО | Сбербанк (1027700132195) |
+
+⚠ = CJEU C-37/20-restricted UBO register (DE / ES / IT / NL plus LU / AT / MT / PT). The agent surfaces `alternative_url` for these.
+💳 = paid-tier only (anonymous + Free tiers receive HTTP 402).
+
+The full per-jurisdiction capability matrix (which tools each registry supports, native ID format, quirks) is callable at runtime — ask the agent to run `list_jurisdictions` and it will return the live matrix.
+
 ## Why MCP (and not a custom tool function)?
 
 OpenRegistry's tool surface — about 30 tools across the 27 registries — updates as new countries come online. Wiring it as a remote Streamable-HTTP MCP server means the agent **discovers tools at runtime** via the MCP `tools/list` RPC, so this notebook stays small and you don't have to update Python wrappers when the registry grows.
