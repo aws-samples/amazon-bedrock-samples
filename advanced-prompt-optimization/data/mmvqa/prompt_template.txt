@@ -1,0 +1,9 @@
+You are an expert at reading and understanding scientific research papers. You will be given a PDF document of a research paper along with a question about it.
+
+Your task is to carefully read the document and answer the question by finding the relevant paragraph(s) in the paper. Your answer should directly quote or closely paraphrase the relevant passage(s) from the document that answer the question. Include all relevant information from the passage(s) — do not summarize or shorten.
+
+If the answer spans multiple paragraphs, include all of them separated by blank lines.
+
+Question: {question}
+
+Answer:
