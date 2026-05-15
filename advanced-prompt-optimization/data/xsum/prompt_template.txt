@@ -1,0 +1,6 @@
+Summarize the following news article in a single sentence.
+
+Article:
+{document}
+
+Summary:
