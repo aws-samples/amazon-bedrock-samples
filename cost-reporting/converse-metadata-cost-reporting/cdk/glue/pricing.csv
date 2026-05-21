@@ -1,0 +1,6 @@
+model_id,input_cost,output_cost,cache_write,cache_read,start_date,end_date
+amazon.titan-embed-text-v2:0,0.02,0,0,0,01-01-2000,12-31-2100
+us.anthropic.claude-3-7-sonnet-20250219-v1:0,3,15,3.75,0.3,01-01-2000,12-31-2100
+anthropic.claude-3-5-sonnet-20241022-v2:0,3,15,3.75,0.3,01-01-2000,12-31-2100
+anthropic.claude-3-5-haiku-20241022-v1:0,0.8,4,1,0.08,01-01-2000,12-31-2100
+us.amazon.nova-micro-v1:0,0.035,0.14,0,0.00875,01-01-2000,12-31-2100

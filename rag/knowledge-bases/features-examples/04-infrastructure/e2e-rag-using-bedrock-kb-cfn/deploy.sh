@@ -21,7 +21,7 @@
 ### DESCRIPTION ###
 
 # This script prepares the AWS CloudFormation templates to deploy the end-to-end RAG workflow
-# using Knowledgebases for Amazon Bedrock
+# using Amazon Bedrock Knowledge Bases
 
 #############
 ### USAGE ###

@@ -4,7 +4,7 @@ This repository contains pre-built examples to help customers get started with t
 
 ## Contents
 
-- [knowledge-bases](./knowledge-bases) - Examples highlighting how Amazon Knowledge Base can be used, and how RAG application can be build with it.
+- [knowledge-bases](./knowledge-bases) - Examples highlighting how Amazon Bedrock Knowledge Bases can be used to develop end-to-end advanced RAG application.
 - [open-source](./open-source) - Examples demonstrating RAG implementations and its components with Amazon bedrock and open source libraries.   
 
 

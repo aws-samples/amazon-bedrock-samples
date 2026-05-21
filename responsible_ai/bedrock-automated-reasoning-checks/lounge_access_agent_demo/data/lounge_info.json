@@ -1,0 +1,114 @@
+{
+  "lounge_name": "Star Alliance Premium Lounge",
+  "location": "Terminal 1, Level 3, Gate Area C",
+  "operating_hours": {
+    "monday_friday": "05:00 - 23:30",
+    "saturday_sunday": "05:00 - 23:30"
+  },
+  "capacity": 200,
+  "amenities": [
+    "High-speed WiFi",
+    "Business center with printing services",
+    "Shower facilities with premium toiletries",
+    "Quiet zones for rest and relaxation",
+    "Family area with children's play corner",
+    "Meeting rooms (available by reservation)",
+    "Charging stations and power outlets",
+    "Premium magazines and newspapers",
+    "Television entertainment areas",
+    "Smoking lounge (separate ventilated area)"
+  ],
+  "dining_options": {
+    "buffet_area": {
+      "description": "International cuisine buffet with rotating menu",
+      "meal_types": [
+        "Continental breakfast (05:00-10:30)",
+        "Light lunch items (11:00-15:00)", 
+        "Dinner selection (17:00-22:00)",
+        "All-day snacks and appetizers"
+      ],
+      "cuisine_types": [
+        "International",
+        "Asian fusion", 
+        "Mediterranean",
+        "Local specialties",
+        "Vegetarian and vegan options",
+        "Kosher meals (upon request)",
+        "Halal options available"
+      ]
+    },
+    "beverage_service": {
+      "alcoholic": [
+        "Premium wines (red, white, sparkling)",
+        "International beer selection",
+        "Top-shelf spirits and liqueurs",
+        "Signature cocktails",
+        "Champagne service"
+      ],
+      "non_alcoholic": [
+        "Freshly brewed coffee and espresso",
+        "Premium tea selection",
+        "Fresh juices and smoothies",
+        "Soft drinks and sparkling water",
+        "Energy drinks"
+      ]
+    }
+  },
+  "services": {
+    "concierge": {
+      "available": true,
+      "hours": "06:00-22:00",
+      "services": [
+        "Flight information and updates",
+        "Ground transportation assistance",
+        "Local area information and recommendations",
+        "Restaurant reservations",
+        "Hotel booking assistance",
+        "Travel document verification"
+      ]
+    },
+    "spa_wellness": {
+      "massage_chairs": 6,
+      "relaxation_pods": 4,
+      "meditation_area": true,
+      "spa_treatments": "Available by appointment"
+    }
+  },
+  "accessibility": {
+    "wheelchair_accessible": true,
+    "accessible_restrooms": true,
+    "braille_signage": true,
+    "hearing_loop_system": true,
+    "assistance_available": true
+  },
+  "policies": {
+    "dress_code": "Smart casual required",
+    "age_restrictions": "Children welcome, must be supervised",
+    "guest_policy": "As per Star Alliance lounge access rules",
+    "luggage_storage": "Available for lounge users",
+    "smoking_policy": "Designated smoking area only",
+    "photography": "Personal photography allowed, commercial requires permission"
+  },
+  "special_features": {
+    "art_gallery": "Rotating exhibitions of local artists",
+    "library_corner": "Books, magazines in multiple languages",
+    "outdoor_terrace": "Weather permitting, runway views",
+    "prayer_room": "Multi-faith quiet space available",
+    "phone_booths": "Private calling areas",
+    "game_area": "Board games and reading materials for families"
+  },
+  "contact_information": {
+    "phone": "+1-555-LOUNGE",
+    "email": "lounge-services@staralliance.com",
+    "manager": "Sarah Chen, Lounge Operations Manager"
+  },
+  "sustainability": {
+    "initiatives": [
+      "Eco-friendly disposable items",
+      "Local food sourcing when possible",
+      "Recycling program",
+      "Energy efficient lighting",
+      "Water conservation measures"
+    ]
+  }
+}

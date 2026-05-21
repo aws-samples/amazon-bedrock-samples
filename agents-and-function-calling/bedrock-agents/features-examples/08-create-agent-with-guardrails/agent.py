@@ -458,14 +458,15 @@ class AgentsForAmazonBedrock:
                 )
         
     def _create_agent_role(self, 
-                             agent_name: str,
-                             agent_foundation_models: List[str],
-                             kb_arns: List[str]=None) -> str:
+                     agent_name: str,
+                     inference_profile: str,
+                     foundational_model: str,
+                     kb_arns: List[str]=None) -> str:
         """Creates an IAM role for an agent.
         
         Args:
             agent_name (str): name of the agent for this new role
-            agent_foundation_models (List[str]): List of IDs or Arn's of the Bedrock foundation model(s) this agent is allowed to use
+            inference_profile (str): ID of the inference profile to use
             kb_arns (List[str], Optional): List of ARNs of the Knowledge Base(s) this agent is allowed to use
         
         Returns:
@@ -473,7 +474,6 @@ class AgentsForAmazonBedrock:
         """
 
         _agent_role_name = f'AmazonBedrockExecutionRoleForAgents_{agent_name}'
-        _tmp_resources = [f"arn:aws:bedrock:{self._region}::foundation-model/{_model}" for _model in agent_foundation_models]
 
         # Create IAM policies for agent
         _bedrock_agent_bedrock_allow_policy_statement = {
@@ -483,7 +483,22 @@ class AgentsForAmazonBedrock:
                     "Sid": "AmazonBedrockAgentBedrockFoundationModelPolicy",
                     "Effect": "Allow",
                     "Action": "bedrock:InvokeModel",
-                    "Resource": _tmp_resources
+                    "Resource": [
+                        f"arn:aws:bedrock:*::foundation-model/{foundational_model}",
+                        f"arn:aws:bedrock:*:*:inference-profile/{inference_profile}"
+                    ]
+                },
+                {
+                    "Sid": "AmazonBedrockAgentBedrockGetInferenceProfile",
+                    "Effect": "Allow",
+                    "Action": [
+                        "bedrock:GetInferenceProfile",
+                        "bedrock:ListInferenceProfiles",
+                        "bedrock:UseInferenceProfile"
+                    ],
+                    "Resource": [
+                        f"arn:aws:bedrock:*:*:inference-profile/{inference_profile}"
+                    ]
                 }
             ]
         }
@@ -561,12 +576,13 @@ class AgentsForAmazonBedrock:
         return _agent_role['Role']['Arn']
 
     def create_agent(self,
-                     agent_name: str,
-                     agent_description: str,
-                     agent_instructions: str,
-                     model_ids: List[str],
-                     kb_arns: List[str]=None) -> str:
-        """Creates an agent given a name, instructions, model, description, and optionally
+                    agent_name: str,
+                    agent_description: str,
+                    agent_instructions: str,
+                    inference_profile: str,
+                    foundational_model: str,
+                    kb_arns: str) -> str:
+        """Creates an agent given a name, instructions, inference profile, description, and optionally
         a set of knowledge bases. Action groups are added to the agent as a separate 
         step once you have created the agent itself.
 
@@ -574,25 +590,42 @@ class AgentsForAmazonBedrock:
             agent_name (str): name of the agent
             agent_description (str): description of the agent
             agent_instructions (str): instructions for the agent
-            model_ids (List[str]): IDs of the foundation models this agent is allowed to use, the first one will be used
-            to create the agent, and the others will also be captured in the agent IAM role for future use
+            inference_profile (str): ID of the inference profile to use
             kb_arns (List[str], Optional): ARNs of the Knowledge Base(s) this agent is allowed to use
         
         Returns:
             str: agent ID
         """
         
-        _role_arn = self._create_agent_role(agent_name, model_ids, kb_arns)
+        _role_arn = self._create_agent_role(agent_name, inference_profile, foundational_model, kb_arns)
 
-        response = self._bedrock_agent_client.create_agent(
-                        agentName=agent_name,
-                        agentResourceRoleArn=_role_arn,
-                        description=agent_description.replace('\n', ''), # console doesn't like newlines for subsequent editing
-                        idleSessionTTLInSeconds=1800,
-                        foundationModel=model_ids[0],
-                        instruction=agent_instructions,
-                    )
-        time.sleep(5)
+        max_retries = 5
+        base_delay = 10
+        
+        for attempt in range(max_retries):
+            try:
+                time.sleep(base_delay * (2 ** attempt))  # Exponential backoff
+                
+                response = self._bedrock_agent_client.create_agent(
+                    agentName=agent_name,
+                    agentResourceRoleArn=_role_arn,
+                    description=agent_description.replace('\n', ''),
+                    idleSessionTTLInSeconds=1800,
+                    foundationModel=inference_profile,
+                    instruction=agent_instructions,
+                )
+                time.sleep(5)
+                return response['agent']['agentId']
+                
+            except self._bedrock_agent_client.exceptions.AccessDeniedException as e:
+                if attempt == max_retries - 1:  # Last attempt
+                    raise Exception(f"Failed to create agent after {max_retries} attempts: {str(e)}")
+                print(f"Attempt {attempt + 1} failed with AccessDeniedException. Retrying...")
+                
+            except Exception as e:
+                # For other exceptions, fail immediately
+                raise Exception(f"Unexpected error creating agent: {str(e)}")
+            
         return response['agent']['agentId']
     
     def add_action_group_with_lambda(self,

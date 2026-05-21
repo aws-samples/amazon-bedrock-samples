@@ -1,0 +1,140 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"description": "The lab reports document specimen analysis from a medical procedure, including clinical history, gross examination, microscopic findings, and immunostaining results. The report provides detailed measurements and diagnostic markers to support the final medical diagnosis.",
+	"class": "Lab Reports",
+	"type": "object",
+	"definitions": {
+		"PatientInfo": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The name of the patient"
+				},
+				"medical_record_number": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The patient's medical record number"
+				},
+				"date_of_birth": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The patient's date of birth in MM/DD/YYYY format"
+				},
+				"gender": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The patient's gender"
+				}
+			}
+		},
+		"ProcedureInfo": {
+			"type": "object",
+			"properties": {
+				"accession_number": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The unique identifier for the specimen/procedure"
+				},
+				"date": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The date of the procedure in MM/DD/YYYY format"
+				},
+				"attending_physician": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The name of the physician who performed or attended the procedure"
+				}
+			}
+		},
+		"ClinicalInfo": {
+			"type": "object",
+			"properties": {
+				"history": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "A brief instruction of the patient's symptoms or reason for procedure"
+				},
+				"specimen": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "A instruction of the tissue or organ examined"
+				}
+			}
+		},
+		"Diagnosis": {
+			"type": "object",
+			"properties": {
+				"diagnosis": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The diagnosis or conclusion"
+				},
+				"tumor_size": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "The size of any tumor in cm"
+				},
+				"cell_type": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "A instruction of the type of cells observed"
+				},
+				"other_findings": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "Other relevant microscopic findings"
+				}
+			}
+		},
+		"Immunostains": {
+			"type": "object",
+			"properties": {
+				"positive_markers": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "Markers for which the tumor cells tested positive"
+				},
+				"negative_markers": {
+					"type": "string",
+					"inferenceType": "explicit",
+					"instruction": "Markers for which the tumor cells tested negative"
+				}
+			}
+		}
+	},
+	"properties": {
+		"patient_information": {
+			"$ref": "#/definitions/PatientInfo"
+		},
+		"procedure_information": {
+			"$ref": "#/definitions/ProcedureInfo"
+		},
+		"clinical_information": {
+			"$ref": "#/definitions/ClinicalInfo"
+		},
+		"diagnosis": {
+			"$ref": "#/definitions/Diagnosis"
+		},
+		"gross_instruction": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "A instruction of the appearance of the specimen"
+		},
+		"microscopic_instruction": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "A instruction of the tumor cells and tissue under the microscope"
+		},
+		"immunostains": {
+			"$ref": "#/definitions/Immunostains"
+		},
+		"comment": {
+			"type": "string",
+			"inferenceType": "explicit",
+			"instruction": "Any additional comments or notes"
+		}
+	}
+}

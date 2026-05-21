@@ -1,7 +1,7 @@
-# Deploy e2e RAG solution (using Knowledgebases for Amazon Bedrock) via CloudFormation
+# Deploy e2e RAG solution (using Amazon Bedrock Knowledge Bases) via CloudFormation
 
 
-This is a complete setup for automatic deployment of end-to-end RAG workflow using Knowledge Bases for Amazon Bedrock. 
+This is a complete setup for automatic deployment of end-to-end RAG workflow using Amazon Bedrock Knowledge Bases. 
 Following resources will get created and deployed:
 - IAM role
 - Open Search Serverless Collection and Index

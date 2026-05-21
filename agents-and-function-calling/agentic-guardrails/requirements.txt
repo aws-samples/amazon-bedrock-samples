@@ -1,0 +1,11 @@
+boto3
+botocore
+langchain-core
+langgraph
+langchain-aws
+langchain-community
+duckduckgo-search
+crewai
+crewai-tools
+strands-agents
+strands-agents-tools

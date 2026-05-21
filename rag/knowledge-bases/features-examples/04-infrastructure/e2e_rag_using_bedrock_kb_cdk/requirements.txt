@@ -2,3 +2,4 @@ aws-lambda-powertools
 boto3
 requests-aws4auth
 opensearch-py
+aws-cdk-lib

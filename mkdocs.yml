@@ -3,7 +3,6 @@ site_name: Amazon Bedrock Recipes
 copyright: Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 site_author: Bedrock-GTM
 site_description: Amazon Bedrock cookbook website
-site_url: https://github.amazon-bedrock-samples.com
 # Repository
 repo_name: "Github: Amazon-Bedrock-Samples"
 repo_url: "https://github.com/aws-samples/amazon-bedrock-samples/tree/main"

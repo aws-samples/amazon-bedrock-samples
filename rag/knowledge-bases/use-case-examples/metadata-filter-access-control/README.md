@@ -1,6 +1,8 @@
-# Access Controls for Knowledge Bases on Amazon Bedrock
+# Access Controls for Amazon Bedrock Knowlege Bases
 
-This notebook guides users on creating access controls for Knowledge Bases on Amazon Bedrock.
+This notebook guides users on creating access controls for Amazon Bedrock Knowlege Bases.
+
+For more details on access control, please read this blog post: https://aws.amazon.com/blogs/machine-learning/access-control-for-vector-stores-using-metadata-filtering-with-knowledge-bases-for-amazon-bedrock/
 
 Metadata filtering in knowledge bases enables access control for your data. By defining metadata fields based on attributes such as user roles, departments, or data sensitivity levels, you can ensure that the retrieval only fetches and uses information that a particular user or application is authorized to access. This helps maintain data privacy and security, preventing sensitive or restricted information from being inadvertently surfaced or used in generated responses. With this access control capability, you can safely use retrieval across different user groups or scenarios while complying with company specific data governance policies and regulations.
 
@@ -24,6 +26,9 @@ The workflow for the solution is as follows:
 ## Deployment
 
 The deployment steps for this solution are provided in the **kb-end-to-end-acl.ipynb** notebook.
+
+## References
+1. https://aws.amazon.com/blogs/machine-learning/multi-tenant-rag-with-amazon-bedrock-knowledge-bases/
 
 ## Contributing
 

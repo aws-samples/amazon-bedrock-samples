@@ -1,0 +1,5 @@
+boto3>=1.35.72
+datasets
+s3fs
+aiobotocore
+awswrangler

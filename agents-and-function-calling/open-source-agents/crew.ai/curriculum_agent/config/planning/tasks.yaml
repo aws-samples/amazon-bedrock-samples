@@ -1,0 +1,123 @@
+task_transfer_learning:
+  description: >
+    Complete this thought with 1 or 2 sentences that refer to how students aged {age_range} in grade {grade} will transfer the knowledge gained from the lesson, unit, or course and apply it outside of the context of the course. 
+  expected_output: >
+    Finish this sentence stated as a complete sentence Formatted as markdown without '```':
+    Students will be able to independently use their learning to...
+  agent: desired_results
+  output_file: logs/tasks/outputs/planning/task_transfer_learning/output.md
+
+task_understandings:
+  description: >
+    Complete this thought with 1 or 2 sentences that refer to the big ideas and specific understandings students aged {age_range} in grade {grade}  will have when the complete the lesson, unit, or course.
+  expected_output: >
+    Finish this sentence stated as a complete sentence Formatted as markdown without '```':
+    Students will understand that...
+  agent: desired_results
+  output_file: logs/tasks/outputs/planning/task_understandings/output.md
+
+task_essential_questions:
+  description: >
+    Generate the provocative questions that foster inquiry, understanding, and transfer of learning. 
+    These questions typically frame the lesson, unit, or course and are often revisited. 
+    If students attain the established goals, they should be able to answer the essential question(s).
+  expected_output: >
+    A list of provocative questions that foster inquiry, understanding, and transfer of learning.
+    Formatted as markdown without '```'
+  agent: desired_results
+  output_file: logs/tasks/outputs/planning/task_essential_questions/output.md
+
+task_acquired_knowledge:
+  description: >
+    Complete this thought with 1 or 2 sentences that Refers to the key knowledge students aged {age_range} in grade {grade} will acquire from the lesson, unit, or course.
+  expected_output: >
+    Finish this sentence stated as a complete sentence Formatted as markdown without '```':
+    Students will know ...
+  agent: desired_results
+  output_file: logs/tasks/outputs/planning/task_acquired_knowledge/output.md
+
+task_acquired_skills:
+  description: >
+    Complete this thought with 1 or 2 sentences that refers to the key skills students aged {age_range} in grade {grade} will acquire from the lesson, unit, or course.
+  expected_output: >
+    Finish this sentence stated as a complete sentence Formatted as markdown without '```':
+    Students will be skilled at ...
+  agent: desired_results
+  output_file: logs/tasks/outputs/planning/task_acquired_skills/output.md
+
+task_evaluative_criteria:
+  description: >
+    Generate specific criteria that will be used to evaluate student performance and understanding 
+    for students aged {age_range} in grade {grade}. Include criteria that assess both process and product.
+  expected_output: >
+    A clear list of evaluative criteria addressing:
+    - Quality of understanding
+    - Skill demonstration
+    - Process execution
+    - Final product elements
+    This should be output as a .md file and formatted as markdown without '```'
+  agent: evidence_and_assessment
+  output_file: logs/tasks/outputs/planning/task_evaluative_criteria/output.md
+
+task_performance_tasks:
+  description: >
+    Design authentic performance task(s) that will allow students aged {age_range} in grade {grade} 
+    to demonstrate their understanding and achievement of the learning goals. These should be 
+    culminating assessments that integrate multiple concepts and skills.
+  expected_output: >
+    A detailed description of performance task(s) including:
+    - Task overview
+    - Learning goals assessed
+    - Required student deliverables
+    - Timeline/phases
+    This should be output as a .md file and formatted as markdown without '```'
+  agent: evidence_and_assessment
+  output_file: logs/tasks/outputs/planning/task_performance_tasks/output.md
+
+task_other_evidence:
+  description: >
+    Specify additional assessment methods and evidence that will be used to evaluate student 
+    learning for students aged {age_range} in grade {grade}. Include both formal and informal 
+    assessments, as well as opportunities for self-reflection.
+  expected_output: >
+    A comprehensive list of assessment methods including:
+    - Formal assessments (quizzes, tests)
+    - Informal checks for understanding
+    - Homework assignments
+    - Self-assessment opportunities
+    - Student reflection prompts
+    This should be output as a .md file and formatted as markdown without '```'
+  agent: evidence_and_assessment
+  output_file: logs/tasks/outputs/planning/task_other_evidence/output.md
+
+task_learning_sequence:
+  description: >
+    Design a sequential learning plan spanning {timeline} that outlines the progression of 
+    learning activities and instructional strategies. Include a logical flow of content delivery,
+    practice opportunities, and formative assessments for students aged {age_range} in grade {grade}.
+  expected_output: >
+    A chronological outline of learning activities including:
+    - Sequence of topics/concepts
+    - Instructional methods for each segment
+    - Estimated duration for activities
+    - Transition points between concepts
+    This should be output as a .md file and formatted as markdown without '```'
+  agent: learning_plan
+  output_file: logs/tasks/outputs/planning/task_learning_sequence/output.md
+
+task_instructional_strategies:
+  description: >
+    Detail the specific instructional strategies and learning activities that will be used
+    throughout the {timeline} to engage students aged {age_range} in grade {grade}. Include
+    a mix of direct instruction, collaborative work, independent practice, and interactive elements.
+  expected_output: >
+    A detailed list of instructional strategies including:
+    - Direct instruction methods
+    - Group learning activities
+    - Individual practice exercises
+    - Discussion formats
+    - Problem-solving approaches
+    - Technology integration points
+    This should be output as a .md file and formatted as markdown without '```'
+  agent: learning_plan
+  output_file: logs/tasks/outputs/planning/task_instructional_strategies/output.md
