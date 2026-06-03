@@ -41,6 +41,22 @@ export interface ILangfuseDemoStackProps extends cdk.StackProps {
    */
   langfuseWorkerImage?: string;
   /**
+   * Explicitly specify Availability Zones for the VPC.
+   *
+   * CloudFront VPC Origins does not support all AZs in every region. In some regions (e.g.
+   * ap-northeast-2 Seoul, ap-northeast-1 Tokyo, us-west-1 California, us-east-1 Virginia), one
+   * AZ is excluded. Because AZ IDs map to different names per AWS account in these older regions,
+   * CDK's default AZ selection may pick an unsupported AZ causing deployment failures.
+   *
+   * If you encounter a CloudFront VPC Origins AZ error, use this prop to explicitly specify
+   * supported AZs. For example, in ap-northeast-2 (Seoul), exclude the AZ mapped to ID
+   * `apne2-az1` in your account:
+   * @example ['ap-northeast-2b', 'ap-northeast-2c']
+   *
+   * @default CDK selects 2 AZs automatically
+   */
+  availabilityZones?: string[];
+  /**
    * Set `true` to create and use Amazon Cognito User Pool for authentication
    *
    * @default - Langfuse native auth will be used - ⚠️ with open sign-up!
@@ -61,7 +77,10 @@ export class LangfuseDemoStack extends cdk.Stack {
 
     const tags = [new cdk.Tag("project", "langfuse-demo")];
 
-    const vpcInfra = new LangfuseVpcInfra(this, "VpcInfra", { tags });
+    const vpcInfra = new LangfuseVpcInfra(this, "VpcInfra", {
+      availabilityZones: props.availabilityZones,
+      tags,
+    });
 
     let cognitoUserPool;
     if (props.useCognitoAuth) {

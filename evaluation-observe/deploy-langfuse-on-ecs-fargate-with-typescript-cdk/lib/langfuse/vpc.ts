@@ -9,6 +9,26 @@ import { Construct } from "constructs";
 
 export interface ILangfuseVpcInfraProps {
   /**
+   * Explicitly specify Availability Zones for the VPC subnets.
+   *
+   * CloudFront VPC Origins does not support all AZs in every region. In some regions (e.g.
+   * ap-northeast-2 Seoul, ap-northeast-1 Tokyo, us-west-1 California, us-east-1 Virginia), one
+   * AZ is excluded from CloudFront VPC Origins support. Because AZ IDs map to different AZ names
+   * per AWS account in these older regions, CDK's default AZ selection may pick an unsupported AZ
+   * causing deployment failures.
+   *
+   * If you encounter a CloudFront VPC Origins AZ error, use this prop to explicitly specify
+   * supported AZs. For example, in ap-northeast-2 (Seoul), exclude the AZ mapped to ID
+   * `apne2-az1` in your account:
+   * @example ['ap-northeast-2b', 'ap-northeast-2c']
+   *
+   * See: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html#vpc-origins-supported-regions
+   * See: https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html
+   *
+   * @default CDK selects 2 AZs automatically
+   */
+  availabilityZones?: string[];
+  /**
    * Optional AWS Tags to apply to created resources
    */
   tags?: cdk.Tag[];
@@ -35,11 +55,16 @@ export class LangfuseVpcInfra extends Construct {
   ) {
     super(scope, id);
 
-    // maxAzs parameter is not specified.
+    // maxAzs parameter is not specified by default.
     // The default behavior of the ec2.Vpc construct is to create a VPC with subnets spread across
     // 2 Availability Zones (AZs) when no maxAzs parameter is specified.
-    // Each AZ will have one public subnet and one private subnet by default
+    // Each AZ will have one public subnet and one private subnet by default.
+    //
+    // NOTE: If deploying in a region where CloudFront VPC Origins excludes an AZ (e.g. Seoul,
+    // Tokyo, N. California, N. Virginia), pass `availabilityZones` in props to explicitly select
+    // supported AZs and avoid deployment failures.
     this.vpc = new ec2.Vpc(this, "Vpc", {
+      ...(props.availabilityZones ? { availabilityZones: props.availabilityZones } : {}),
       gatewayEndpoints: {
         S3: {
           service: ec2.GatewayVpcEndpointAwsService.S3,
