@@ -1,13 +1,13 @@
 {
     "peerDependencies": {
-      "aws-cdk-lib": "^2.166.0",
+      "aws-cdk-lib": "^2.177.0",
       "constructs": "^10.0.0"
     },
     "devDependencies": {
-      "aws-cdk-lib": "2.166.0"
+      "aws-cdk-lib": "2.177.0"
     },
     "dependencies": {
-        "aws-cdk-lib": "^2.166.0",
+        "aws-cdk-lib": "^2.177.0",
         "constructs": "^10.0.0"
       }
   }
