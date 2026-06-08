@@ -55,7 +55,7 @@ Please NOTE: The CDK will ONLY deploy in **us-east-1** region.
 1. Clone the repository to your local machine or AWS environment, set up a virtual environment and activate it , download related data and install required Python packages using below code:
 ```bash
 git clone https://github.com/aws-samples/amazon-bedrock-samples.git
-cd ./amazon-bedrock-samples/agents-and-function-calling-for-bedrock/use-case-examples/marketing-agent
+cd ./amazon-bedrock-samples/agents-and-function-calling/bedrock-agents/use-case-examples/marketing-agent
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
