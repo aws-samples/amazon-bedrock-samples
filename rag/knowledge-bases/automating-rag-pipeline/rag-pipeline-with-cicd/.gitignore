@@ -1,0 +1,53 @@
+
+.DS_Store
+
+# AWS CDK
+cdk.out/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# TypeScript
+*.tsbuildinfo
+dist/
+out/
+build/
+
+# Logs
+logs/
+*.log
+
+# Dependency directories
+jspm_packages/
+typings/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# MacOS
+.DS_Store
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Coverage directory used by tools like istanbul
+coverage/
