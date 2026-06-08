@@ -185,6 +185,9 @@ nav:
         - Chunking strategies for RAG applications: './rag/open-source/chunking/rag_chunking_strategies_langchain_bedrock.md'
         - Vector Stores:
           - Langchain Chatbot with Opensearch: './rag/open-source/vector_stores/rag_langchain_bedrock_opensearch.md'
+    - Multi Modal:
+      - Nova:
+        - Interacting with Amazon Nova-Lite with images: './multi-modal/Nova/Nova-Lite-Multimodal-Example.md'
     - Model Customization:
       - Model Distillation with Invocation Logs: './custom-models/model-distillation/Historical_invocation_distillation.md'
       - Model Distillation with S3 Data: './custom-models/model-distillation/Distillation-via-S3-input.md'
