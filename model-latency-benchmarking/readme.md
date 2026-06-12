@@ -24,7 +24,7 @@ This tool helps you benchmark model latency metrics for Large Language Models (L
 1. Set up your test:
    - Put your prompts in a JSONL file
    - Change settings in the first code cell (like file paths and test details)
-   - Some models (for example Amazon Nova and the latest Claude models) reject `temperature` and `topP` in the same request, so the tool sends only one. Set `INFERENCE_SAMPLING` in the configuration cell to `'temperature'` (default) or `'topP'` to choose which one.
+   - Some models reject `temperature` and `topP` together; set `INFERENCE_SAMPLING` in the configuration cell to `'temperature'` (default) or `'topP'`.
 
 2. Run the code:
    - All cells will run automatically
@@ -78,51 +78,13 @@ Your input JSONL file should contain one JSON object per line. The following fie
 
 ## Prompt caching
 
-Prompt caching lets you cache a static prompt prefix (the `cached_context`) so that repeated requests reusing that prefix skip reprocessing it. This reduces Time to First Token and lowers input-token cost for workloads that send a large, stable context on every request, such as a system prompt, a long instruction set, a knowledge document, or few-shot examples.
+Prompt caching reuses a static prompt prefix (`cached_context`) across requests to lower Time to First Token and input-token cost. Set `prompt_caching` to `true` and provide the prefix in `cached_context`; the optional fields are described in the dataset table above. Caching is off by default, so existing datasets are unaffected.
 
-How it works in the tool:
+- Available for on-demand invocation only.
+- Caching only triggers when the cached prefix meets the model's minimum token threshold (for example, 4,096 tokens for Claude Haiku 4.5). Confirm current thresholds and supported models in the [Amazon Bedrock prompt caching documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html).
+- Output adds `cache_read_input_tokens`, `cache_write_input_tokens`, and `Cache_Hit_Rate`, and the analysis reports Time to First Token for cached and uncached calls separately. Existing columns are unchanged.
 
-- Set `prompt_caching` to `true` on a scenario and supply the static prefix in `cached_context`. The tool places the cached context first and inserts a cache checkpoint immediately after it, then appends your `text_prompt`.
-- Set `cache_ttl` to `5m` (default) or `1h` to control how long the cache entry lives. The `1h` extended TTL is only supported on Anthropic models; other models use the default `5m`.
-- When `prompt_caching` is `false` or absent, the request is sent without any cache checkpoint, exactly as before.
-- If `prompt_caching` is `true` but `cached_context` is empty, or `cache_ttl` is not `5m` or `1h`, the tool records an error status with a descriptive message for that invocation and continues with the remaining scenarios.
-
-A global prompt caching toggle in the configuration cell sets the default. A scenario's `prompt_caching` field always wins when present.
-
-### Supported models, regions, and minimum token thresholds
-
-Prompt caching is available for **on-demand invocation only**. It is not supported with provisioned throughput.
-
-Caching only triggers when the cached prefix meets or exceeds a per-model minimum token threshold. Below the threshold, the request still runs but no cache write or read occurs. The thresholds and the list of caching-capable models and supported regions change over time, so confirm the current values in the [Amazon Bedrock prompt caching documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html) for your model and region before authoring a dataset.
-
-The models demonstrated by this tool and their minimum cached-prefix token thresholds:
-
-| Model | Inference profile ID | Minimum tokens to trigger caching |
-|-------|----------------------|-----------------------------------|
-| Claude Haiku 4.5 | `us.anthropic.claude-haiku-4-5-20251001-v1:0` | 4,096 |
-| Amazon Nova Pro | `us.amazon.nova-pro-v1:0` | 1,000 (1K) |
-
-Only reference caching-capable models for any scenario where `prompt_caching` is `true`.
-
-## Cache metrics in output
-
-When prompt caching is active, the tool captures cache usage from the Converse response and adds these columns to the per-invocation output. When a response omits the cache fields, the tool records zero for both token counts so the output schema stays stable.
-
-| Metric | Description |
-|--------|-------------|
-| `cache_read_input_tokens` | Input tokens served from cache on a cache hit. `0` when absent. |
-| `cache_write_input_tokens` | Input tokens written to the cache when it is populated. `0` when absent. |
-| `Cache_Hit_Rate` | Fraction of input tokens served from cache, derived per invocation as cache read input tokens divided by total input tokens. |
-
-The analysis cell reports Time to First Token for cached invocations separately from uncached invocations and includes the cache token columns and Cache_Hit_Rate in the aggregated output. All existing per-invocation columns and aggregated metrics are preserved; the cache columns are added rather than replacing anything.
-
-## Caching demonstration dataset
-
-The repository ships a dedicated demo dataset, `caching-demo-prompts-for-benchmarking.jsonl`, alongside the sample dataset. Its purpose is to let you observe the cache effect directly without authoring your own data.
-
-It demonstrates prompt caching on two models, Claude Haiku 4.5 and Amazon Nova Pro. For each model it pairs a cached scenario (`prompt_caching: true`) with a matching uncached baseline (`prompt_caching: false`) that uses the same model and prompt, so cached and uncached results compare directly. The cached context in each scenario meets the per-model minimum token threshold so caching is triggered.
-
-To run it, point the dataset file path in the configuration cell at `caching-demo-prompts-for-benchmarking.jsonl` and run the notebook as usual. No tool changes are needed. After the run, compare the cached scenarios against their baselines: cached invocations should report non-zero `cache_read_input_tokens` or `cache_write_input_tokens` and lower Time to First Token. Because the first request pays the cache write cost while later requests benefit from the read, run enough invocations per scenario to warm the cache before comparing cache-hit latency.
+To see it in action, point the dataset path at `caching-demo-prompts-for-benchmarking.jsonl`, which pairs cached and uncached scenarios for Claude Haiku 4.5 and Amazon Nova Pro.
 
 ## Important notes
 
