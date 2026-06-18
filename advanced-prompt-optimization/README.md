@@ -1,12 +1,13 @@
 # Advanced Prompt Optimization — Tutorial Notebooks
 
-Three runnable notebooks, one per evaluator mode in Amazon Bedrock Advanced Prompt Optimization (APO). All boto3, all explained inline.
+Four runnable notebooks for Amazon Bedrock Advanced Prompt Optimization (APO): one per evaluator mode, plus local/spot optimization with `advpo:` tags. All boto3, all explained inline.
 
 | Notebook | Mode | Chapters |
 |---|---|---|
 | `01_lambda_metric.ipynb` | Lambda metric | Text (NESTFUL) + PDF (MMVQA) |
 | `02_llm_as_judge.ipynb` | LLM-as-Judge | Text (IFBench) + Image (Defactify) |
 | `03_steering_criteria.ipynb` | Steering criteria | Text (XSum) + Image (MathVista) |
+| `04_local_spot_optimization.ipynb` | Steering + `advpo:` tags | Local/spot optimization of a chosen prompt section |
 
 ## Before you start
 
@@ -45,8 +46,9 @@ advanced-prompt-optimization/
 ├── 01_lambda_metric.ipynb
 ├── 02_llm_as_judge.ipynb
 ├── 03_steering_criteria.ipynb
+├── 04_local_spot_optimization.ipynb
 └── data/                             # Per-example samples, templates, lambda code, multimodal assets
-    ├── nestful/, mmvqa/, ifbench/, defactify/, xsum/, mathvista/
+    ├── nestful/, mmvqa/, ifbench/, defactify/, xsum/, mathvista/, spot/
     └── <each>/reference_results.jsonl   # Pre-baked results from a real run (replay mode)
 ```
 

@@ -313,6 +313,12 @@ EXAMPLES: dict[str, dict] = {
         "asset_type": "image",
         "asset_role": "image_path",
     },
+    "spot": {
+        "mode": "steering",
+        "template_fields": ["message"],
+        "template_id": "spot_local_optimization_example",
+        "multimodal": False,
+    },
 }
 
 
