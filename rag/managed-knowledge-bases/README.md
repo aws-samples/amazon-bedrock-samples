@@ -27,7 +27,7 @@ Create a KB, ingest documents, and query with the Retrieve and AgenticRetrieveSt
 Focused examples for individual managed KB capabilities:
 
 - [01-data-connectors/](02-feature-examples/01-data-connectors/) — Web Crawler,  <span style="color:red">[ Confluence, SharePoint, OneDrive, Google Drive, Custom - coming soon]</span>
-- [02-chunking-and-parsing/](02-feature-examples/02-chunking-and-parsing/) — Smart Parsing & multi-modal content
+- [02-chunking-and-parsing/](02-feature-examples/02-chunking-and-parsing/) — chunking strategies, Multi-modal RAG using Smart Parsing & advance indexing
 - [03-retrieval-optimization/](02-feature-examples/03-retrieval-optimization/) — Hybrid search, metadata filtering, reranking <span style="color:red">[coming soon]</span>
 - [04-rag-evaluation/](02-feature-examples/04-rag-evaluation/) — Synthetic Q&A generation, Bedrock evaluation jobs <span style="color:red">[coming soon]</span>
 - [05-observability/](02-feature-examples/05-observability/) — CloudWatch metrics, OTEL spans, vended logs <span style="color:red">[coming soon]</span>
@@ -116,6 +116,70 @@ result = kb.agentic_retrieve_stream(
     reranking_model_arn='arn:aws:bedrock:us-west-2::foundation-model/cohere.rerank-v3-5:0'
 )
 ```
+## Chunking Strategies
+
+Managed KBs support configurable chunking per data source:
+
+```python
+# Default chunking (~300 tokens, sentence-aware) — no config needed
+kb = ManagedKnowledgeBase(kb_name="my-kb", bucket_name="my-bucket")
+
+# Fixed-size chunking (custom token size + overlap)
+kb = ManagedKnowledgeBase(
+    kb_name="my-kb",
+    data_sources=[{
+        'type': 'S3',
+        'bucket_name': 'my-bucket',
+        'chunking_strategy': 'FIXED_SIZE',
+        'max_tokens': 500,
+        'overlap_percentage': 20,
+    }],
+)
+
+# No chunking (each file = 1 chunk, for pre-split documents)
+kb = ManagedKnowledgeBase(
+    kb_name="my-kb",
+    data_sources=[{
+        'type': 'S3',
+        'bucket_name': 'my-bucket',
+        'chunking_strategy': 'NONE',
+    }],
+)
+```
+
+| Strategy | Description | When to use |
+|----------|-------------|-------------|
+| **Default** (recommended) | ~300 tokens, honors sentence boundaries | Most use cases |
+| **Fixed-size** | Configurable token size + overlap % | Need more context or more precision |
+| **No chunking** | 1 file = 1 chunk | Pre-processed/pre-split documents |
+
+> **Note:** Semantic and Hierarchical chunking are only available for Customer-managed Knowledge Bases.
+
+## Advanced Indexing
+
+Extract visual, audio, and video content beyond text:
+
+```python
+# Enable image extraction (charts, diagrams from PDFs/DOCX/PPT)
+kb = ManagedKnowledgeBase(
+    kb_name="my-kb",
+    data_sources=[{
+        'type': 'S3',
+        'bucket_name': 'my-bucket',
+        'enable_image_extraction': True,
+        'enable_audio_extraction': True,   # .mp3, .wav, .m4a, .flac, .ogg
+        'enable_video_extraction': True,   # .mp4, .mov, .m4v
+    }],
+)
+```
+
+| Toggle | File types | What gets indexed |
+|--------|-----------|-------------------|
+| `enable_image_extraction` | PDF, DOCX, PPT, HTML | Descriptions of charts, diagrams, screenshots |
+| `enable_audio_extraction` | MP3, WAV, M4A, FLAC, OGG | Audio transcriptions |
+| `enable_video_extraction` | MP4, MOV, M4V | Video content descriptions |
+
+
 
 ## 🔗 Related Links
 

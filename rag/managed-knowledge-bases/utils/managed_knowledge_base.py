@@ -475,19 +475,52 @@ def _build_connector_params(config: dict, account_id: str) -> tuple:
             connector_params["filterConfiguration"] = config["filter_config"]
 
     # Wrap in MANAGED_KNOWLEDGE_BASE_CONNECTOR outer structure
+    managed_connector_config = {
+        "connectorParameters": connector_params,
+        "deletionProtectionConfiguration": {
+            "deletionProtectionStatus": "DISABLED"
+        },
+    }
+
+    # Add mediaExtractionConfiguration for Advanced Indexing (image/audio/video)
+    # These toggles enable extraction of visual, audio, and video content
+    # from source documents during ingestion.
+    media_extraction = {}
+    if config.get("enable_image_extraction"):
+        media_extraction["imageExtractionStatus"] = "ENABLED"
+    if config.get("enable_audio_extraction"):
+        media_extraction["audioExtractionStatus"] = "ENABLED"
+    if config.get("enable_video_extraction"):
+        media_extraction["videoExtractionStatus"] = "ENABLED"
+    if media_extraction:
+        managed_connector_config["mediaExtractionConfiguration"] = media_extraction
+
     ds_config = {
         "type": "MANAGED_KNOWLEDGE_BASE_CONNECTOR",
-        "managedKnowledgeBaseConnectorConfiguration": {
-            "connectorParameters": connector_params,
-            "deletionProtectionConfiguration": {
-                "deletionProtectionStatus": "DISABLED"
-            },
-        },
+        "managedKnowledgeBaseConnectorConfiguration": managed_connector_config,
     }
 
     vector_ingestion_config = {
         "parsingConfiguration": {"parsingStrategy": "SMART_PARSING"}
     }
+
+    # Add chunking configuration if specified in the data source config
+    # Supported strategies for Managed KBs: FIXED_SIZE, NONE
+    # Default (omitted) = service-managed ~300 token chunks
+    chunking_strategy = config.get("chunking_strategy")
+    if chunking_strategy == "FIXED_SIZE":
+        vector_ingestion_config["chunkingConfiguration"] = {
+            "chunkingStrategy": "FIXED_SIZE",
+            "fixedSizeChunkingConfiguration": {
+                "maxTokens": config.get("max_tokens", 500),
+                "overlapPercentage": config.get("overlap_percentage", 20),
+            },
+        }
+    elif chunking_strategy == "NONE":
+        vector_ingestion_config["chunkingConfiguration"] = {
+            "chunkingStrategy": "NONE"
+        }
+    # else: no chunkingConfiguration = use service default (~300 tokens)
 
     return (ds_config, vector_ingestion_config)
 
