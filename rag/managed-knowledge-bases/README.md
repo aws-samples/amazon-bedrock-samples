@@ -28,7 +28,7 @@ Focused examples for individual managed KB capabilities:
 
 - [01-data-connectors/](02-feature-examples/01-data-connectors/) — Web Crawler,  <span style="color:red">[ Confluence, SharePoint, OneDrive, Google Drive, Custom - coming soon]</span>
 - [02-chunking-and-parsing/](02-feature-examples/02-chunking-and-parsing/) — chunking strategies, Multi-modal RAG using Smart Parsing & advance indexing
-- [03-retrieval-optimization/](02-feature-examples/03-retrieval-optimization/) — Hybrid search, metadata filtering, reranking <span style="color:red">[coming soon]</span>
+- [03-retrieval-optimization/](02-feature-examples/03-retrieval-optimization/) — Hybrid search, metadata filtering, agentic retrieval deep dive
 - [04-rag-evaluation/](02-feature-examples/04-rag-evaluation/) — Synthetic Q&A generation, Bedrock evaluation jobs <span style="color:red">[coming soon]</span>
 - [05-observability/](02-feature-examples/05-observability/) — CloudWatch metrics, OTEL spans, vended logs <span style="color:red">[coming soon]</span>
 - [06-responsible-ai/](02-feature-examples/06-responsible-ai/) — Bedrock Guardrails integration <span style="color:red">[coming soon]</span>
