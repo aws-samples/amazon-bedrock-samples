@@ -1,0 +1,11 @@
+{
+  "project_arn": "",
+  "blueprint_id": "",
+  "document_name": "",
+  "dataAutomation_profilearn": "",
+  "project_stage": "LIVE",
+  "input_document": "",
+  "bda_s3_output_location": "",
+  "inputs": [
+  ]
+}
