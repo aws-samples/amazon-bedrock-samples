@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["boto3>=1.35.0"]
+# dependencies = ["boto3>=1.40.0"]
 # ///
 """Snapshot an AR policy's DRAFT into an immutable numbered version.
 

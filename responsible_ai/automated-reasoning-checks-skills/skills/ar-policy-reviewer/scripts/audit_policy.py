@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["boto3>=1.35.0"]
+# dependencies = ["boto3>=1.40.0"]
 # ///
 """Audit an AR policy: fetch QUALITY_REPORT + FIDELITY_REPORT + POLICY_DEFINITION from the latest
 COMPLETED build and print a prioritized findings report.

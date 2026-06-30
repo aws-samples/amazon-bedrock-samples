@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["boto3>=1.35.0"]
+# dependencies = ["boto3>=1.40.0"]
 # ///
 """Create a QnA test case for an AR policy.
 
@@ -28,7 +28,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--policy-arn", required=True)
     p.add_argument("--output", required=True, help="The model answer to validate (guardContent).")
-    p.add_argument("--input", help="The user question (the `query`, optional context).")
+    p.add_argument("--input", help="The user question (optional context).")
     p.add_argument("--expected", choices=EXPECTED_CHOICES, required=True, help="Expected aggregated result (required).")
     p.add_argument("--confidence", type=float, help="Confidence threshold 0.0-1.0 (optional).")
     p.add_argument("--client-request-token", help="Idempotency token (optional).")
@@ -42,7 +42,15 @@ def main() -> None:
         "expectedAggregatedFindingsResult": args.expected,
     }
     if args.input:
-        params["query"] = args.input
+        # The question param was renamed across boto3 versions: older SDKs (e.g. 1.40)
+        # use "query"; newer ones (e.g. 1.43+) use "queryContent". Pick whichever the
+        # installed SDK actually exposes, so the script works on both.
+        key = "query"
+        if not args.dry_run:
+            members = ctx.bedrock.meta.service_model.operation_model(
+                "CreateAutomatedReasoningPolicyTestCase").input_shape.members
+            key = "queryContent" if "queryContent" in members else "query"
+        params[key] = args.input
     if args.confidence is not None:
         params["confidenceThreshold"] = args.confidence
     if args.client_request_token:

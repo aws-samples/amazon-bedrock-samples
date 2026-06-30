@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="556" viewBox="0 0 1200 556" font-family="Avenir Next, Helvetica Neue, sans-serif">
+  <defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2B3A4C"/><stop offset="1" stop-color="#232F3E"/>
+    </linearGradient>
+    <filter id="card" x="-20%" y="-20%" width="140%" height="170%">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#232F3E" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="556" fill="#FBFBFA"/>
+
+  <!-- Header -->
+  <text x="56" y="54" font-size="30" fill="#16212E" font-weight="700">What's inside the suite</text>
+  <text x="56" y="82" font-size="16" fill="#5A6B7B">Six Agent Skills sit on one shared foundation, so they stay small and speak the same language.</text>
+  <line x1="56" y1="102" x2="1144" y2="102" stroke="#E3E7EB" stroke-width="1"/>
+
+  <!-- ===== Six skills ===== -->
+  <text x="56" y="140" font-size="13.5" letter-spacing="2.5" fill="#5A6B7B" font-weight="700">THE SIX AGENT SKILLS</text>
+  <g>
+    <g filter="url(#card)"><rect x="56" y="156" width="168" height="104" rx="11" fill="#FFFFFF" stroke="#E3E7EB"/>
+      <rect x="56" y="156" width="168" height="6" rx="3" fill="#FF9900"/>
+      <text x="76" y="202" font-size="18" fill="#16212E" font-weight="700">Builder</text>
+      <text x="76" y="232" font-size="13.5" fill="#5A6B7B">make the rules</text></g>
+    <g filter="url(#card)"><rect x="240" y="156" width="168" height="104" rx="11" fill="#FFFFFF" stroke="#E3E7EB"/>
+      <rect x="240" y="156" width="168" height="6" rx="3" fill="#FF9900"/>
+      <text x="260" y="202" font-size="18" fill="#16212E" font-weight="700">Reviewer</text>
+      <text x="260" y="232" font-size="13.5" fill="#5A6B7B">check the rules</text></g>
+    <g filter="url(#card)"><rect x="424" y="156" width="168" height="104" rx="11" fill="#FFFFFF" stroke="#E3E7EB"/>
+      <rect x="424" y="156" width="168" height="6" rx="3" fill="#FF9900"/>
+      <text x="444" y="202" font-size="18" fill="#16212E" font-weight="700">Tester</text>
+      <text x="444" y="232" font-size="13.5" fill="#5A6B7B">test the rules</text></g>
+    <g filter="url(#card)"><rect x="608" y="156" width="168" height="104" rx="11" fill="#FFFFFF" stroke="#E3E7EB"/>
+      <rect x="608" y="156" width="168" height="6" rx="3" fill="#FF9900"/>
+      <text x="628" y="202" font-size="18" fill="#16212E" font-weight="700">Debugger</text>
+      <text x="628" y="232" font-size="13.5" fill="#5A6B7B">fix the rules</text></g>
+    <g filter="url(#card)"><rect x="792" y="156" width="168" height="104" rx="11" fill="url(#navy)"/>
+      <rect x="792" y="156" width="168" height="6" rx="3" fill="#FF9900"/>
+      <text x="812" y="202" font-size="18" fill="#FFFFFF" font-weight="700">Deployer</text>
+      <text x="812" y="232" font-size="13.5" fill="#C4CDD6">ship the policy</text></g>
+    <g filter="url(#card)"><rect x="976" y="156" width="168" height="104" rx="11" fill="url(#navy)"/>
+      <rect x="976" y="156" width="168" height="6" rx="3" fill="#FF9900"/>
+      <text x="996" y="202" font-size="18" fill="#FFFFFF" font-weight="700">Validator</text>
+      <text x="996" y="232" font-size="13.5" fill="#C4CDD6">check answers</text></g>
+  </g>
+
+  <!-- connectors -->
+  <g stroke="#D7DDE3" stroke-width="1.5">
+    <line x1="140" y1="260" x2="140" y2="316"/>
+    <line x1="324" y1="260" x2="324" y2="316"/>
+    <line x1="508" y1="260" x2="508" y2="316"/>
+    <line x1="692" y1="260" x2="692" y2="316"/>
+    <line x1="876" y1="260" x2="876" y2="316"/>
+    <line x1="1060" y1="260" x2="1060" y2="316"/>
+  </g>
+  <text x="600" y="302" font-size="13" fill="#A9B2BB" text-anchor="middle" font-style="italic">every skill builds on the same base</text>
+
+  <!-- ===== Shared foundation ===== -->
+  <text x="56" y="350" font-size="13.5" letter-spacing="2.5" fill="#5A6B7B" font-weight="700">SHARED FOUNDATION</text>
+  <g filter="url(#card)">
+    <rect x="56" y="366" width="528" height="130" rx="12" fill="#FFFFFF" stroke="#E3E7EB"/>
+    <text x="80" y="400" font-size="18" fill="#16212E" font-weight="700">Shared library</text>
+    <text x="218" y="400" font-size="13" fill="#A9B2BB" font-family="Menlo, monospace">ar_common.py</text>
+    <text x="80" y="430" font-size="14" fill="#5A6B7B">One place for the AWS calls, polling, and reading</text>
+    <text x="80" y="452" font-size="14" fill="#5A6B7B">results, including the safety check that confirms</text>
+    <text x="80" y="474" font-size="14" fill="#5A6B7B">a check actually ran.</text>
+  </g>
+  <g filter="url(#card)">
+    <rect x="616" y="366" width="528" height="130" rx="12" fill="#FFFFFF" stroke="#E3E7EB"/>
+    <text x="640" y="400" font-size="18" fill="#16212E" font-weight="700">Reference docs</text>
+    <text x="788" y="400" font-size="13" fill="#A9B2BB" font-family="Menlo, monospace">references/</text>
+    <g font-size="13" font-weight="600">
+      <rect x="640" y="416" width="228" height="32" rx="8" fill="#F4F6F8"/><text x="656" y="437" fill="#16212E">the API, in one place</text>
+      <rect x="888" y="416" width="232" height="32" rx="8" fill="#F4F6F8"/><text x="904" y="437" fill="#16212E">what each verdict means</text>
+      <rect x="640" y="456" width="228" height="32" rx="8" fill="#F4F6F8"/><text x="656" y="477" fill="#16212E">how to write rules</text>
+      <rect x="888" y="456" width="232" height="32" rx="8" fill="#F4F6F8"/><text x="904" y="477" fill="#16212E">plain-language glossary</text>
+    </g>
+  </g>
+
+  <!-- footer -->
+  <line x1="56" y1="518" x2="1144" y2="518" stroke="#EEF1F4" stroke-width="1"/>
+  <text x="56" y="538" font-size="13" fill="#16212E" font-weight="600">Installs as one plugin.</text>
+  <text x="218" y="538" font-size="13" fill="#5A6B7B">Each skill carries its own runnable scripts; the foundation keeps them consistent.</text>
+</svg>

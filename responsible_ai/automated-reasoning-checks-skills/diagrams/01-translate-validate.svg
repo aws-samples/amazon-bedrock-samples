@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="556" viewBox="0 0 1200 556" font-family="Avenir Next, Helvetica Neue, sans-serif">
+  <defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2B3A4C"/><stop offset="1" stop-color="#232F3E"/>
+    </linearGradient>
+    <marker id="a" markerWidth="11" markerHeight="11" refX="7" refY="5" orient="auto">
+      <path d="M1,1.5 L8,5 L1,8.5" fill="none" stroke="#8A97A4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <filter id="card" x="-20%" y="-20%" width="140%" height="170%">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#232F3E" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="556" fill="#FBFBFA"/>
+
+  <!-- Header -->
+  <text x="56" y="54" font-size="30" fill="#16212E" font-weight="700">How a check works: translate, then validate</text>
+  <text x="56" y="82" font-size="16" fill="#5A6B7B">Language models turn words into logic. A math solver decides if the logic holds.</text>
+  <line x1="56" y1="102" x2="1144" y2="102" stroke="#E3E7EB" stroke-width="1"/>
+
+  <!-- labels row -->
+  <text x="56" y="146" font-size="13.5" letter-spacing="2.5" fill="#5A6B7B" font-weight="700">THE QUESTION &amp; ANSWER</text>
+  <text x="430" y="146" font-size="13.5" letter-spacing="2.5" fill="#B0623A" font-weight="700">STEP 1 · TRANSLATE</text>
+  <text x="844" y="146" font-size="13.5" letter-spacing="2.5" fill="#5A6B7B" font-weight="700">STEP 2 · VALIDATE</text>
+
+  <!-- Input -->
+  <g filter="url(#card)">
+    <rect x="56" y="162" width="320" height="172" rx="12" fill="#FFFFFF" stroke="#E3E7EB"/>
+    <text x="80" y="200" font-size="14" fill="#8A97A4" font-weight="700">Q</text>
+    <text x="104" y="200" font-size="15" fill="#16212E">"I'm full-time, here 18 months.</text>
+    <text x="104" y="222" font-size="15" fill="#16212E">Can I take parental leave?"</text>
+    <line x1="80" y1="244" x2="352" y2="244" stroke="#EEF1F4"/>
+    <text x="80" y="278" font-size="14" fill="#8A97A4" font-weight="700">A</text>
+    <text x="104" y="278" font-size="15" fill="#16212E">"Yes, you are eligible."</text>
+    <text x="80" y="312" font-size="12.5" fill="#A9B2BB">plain language, from your chatbot</text>
+  </g>
+
+  <!-- Step 1 Translate -->
+  <g filter="url(#card)">
+    <rect x="430" y="162" width="360" height="172" rx="12" fill="#FFFFFF" stroke="#F0D9C4"/>
+    <rect x="430" y="162" width="360" height="36" rx="12" fill="#FFF6EC"/>
+    <rect x="430" y="180" width="360" height="18" fill="#FFF6EC"/>
+    <text x="452" y="186" font-size="13.5" fill="#B0623A" font-weight="700">Language models read the words</text>
+    <text x="452" y="232" font-size="12.5" fill="#8A97A4" font-weight="700" font-family="Menlo, monospace">premises</text>
+    <text x="452" y="256" font-size="14" fill="#16212E" font-family="Menlo, monospace">isFullTime = true</text>
+    <text x="452" y="278" font-size="14" fill="#16212E" font-family="Menlo, monospace">tenureMonths = 18</text>
+    <text x="452" y="312" font-size="12.5" fill="#8A97A4" font-weight="700" font-family="Menlo, monospace">claim</text>
+    <text x="540" y="312" font-size="14" fill="#16212E" font-family="Menlo, monospace">eligible = true</text>
+  </g>
+
+  <!-- Step 2 Validate -->
+  <g filter="url(#card)">
+    <rect x="844" y="162" width="300" height="172" rx="12" fill="url(#navy)"/>
+    <text x="868" y="198" font-size="13.5" fill="#FF9900" font-weight="700">A math solver checks the rule</text>
+    <text x="868" y="238" font-size="12.5" fill="#9DB0C2" font-family="Menlo, monospace">policy rule</text>
+    <text x="868" y="266" font-size="14.5" fill="#FFFFFF" font-family="Menlo, monospace">(=&gt; (and isFullTime</text>
+    <text x="868" y="288" font-size="14.5" fill="#FFFFFF" font-family="Menlo, monospace">     (&gt; tenureMonths 12))</text>
+    <text x="868" y="310" font-size="14.5" fill="#FFFFFF" font-family="Menlo, monospace">     eligible)</text>
+  </g>
+
+  <!-- arrows -->
+  <line x1="376" y1="248" x2="426" y2="248" stroke="#8A97A4" stroke-width="1.7" marker-end="url(#a)"/>
+  <line x1="790" y1="248" x2="840" y2="248" stroke="#8A97A4" stroke-width="1.7" marker-end="url(#a)"/>
+
+  <!-- confidence note + verdict row -->
+  <text x="56" y="370" font-size="13.5" fill="#5A6B7B">Several models translate the same input; how much they agree becomes a <tspan font-weight="700" fill="#16212E">confidence</tspan> score.</text>
+  <g filter="url(#card)">
+    <rect x="844" y="350" width="300" height="52" rx="12" fill="#E8F4E5"/>
+    <circle cx="872" cy="376" r="8" fill="#1D8102"/>
+    <path d="M868,376 l3,3 l6,-7" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="892" y="382" font-size="17" fill="#1D6B07" font-weight="700">VALID</text>
+    <text x="968" y="382" font-size="13" fill="#5A7A4E">+ the rule that proves it</text>
+  </g>
+
+  <!-- ===== insight band ===== -->
+  <line x1="56" y1="438" x2="1144" y2="438" stroke="#E3E7EB" stroke-width="1"/>
+  <g filter="url(#card)">
+    <rect x="56" y="456" width="540" height="84" rx="12" fill="#FFFFFF" stroke="#E3E7EB"/>
+    <rect x="56" y="456" width="6" height="84" rx="3" fill="#EC7211"/>
+    <text x="84" y="486" font-size="17" fill="#16212E" font-weight="700">Suspect the translation first</text>
+    <text x="84" y="510" font-size="13.5" fill="#5A6B7B">Step 2 is exact, so surprises come from Step 1. The usual fix is to</text>
+    <text x="84" y="529" font-size="13.5" fill="#5A6B7B">sharpen a variable description (tell it "2 years" = <tspan font-family="Menlo, monospace" fill="#16212E">tenureMonths 24</tspan>).</text>
+  </g>
+  <g filter="url(#card)">
+    <rect x="620" y="456" width="524" height="84" rx="12" fill="#FFFFFF" stroke="#E3E7EB"/>
+    <rect x="620" y="456" width="6" height="84" rx="3" fill="#1D8102"/>
+    <text x="648" y="486" font-size="17" fill="#16212E" font-weight="700">Every verdict is explainable</text>
+    <text x="648" y="510" font-size="13.5" fill="#5A6B7B">It returns the rules behind it: <tspan font-weight="700" fill="#1D6B07">supporting</tspan> for VALID,</text>
+    <text x="648" y="529" font-size="13.5" fill="#5A6B7B"><tspan font-weight="700" fill="#A8290F">contradicting</tspan> for INVALID. Proof you can log and audit.</text>
+  </g>
+</svg>

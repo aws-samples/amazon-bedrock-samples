@@ -66,7 +66,7 @@ Quality-report fields: `ruleCount`, `variableCount`, `typeCount`, `conflictingRu
 
 | Job | API verb | Key args |
 |---|---|---|
-| Create QnA test | `CreateAutomatedReasoningPolicyTestCase` | `guardContent`(req=answer), `queryContent`(=question), `expectedAggregatedFindingsResult`, `confidenceThreshold` |
+| Create QnA test | `CreateAutomatedReasoningPolicyTestCase` | `guardContent`(req=answer), question param is `query` (boto3 ~1.40) or `queryContent` (1.43+), `expectedAggregatedFindingsResult`, `confidenceThreshold` |
 | Get/Update/Delete/List test | `.../TestCase(s)` | update/delete need `lastUpdatedAt` |
 | Run tests | `StartAutomatedReasoningPolicyTestWorkflow` | `policyArn`, `buildWorkflowId`(COMPLETED build), optional `testCaseIds` |
 | Get/List results | `Get/ListAutomatedReasoningPolicyTestResult(s)` | `buildWorkflowId` (+ `testCaseId`) |

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["boto3>=1.35.0"]
+# dependencies = ["boto3>=1.40.0"]
 # ///
 """Build (or merge into) an AR policy from a source document via INGEST_CONTENT (step 2 of 2).
 

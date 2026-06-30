@@ -160,10 +160,12 @@ came back with correct `VALID`/`INVALID` verdicts. Lessons baked into the code:
 - **Result assets nest under `response["buildWorkflowAssets"][<camelCaseKey>]`**, and not every asset
   exists for every build type (e.g. no `FIDELITY_REPORT` on `INGEST`/`REFINE`; run
   `GENERATE_FIDELITY_REPORT`). Helpers use `try_get_result_asset` + `asset_payload` to handle this.
-- **API model varies by boto3 version.** Older models expose only 3 `buildWorkflowType`s and may name
-  the test-case question param `query` (not `queryContent`), require `policies:[<versioned-arn>]` in the
-  guardrail AR config, and reject `--force` on policy delete. Pin a recent `boto3` (the PEP-723 headers
-  request `>=1.35`); on an older one, delete a policy's build workflows + versions before the policy.
+- **API model varies by boto3 version.** The test-case question param is named `query` on older SDKs
+  (around 1.40) and `queryContent` on newer ones (1.43+); `create_test.py` detects which the installed
+  SDK exposes and uses that, so it works on both. Older models also expose only 3 `buildWorkflowType`s,
+  require `policies:[<versioned-arn>]` in the guardrail AR config, and reject `--force` on policy delete.
+  The PEP-723 headers request `boto3>=1.40.0`, so `uv run` pulls a current SDK; on an older one, delete a
+  policy's build workflows + versions before the policy.
 - **Runtime translation ≠ test translation.** `ApplyGuardrail` may return `VALID` with the input sitting
   in `untranslatedPremises`/`untranslatedClaims` if the phrasing doesn't map to policy variables, i.e.
   nothing was actually checked. Treat untranslated content as a warning and tune variable descriptions.

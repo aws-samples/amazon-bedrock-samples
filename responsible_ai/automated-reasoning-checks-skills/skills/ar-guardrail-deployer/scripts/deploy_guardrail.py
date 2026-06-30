@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["boto3>=1.35.0"]
+# dependencies = ["boto3>=1.40.0"]
 # ///
 """Attach an AR policy version to a Bedrock Guardrail (idempotent create-or-update by name).
 
