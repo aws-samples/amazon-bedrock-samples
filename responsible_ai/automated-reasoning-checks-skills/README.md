@@ -6,6 +6,35 @@ to mathematically verify LLM outputs against an encoded policy.
 
 ![Six Agent Skills across the policy lifecycle](diagrams/02-lifecycle.png)
 
+> **Reviewing this?** Thanks for taking a look — it's a working draft shared for feedback before a PR
+> upstream. You can read everything right here (README, diagrams, and the `skills/*/SKILL.md` files);
+> nothing calls AWS until *you* run a script with your own credentials.
+
+## Try it in Claude Code
+
+This suite lives in a subfolder of a larger repo, so install it from a local clone (one extra step
+versus a root-level marketplace):
+
+```bash
+git clone --depth 1 -b ar-checks-skills https://github.com/akinfaa/amazon-bedrock-samples.git
+```
+
+Then in Claude Code, point the marketplace at the suite folder and install any of the six plugins:
+
+```text
+/plugin marketplace add ./amazon-bedrock-samples/responsible_ai/automated-reasoning-checks-skills
+/plugin install ar-policy-builder@automated-reasoning-skills
+```
+
+Plugins in the `automated-reasoning-skills` marketplace: `ar-policy-builder`, `ar-policy-reviewer`,
+`ar-policy-tester`, `ar-policy-debugger`, `ar-guardrail-deployer`, `ar-runtime-validator`. Once
+installed, just describe the task ("create an automated reasoning policy from this doc", "my AR test is
+failing") and the matching skill activates.
+
+Prefer not to install? Skim the diagrams below and the `skills/*/SKILL.md` files. To run a script
+directly, see [Using the scripts](#using-the-scripts) — each is a standalone `uv run` file with
+`--help` and `--dry-run`.
+
 The six skills cover the full AR lifecycle, in order:
 
 | Skill | What it does |
