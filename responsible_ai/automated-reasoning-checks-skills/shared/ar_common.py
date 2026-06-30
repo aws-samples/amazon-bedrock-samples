@@ -75,6 +75,12 @@ ASSET_TYPES = [
 ]
 TERMINAL_BUILD_STATUSES = {"COMPLETED", "FAILED", "CANCELLED"}
 
+# A policy allows at most this many build workflows per pool, with at most 1 active.
+# Builds are partitioned into two pools that are counted separately: fidelity-report
+# builds vs. everything else. (Mirrors manageBuildSlot in the ARchitect sample.)
+MAX_BUILDS_PER_POOL = 2
+FIDELITY_BUILD_TYPES = {"GENERATE_FIDELITY_REPORT"}
+
 
 # --------------------------------------------------------------------------- #
 # Clients + dry-run
@@ -255,6 +261,75 @@ def latest_completed_build_id(ctx: ARContext, policy_arn: str) -> str | None:
         return None
     completed.sort(key=lambda s: s.get("updatedAt") or s.get("createdAt") or "", reverse=True)
     return completed[0].get("buildWorkflowId")
+
+
+# --------------------------------------------------------------------------- #
+# Build-slot management (the "too many build workflows" fix)
+# --------------------------------------------------------------------------- #
+def _is_fidelity_build(build_type: str | None) -> bool:
+    """Fidelity-report builds are counted in a separate pool from policy builds."""
+    return (build_type or "") in FIDELITY_BUILD_TYPES
+
+
+def list_builds(ctx: ARContext, policy_arn: str) -> list[dict]:
+    """Return the policy's build-workflow summaries (id, status, type, timestamps)."""
+    resp = ctx.call(
+        "bedrock", "list_automated_reasoning_policy_build_workflows", policyArn=policy_arn, maxResults=50
+    )
+    return resp.get("automatedReasoningPolicyBuildWorkflowSummaries", [])
+
+
+def delete_build(ctx: ARContext, policy_arn: str, build_workflow_id: str, last_updated_at: Any) -> dict:
+    """Delete one build workflow. `last_updated_at` is the summary's updatedAt (a concurrency token)."""
+    return ctx.call(
+        "bedrock",
+        "delete_automated_reasoning_policy_build_workflow",
+        policyArn=policy_arn,
+        buildWorkflowId=build_workflow_id,
+        lastUpdatedAt=last_updated_at,
+    )
+
+
+def ensure_build_slot(ctx: ARContext, policy_arn: str, build_type: str) -> None:
+    """Free a build slot before starting a new build, so we never hit the per-policy cap.
+
+    A policy allows at most MAX_BUILDS_PER_POOL build workflows per pool (fidelity-report builds
+    vs. everything else), counted separately. If the relevant pool is at capacity, delete the
+    OLDEST terminal build (COMPLETED/FAILED/CANCELLED) to free a slot. Never touches an in-progress
+    build. Raises if every slot in the pool is occupied by an in-progress build.
+
+    Mirrors manageBuildSlot in the ARchitect sample
+    (github.com/aws-samples/sample-automated-reasoning-formalization, src/services/policy-service.ts).
+    """
+    if ctx.dry_run:
+        sys.stderr.write(f"[dry-run] would ensure a free build slot for {build_type}\n")
+        return
+    is_fidelity = _is_fidelity_build(build_type)
+    pool = [b for b in list_builds(ctx, policy_arn) if _is_fidelity_build(b.get("buildWorkflowType")) == is_fidelity]
+    if len(pool) < MAX_BUILDS_PER_POOL:
+        return
+    terminal = sorted(
+        (b for b in pool if b.get("status") in TERMINAL_BUILD_STATUSES),
+        key=lambda b: b.get("createdAt") or "",
+    )
+    pool_name = "fidelity-report" if is_fidelity else "policy"
+    if not terminal:
+        raise RuntimeError(
+            f"All {MAX_BUILDS_PER_POOL} {pool_name} build slots are in use by in-progress builds. "
+            "Wait for one to complete, then retry."
+        )
+    oldest = terminal[0]
+    sys.stderr.write(f"[slot] freeing a {pool_name} build slot: deleting old build {oldest.get('buildWorkflowId')} ({oldest.get('status')})\n")
+    delete_build(ctx, policy_arn, oldest["buildWorkflowId"], oldest.get("updatedAt"))
+
+
+def start_build(ctx: ARContext, policy_arn: str, build_type: str, source_content: dict, client_request_token: str | None = None) -> dict:
+    """Free a slot, then start a build workflow. Returns the start response (with buildWorkflowId)."""
+    ensure_build_slot(ctx, policy_arn, build_type)
+    params: dict = {"policyArn": policy_arn, "buildWorkflowType": build_type, "sourceContent": source_content}
+    if client_request_token:
+        params["clientRequestToken"] = client_request_token
+    return ctx.call("bedrock", "start_automated_reasoning_policy_build_workflow", **params)
 
 
 # --------------------------------------------------------------------------- #

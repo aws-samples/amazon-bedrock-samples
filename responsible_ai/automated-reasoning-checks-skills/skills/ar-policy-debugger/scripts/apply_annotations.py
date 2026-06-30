@@ -44,12 +44,12 @@ def main() -> None:
         policy_def = cur.get("policyDefinition", {"version": "1.0"})
         policy_def.setdefault("version", "1.0")
 
-    start = ctx.call(
-        "bedrock",
-        "start_automated_reasoning_policy_build_workflow",
-        policyArn=args.policy_arn,
-        buildWorkflowType="REFINE_POLICY",
-        sourceContent={
+    # start_build frees a build slot first (deletes an old terminal build if at the cap).
+    start = ar.start_build(
+        ctx,
+        args.policy_arn,
+        "REFINE_POLICY",
+        {
             "policyDefinition": policy_def,
             "workflowContent": {"policyRepairAssets": {"annotations": annotations}},
         },

@@ -35,7 +35,11 @@ suspect the translation first** (fix variable descriptions); only then suspect t
 
 ### Build status enum
 `SCHEDULED → PREPROCESSING → BUILDING → TESTING → COMPLETED` (+ `CANCEL_REQUESTED`, `FAILED`, `CANCELLED`).
-⚠️ **Max 2 build workflows per policy; only 1 IN_PROGRESS.** Delete an old one before starting a 3rd.
+⚠️ **Max 2 build workflows per policy, only 1 IN_PROGRESS.** Builds split into two pools counted
+separately: fidelity-report builds (`GENERATE_FIDELITY_REPORT`) vs. everything else. The scripts call
+`ar_common.start_build`, which frees a slot first by deleting the oldest terminal build when a pool is at
+capacity (never an in-progress one), so you do not manage this by hand. It raises only if every slot in
+the pool is busy with an in-progress build.
 
 ### Asset types (`assetType`)
 `BUILD_LOG` · `QUALITY_REPORT` · `POLICY_DEFINITION` · `GENERATED_TEST_CASES` · `POLICY_SCENARIOS` ·

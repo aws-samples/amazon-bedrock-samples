@@ -74,13 +74,9 @@ def main() -> None:
         document["documentDescription"] = description
 
     source_content: dict = {"policyDefinition": policy_def, "workflowContent": {"documents": [document]}}
-    params: dict = {
-        "policyArn": args.policy_arn,
-        "buildWorkflowType": "INGEST_CONTENT",
-        "sourceContent": source_content,
-    }
 
-    resp = ctx.call("bedrock", "start_automated_reasoning_policy_build_workflow", **params)
+    # start_build frees a build slot first (deletes an old terminal build if at the cap).
+    resp = ar.start_build(ctx, args.policy_arn, "INGEST_CONTENT", source_content)
     ar.emit(resp)
 
     if args.dry_run or args.no_poll:

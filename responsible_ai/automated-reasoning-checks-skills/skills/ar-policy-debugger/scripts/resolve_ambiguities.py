@@ -36,13 +36,8 @@ def main() -> None:
         policy_def = cur.get("policyDefinition", {"version": "1.0"})
         policy_def.setdefault("version", "1.0")
 
-    start = ctx.call(
-        "bedrock",
-        "start_automated_reasoning_policy_build_workflow",
-        policyArn=args.policy_arn,
-        buildWorkflowType="RESOLVE_POLICY_AMBIGUITIES",
-        sourceContent={"policyDefinition": policy_def},
-    )
+    # start_build frees a build slot first (deletes an old terminal build if at the cap).
+    start = ar.start_build(ctx, args.policy_arn, "RESOLVE_POLICY_AMBIGUITIES", {"policyDefinition": policy_def})
     ar.emit(start)
     if args.dry_run:
         return

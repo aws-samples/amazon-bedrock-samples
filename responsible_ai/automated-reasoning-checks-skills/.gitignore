@@ -12,6 +12,9 @@ diagrams/README.md
 .DS_Store
 .claude/
 
+# Local benchmark / scratch work (annotation vs local-JSON comparison). Not for the repo.
+eval/
+
 # Python
 __pycache__/
 *.pyc

@@ -46,7 +46,8 @@ result is wrong, look at the finding's `premises`/`claims`/`confidence`:
    English and let AR compile it. After REFINE_POLICY, review proposed changes, then `UpdateAutomatedReasoningPolicy`.
 3. **Fix conflicts/bare assertions first.** They cause `IMPOSSIBLE` for all involved inputs.
 4. **Re-review and re-test after every change** (hand back to reviewer/tester). Refinement is iterative.
-5. **⚠️ Max 2 build workflows per policy.** Delete an old one before starting a new refine build.
+5. **Build-slot cap is handled for you.** A policy allows at most 2 build workflows per pool; the scripts
+   free a slot automatically (deleting the oldest terminal build) before each refine build.
 
 ## Workflow
 ```

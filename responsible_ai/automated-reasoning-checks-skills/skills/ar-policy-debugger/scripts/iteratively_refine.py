@@ -56,12 +56,12 @@ def main() -> None:
     if args.feedback:
         refinement["feedback"] = args.feedback
 
-    start = ctx.call(
-        "bedrock",
-        "start_automated_reasoning_policy_build_workflow",
-        policyArn=args.policy_arn,
-        buildWorkflowType="ITERATIVELY_REFINE_POLICY",
-        sourceContent={"policyDefinition": policy_def, "workflowContent": {"iterativeRefinementContent": refinement}},
+    # start_build frees a build slot first (deletes an old terminal build if at the cap).
+    start = ar.start_build(
+        ctx,
+        args.policy_arn,
+        "ITERATIVELY_REFINE_POLICY",
+        {"policyDefinition": policy_def, "workflowContent": {"iterativeRefinementContent": refinement}},
     )
     ar.emit(start)
     if args.dry_run:

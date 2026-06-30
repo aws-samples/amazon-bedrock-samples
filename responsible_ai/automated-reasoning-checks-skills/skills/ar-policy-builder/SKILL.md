@@ -39,7 +39,8 @@ Read those when you need exact arg shapes or rule syntax.
 3. **Always write `instructions`** at build time; they materially improve extraction. Cover three
    things: the use case, example user questions, and which sections to focus on / ignore.
 4. **`policyDefinition.version` must be `"1.0"`** in `sourceContent` (schema version, ≠ resource version).
-5. **⚠️ Max 2 build workflows per policy, 1 IN_PROGRESS.** Delete an old one before a third.
+5. **Build-slot cap is handled for you.** A policy allows at most 2 build workflows per pool; the script
+   frees a slot automatically (deleting the oldest terminal build) before starting a build.
 6. After the build COMPLETES, **do not assume it's correct**; extraction is non-deterministic. Hand off
    to `ar-policy-reviewer` to check the quality + fidelity reports.
 
