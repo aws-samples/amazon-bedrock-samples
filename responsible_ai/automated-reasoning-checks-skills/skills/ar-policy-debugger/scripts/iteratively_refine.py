@@ -68,6 +68,8 @@ def main() -> None:
         return
 
     build_id = start.get("buildWorkflowId")
+    if not build_id:
+        sys.exit(f"No buildWorkflowId in start response: {start}")
     ar.poll_build_workflow(ctx, args.policy_arn, build_id)
     refined = ar.get_result_asset(ctx, args.policy_arn, build_id, "POLICY_DEFINITION")
     ar.emit({"refinedDefinition": refined})

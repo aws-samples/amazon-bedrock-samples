@@ -30,6 +30,9 @@ def main() -> None:
     ar.add_common_args(p)
     args = p.parse_args()
 
+    if args.asset_type == "SOURCE_DOCUMENT" and not args.asset_id:
+        sys.exit("--asset-id is required for SOURCE_DOCUMENT (get it from the ASSET_MANIFEST).")
+
     ctx = ar.ctx_from_args(args)
     build_id = args.build_workflow_id or ar.latest_completed_build_id(ctx, args.policy_arn)
     if not build_id:

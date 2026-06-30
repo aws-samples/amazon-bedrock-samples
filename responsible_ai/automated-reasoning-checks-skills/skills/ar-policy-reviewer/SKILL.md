@@ -31,7 +31,9 @@ into a prioritized list of fixes. It diagnoses; `ar-policy-debugger` applies the
 - Before testing or deploying, as a health check.
 
 ## Key directives
-1. **Always pull all three assets:** `POLICY_DEFINITION`, `QUALITY_REPORT`, `FIDELITY_REPORT`.
+1. **Pull the build assets:** `POLICY_DEFINITION` + `QUALITY_REPORT` are produced by every build.
+   ⚠️ `FIDELITY_REPORT` is **not** auto-produced by `INGEST_CONTENT`/`REFINE_POLICY` — run a
+   `GENERATE_FIDELITY_REPORT` build to get it. `audit_policy.py` tolerates a missing one and says so.
 2. **Triage by severity:** conflicting rules + bare assertions (cause `IMPOSSIBLE`) first; then
    unused/duplicate variables (cause `TRANSLATION_AMBIGUOUS`); then low fidelity scores.
 3. **Don't auto-edit.** Report findings and recommend specific annotations; hand off to `ar-policy-debugger`.
@@ -59,8 +61,8 @@ uv run scripts/audit_policy.py --policy-arn <ARN>
 
 # Or fetch a single asset to inspect manually
 uv run scripts/get_assets.py --policy-arn <ARN> --asset-type QUALITY_REPORT
-uv run scripts/get_assets.py --policy-arn <ARN> --asset-type FIDELITY_REPORT
 uv run scripts/get_assets.py --policy-arn <ARN> --asset-type POLICY_DEFINITION
+uv run scripts/get_assets.py --policy-arn <ARN> --asset-type FIDELITY_REPORT   # only after GENERATE_FIDELITY_REPORT
 ```
 `audit_policy.py` resolves the latest COMPLETED build automatically (override with `--build-workflow-id`).
 
