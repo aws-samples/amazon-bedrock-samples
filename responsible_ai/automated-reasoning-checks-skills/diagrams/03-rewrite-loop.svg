@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="556" viewBox="0 0 1200 556" font-family="Avenir Next, Helvetica Neue, sans-serif">
+  <defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2B3A4C"/><stop offset="1" stop-color="#232F3E"/>
+    </linearGradient>
+    <marker id="a" markerWidth="11" markerHeight="11" refX="7" refY="5" orient="auto">
+      <path d="M1,1.5 L8,5 L1,8.5" fill="none" stroke="#8A97A4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="ao" markerWidth="12" markerHeight="12" refX="7" refY="5" orient="auto">
+      <path d="M1,1 L9,5 L1,9" fill="none" stroke="#EC7211" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="ag" markerWidth="12" markerHeight="12" refX="7" refY="5" orient="auto">
+      <path d="M1,1 L9,5 L1,9" fill="none" stroke="#1D8102" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <filter id="card" x="-20%" y="-20%" width="140%" height="170%">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#232F3E" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="556" fill="#FBFBFA"/>
+
+  <!-- Header -->
+  <text x="56" y="54" font-size="30" fill="#16212E" font-weight="700">Fixing a wrong answer, automatically</text>
+  <text x="56" y="82" font-size="16" fill="#5A6B7B">A failed check hands the broken rule back to the model, which rewrites until the answer is sound.</text>
+  <line x1="56" y1="102" x2="1144" y2="102" stroke="#E3E7EB" stroke-width="1"/>
+
+  <!-- ===== Single left-to-right track: 4 steps ===== -->
+  <!-- 1 Answer -->
+  <g filter="url(#card)">
+    <rect x="56" y="156" width="248" height="132" rx="12" fill="#FFFFFF" stroke="#E3E7EB"/>
+    <circle cx="86" cy="190" r="14" fill="#232F3E"/><text x="86" y="195" font-size="14" fill="#FFFFFF" font-weight="700" text-anchor="middle">1</text>
+    <text x="112" y="196" font-size="17" fill="#16212E" font-weight="700">Model answers</text>
+    <text x="80" y="236" font-size="13.5" fill="#5A6B7B">"Yes, you are eligible</text>
+    <text x="80" y="257" font-size="13.5" fill="#5A6B7B">for parental leave."</text>
+  </g>
+  <!-- 2 Check -->
+  <g filter="url(#card)">
+    <rect x="336" y="156" width="248" height="132" rx="12" fill="url(#navy)"/>
+    <circle cx="366" cy="190" r="14" fill="#FF9900"/><text x="366" y="195" font-size="14" fill="#FFFFFF" font-weight="700" text-anchor="middle">2</text>
+    <text x="392" y="196" font-size="17" fill="#FFFFFF" font-weight="700">Check runs</text>
+    <text x="360" y="236" font-size="13.5" fill="#C4CDD6">ApplyGuardrail weighs</text>
+    <text x="360" y="257" font-size="13.5" fill="#C4CDD6">the answer vs. the rules</text>
+  </g>
+  <!-- 3 Verdict -->
+  <g filter="url(#card)">
+    <rect x="616" y="156" width="248" height="132" rx="12" fill="#FFFFFF" stroke="#E3E7EB"/>
+    <circle cx="646" cy="190" r="14" fill="#232F3E"/><text x="646" y="195" font-size="14" fill="#FFFFFF" font-weight="700" text-anchor="middle">3</text>
+    <text x="672" y="196" font-size="17" fill="#16212E" font-weight="700">Verdict</text>
+    <rect x="640" y="220" width="200" height="34" rx="9" fill="#FBE7E3"/>
+    <circle cx="662" cy="237" r="6" fill="#D13212"/>
+    <text x="678" y="242" font-size="14.5" fill="#A8290F" font-weight="700">INVALID</text>
+    <text x="640" y="276" font-size="12.5" fill="#8A97A4">…plus the rule it broke</text>
+  </g>
+  <!-- 4 Rewrite -->
+  <g filter="url(#card)">
+    <rect x="896" y="156" width="248" height="132" rx="12" fill="#FFFFFF" stroke="#F0D9C4"/>
+    <circle cx="926" cy="190" r="14" fill="#EC7211"/><text x="926" y="195" font-size="14" fill="#FFFFFF" font-weight="700" text-anchor="middle">4</text>
+    <text x="952" y="196" font-size="17" fill="#16212E" font-weight="700">Rewrite</text>
+    <text x="920" y="236" font-size="13.5" fill="#5A6B7B">The model corrects the</text>
+    <text x="920" y="257" font-size="13.5" fill="#5A6B7B">answer using that rule</text>
+  </g>
+
+  <!-- forward arrows -->
+  <line x1="304" y1="222" x2="336" y2="222" stroke="#8A97A4" stroke-width="1.7" marker-end="url(#a)"/>
+  <line x1="584" y1="222" x2="616" y2="222" stroke="#8A97A4" stroke-width="1.7" marker-end="url(#a)"/>
+  <!-- INVALID path: verdict -> rewrite (orange) -->
+  <line x1="864" y1="222" x2="896" y2="222" stroke="#EC7211" stroke-width="2" marker-end="url(#ao)"/>
+  <text x="880" y="320" font-size="11.5" fill="#B0623A" font-weight="700" text-anchor="middle">if not VALID</text>
+
+  <!-- return arc: rewrite (4) loops back to answer (1), beneath the track -->
+  <path d="M1020,288 C1020,366 1020,366 940,366 L240,366 C160,366 160,366 160,300"
+        fill="none" stroke="#EC7211" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round" marker-end="url(#ao)"/>
+  <rect x="470" y="355" width="260" height="23" rx="11.5" fill="#FBFBFA"/>
+  <text x="600" y="371" font-size="13.5" fill="#B0623A" font-weight="700" text-anchor="middle">re-check the new answer · Valid@N</text>
+
+  <!-- ===== VALID exit ===== -->
+  <line x1="56" y1="430" x2="1144" y2="430" stroke="#E3E7EB" stroke-width="1"/>
+  <text x="56" y="406" font-size="13.5" fill="#16212E" font-weight="700">When the check finally passes</text>
+  <text x="380" y="406" font-size="13.5" fill="#5A6B7B">the loop stops and the answer ships with the rules that prove it.</text>
+
+  <g filter="url(#card)">
+    <rect x="56" y="452" width="540" height="76" rx="12" fill="#E8F4E5"/>
+    <circle cx="92" cy="490" r="11" fill="#1D8102"/>
+    <path d="M86,490 l4,4 l8,-9" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="116" y="486" font-size="20" fill="#1D6B07" font-weight="700">VALID</text>
+    <text x="116" y="510" font-size="14" fill="#5A7A4E">serve it to the user — with its audit trail</text>
+  </g>
+  <g filter="url(#card)">
+    <rect x="620" y="452" width="524" height="76" rx="12" fill="#FFFFFF" stroke="#E3E7EB"/>
+    <text x="648" y="482" font-size="16" fill="#16212E" font-weight="700">Some verdicts ask first</text>
+    <text x="648" y="508" font-size="14" fill="#5A6B7B"><tspan font-weight="700" fill="#16212E">Ambiguous</tspan> or <tspan font-weight="700" fill="#16212E">impossible</tspan> inputs pause to ask the user, not loop.</text>
+  </g>
+</svg>

@@ -1,0 +1,16 @@
+{
+  "name": "automated-reasoning-skills",
+  "owner": { "name": "Adewale Akinfaderin" },
+  "metadata": {
+    "description": "Agent Skills for Amazon Bedrock Automated Reasoning checks: build, review, test, debug, deploy, and validate AR policies.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "automated-reasoning-skills",
+      "source": ".",
+      "skills": "skills",
+      "description": "Build, review, test, debug, deploy, and validate Amazon Bedrock Automated Reasoning policies."
+    }
+  ]
+}

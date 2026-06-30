@@ -1,0 +1,12 @@
+# Local working source — the Bedrock User Guide AR chapter (large, AWS-copyrighted). Not for the repo.
+bedrock_AR_section.pdf
+AR_section_text.txt
+
+# OS / editor cruft
+.DS_Store
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
