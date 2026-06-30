@@ -1,6 +1,12 @@
-# Local working source — the Bedrock User Guide AR chapter (large, AWS-copyrighted). Not for the repo.
+# Local working source: the Bedrock User Guide AR chapter (large, AWS-copyrighted). Not for the repo.
 bedrock_AR_section.pdf
 AR_section_text.txt
+
+# Diagram working files: the repo ships only the 2x PNGs the README embeds.
+# SVG masters, 3x exports, and the diagram README stay local (regenerate from SVG as needed).
+diagrams/*.svg
+diagrams/*@3x.png
+diagrams/README.md
 
 # OS / editor cruft
 .DS_Store
