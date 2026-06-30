@@ -64,7 +64,7 @@ def main() -> None:
             policy_def = cur.get("policyDefinition", policy_def)
             policy_def.setdefault("version", "1.0")
 
-    # documents[].document is a BLOB — pass RAW BYTES. boto3 base64-encodes blobs itself,
+    # documents[].document is a BLOB; pass RAW BYTES. boto3 base64-encodes blobs itself,
     # so handing it a base64 string would double-encode and the service extracts nothing.
     description = args.doc_description
     if args.instructions:
@@ -92,7 +92,7 @@ def main() -> None:
     if status == "COMPLETED":
         sys.stderr.write("Next: run ar-policy-reviewer on this policy ARN to check quality + fidelity reports.\n")
     else:
-        sys.stderr.write("Build did not complete cleanly — fetch BUILD_LOG asset to investigate.\n")
+        sys.stderr.write("Build did not complete cleanly. Fetch the BUILD_LOG asset to investigate.\n")
 
 
 if __name__ == "__main__":

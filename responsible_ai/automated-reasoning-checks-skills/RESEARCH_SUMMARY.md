@@ -1,4 +1,4 @@
-# Automated Reasoning (AR) Checks — Research Summary
+# Automated Reasoning (AR) Checks: Research Summary
 
 > Consolidated notes for building **Agent Skills** around Amazon Bedrock Automated Reasoning checks.
 > **Primary source:** the Bedrock User Guide AR chapter (`bedrock_AR_section.pdf`, ~120 pages,
@@ -12,11 +12,12 @@
 ## 1. What Automated Reasoning Checks Are
 
 A safeguard policy type within **Amazon Bedrock Guardrails** that uses **formal logic + SMT solvers**
-to mathematically verify whether an LLM answer is consistent with an encoded **policy**. Unlike
-LLM-as-a-judge (one probabilistic system checking another), AR gives a **sound, auditable** verdict.
+to mathematically verify whether an LLM answer is consistent with an encoded **policy**. AR gives a
+**sound, auditable** verdict, where LLM-as-a-judge is one probabilistic system checking another.
 
-AR does **not** simply block content — it returns structured **findings** (with the rules and variable
-assignments behind each verdict) that you use to **rewrite / steer / caveat** the answer.
+AR returns structured **findings** (with the rules and variable
+assignments behind each verdict) that you use to **rewrite / steer / caveat** the answer, going beyond
+simply blocking content.
 
 Status: **GA** in select Regions, **English (US) only**, uses **cross-region inference** internally.
 Charged per **automated reasoning policy unit**.
@@ -27,10 +28,10 @@ Charged per **automated reasoning policy unit**.
 
 AR validates content in two distinct steps. **Almost all debugging hinges on knowing which step failed.**
 
-1. **Translate** — multiple foundation models independently convert the natural-language input
+1. **Translate**: multiple foundation models independently convert the natural-language input
    (question + answer) into formal logic, mapping phrases to your policy's **variables**. This step
    *can* be wrong; its reliability is captured by a **confidence** score (= % of models that agreed).
-2. **Validate** — an **SMT solver** checks the translated logic against your **rules**. This step is
+2. **Validate**: an **SMT solver** checks the translated logic against your **rules**. This step is
    **mathematically sound**: if the translation is correct, the result is correct.
 
 > Debugging rule of thumb: **check the translation first.** If the right variables got the right values
@@ -59,8 +60,8 @@ Formal-logic expressions in a **subset of SMT-LIB**. Should be **if-then (implic
 | `=` | equality | `(= employmentType FULL_TIME)` |
 | `>` `<` `>=` `<=` | comparison | `(>= creditScore 700)` |
 
-**Bare assertions** (rules with no if-then, e.g. `eligibleForParentalLeave`) become **axioms** — always
-true — and are a top cause of unexpected `IMPOSSIBLE` results. Only acceptable for boundary conditions
+**Bare assertions** (rules with no if-then, e.g. `eligibleForParentalLeave`) become **axioms** (always
+true) and are a top cause of unexpected `IMPOSSIBLE` results. Only acceptable for boundary conditions
 like `(>= accountBalance 0)`.
 
 ### Variables
@@ -68,9 +69,9 @@ Each has a **name, type, description**. Types: **BOOL**, **INT**, **NUMBER** (de
 - ⚠️ **Variable descriptions are the #1 factor in translation accuracy.** Good ones state what the
   variable means, the unit/format, synonyms/alt-phrasings users use, and boundary conditions
   (e.g. "convert years to months: 2 years = 24; set 0 for new hires").
-- **Namespace rule:** variable names, type names, and enum values share **one namespace** — all must
+- **Namespace rule:** variable names, type names, and enum values share **one namespace**, so all must
   be unique (prefix collisions like `LeaveType_OTHER` / `Severity_OTHER`).
-- AR is **not** for char-by-char/string validation (e.g. password rules) — use deterministic code there.
+- Use deterministic code for char-by-char/string validation (e.g. password rules); AR does not handle it.
 
 ### Custom types (enums)
 Fixed value sets. **Use enums for mutually-exclusive states; use separate booleans for co-existing
@@ -80,13 +81,13 @@ value when input might not match.
 ### Fidelity report (auto-generated on build)
 Measures how faithfully the policy represents the source doc. Two scores (0.0–1.0): **coverage**
 (how much of the source is captured) and **accuracy** (how faithfully rules match intent). Provides
-per-rule / per-variable **grounding** back to numbered atomic statements in the source — built for
+per-rule / per-variable **grounding** back to numbered atomic statements in the source, built for
 **SME review without reading formal logic**. Regenerate with `GENERATE_FIDELITY_REPORT`.
 
 ### Quality report (auto-generated on build)
 Flags structural issues: **conflicting rules** (→ cause `IMPOSSIBLE` for all involved inputs),
 **unused variables** (→ noise, cause `TRANSLATION_AMBIGUOUS`), **unused type values**, **disjoint
-rule sets** (groups sharing no variables — may signal missing connections). Asset type `QUALITY_REPORT`.
+rule sets** (groups sharing no variables, which may signal missing connections). Asset type `QUALITY_REPORT`.
 
 ---
 
@@ -99,7 +100,7 @@ trivially always-true/always-false.
 
 The **aggregated** result = the **worst** finding by severity. Severity (worst→best):
 **`TRANSLATION_AMBIGUOUS → IMPOSSIBLE → INVALID → SATISFIABLE → VALID`**.
-(`TOO_COMPLEX` and `NO_TRANSLATIONS` sit outside this ordering — handle separately.)
+(`TOO_COMPLEX` and `NO_TRANSLATIONS` sit outside this ordering; handle separately.)
 
 | Result (API key) | Meaning | Key fields | Recommended action |
 |---|---|---|---|
@@ -184,14 +185,14 @@ immutable numbered version. `ExportAutomatedReasoningPolicyVersion` to get the J
   ⚠️ Each block defaults to **agent-side (`guard_content`/claim)**; set `qualifiers:["query"]` to mark
   user-side. **No model response is appended**, so you must include ≥1 claim block or you get a
   `ValidationException`. Read findings: `response["assessments"][].automatedReasoningPolicy.findings[]`
-  (union — exactly one of `valid/invalid/satisfiable/impossible/translationAmbiguous/tooComplex/noTranslations`).
+  (union, exactly one of `valid/invalid/satisfiable/impossible/translationAmbiguous/tooComplex/noTranslations`).
 - **`Converse` / `InvokeModel` / `InvokeAgent` / `RetrieveAndGenerate`**: AR runs **only if** there's a
   `guardContent` block. The **model response is auto-appended as a claim**, so query-only blocks still work.
   ⚠️ **`Converse` uses snake_case qualifiers** (`query`, `guard_content`, `grounding_source`);
   `InvokeModel` XML tags use **camelCase** (`query`, `guardContent`, `groundingSource`).
   Qualifier precedence: `guard_content > query > grounding_source`.
 - ⚠️ **Silent-skip gotcha:** a misconfigured (untagged) request still **succeeds** but returns
-  `automatedReasoningPolicyUnits: 0` — AR didn't run. **Always assert this value is > 0.**
+  `automatedReasoningPolicyUnits: 0` (AR didn't run). **Always assert this value is > 0.**
 
 ### Management / misc
 `Get/Update/Delete/ListAutomatedReasoningPolicies` (`--force` delete cascades versions/tests).
@@ -204,11 +205,11 @@ IAM actions: `bedrock:CreateAutomatedReasoningPolicy`, `:StartAutomatedReasoning
 
 ## 6. Authoring Good Policies (docs best practices)
 
-- **Start simple & iterate** — one focused section first, test, then merge more via iterative building.
+- **Start simple & iterate:** one focused section first, test, then merge more via iterative building.
   (The #1 mistake is trying to ingest a whole complex document at once.)
 - **Prepare the source doc:** clear if-then rules, no boilerplate/legal/TOC. ⚠️ **Limits: 5 MB and
   50,000 characters** (images/tables count). (Blogs' "120K tokens / 100 pages" is **superseded** by docs.)
-- **(Optional) LLM-preprocess** narrative docs into rules first — the docs give two ready prompts:
+- **(Optional) LLM-preprocess** narrative docs into rules first. The docs give two ready prompts:
   (1) *plain-text if-then extraction*, (2) *structured JSON extraction* (with `confidence`,
   `ruleType: explicit/implicit/sanity`, an `ambiguities` array, and auto-generated **sanity/boundary
   rules** like "age 0–150"). **Review LLM output against the original before using.**
@@ -222,12 +223,12 @@ IAM actions: `bedrock:CreateAutomatedReasoningPolicy`, `:StartAutomatedReasoning
 
 ## 7. AWS's own agent workflow = strong signal for our skills
 
-The User Guide documents **using "Kiro CLI" (an agent) to refine AR policies via natural language** —
-it loads the policy definition + quality report + test findings, explains failures, proposes rule/variable
+The User Guide documents **using "Kiro CLI" (an agent) to refine AR policies via natural language**.
+It loads the policy definition + quality report + test findings, explains failures, proposes rule/variable
 changes, and applies **annotations** through the control-plane + test APIs. Prereqs include saving an
 **"Automated Reasoning policy API context prompt"** (a markdown file of API usage guidance) into the
 project so the agent calls the APIs correctly, and using a **large model (e.g. Sonnet 4.5)** for the
-logical reasoning. **This is essentially the product we're building** — our skills should bundle that
+logical reasoning. **This is essentially the product we're building**, so our skills should bundle that
 same API-context guidance as `references/`, and cover the same jobs (explore, diagnose, refine, test).
 
 ---
@@ -242,12 +243,12 @@ same API-context guidance as `references/`, and cover the same jobs (explore, di
 - Notebooks: policy creator, refinement, test creator, guardrail validation, rewrite, **valid@N**.
 
 ### `automated-reasoning-rewriting-chatbot/` (Flask + React, auditable rewrite loop)
-- `config_manager.ensure_guardrail(policy_arn)` — idempotent create-or-update; derives required
+- `config_manager.ensure_guardrail(policy_arn)`: idempotent create-or-update; derives required
   `crossRegionConfig` profile from the policy ARN.
-- `validation_service` — `apply_guardrail` shape + `_extract_finding_type` union parsing + priority sort.
-- `policy_service` — load policy definition **without a saved version** from the latest COMPLETED build's
+- `validation_service`: `apply_guardrail` shape + `_extract_finding_type` union parsing + priority sort.
+- `policy_service`: load policy definition **without a saved version** from the latest COMPLETED build's
   `POLICY_DEFINITION` asset; `format_policy_context()` → `{{policy_context}}` injection.
-- `llm_service` — model-agnostic invoke (Claude/Nova/default) + cross-region inference prefixing;
+- `llm_service`: model-agnostic invoke (Claude/Nova/default) + cross-region inference prefixing;
   `retry_handler.retry_api_call(max_retries=3, base_delay=1.0)`.
 - Per-type rewrite templates + clarification/fallback templates; `ThreadProcessor` state machine
   (`GENERATE_INITIAL → VALIDATE → CHECK_QUESTIONS → HANDLE_RESULT → REWRITING_LOOP`), `AuditLogger`.
@@ -269,7 +270,7 @@ Optional `references/` (deep-dive `.md`, loaded on demand), `scripts/` (PEP 723 
 `assets/`, `.claude-plugin/plugin.json` (per-skill, Nova) or repo-level `.claude-plugin/marketplace.json` (HF).
 
 **Frontmatter:** required `name` + `description`; optional `license`, `tags`, `metadata`, `allowed-tools`.
-The **`description` is the trigger** — third-person, lead with what it does, then concrete trigger signals
+The **`description` is the trigger**: third-person, lead with what it does, then concrete trigger signals
 (keywords, API/model names, literal user phrasings): "Use this skill whenever the user mentions … Also
 trigger when …, even if they don't say 'X' explicitly."
 

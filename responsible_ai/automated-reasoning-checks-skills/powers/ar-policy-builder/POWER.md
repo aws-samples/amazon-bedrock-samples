@@ -6,7 +6,7 @@ keywords: ["builder", "automated reasoning", "bedrock", "guardrail", "AR policy"
 author: "Adewale Akinfaderin"
 ---
 
-<!-- GENERATED from skills/ar-policy-builder/SKILL.md by scripts/sync_powers.py — do not edit by hand. Edit the SKILL.md and re-run the script. -->
+<!-- GENERATED from skills/ar-policy-builder/SKILL.md by scripts/sync_powers.py. Do not edit by hand; edit the SKILL.md and re-run the script. -->
 
 # AR Policy Builder
 
@@ -22,22 +22,22 @@ Read those when you need exact arg shapes or rule syntax.
 ## When to use
 - Starting a brand-new AR policy from a document.
 - Adding a new document's rules into an existing policy (merge via `INGEST_CONTENT` with the full
-  current definition — see Step 4).
+  current definition; see Step 4).
 
 ## Key directives
 1. **⚠️ Source doc limit is 5 MB AND 50,000 characters** (images/tables count). If larger, split into
-   focused single-domain sections and build incrementally — do NOT try to ingest a whole complex doc at once.
+   focused single-domain sections and build incrementally. Do NOT try to ingest a whole complex doc at once.
 2. **One policy = one focused domain** (e.g. parental leave), not a whole handbook.
-3. **Always write `instructions`** at build time — they materially improve extraction. Cover three
+3. **Always write `instructions`** at build time; they materially improve extraction. Cover three
    things: the use case, example user questions, and which sections to focus on / ignore.
 4. **`policyDefinition.version` must be `"1.0"`** in `sourceContent` (schema version, ≠ resource version).
 5. **⚠️ Max 2 build workflows per policy, 1 IN_PROGRESS.** Delete an old one before a third.
-6. After the build COMPLETES, **do not assume it's correct** — extraction is non-deterministic. Hand off
+6. After the build COMPLETES, **do not assume it's correct**; extraction is non-deterministic. Hand off
    to `ar-policy-reviewer` to check the quality + fidelity reports.
 
 ## Workflow
 
-### Step 1 — (Optional) Pre-extract rules with an LLM
+### Step 1: (Optional) Pre-extract rules with an LLM
 For narrative/legal/complex docs, convert prose into clean if-then rules first. This yields higher-quality
 policies with fewer junk variables.
 ```
@@ -46,14 +46,14 @@ uv run scripts/extract_rules_with_llm.py --file handbook.pdf --mode structured -
 `--mode plain` = numbered if-then rules; `--mode structured` = JSON with confidence/ruleType/ambiguities
 plus auto-generated sanity (boundary) rules. **Always review the output against the original** before using.
 
-### Step 2 — Create the policy resource
+### Step 2: Create the policy resource
 ```
 uv run scripts/create_policy.py --name "MyHRPolicy" \
   --description "Validates HR chatbot answers about leave eligibility"
 ```
 Returns `policyArn` + `version: DRAFT`. Add `--kms-key-id <arn>` for a customer-managed key.
 
-### Step 3 — Build from the document (INGEST_CONTENT)
+### Step 3: Build from the document (INGEST_CONTENT)
 ```
 uv run scripts/build_from_document.py --policy-arn <ARN> --file leave_policy.pdf \
   --doc-name "HR Leave Policy" \
@@ -64,7 +64,7 @@ uv run scripts/build_from_document.py --policy-arn <ARN> --file leave_policy.pdf
 ```
 The script base64-encodes the doc, starts the workflow, and polls to `COMPLETED`.
 
-### Step 4 — Merge another document into an existing policy
+### Step 4: Merge another document into an existing policy
 Pass the **full current** policy definition so new rules merge instead of replacing:
 ```
 uv run scripts/build_from_document.py --policy-arn <ARN> --file benefits.pdf \
@@ -72,7 +72,7 @@ uv run scripts/build_from_document.py --policy-arn <ARN> --file benefits.pdf \
 ```
 `--merge` fetches and includes the existing definition automatically.
 
-### Step 5 — Hand off
+### Step 5: Hand off
 Tell the user to run `ar-policy-reviewer` on the policy ARN to check for unused/duplicate variables,
 bare assertions, and conflicting rules before testing.
 
@@ -82,11 +82,11 @@ bare assertions, and conflicting rules before testing.
 - ✅ `boto3` (scripts declare it via PEP 723; `uv run` installs automatically).
 
 ## Resources
-- `references/doc-preparation.md` — clear-vs-vague rules, splitting, preprocessing, writing instructions.
+- `references/doc-preparation.md`: clear-vs-vague rules, splitting, preprocessing, writing instructions.
 - `scripts/create_policy.py`, `scripts/build_from_document.py`, `scripts/extract_rules_with_llm.py`
-  — all support `--help` and `--dry-run`.
-- `../../shared/references/ar-api-context.md` — full API surface. `smtlib-rules.md` — rule syntax.
+  all support `--help` and `--dry-run`.
+- `../../shared/references/ar-api-context.md`: full API surface. `smtlib-rules.md`: rule syntax.
 
 ## Available Steering Files
 
-- **doc-preparation.md** — load on demand with `readSteering` (`steeringFile="doc-preparation.md"`).
+- **doc-preparation.md**: load on demand with `readSteering` (`steeringFile="doc-preparation.md"`).

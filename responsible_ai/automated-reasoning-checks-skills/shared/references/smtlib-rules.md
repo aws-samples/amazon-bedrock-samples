@@ -23,7 +23,7 @@ Well-formed:
 
 ## ⚠️ Bare assertions = the #1 trap
 A rule with no if-then (e.g. `eligibleForParentalLeave` or `(= eligibleForParentalLeave true)`)
-becomes an **axiom** — always true — so any input claiming the opposite returns `IMPOSSIBLE`.
+becomes an **axiom** (always true), so any input claiming the opposite returns `IMPOSSIBLE`.
 Only use bare assertions for genuine **boundary conditions**:
 ```
 ;; GOOD: account balance can't be negative
@@ -42,19 +42,19 @@ users use · **boundary conditions**. Example:
 > users mention years of service, convert to months (2 years = 24 months). Set to 0 for new hires."
 
 ## Modeling patterns (best practices)
-- **Implications over assertions** — structure rules as `(=> condition conclusion)`.
+- **Implications over assertions.** Structure rules as `(=> condition conclusion)`.
 - **Enums for mutually-exclusive states; booleans for co-existing states.** A person can be veteran
   AND teacher → two booleans, not an enum (an enum would force a false choice → contradictions).
   Add an `OTHER`/`NONE` enum value when input might not match any value.
 - **Validate numeric ranges** with boundary rules (`(>= age 0)`, `(<= age 150)`).
-- **Intermediate variables** for abstraction — name a derived concept once, reference it in many rules.
+- **Intermediate variables** for abstraction. Name a derived concept once, reference it in many rules.
 - **Describe what is true, not how to compute it.** AR models facts, not algorithms. Avoid rules that
   require the translation step to calculate values.
 - **Avoid:** contradictory rules, unused variables, duplicate/near-duplicate variables
   (`tenureMonths` vs `monthsOfService`), circular dependencies, nonlinear arithmetic (→ `TOO_COMPLEX`).
-- **Namespace:** variable names, type names, and enum values share **one namespace** — all unique.
+- **Namespace:** variable names, type names, and enum values share **one namespace**, all unique.
   Prefix collisions: `LeaveType_OTHER`, `Severity_OTHER`.
 
 ## Not a fit for AR
-Char-by-char / string-format validation (e.g. password rules) — use deterministic code instead.
+Char-by-char / string-format validation (e.g. password rules) should use deterministic code instead.
 AR reasons over natural-language concepts mapped to typed variables, not raw text.

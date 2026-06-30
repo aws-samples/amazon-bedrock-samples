@@ -1,4 +1,4 @@
-# Automated Reasoning Checks — Agent Skills Plan
+# Automated Reasoning Checks: Agent Skills Plan
 
 > Design for a **suite of focused skills**, each with **runnable boto3 scripts + guidance**,
 > packaged as a **Claude Code plugin/marketplace**. Decisions confirmed with the user.
@@ -12,7 +12,7 @@
 2. **Scripts do the boto3; SKILL.md teaches the judgment.** Each script is PEP-723
    (`uv run`), supports `--help`, prints JSON, and is also pasteable inline.
 3. **Shared knowledge lives in a `references/` core** (the "API context prompt" pattern AWS
-   uses for Kiro CLI) so every skill can point to one authoritative reference instead of
+   uses for Kiro CLI) so every skill can point to one authoritative reference and avoid
    duplicating the finding/operator/asset tables.
 4. **The two-step model (Translate→Validate) is the spine** of all diagnostic guidance.
 5. **Safety rails baked in:** assert `automatedReasoningPolicyUnits > 0`, warn on `DRAFT` in
@@ -24,7 +24,7 @@
 
 ```
 Automated_Reasoning_Skills/
-├── RESEARCH_SUMMARY.md            # done — docs-authoritative reference
+├── RESEARCH_SUMMARY.md            # done, docs-authoritative reference
 ├── SKILLS_PLAN.md                 # this file
 ├── README.md                      # marketplace overview + install instructions
 ├── .claude-plugin/
@@ -53,7 +53,7 @@ shared references are symlinked or referenced by relative path from `shared/refe
 
 ## The 6 skills
 
-### 1. `ar-policy-builder` — create a policy from a document
+### 1. `ar-policy-builder`: create a policy from a document
 **Triggers:** "create an automated reasoning policy", "build AR policy from this PDF/handbook",
 "turn this doc into rules", mentions of `CreateAutomatedReasoningPolicy` / `INGEST_CONTENT`.
 **Workflow:** prepare source (5 MB / 50K char limit; optional LLM rule-extraction prompt) →
@@ -65,7 +65,7 @@ with good `instructions` → poll → hand off to reviewer.
 - `extract_rules_with_llm.py --file [--mode plain|structured]` (the two doc-preprocessing prompts)
 **References:** doc-prep checklist, the two extraction prompts, effective-instructions guide.
 
-### 2. `ar-policy-reviewer` — inspect & sanity-check an extracted policy
+### 2. `ar-policy-reviewer`: inspect & sanity-check an extracted policy
 **Triggers:** "review my AR policy", "check the quality report", "is my policy good", post-build.
 **Workflow:** pull `POLICY_DEFINITION` + `QUALITY_REPORT` + `FIDELITY_REPORT` assets →
 flag unused/duplicate vars, bare assertions, conflicting rules, disjoint sets, low
@@ -75,7 +75,7 @@ coverage/accuracy → produce a prioritized fix list (defers actual fixes to deb
 - `audit_policy.py --policy-arn` (fetches assets, prints a structured findings report + score summary)
 **References:** quality-report interpretation, fidelity-report interpretation.
 
-### 3. `ar-policy-tester` — generate scenarios + author/run QnA tests
+### 3. `ar-policy-tester`: generate scenarios + author/run QnA tests
 **Triggers:** "test my AR policy", "generate test scenarios", "add a QnA test", "validate all tests".
 **Workflow:** `GENERATE_POLICY_SCENARIOS` → `Get...NextScenario` (review SATISFIABLE/thumbs-down) →
 `CreateAutomatedReasoningPolicyTestCase` (guard/query content, expected result, confidence) →
@@ -86,7 +86,7 @@ coverage/accuracy → produce a prioritized fix list (defers actual fixes to deb
 - `run_tests.py --policy-arn [--build-workflow-id] [--test-case-ids]` (run + collect results)
 **References:** scenarios-vs-QnA strategy, expected-result severity logic.
 
-### 4. `ar-policy-debugger` — diagnose failures & apply annotation repairs
+### 4. `ar-policy-debugger`: diagnose failures & apply annotation repairs
 **Triggers:** "my test is failing", "getting IMPOSSIBLE / TRANSLATION_AMBIGUOUS / unexpected VALID",
 "fix my AR policy rules". *This is the Kiro-CLI-equivalent flagship skill.*
 **Workflow:** classify by actual result → **check translation first** (premises/claims/confidence) →
@@ -100,7 +100,7 @@ re-review → `UpdateAutomatedReasoningPolicy`.
 **References:** the **debugging decision table** (result → likely cause → fix), annotation-type
 catalog with before/after examples, translate-vs-validate triage.
 
-### 5. `ar-guardrail-deployer` — version the policy & attach to a guardrail
+### 5. `ar-guardrail-deployer`: version the policy & attach to a guardrail
 **Triggers:** "deploy my AR policy", "create a guardrail with my policy", "version this policy",
 "attach AR policy to guardrail".
 **Workflow:** `CreateAutomatedReasoningPolicyVersion` (with `definitionHash`) →
@@ -112,7 +112,7 @@ required `crossRegionConfig` → create guardrail version → return guardrail i
   (idempotent ensure-guardrail; derives cross-region profile from ARN)
 **References:** versioning model, 2-policies-per-guardrail limit, DRAFT-vs-numbered guidance.
 
-### 6. `ar-runtime-validator` — validate LLM outputs + rewrite loop
+### 6. `ar-runtime-validator`: validate LLM outputs + rewrite loop
 **Triggers:** "validate this answer with AR", "call ApplyGuardrail", "set up a rewrite loop",
 "check my chatbot response", mentions of `apply_guardrail` / `automatedReasoningPolicy.findings`.
 **Workflow:** `ApplyGuardrail` (or `Converse`) with correct qualifiers → parse findings (union) →
@@ -138,13 +138,13 @@ runtime qualifier/units rules. Keeps each `SKILL.md` lean.
 ## Build order (proposed)
 
 1. **Scaffold** repo + `shared/` + `marketplace.json` + `README.md`.
-2. **`shared/ar_common.py`** (clients, poller, asset fetch, finding parser, units-guard, retry) — every script imports it.
+2. **`shared/ar_common.py`** (clients, poller, asset fetch, finding parser, units-guard, retry). Every script imports it.
 3. **`shared/references/`** core docs (distilled from RESEARCH_SUMMARY).
 4. Skills in lifecycle order: **builder → reviewer → tester → debugger → deployer → runtime-validator.**
-5. **Dry-run validation** of each script (`--help` + arg parsing) without live AWS calls; note where real creds are needed.
+5. **Dry-run validation** of each script (`--help` + arg parsing) with no live AWS calls; note where real creds are needed.
 
 ## Open questions before scaffolding
 - **boto3 availability / AWS creds:** do you want scripts that actually call Bedrock (you run them
   with creds), or also a `--dry-run`/mock mode for offline testing? (Plan assumes real calls + `--help`.)
 - **Region default:** `us-east-1` ok as the scripts' default?
-- **LLM convention for rewrite/extraction scripts:** standardize on `Converse` (cleaner) — agree?
+- **LLM convention for rewrite/extraction scripts:** standardize on `Converse` (cleaner). Agree?

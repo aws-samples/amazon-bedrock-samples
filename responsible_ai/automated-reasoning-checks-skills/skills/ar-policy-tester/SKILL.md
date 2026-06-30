@@ -18,7 +18,7 @@ license: Apache-2.0
 
 ## Overview
 Testing targets the **two-step pipeline** separately:
-- **Generated scenarios** test **rule correctness** — they're derived from your rules and remove
+- **Generated scenarios** test **rule correctness**. They're derived from your rules and remove
   translation uncertainty. Review each: thumbs-up saves a `SATISFIABLE` test; thumbs-down → annotate.
 - **QnA tests** test the **full pipeline** (translation + validation) with realistic question/answer
   pairs and an expected result.
@@ -33,13 +33,13 @@ Testing targets the **two-step pipeline** separately:
 
 ## Key directives
 1. **Scenarios before QnA.** Validate rules before spending effort on translation tests.
-2. **Cover both valid and invalid cases** — e.g. a response that correctly states a rule AND one that
-   states a wrong threshold.
+2. **Cover both valid and invalid cases** (e.g. a response that correctly states a rule AND one that
+   states a wrong threshold).
 3. **`expectedAggregatedFindingsResult` = the WORST finding** by severity
    (`TRANSLATION_AMBIGUOUS > IMPOSSIBLE > INVALID > SATISFIABLE > VALID`). A test with one IMPOSSIBLE
    finding aggregates to IMPOSSIBLE even if others are VALID.
 4. **Test workflow needs a COMPLETED build id.** The script resolves the latest one automatically.
-5. On failures, hand off to `ar-policy-debugger` — don't guess at fixes here.
+5. On failures, hand off to `ar-policy-debugger`. Don't guess at fixes here.
 
 ## Workflow
 ```

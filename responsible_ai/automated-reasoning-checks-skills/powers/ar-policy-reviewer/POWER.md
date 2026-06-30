@@ -6,12 +6,12 @@ keywords: ["reviewer", "automated reasoning", "bedrock", "guardrail", "AR policy
 author: "Adewale Akinfaderin"
 ---
 
-<!-- GENERATED from skills/ar-policy-reviewer/SKILL.md by scripts/sync_powers.py — do not edit by hand. Edit the SKILL.md and re-run the script. -->
+<!-- GENERATED from skills/ar-policy-reviewer/SKILL.md by scripts/sync_powers.py. Do not edit by hand; edit the SKILL.md and re-run the script. -->
 
 # AR Policy Reviewer
 
 ## Overview
-After a build completes, the extracted policy is **not guaranteed correct** — extraction is
+After a build completes, the extracted policy is **not guaranteed correct**, because extraction is
 non-deterministic. This skill pulls the build's **quality report** (structural issues) and **fidelity
 report** (how faithfully the policy represents the source) plus the **policy definition**, and turns them
 into a prioritized list of fixes. It diagnoses; `ar-policy-debugger` applies the fixes.
@@ -25,27 +25,27 @@ into a prioritized list of fixes. It diagnoses; `ar-policy-debugger` applies the
 
 ## Key directives
 1. **Pull the build assets:** `POLICY_DEFINITION` + `QUALITY_REPORT` are produced by every build.
-   ⚠️ `FIDELITY_REPORT` is **not** auto-produced by `INGEST_CONTENT`/`REFINE_POLICY` — run a
+   ⚠️ `FIDELITY_REPORT` is **not** auto-produced by `INGEST_CONTENT`/`REFINE_POLICY`. Run a
    `GENERATE_FIDELITY_REPORT` build to get it. `audit_policy.py` tolerates a missing one and says so.
 2. **Triage by severity:** conflicting rules + bare assertions (cause `IMPOSSIBLE`) first; then
    unused/duplicate variables (cause `TRANSLATION_AMBIGUOUS`); then low fidelity scores.
 3. **Don't auto-edit.** Report findings and recommend specific annotations; hand off to `ar-policy-debugger`.
-4. The fidelity report is **SME-friendly** — share its grounding (rule → source statement) with the
+4. The fidelity report is **SME-friendly**. Share its grounding (rule → source statement) with the
    document author to confirm intent without reading formal logic.
 
 ## What to flag
-- **Conflicting rules** — contradictory conclusions for the same conditions → `IMPOSSIBLE` for all
+- **Conflicting rules**: contradictory conclusions for the same conditions → `IMPOSSIBLE` for all
   involved inputs. Merge or delete one.
-- **Bare assertions** — rules not in if-then form (e.g. `(= eligible true)`) → unexpected `IMPOSSIBLE`.
+- **Bare assertions**: rules not in if-then form (e.g. `(= eligible true)`) → unexpected `IMPOSSIBLE`.
   Rewrite as implications (acceptable only for boundary conditions like `(>= balance 0)`).
-- **Unused variables** — referenced by no rule → noise → `TRANSLATION_AMBIGUOUS`. Delete or add rules.
+- **Unused variables**: referenced by no rule → noise → `TRANSLATION_AMBIGUOUS`. Delete or add rules.
 - **Duplicate/near-duplicate variables** (`tenureMonths` vs `monthsOfService`) → inconsistent
   translation. Merge.
-- **Unused type values** — enum values no rule references. Add rules or remove the value.
-- **Disjoint rule sets** — groups sharing no variables. Fine if domains are independent; otherwise a
+- **Unused type values**: enum values no rule references. Add rules or remove the value.
+- **Disjoint rule sets**: groups sharing no variables. Fine if domains are independent; otherwise a
   signal that connecting variables are missing.
-- **Low coverage score** — source content not captured (look for source statements with 0 rules/0 vars).
-- **Low per-rule accuracy** — rule may misrepresent the source; compare to its grounding statements.
+- **Low coverage score**: source content not captured (look for source statements with 0 rules/0 vars).
+- **Low per-rule accuracy**: rule may misrepresent the source; compare to its grounding statements.
 
 ## Workflow
 ```
@@ -60,6 +60,6 @@ uv run scripts/get_assets.py --policy-arn <ARN> --asset-type FIDELITY_REPORT   #
 `audit_policy.py` resolves the latest COMPLETED build automatically (override with `--build-workflow-id`).
 
 ## Resources
-- `scripts/get_assets.py` — fetch one build asset (`--asset-type`, valid types listed in `--help`).
-- `scripts/audit_policy.py` — fetch + summarize quality/fidelity/definition into a prioritized report.
+- `scripts/get_assets.py`: fetch one build asset (`--asset-type`, valid types listed in `--help`).
+- `scripts/audit_policy.py`: fetch + summarize quality/fidelity/definition into a prioritized report.
 - `../../shared/references/ar-api-context.md`, `findings-reference.md`, `smtlib-rules.md`.

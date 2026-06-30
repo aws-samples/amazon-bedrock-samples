@@ -6,16 +6,16 @@ keywords: ["debugger", "automated reasoning", "bedrock", "guardrail", "AR policy
 author: "Adewale Akinfaderin"
 ---
 
-<!-- GENERATED from skills/ar-policy-debugger/SKILL.md by scripts/sync_powers.py — do not edit by hand. Edit the SKILL.md and re-run the script. -->
+<!-- GENERATED from skills/ar-policy-debugger/SKILL.md by scripts/sync_powers.py. Do not edit by hand; edit the SKILL.md and re-run the script. -->
 
 # AR Policy Debugger
 
 ## Overview
-This is the **iterative refinement** skill — the equivalent of AWS's documented "Kiro CLI" policy-repair
+This is the **iterative refinement** skill, the equivalent of AWS's documented "Kiro CLI" policy-repair
 workflow. It loads the policy definition, quality report, and failing-test findings; explains *why* a test
 fails using the **two-step model**; and applies targeted **annotations** so you don't hand-edit formal logic.
 
-**⚠️ Golden rule — check the translation first.** The SMT validation step is mathematically sound. When a
+**⚠️ Golden rule: check the translation first.** The SMT validation step is mathematically sound. When a
 result is wrong, look at the finding's `premises`/`claims`/`confidence`:
 - Right variables, right values, wrong result → the issue is in your **rules**.
 - Wrong/missing variable assignment → the issue is in your **variable descriptions** (cheaper, safer to fix).
@@ -38,7 +38,7 @@ result is wrong, look at the finding's `premises`/`claims`/`confidence`:
 1. **Translate-first triage** before touching rules.
 2. **Prefer annotations over manual edits.** Use `addRuleFromNaturalLanguage` to describe a rule in plain
    English and let AR compile it. After REFINE_POLICY, review proposed changes, then `UpdateAutomatedReasoningPolicy`.
-3. **Fix conflicts/bare assertions first** — they cause `IMPOSSIBLE` for all involved inputs.
+3. **Fix conflicts/bare assertions first.** They cause `IMPOSSIBLE` for all involved inputs.
 4. **Re-review and re-test after every change** (hand back to reviewer/tester). Refinement is iterative.
 5. **⚠️ Max 2 build workflows per policy.** Delete an old one before starting a new refine build.
 
@@ -65,10 +65,10 @@ See `references/debugging-decisions.md` for ready-to-use annotation recipes (mis
 overlapping variables, bare-assertion fix).
 
 ## Resources
-- `references/debugging-decisions.md` — decision table + annotation recipes + worked examples.
+- `references/debugging-decisions.md`: decision table + annotation recipes + worked examples.
 - `scripts/apply_annotations.py`, `scripts/resolve_ambiguities.py`, `scripts/iteratively_refine.py`.
 - `../../shared/references/findings-reference.md`, `smtlib-rules.md`, `ar-api-context.md`.
 
 ## Available Steering Files
 
-- **debugging-decisions.md** — load on demand with `readSteering` (`steeringFile="debugging-decisions.md"`).
+- **debugging-decisions.md**: load on demand with `readSteering` (`steeringFile="debugging-decisions.md"`).

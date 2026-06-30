@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Install the Automated Reasoning Kiro Powers into ~/.kiro/powers (global) or .kiro/powers (local).
-# Powers are generated from the SKILL.md files — run `uv run scripts/sync_powers.py` first if you edited a skill.
+# Powers are generated from the SKILL.md files. Run `uv run scripts/sync_powers.py` first if you edited a skill.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

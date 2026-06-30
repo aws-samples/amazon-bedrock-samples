@@ -65,8 +65,8 @@ questions, or simplify the answer. Do not attempt to rewrite repeatedly.
 ## NO_TRANSLATIONS
 ```
 The content appears unrelated to the policy's domain (no policy variables matched). If the question is
-on-topic, the policy may be missing variables — surface this. If off-topic, handle it outside AR
-(e.g., a topic policy) rather than rewriting.
+on-topic, the policy may be missing variables. Surface this. If off-topic, handle it outside AR
+(e.g., a topic policy) instead of rewriting.
 ```
 
 ## Policy context injection

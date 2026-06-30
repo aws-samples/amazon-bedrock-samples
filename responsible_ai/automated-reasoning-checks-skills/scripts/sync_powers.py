@@ -11,7 +11,7 @@ copies the skill's references/*.md into powers/<skill>/steering/ so they can be 
 via Kiro's readSteering. A "## Available Steering Files" section is appended listing them.
 
 This mirrors the pattern in aws-samples/amazon-nova-samples (nova-prompter): edit the SKILL.md,
-then re-run this script — never hand-edit POWER.md.
+then re-run this script. Never hand-edit POWER.md.
 
 Usage:
     uv run scripts/sync_powers.py            # regenerate all powers
@@ -30,7 +30,7 @@ SKILLS_DIR = ROOT / "skills"
 POWERS_DIR = ROOT / "powers"
 AUTHOR = "Adewale Akinfaderin"
 
-GENERATED_HEADER = "<!-- GENERATED from skills/{skill}/SKILL.md by scripts/sync_powers.py — do not edit by hand. Edit the SKILL.md and re-run the script. -->"
+GENERATED_HEADER = "<!-- GENERATED from skills/{skill}/SKILL.md by scripts/sync_powers.py. Do not edit by hand; edit the SKILL.md and re-run the script. -->"
 
 
 def parse_frontmatter(text: str) -> tuple[dict, str]:
@@ -134,7 +134,7 @@ def build_power(skill_dir: Path) -> Path | None:
             "",
         ]
         for sf in steering_files:
-            lines.append(f'- **{sf}** — load on demand with `readSteering` (`steeringFile="{sf}"`).')
+            lines.append(f'- **{sf}**: load on demand with `readSteering` (`steeringFile="{sf}"`).')
     out = power_dir / "POWER.md"
     out.write_text("\n".join(lines) + "\n")
     return out
@@ -164,7 +164,7 @@ def main() -> None:
             print(f"wrote powers/{sd.name}/POWER.md")
 
     if args.check and stale:
-        sys.exit(f"Stale POWER.md for: {', '.join(stale)} — run: uv run scripts/sync_powers.py")
+        sys.exit(f"Stale POWER.md for: {', '.join(stale)}. Run: uv run scripts/sync_powers.py")
     if not args.check:
         print(f"\nGenerated {len(skill_dirs)} powers. Install with: ./install-powers.sh")
 

@@ -203,8 +203,8 @@ def get_result_asset(ctx: ARContext, policy_arn: str, build_workflow_id: str, as
 
     Returns the full response dict. The payload itself is nested under
     `buildWorkflowAssets` (see `asset_payload` to unwrap it). Not every asset
-    exists for every build type — e.g. FIDELITY_REPORT is absent on REFINE_POLICY
-    builds — so callers should use `try_get_result_asset` when an asset is optional.
+    exists for every build type (e.g. FIDELITY_REPORT is absent on REFINE_POLICY
+    builds), so callers should use `try_get_result_asset` when an asset is optional.
     """
     if asset_type not in ASSET_TYPES:
         raise ValueError(f"asset_type must be one of {ASSET_TYPES}")

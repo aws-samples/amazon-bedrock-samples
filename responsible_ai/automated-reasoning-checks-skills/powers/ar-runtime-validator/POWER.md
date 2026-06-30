@@ -6,13 +6,13 @@ keywords: ["runtime validator", "automated reasoning", "bedrock", "guardrail", "
 author: "Adewale Akinfaderin"
 ---
 
-<!-- GENERATED from skills/ar-runtime-validator/SKILL.md by scripts/sync_powers.py — do not edit by hand. Edit the SKILL.md and re-run the script. -->
+<!-- GENERATED from skills/ar-runtime-validator/SKILL.md by scripts/sync_powers.py. Do not edit by hand; edit the SKILL.md and re-run the script. -->
 
 # AR Runtime Validator
 
 ## Overview
 At runtime you validate an LLM answer against a guardrail that has an AR policy attached, read the
-**findings**, and — if the answer isn't VALID — feed the contradicting/insufficient rules back to the LLM
+**findings**, and (if the answer isn't VALID) feed the contradicting/insufficient rules back to the LLM
 to **rewrite**, then re-validate. Repeat until VALID or a max-iteration cap (Valid@N).
 
 **Reference:** `../../shared/references/ar-api-context.md` (runtime section + qualifier rules),
@@ -27,7 +27,7 @@ to **rewrite**, then re-validate. Repeat until VALID or a max-iteration cap (Val
 3. **Use a numbered guardrail version** in production, not DRAFT.
 4. **Rewrite by worst finding first** (severity order). `VALID` → serve; `TOO_COMPLEX` → ask the user to
    simplify (don't loop); `TRANSLATION_AMBIGUOUS`/`IMPOSSIBLE` from input → consider asking for clarification.
-5. **Log the audit trail** — findings + supporting/contradicting rules per iteration are
+5. **Log the audit trail.** Findings + supporting/contradicting rules per iteration are
    mathematically-verifiable evidence. Keep them.
 
 ## Workflow
@@ -57,9 +57,9 @@ See `../../shared/references/findings-reference.md` for the full table. Quick gu
 
 ## Resources
 - `scripts/validate_response.py`, `scripts/rewrite_loop.py` (`--help` + `--dry-run`).
-- `references/rewrite-templates.md` — per-finding-type rewrite prompts (lifted from aws-samples).
+- `references/rewrite-templates.md`: per-finding-type rewrite prompts (lifted from aws-samples).
 - `../../shared/references/ar-api-context.md`, `findings-reference.md`.
 
 ## Available Steering Files
 
-- **rewrite-templates.md** — load on demand with `readSteering` (`steeringFile="rewrite-templates.md"`).
+- **rewrite-templates.md**: load on demand with `readSteering` (`steeringFile="rewrite-templates.md"`).

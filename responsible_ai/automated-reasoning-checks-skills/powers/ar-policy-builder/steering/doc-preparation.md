@@ -16,19 +16,19 @@ AR extracts best from documents where each rule states a **condition and an outc
   first section, then merge the rest with iterative building (`build_from_document.py --merge`).
 
 ## Pre-process complex documents
-Remove headers/footers/TOC/appendices and boilerplate/legal disclaimers that don't contain rules —
-they produce noisy policies with unnecessary variables. Simplify complex tables into plain-text statements.
+Remove headers/footers/TOC/appendices and boilerplate/legal disclaimers that don't contain rules.
+They produce noisy policies with unnecessary variables. Simplify complex tables into plain-text statements.
 
 ## (Optional) LLM rule extraction
 For narrative/legal prose, use `scripts/extract_rules_with_llm.py` to rewrite the doc as if-then rules
 first. Review:
-- `confidence: low` rules — verify against the source.
-- `ruleType: implicit` rules — these were inferred, not stated; confirm intent.
-- the `ambiguities` array — source areas that are unclear and may need rewriting.
+- `confidence: low` rules: verify against the source.
+- `ruleType: implicit` rules: these were inferred, not stated, so confirm intent.
+- the `ambiguities` array: source areas that are unclear and may need rewriting.
 **Always review LLM output against the original before using it as AR source text.**
 
 ## Write effective build `instructions`
 Cover three things:
-1. **The use case** — "This policy validates an HR chatbot answering leave-eligibility questions."
-2. **Example user questions** — "Users ask 'Am I eligible for parental leave if I've worked here 9 months?'"
-3. **Focus** — "Focus on sections 3–5 (leave policies). Ignore the company overview in section 1."
+1. **The use case**: "This policy validates an HR chatbot answering leave-eligibility questions."
+2. **Example user questions**: "Users ask 'Am I eligible for parental leave if I've worked here 9 months?'"
+3. **Focus**: "Focus on sections 3–5 (leave policies). Ignore the company overview in section 1."

@@ -51,7 +51,7 @@ def main() -> None:
         policy_def = cur.get("policyDefinition", {"version": "1.0"})
         policy_def.setdefault("version", "1.0")
 
-    # document is a BLOB — pass raw bytes (boto3 base64-encodes blobs itself).
+    # document is a BLOB; pass raw bytes (boto3 base64-encodes blobs itself).
     refinement: dict = {"documents": [{"document": raw, "documentContentType": ctype, "documentName": args.doc_name}]}
     if args.feedback:
         refinement["feedback"] = args.feedback

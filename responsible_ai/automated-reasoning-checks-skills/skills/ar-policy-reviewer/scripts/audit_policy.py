@@ -44,7 +44,7 @@ def summarize_quality(q: dict) -> list[str]:
             n = len(val) if isinstance(val, list) else val
             sev = "HIGH" if "conflict" in label else "MEDIUM"
             issues.append(f"[{sev}] {label}: {n}")
-    # disjoint rule sets are informational, not always a problem — note separately
+    # disjoint rule sets are informational, not always a problem; note separately
     return issues
 
 
@@ -52,7 +52,7 @@ def summarize_fidelity(f: dict) -> list[str]:
     """f is the unwrapped fidelityReport payload (may be empty if not produced)."""
     out: list[str] = []
     if not f:
-        return ["not produced for this build type (e.g. REFINE_POLICY) — run GENERATE_FIDELITY_REPORT"]
+        return ["not produced for this build type (e.g. REFINE_POLICY); run GENERATE_FIDELITY_REPORT"]
     cov = _dig(f, "coverageScore", "coverage_score", "coverage")
     acc = _dig(f, "accuracyScore", "accuracy_score", "accuracy")
     if cov is not None:
@@ -83,7 +83,7 @@ def summarize_definition(d: dict) -> list[str]:
             continue
         expr = " ".join((r.get("expression") or "").split())
         if "=>" in expr:
-            continue  # conditional — fine
+            continue  # conditional, fine
         # lone boolean var, or (= boolVar true/false), or (not boolVar)
         flagged = (
             expr in bool_names

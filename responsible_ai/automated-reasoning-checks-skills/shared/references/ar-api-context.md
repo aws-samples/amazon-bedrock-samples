@@ -1,13 +1,13 @@
-# Automated Reasoning Checks — API Context Reference
+# Automated Reasoning Checks: API Context Reference
 
 > The authoritative API surface for Amazon Bedrock Automated Reasoning (AR) checks. Every AR skill
-> points here instead of duplicating it. boto3 method = the CLI verb shown, snake_cased.
+> points here to keep a single source of truth. boto3 method = the CLI verb shown, snake_cased.
 > Clients: `boto3.client("bedrock")` (control plane), `boto3.client("bedrock-runtime")` (validation).
 
 ## The two-step model (read first)
-AR validates in two steps: **(1) Translate** — multiple FMs convert NL question+answer into formal
-logic over your variables (fallible; reliability = `confidence` = % of models agreeing). **(2) Validate**
-— an SMT solver checks the logic against your rules (mathematically sound). **When a result is wrong,
+AR validates in two steps. **(1) Translate**: multiple FMs convert NL question+answer into formal
+logic over your variables (fallible; reliability = `confidence` = % of models agreeing). **(2) Validate**:
+an SMT solver checks the logic against your rules (mathematically sound). **When a result is wrong,
 suspect the translation first** (fix variable descriptions); only then suspect the rules.
 
 ## Policy lifecycle (control plane)
@@ -21,7 +21,7 @@ suspect the translation first** (fix variable descriptions); only then suspect t
 | Cancel / delete build | `Cancel...` / `DeleteAutomatedReasoningPolicyBuildWorkflow` | delete needs `lastUpdatedAt` |
 | Fetch build assets | `GetAutomatedReasoningPolicyBuildWorkflowResultAssets` | `policyArn`, `buildWorkflowId`, `assetType`, `assetId`(for SOURCE_DOCUMENT) |
 | Get / update DRAFT | `GetAutomatedReasoningPolicy` / `UpdateAutomatedReasoningPolicy` | update needs `policyDefinition` |
-| Delete policy | `DeleteAutomatedReasoningPolicy` | delete dependents FIRST (build workflows w/ `lastUpdatedAt`, numbered versions via the `:N` ARN, test cases), then the DRAFT. `--force` exists in newer API versions but is NOT available everywhere — don't rely on it. |
+| Delete policy | `DeleteAutomatedReasoningPolicy` | delete dependents FIRST (build workflows w/ `lastUpdatedAt`, numbered versions via the `:N` ARN, test cases), then the DRAFT. `--force` exists in newer API versions but is NOT available everywhere, so don't rely on it. |
 | List policies | `ListAutomatedReasoningPolicies` | optional `policyArn` filter |
 | Snapshot version | `CreateAutomatedReasoningPolicyVersion` | needs `lastUpdatedDefinitionHash` (concurrency token) |
 | Export version JSON | `ExportAutomatedReasoningPolicyVersion` | `policyArn`, version |
@@ -40,17 +40,17 @@ suspect the translation first** (fix variable descriptions); only then suspect t
 ### Asset types (`assetType`)
 `BUILD_LOG` · `QUALITY_REPORT` · `POLICY_DEFINITION` · `GENERATED_TEST_CASES` · `POLICY_SCENARIOS` ·
 `FIDELITY_REPORT` · `ASSET_MANIFEST` · `SOURCE_DOCUMENT` (needs `assetId` from the manifest).
-⚠️ The payload nests under **`response["buildWorkflowAssets"][<camelCaseKey>]`** — e.g.
-`buildWorkflowAssets.policyDefinition`, `.qualityReport`, `.fidelityReport`, `.buildLog`. Not every
-asset exists for every build type, so a missing one raises `ResourceNotFoundException` — treat as optional.
+⚠️ The payload nests under **`response["buildWorkflowAssets"][<camelCaseKey>]`** (e.g.
+`buildWorkflowAssets.policyDefinition`, `.qualityReport`, `.fidelityReport`, `.buildLog`). Not every
+asset exists for every build type, so a missing one raises `ResourceNotFoundException`; treat as optional.
 Quality-report fields: `ruleCount`, `variableCount`, `typeCount`, `conflictingRules`, `unusedVariables`,
 `unusedTypes`, `unusedTypeValues`, `disjointRuleSets`. Rule fields: `id`, `expression`, `alternateExpression`.
 
 ### `sourceContent` shapes
 - **INGEST_CONTENT:** `{ policyDefinition:{version:"1.0", types:[], rules:[], variables:[]}, workflowContent:{ documents:[{document:<bytes>, documentContentType:"pdf"|"txt", documentName, documentDescription}] } }`. To **merge**, pass the **full current** `policyDefinition`.
   ⚠️ `policyDefinition.version` MUST be `"1.0"` (schema version, not the resource version).
-  ⚠️ `document` is a **blob**. In **boto3 pass RAW BYTES** (boto3 base64-encodes blobs for you — a base64 string double-encodes and the build silently extracts **0 rules**). In the **AWS CLI**, pass base64. `documentContentType` enum is exactly `pdf` | `txt`.
-  ⚠️ A successful INGEST does **not** auto-produce a `FIDELITY_REPORT` asset — run a `GENERATE_FIDELITY_REPORT` build for that. `QUALITY_REPORT`, `POLICY_DEFINITION`, and `GENERATED_TEST_CASES` are present.
+  ⚠️ `document` is a **blob**. In **boto3 pass RAW BYTES** (boto3 base64-encodes blobs for you; a base64 string double-encodes and the build silently extracts **0 rules**). In the **AWS CLI**, pass base64. `documentContentType` enum is exactly `pdf` | `txt`.
+  ⚠️ A successful INGEST does **not** auto-produce a `FIDELITY_REPORT` asset. Run a `GENERATE_FIDELITY_REPORT` build for that. `QUALITY_REPORT`, `POLICY_DEFINITION`, and `GENERATED_TEST_CASES` are present.
 - **IMPORT_POLICY:** `{ policyDefinition:{version:"1.0", variables:[...], rules:[{id, expression}], types:[...]} }`.
 - **ITERATIVELY_REFINE_POLICY:** `{ policyDefinition:<current>, workflowContent:{ iterativeRefinementContent:{ documents:[...], feedback:"..." } } }`.
 - **REFINE_POLICY (annotations):** `{ policyDefinition:<current>, workflowContent:{ policyRepairAssets:{ annotations:[...] } } }`.
@@ -79,8 +79,8 @@ Test result = `expected` vs **`actual`** (worst-severity aggregated) + pass/fail
 Args: `guardrailIdentifier`, `guardrailVersion` (use a **number**, not DRAFT in prod), `source`
 (`OUTPUT` for answers, `INPUT` for prompts), `content=[{text:{text, qualifiers}}]`, `outputScope`.
 - Each block defaults to **agent-side (`guard_content` / claim)**. Mark user-side with `qualifiers:["query"]`.
-- ⚠️ **No model response is appended** — you must include ≥1 claim block or you get `ValidationException`.
-- Findings: `response["assessments"][].automatedReasoningPolicy.findings[]` (union — one of
+- ⚠️ **No model response is appended**, so you must include ≥1 claim block or you get `ValidationException`.
+- Findings: `response["assessments"][].automatedReasoningPolicy.findings[]` (union, one of
   `valid/invalid/satisfiable/impossible/translationAmbiguous/tooComplex/noTranslations`).
 
 ### `Converse` / `InvokeModel` / `InvokeAgent` / `RetrieveAndGenerate`
@@ -102,8 +102,8 @@ An untagged request still **succeeds** but returns `automatedReasoningPolicyUnit
 ## Constraints (docs-authoritative)
 - Source document: **≤ 5 MB and ≤ 50,000 characters** (images/tables count). Split larger docs.
 - English (US) only. GA in select Regions. Uses cross-region inference internally.
-- Variable/type/enum-value names share **one namespace** — all must be unique.
-- AR is not for char-by-char validation (e.g. passwords) — use deterministic code there.
+- Variable/type/enum-value names share **one namespace**, so all must be unique.
+- Use deterministic code for char-by-char validation (e.g. passwords); AR does not cover that.
 
 ## IAM (least privilege)
 `bedrock:CreateAutomatedReasoningPolicy`, `:StartAutomatedReasoningPolicyBuildWorkflow`,

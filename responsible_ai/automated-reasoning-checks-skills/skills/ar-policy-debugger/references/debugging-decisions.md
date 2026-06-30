@@ -3,12 +3,12 @@
 ## The triage (always start here)
 When a test fails, read the finding's `translation`:
 1. **Are the right variables assigned the right values?** If a phrase like "2 years" became
-   `tenureMonths = 2` instead of `24`, that's a **translation** bug → fix the **variable description**.
+   `tenureMonths = 2` instead of `24`, that's a **translation** bug. Fix the **variable description**.
 2. **If the translation is correct but the result is wrong**, it's a **rule** bug → inspect
    `supportingRules` (for unexpected VALID) or `contradictingRules` (for unexpected INVALID/IMPOSSIBLE).
-3. **Check `untranslatedPremises`/`untranslatedClaims`** — important content not translated may mean a
+3. **Check `untranslatedPremises`/`untranslatedClaims`.** Important content not translated may mean a
    missing variable.
-4. **Check `confidence`** — low = the translation models disagreed → ambiguous descriptions.
+4. **Check `confidence`.** Low = the translation models disagreed → ambiguous descriptions.
 
 ## Decision table
 | Actual result | Likely cause | Where to look / fix |
@@ -26,7 +26,7 @@ When a test fails, read the finding's `translation`:
 
 The file is a JSON array of annotation objects, passed as `policyRepairAssets.annotations`.
 
-### Recipe 1 — Add a missing tenure requirement
+### Recipe 1: Add a missing tenure requirement
 ```json
 [
   { "addVariable": { "name": "tenureMonths", "type": "INT",
@@ -36,7 +36,7 @@ The file is a JSON array of annotation objects, passed as `policyRepairAssets.an
 ]
 ```
 
-### Recipe 2 — Fix overlapping variables causing TRANSLATION_AMBIGUOUS
+### Recipe 2: Fix overlapping variables causing TRANSLATION_AMBIGUOUS
 ```json
 [
   { "deleteVariable": { "name": "monthsOfService" } },
@@ -46,7 +46,7 @@ The file is a JSON array of annotation objects, passed as `policyRepairAssets.an
 ]
 ```
 
-### Recipe 3 — Fix a bare assertion causing IMPOSSIBLE
+### Recipe 3: Fix a bare assertion causing IMPOSSIBLE
 ```json
 [
   { "deleteRule": { "id": "<BARE_RULE_ID>" } },
@@ -55,7 +55,7 @@ The file is a JSON array of annotation objects, passed as `policyRepairAssets.an
 ]
 ```
 
-### Recipe 4 — Natural-language feedback on a scenario/rule
+### Recipe 4: Natural-language feedback on a scenario/rule
 ```json
 [
   { "updateFromScenarioFeedback": {
@@ -64,12 +64,12 @@ The file is a JSON array of annotation objects, passed as `policyRepairAssets.an
 ```
 
 ## After applying
-1. The REFINE_POLICY build proposes changes — review them.
+1. The REFINE_POLICY build proposes changes. Review them.
 2. `UpdateAutomatedReasoningPolicy` to commit to DRAFT (the script can do this if you pass the new definition).
 3. Re-run `ar-policy-reviewer` (quality report) and `ar-policy-tester` (regression). Iterate.
 
 ## When to use the other workflows
-- **RESOLVE_POLICY_AMBIGUITIES** (`resolve_ambiguities.py`) — bulk auto-refine of ambiguous variable
+- **RESOLVE_POLICY_AMBIGUITIES** (`resolve_ambiguities.py`): bulk auto-refine of ambiguous variable
   descriptions/types when many TRANSLATION_AMBIGUOUS results appear.
-- **ITERATIVELY_REFINE_POLICY** (`iteratively_refine.py`) — when the source document changed, or you want
+- **ITERATIVELY_REFINE_POLICY** (`iteratively_refine.py`): when the source document changed, or you want
   to guide refinement with a doc + natural-language feedback (vs. adding brand-new content via INGEST_CONTENT).

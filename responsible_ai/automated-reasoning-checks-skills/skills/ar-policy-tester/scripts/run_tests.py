@@ -51,7 +51,7 @@ def main() -> None:
     if not case_ids:
         sys.exit("No test cases found for this policy. Create some with create_test.py.")
 
-    # Fetch each result via Get (per-case) — more reliable than the List op on some service
+    # Fetch each result via Get (per-case), more reliable than the List op on some service
     # versions. Poll briefly until each test leaves a non-terminal state.
     import time
 

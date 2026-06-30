@@ -6,7 +6,7 @@ keywords: ["guardrail deployer", "automated reasoning", "bedrock", "guardrail", 
 author: "Adewale Akinfaderin"
 ---
 
-<!-- GENERATED from skills/ar-guardrail-deployer/SKILL.md by scripts/sync_powers.py — do not edit by hand. Edit the SKILL.md and re-run the script. -->
+<!-- GENERATED from skills/ar-guardrail-deployer/SKILL.md by scripts/sync_powers.py. Do not edit by hand; edit the SKILL.md and re-run the script. -->
 
 # AR Guardrail Deployer
 
@@ -19,13 +19,13 @@ required **cross-region guardrail profile**. Updating DRAFT later won't affect a
 
 ## Key directives
 1. **Version before deploying.** `CreateAutomatedReasoningPolicyVersion` needs the current
-   `definitionHash` (concurrency token) from a get/create/update response — the script fetches it.
+   `definitionHash` (concurrency token) from a get/create/update response. The script fetches it.
 2. **Pin guardrails to a numbered version in production**, not DRAFT.
 3. **⚠️ AR guardrails require a `crossRegionConfig`** (a guardrail profile, e.g. `us.guardrail.v1:0`).
    The script derives the profile ARN from the policy ARN's account+region.
 4. **⚠️ Max 2 AR policies per guardrail.**
-5. **Confirm before deploying** — this is an outward-facing change. Don't overwrite an existing guardrail
-   without checking what it currently points to.
+5. **Confirm before deploying.** This is an outward-facing change. Check what an existing guardrail
+   currently points to before you overwrite it.
 6. **Default `confidenceThreshold` = 1.0** (most stringent). Lower only with a tested reason.
 
 ## Workflow
@@ -45,6 +45,6 @@ Hand off to `ar-runtime-validator` to validate LLM outputs with `ApplyGuardrail`
 new guardrail id + version.
 
 ## Resources
-- `scripts/create_version.py` — snapshot DRAFT → numbered version.
-- `scripts/deploy_guardrail.py` — ensure-guardrail (create/update) + version, with cross-region profile.
+- `scripts/create_version.py`: snapshot DRAFT → numbered version.
+- `scripts/deploy_guardrail.py`: ensure-guardrail (create/update) + version, with cross-region profile.
 - `../../shared/references/ar-api-context.md`.
