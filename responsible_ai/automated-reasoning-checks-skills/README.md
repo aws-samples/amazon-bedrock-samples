@@ -10,26 +10,32 @@ to mathematically verify LLM outputs against an encoded policy.
 > upstream. You can read everything right here (README, diagrams, and the `skills/*/SKILL.md` files);
 > nothing calls AWS until *you* run a script with your own credentials.
 
-## Try it in Claude Code
+## Try it
 
-This suite lives in a subfolder of a larger repo, so install it from a local clone (one extra step
-versus a root-level marketplace):
+This suite lives in a subfolder of a larger repo, so start from a local clone:
 
 ```bash
 git clone --depth 1 -b ar-checks-skills https://github.com/akinfaa/amazon-bedrock-samples.git
 ```
 
-Then in Claude Code, point the marketplace at the suite folder and install any of the six plugins:
+**In Claude Code**, point the marketplace at the suite folder and install any of the six plugins:
 
 ```text
 /plugin marketplace add ./amazon-bedrock-samples/responsible_ai/automated-reasoning-checks-skills
 /plugin install ar-policy-builder@automated-reasoning-skills
 ```
 
-Plugins in the `automated-reasoning-skills` marketplace: `ar-policy-builder`, `ar-policy-reviewer`,
-`ar-policy-tester`, `ar-policy-debugger`, `ar-guardrail-deployer`, `ar-runtime-validator`. Once
-installed, just describe the task ("create an automated reasoning policy from this doc", "my AR test is
-failing") and the matching skill activates.
+**In other agents that support the open format** (Kiro, Cursor, Codex), install with `npx`:
+
+```bash
+REPO=https://github.com/akinfaa/amazon-bedrock-samples
+npx skills add $REPO/tree/ar-checks-skills/responsible_ai/automated-reasoning-checks-skills --skill '*'
+```
+
+Skills in the `automated-reasoning-skills` set: `ar-policy-builder`, `ar-policy-reviewer`,
+`ar-policy-tester`, `ar-policy-debugger`, `ar-guardrail-deployer`, `ar-runtime-validator`. Use
+`--skill '*'` for all six. Once installed, just describe the task ("create an automated reasoning policy
+from this doc", "my AR test is failing") and the matching skill activates.
 
 Prefer not to install? Skim the diagrams below and the `skills/*/SKILL.md` files. To run a script
 directly, see [Using the scripts](#using-the-scripts); each is a standalone `uv run` file with
