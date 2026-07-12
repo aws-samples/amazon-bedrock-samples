@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import {BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, BedrockKnowledgeBaseModels} from '@aws/agents-and-function-calling-for-amazon-bedrock-blueprints';
+import {BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, BedrockKnowledgeBaseModels} from '@aws/agents-for-amazon-bedrock-blueprints';
 
 export class AgentWithSimpleClassificationStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {

@@ -1,6 +1,6 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, AgentActionGroup, PromptConfig_Override, PromptStateConfig, PromptType} from '@aws/agents-and-function-calling-for-amazon-bedrock-blueprints';
+import { BedrockAgentBlueprintsConstruct, AgentDefinitionBuilder, AgentActionGroup, PromptConfig_Override, PromptStateConfig, PromptType} from '@aws/agents-for-amazon-bedrock-blueprints';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { join } from 'path';

@@ -1,8 +1,10 @@
 
 import { Duration, RemovalPolicy, aws_rds as rds } from "aws-cdk-lib";
+import { SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
 import { Effect, ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { ClusterInstance } from "aws-cdk-lib/aws-rds";
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from "aws-cdk-lib/custom-resources";
 import { Construct } from "constructs";
 import { join } from "path";
@@ -11,7 +13,7 @@ import { join } from "path";
 
 export class RDSDatabaseForAgentWithFD extends Construct {
     public readonly dbSecret: rds.DatabaseSecret;
-    public readonly dbCluster: rds.ServerlessCluster;
+    public readonly dbCluster: rds.DatabaseCluster;
     public readonly AuroraClusterArn: string;
     public readonly AuroraDatabaseSecretArn: string;
 
@@ -23,8 +25,10 @@ export class RDSDatabaseForAgentWithFD extends Construct {
             username: 'clusteradmin',
         });
 
+        const defaultVpc = Vpc.fromLookup(this, 'defaultVpc', {isDefault: true});
+
         // Define Aurora Serverless cluster
-        this.dbCluster = new rds.ServerlessCluster(this, 'AuroraClusterForAgentWithFD', {
+        this.dbCluster = new rds.DatabaseCluster(this, 'AuroraClusterForAgentWithFD', {
             engine: rds.DatabaseClusterEngine.auroraPostgres({
                 version: rds.AuroraPostgresEngineVersion.VER_13_12,
             }),
@@ -33,6 +37,11 @@ export class RDSDatabaseForAgentWithFD extends Construct {
             credentials: rds.Credentials.fromSecret(this.dbSecret),
             enableDataApi: true,
             removalPolicy: RemovalPolicy.DESTROY,
+            serverlessV2MinCapacity: 0.5,
+            serverlessV2MaxCapacity: 8,
+            vpc: defaultVpc,
+            vpcSubnets: { subnetType: SubnetType.PUBLIC },
+            writer: ClusterInstance.serverlessV2('writer', { }),
         });
 
 
@@ -61,7 +70,7 @@ export class RDSDatabaseForAgentWithFD extends Construct {
         const customResourcePolicy = AwsCustomResourcePolicy.fromStatements([invokePermission]);
 
         // Create a custom resource to trigger the execution of populateSampleDataFunction Lambda function whenever the stack is updated
-        new AwsCustomResource(this, 'TriggerPopulateDataFunction', {
+        const populateResource = new AwsCustomResource(this, 'TriggerPopulateDataFunction', {
             onUpdate: {
                 service: 'Lambda',
                 action: 'InvokeCommand',
@@ -73,6 +82,7 @@ export class RDSDatabaseForAgentWithFD extends Construct {
             },
             policy: customResourcePolicy,
         });
+        populateResource.node.addDependency(this.dbCluster);
 
         this.AuroraClusterArn = this.dbCluster.clusterArn;
         this.AuroraDatabaseSecretArn = this.dbSecret.secretArn;
