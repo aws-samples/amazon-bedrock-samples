@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern 5: Gateway + JWT (Cognito)</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <div class="pattern-hero">
+    <div class="badge"><div class="dot" style="background:var(--orange)"></div>Pattern 5</div>
+    <h1>Gateway + JWT (Cognito)</h1>
+    <p class="subtitle">Use Cognito as the identity provider. The Gateway validates JWT tokens before allowing access to KB targets. This enables per-user identity without exposing the KB ID.</p>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Architecture</h4>
+    <div class="arch-flow">
+      <div class="arch-node" style="border-color:var(--green)"><div class="icon">🤖</div><div class="name">Agent</div><div class="sub">JWT Bearer Token</div></div>
+      <div class="arch-arrow"><div class="al">Bearer Token</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="icon">🚪</div><div class="name">Gateway</div><div class="sub">CUSTOM_JWT</div></div>
+      <div class="arch-arrow"><div class="al">Retrieve</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--cyan)"><div class="icon">📚</div><div class="name">KB Target</div><div class="sub">Managed KB</div></div>
+    </div>
+    <div class="arch-side">
+      <div class="arch-node" style="border-color:var(--orange)"><div class="icon">🔑</div><div class="name">Cognito User Pool</div><div class="sub">OIDC Discovery / JWT Validation</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card" style="border-left:3px solid var(--orange)">
+      <h4>JWT Authentication Flow</h4>
+      <ul>
+        <li>1. Client authenticates with Cognito → JWT</li>
+        <li>2. Client sends Bearer token to Gateway</li>
+        <li>3. Gateway validates via OIDC discovery</li>
+        <li>4. If valid, request proceeds to KB target</li>
+      </ul>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--orange)">
+      <h4>Available JWT Claims</h4>
+      <ul>
+        <li><code>sub</code> — Cognito user ID</li>
+        <li><code>email</code> — User email</li>
+        <li><code>custom:department</code> — Custom attribute</li>
+        <li><code>aud</code> — App client ID</li>
+        <li><code>iss</code> — Pool issuer URL</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-box">
+    <h4>Create JWT Gateway</h4>
+    <pre>discovery_url = <span class="str">f"https://cognito-idp.{REGION}.amazonaws.com/{pool_id}/.well-known/openid-configuration"</span>
+
+gw = ac.<span class="fn">create_gateway</span>(
+    name=<span class="str">"jwt-gateway"</span>,
+    roleArn=GW_ROLE_ARN,
+    protocolType=<span class="str">"MCP"</span>,
+    authorizerType=<span class="str">"CUSTOM_JWT"</span>,
+    authorizerConfiguration={<span class="str">"customJWTAuthorizer"</span>: {
+        <span class="str">"discoveryUrl"</span>: discovery_url,
+        <span class="str">"allowedAudience"</span>: [client_id],
+        <span class="str">"allowedClients"</span>: [client_id]
+    }}
+)</pre>
+  </div>
+
+  <div class="use-case">
+    <h4>🎯 When to Use</h4>
+    <p>When you need per-user identity without IAM. Custom claims like <code>custom:department</code> can be used downstream by Lambda interceptors to inject metadata filters dynamically — enabling per-user document scoping.</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="pattern4.html" class="prev"><span class="dir">← Previous</span>P4: Gateway + Cedar</a>
+    <a href="pattern6.html" class="next"><span class="dir">Next →</span>P6: JWT + Cedar</a>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>

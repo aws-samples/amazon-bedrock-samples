@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern 4: Gateway + Cedar Policy Engine</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <div class="pattern-hero">
+    <div class="badge"><div class="dot" style="background:var(--orange)"></div>Pattern 4</div>
+    <h1>Gateway + Cedar Policy Engine</h1>
+    <p class="subtitle">Add Cedar authorization policies to the Gateway. Cedar evaluates whether a principal can invoke a specific Gateway target. Supports LOG_ONLY and ENFORCE modes.</p>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Architecture</h4>
+    <div class="arch-flow">
+      <div class="arch-node" style="border-color:var(--green)"><div class="icon">🤖</div><div class="name">Agent</div><div class="sub">IAM Credentials</div></div>
+      <div class="arch-arrow"><div class="al">IAM Auth</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="icon">🚪</div><div class="name">Gateway</div><div class="sub">IAM Auth</div></div>
+      <div class="arch-arrow"><div class="al">Evaluate</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--orange)"><div class="icon">🛡️</div><div class="name">Cedar Policy Engine</div><div class="sub">permit / deny</div></div>
+      <div class="arch-arrow"><div class="al">If Permitted</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--cyan)"><div class="icon">📚</div><div class="name">KB Target</div><div class="sub">Managed KB</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card" style="border-left:3px solid var(--orange)">
+      <h4>LOG_ONLY Mode</h4>
+      <ul>
+        <li><span class="ck">✓</span> Cedar evaluates and logs decisions</li>
+        <li><span class="ck">✓</span> Does NOT block requests</li>
+        <li><span class="ck">✓</span> Use for auditing and testing</li>
+        <li><span class="ck">✓</span> Validate before enforcement</li>
+      </ul>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--orange)">
+      <h4>ENFORCE Mode</h4>
+      <ul>
+        <li><span class="ck">✓</span> Cedar evaluates and blocks denied</li>
+        <li><span class="ck">✓</span> Production-ready enforcement</li>
+        <li><span class="ck">✓</span> 403 Forbidden on deny</li>
+        <li><span class="ck">✓</span> Use after LOG_ONLY validation</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-box">
+    <h4>Cedar Policy Examples</h4>
+    <pre><span class="cmt">// Permit all principals to invoke this gateway</span>
+<span class="kw">permit</span>(principal, action,
+  resource == AgentCore::Gateway::<span class="str">"&lt;gateway-arn&gt;"</span>);
+
+<span class="cmt">// Deny a specific principal</span>
+<span class="kw">forbid</span>(
+  principal == AgentCore::Principal::<span class="str">"arn:aws:iam::123456789012:role/DeniedRole"</span>,
+  action,
+  resource == AgentCore::Gateway::<span class="str">"&lt;gateway-arn&gt;"</span>
+);</pre>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card" style="border-left:3px solid var(--green)">
+      <h4>Cedar Controls</h4>
+      <ul>
+        <li><span class="ck">✓</span> Whether a principal can invoke a Gateway</li>
+        <li><span class="ck">✓</span> Resource-level permit/deny</li>
+        <li><span class="ck">✓</span> Gateway-level access</li>
+      </ul>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--red)">
+      <h4>Cedar Does NOT Control</h4>
+      <ul>
+        <li><span class="cx">✗</span> Which documents are returned</li>
+        <li><span class="cx">✗</span> Document-level filtering</li>
+        <li><span class="cx">✗</span> Metadata filter scoping</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="use-case">
+    <h4>🎯 When to Use</h4>
+    <p>When you need per-principal authorization with policy-as-code. Cedar controls WHO can invoke the Gateway (resource-level). For document-level scoping, combine Cedar with metadata filters (Pattern 2).</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="pattern3.html" class="prev"><span class="dir">← Previous</span>P3: Gateway + IAM</a>
+    <a href="pattern5.html" class="next"><span class="dir">Next →</span>P5: JWT + Cognito</a>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>

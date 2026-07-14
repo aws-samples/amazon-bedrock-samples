@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Managed Knowledge Bases — Security Patterns</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <section class="hero">
+    <h1>Managed Knowledge Bases<br>Security Patterns</h1>
+    <p>8 progressive patterns for securing Amazon Bedrock Managed Knowledge Bases — from simple IAM access to full multi-tenant governance with JWT, Cedar, and Lambda interceptors.</p>
+  </section>
+  <section class="overview-grid">
+    <a href="pattern1.html" class="card c-green"><div class="num">01</div><h3>Direct SDK Access</h3><p>IAM-authenticated SDK calls to create, ingest, and retrieve. No Gateway layer.</p><span class="tag">IAM · Bedrock API</span></a>
+    <a href="pattern2.html" class="card c-blue"><div class="num">02</div><h3>Access Control Filters</h3><p>Document-level access control via metadata sidecar files — scope by department, role, tenant.</p><span class="tag">Access Control · Metadata · Sidecars</span></a>
+    <a href="pattern3.html" class="card c-blue"><div class="num">03</div><h3>Gateway + IAM</h3><p>AgentCore Gateway hides KB ID from agents. Standard MCP interface.</p><span class="tag">Gateway · MCP · IAM</span></a>
+    <a href="pattern4.html" class="card c-orange"><div class="num">04</div><h3>Gateway + Cedar</h3><p>Cedar Policy Engine for per-principal authorization. LOG_ONLY and ENFORCE modes.</p><span class="tag">Cedar · Policy-as-Code</span></a>
+    <a href="pattern5.html" class="card c-orange"><div class="num">05</div><h3>JWT + Cognito</h3><p>Token-based authentication via Cognito User Pools. Per-user identity.</p><span class="tag">JWT · Cognito · OIDC</span></a>
+    <a href="pattern6.html" class="card c-pink"><div class="num">06</div><h3>JWT + Cedar</h3><p>Two-layer auth: JWT validates WHO, Cedar decides WHAT. Multi-tenant ready.</p><span class="tag">Multi-Tenant · JWT · Cedar</span></a>
+    <a href="pattern7.html" class="card c-pink"><div class="num">07</div><h3>Lambda Interceptor</h3><p>Custom pre/post processing — dynamic filter injection, audit, redaction.</p><span class="tag">Lambda · Interceptor</span></a>
+    <a href="pattern8.html" class="card c-cyan"><div class="num">08</div><h3>Full Governance</h3><p>All 5 layers combined: JWT + Cedar + Interceptor + Gateway + Metadata Filters.</p><span class="tag">Production · Defense-in-Depth</span></a>
+  </section>
+  <div class="diagram-box">
+    <h4>Security Layers Overview</h4>
+    <table class="ptable" style="margin:0">
+      <tr><th>Layer</th><th>Component</th><th>Controls</th><th>Patterns</th></tr>
+      <tr><td style="color:var(--green)">1</td><td>Authentication</td><td>IAM / JWT / None</td><td>All</td></tr>
+      <tr><td style="color:var(--blue)">2</td><td>Gateway</td><td>Single entry point, hides KB ID</td><td>P3-P8</td></tr>
+      <tr><td style="color:var(--orange)">3</td><td>Cedar Policy Engine</td><td>Per-principal permit/deny</td><td>P4, P6, P8</td></tr>
+      <tr><td style="color:var(--pink)">4</td><td>Lambda Interceptor</td><td>Custom request/response logic</td><td>P7, P8</td></tr>
+      <tr><td style="color:var(--cyan)">5</td><td>Metadata Filters</td><td>Document-level scoping</td><td>P2, P8</td></tr>
+    </table>
+  </div>
+  <div class="diagram-box">
+    <h4>SDK Requirements</h4>
+    <table class="ptable" style="margin:0">
+      <tr><th>Service</th><th>Min boto3</th><th>Used For</th></tr>
+      <tr><td>bedrock-agent</td><td>1.42.78</td><td>CreateKnowledgeBase, CreateDataSource, StartIngestionJob</td></tr>
+      <tr><td>bedrock-agent-runtime</td><td>1.42.69</td><td>Retrieve, RetrieveAndGenerate</td></tr>
+      <tr><td>bedrock-agentcore-control</td><td>1.42.75</td><td>Gateway, PolicyEngine, Cedar policies</td></tr>
+      <tr><td>bedrock-agentcore</td><td>1.42.75</td><td>GetWorkloadAccessToken</td></tr>
+    </table>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern 6: JWT + Cedar (Multi-Tenant)</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <div class="pattern-hero">
+    <div class="badge"><div class="dot" style="background:var(--pink)"></div>Pattern 6</div>
+    <h1>JWT + Cedar (Multi-Tenant)</h1>
+    <p class="subtitle">Combine JWT authentication with Cedar authorization. JWT validates WHO the caller is, Cedar decides WHAT they can do. The pattern for multi-tenant applications.</p>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Architecture — Two-Layer Auth</h4>
+    <div class="arch-flow">
+      <div class="arch-node" style="border-color:var(--green)"><div class="icon">🤖</div><div class="name">Agent</div><div class="sub">JWT Token</div></div>
+      <div class="arch-arrow"><div class="al">JWT</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="icon">🚪</div><div class="name">Gateway</div><div class="sub">CUSTOM_JWT</div></div>
+      <div class="arch-arrow"><div class="al">Authorize</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--orange)"><div class="icon">🛡️</div><div class="name">Cedar Engine</div><div class="sub">permit / deny</div></div>
+      <div class="arch-arrow"><div class="al">If Permitted</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--cyan)"><div class="icon">📚</div><div class="name">KB Targets</div><div class="sub">Per-Department</div></div>
+    </div>
+    <div class="arch-side">
+      <div class="arch-node" style="border-color:var(--pink)"><div class="icon">🔑</div><div class="name">Cognito</div><div class="sub">Identity Provider</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card" style="border-left:3px solid var(--pink)">
+      <h4>Layer 1 — JWT (WHO)</h4>
+      <ul>
+        <li><span class="ck">✓</span> Validates identity</li>
+        <li><span class="ck">✓</span> Is this a real, authenticated user?</li>
+        <li><span class="ck">✓</span> Extracts claims (department, role)</li>
+      </ul>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--pink)">
+      <h4>Layer 2 — Cedar (WHAT)</h4>
+      <ul>
+        <li><span class="ck">✓</span> Evaluates authorization</li>
+        <li><span class="ck">✓</span> Is this user allowed to invoke this gateway?</li>
+        <li><span class="ck">✓</span> Per-principal permit/deny</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-box">
+    <h4>Multi-Tenant Target Layout</h4>
+    <pre><span class="cmt"># Gateway (JWT + Cedar)</span>
+<span class="cmt">#   ├── Target: engineering-kb  ← Cedar: permit dept=engineering</span>
+<span class="cmt">#   ├── Target: marketing-kb   ← Cedar: permit dept=marketing</span>
+<span class="cmt">#   └── Target: shared-kb      ← Cedar: permit all</span>
+
+gw = ac.<span class="fn">create_gateway</span>(
+    name=<span class="str">"multi-tenant-gw"</span>,
+    roleArn=GW_ROLE_ARN,
+    protocolType=<span class="str">"MCP"</span>,
+    authorizerType=<span class="str">"CUSTOM_JWT"</span>,
+    authorizerConfiguration={...},
+    policyEngineConfiguration={
+        <span class="str">"arn"</span>: pe_arn,
+        <span class="str">"mode"</span>: <span class="str">"LOG_ONLY"</span>  <span class="cmt"># Start with audit, then ENFORCE</span>
+    }
+)</pre>
+  </div>
+
+  <table class="ptable">
+    <tr><th>Mode</th><th>Behavior</th><th>When to Use</th></tr>
+    <tr><td>LOG_ONLY</td><td>Cedar evaluates and logs but does not block</td><td>Testing, auditing, gradual rollout</td></tr>
+    <tr><td>ENFORCE</td><td>Cedar evaluates and blocks denied requests</td><td>Production after LOG_ONLY validation</td></tr>
+  </table>
+
+  <div class="use-case">
+    <h4>🎯 When to Use</h4>
+    <p>Multi-tenant SaaS where different users/departments have different access levels. JWT identifies the user; Cedar decides which targets they can invoke. Recommended rollout: LOG_ONLY → review CloudWatch logs → ENFORCE.</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="pattern5.html" class="prev"><span class="dir">← Previous</span>P5: JWT + Cognito</a>
+    <a href="pattern7.html" class="next"><span class="dir">Next →</span>P7: Lambda Interceptor</a>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>

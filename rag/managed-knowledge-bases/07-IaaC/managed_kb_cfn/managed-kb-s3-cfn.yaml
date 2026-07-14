@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  End-to-end Bedrock Managed Knowledge Base with S3 data source.
+  Creates: S3 bucket, IAM role with policies, Managed KB, and S3 data source.
+  After stack creation, upload documents to S3 and start an ingestion job.
+
+Parameters:
+  KnowledgeBaseName:
+    Type: String
+    Default: bmkb-cfn-demo
+    Description: Name for the Managed Knowledge Base
+
+  BucketName:
+    Type: String
+    Default: ''
+    Description: >
+      S3 bucket name for documents. Leave empty to auto-generate.
+      If specified, the bucket must not already exist.
+
+  S3Prefix:
+    Type: String
+    Default: documents/
+    Description: S3 prefix to scope document ingestion
+
+  EmbeddingModel:
+    Type: String
+    Default: MANAGED
+    AllowedValues:
+      - MANAGED
+      - amazon.titan-embed-text-v2:0
+      - cohere.embed-english-v3
+      - cohere.embed-multilingual-v3
+    Description: >
+      Embedding model. MANAGED = free service-managed model (no extra cost).
+      Others use a custom Bedrock model (additional cost).
+
+Conditions:
+  AutoGenerateBucketName: !Equals [!Ref BucketName, '']
+  UseCustomEmbedding: !Not [!Equals [!Ref EmbeddingModel, 'MANAGED']]
+
+Resources:
+  # ═══════════════════════════════════════════════════════════════════════
+  # S3 Bucket for documents
+  # ═══════════════════════════════════════════════════════════════════════
+  DocumentsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !If
+        - AutoGenerateBucketName
+        - !Sub '${KnowledgeBaseName}-${AWS::AccountId}-${AWS::Region}'
+        - !Ref BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # IAM Role for Knowledge Base execution
+  # ═══════════════════════════════════════════════════════════════════════
+  KBExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'AmazonBedrockExecutionRoleForKB_${KnowledgeBaseName}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                AWS:SourceArn: !Sub 'arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*'
+      MaxSessionDuration: 3600
+
+  # S3 access policy
+  S3AccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub 'BedrockKB_S3Access_${KnowledgeBaseName}'
+      Roles:
+        - !Ref KBExecutionRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: S3ListBucket
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+            Resource:
+              - !GetAtt DocumentsBucket.Arn
+            Condition:
+              StringEquals:
+                aws:ResourceAccount:
+                  - !Ref AWS::AccountId
+          - Sid: S3GetObject
+            Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource:
+              - !Sub '${DocumentsBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                aws:ResourceAccount:
+                  - !Ref AWS::AccountId
+
+  # CloudWatch metrics policy
+  CloudWatchPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub 'BedrockKB_CloudWatch_${KnowledgeBaseName}'
+      Roles:
+        - !Ref KBExecutionRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: CloudWatchWrite
+            Effect: Allow
+            Action:
+              - cloudwatch:PutMetricData
+            Resource: '*'
+            Condition:
+              StringEquals:
+                cloudwatch:namespace: AWS/Bedrock/KnowledgeBases
+
+  # Foundation model policy (only when using custom embedding model)
+  FoundationModelPolicy:
+    Type: AWS::IAM::Policy
+    Condition: UseCustomEmbedding
+    Properties:
+      PolicyName: !Sub 'BedrockKB_FM_${KnowledgeBaseName}'
+      Roles:
+        - !Ref KBExecutionRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: InvokeModel
+            Effect: Allow
+            Action:
+              - bedrock:InvokeModel
+            Resource:
+              - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/${EmbeddingModel}'
+          - Sid: ListModels
+            Effect: Allow
+            Action:
+              - bedrock:ListFoundationModels
+              - bedrock:ListCustomModels
+            Resource: '*'
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # Managed Knowledge Base
+  # ═══════════════════════════════════════════════════════════════════════
+  ManagedKnowledgeBase:
+    Type: AWS::Bedrock::KnowledgeBase
+    DependsOn:
+      - S3AccessPolicy
+      - CloudWatchPolicy
+    Properties:
+      Name: !Ref KnowledgeBaseName
+      Description: !Sub 'Managed KB created via CloudFormation - ${KnowledgeBaseName}'
+      RoleArn: !GetAtt KBExecutionRole.Arn
+      KnowledgeBaseConfiguration:
+        Type: MANAGED
+        ManagedKnowledgeBaseConfiguration: !If
+          - UseCustomEmbedding
+          - EmbeddingModelArn: !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/${EmbeddingModel}'
+            EmbeddingModelConfiguration:
+              BedrockEmbeddingModelConfiguration:
+                EmbeddingDataType: FLOAT32
+          - {}
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # S3 Data Source (Managed KB Connector)
+  #
+  # Important: ConnectorParameters is a free-form JSON field.
+  # Keys inside MUST be camelCase (API format), not PascalCase (CFN format).
+  # ═══════════════════════════════════════════════════════════════════════
+  S3DataSource:
+    Type: AWS::Bedrock::DataSource
+    Properties:
+      Name: !Sub '${KnowledgeBaseName}-s3-source'
+      KnowledgeBaseId: !GetAtt ManagedKnowledgeBase.KnowledgeBaseId
+      DataSourceConfiguration:
+        Type: MANAGED_KNOWLEDGE_BASE_CONNECTOR
+        ManagedKnowledgeBaseConnectorConfiguration:
+          ConnectorParameters:
+            type: S3
+            version: '1'
+            connectionConfiguration:
+              bucketName: !Ref DocumentsBucket
+              bucketOwnerAccountId: !Ref AWS::AccountId
+            filterConfiguration:
+              inclusionPrefixes:
+                - !Ref S3Prefix
+            deletionProtectionConfiguration:
+              enableDeletionProtection: false
+          DeletionProtectionConfiguration:
+            DeletionProtectionStatus: DISABLED
+      VectorIngestionConfiguration:
+        ParsingConfiguration:
+          ParsingStrategy: SMART_PARSING
+
+Outputs:
+  KnowledgeBaseId:
+    Description: The ID of the created Managed Knowledge Base
+    Value: !GetAtt ManagedKnowledgeBase.KnowledgeBaseId
+    Export:
+      Name: !Sub '${AWS::StackName}-KBId'
+
+  KnowledgeBaseArn:
+    Description: The ARN of the Managed Knowledge Base
+    Value: !GetAtt ManagedKnowledgeBase.KnowledgeBaseArn
+
+  DataSourceId:
+    Description: The ID of the S3 data source
+    Value: !GetAtt S3DataSource.DataSourceId
+
+  S3BucketName:
+    Description: The S3 bucket for documents
+    Value: !Ref DocumentsBucket
+
+  S3UploadPath:
+    Description: Upload documents here then start ingestion
+    Value: !Sub 's3://${DocumentsBucket}/${S3Prefix}'
+
+  KBExecutionRoleArn:
+    Description: IAM role used by the Knowledge Base
+    Value: !GetAtt KBExecutionRole.Arn
+
+  NextSteps:
+    Description: After stack creation, do these steps
+    Value: !Sub |
+      1. Upload documents: aws s3 cp your-file.pdf s3://${DocumentsBucket}/${S3Prefix}
+      2. Start ingestion: aws bedrock-agent start-ingestion-job --knowledge-base-id ${ManagedKnowledgeBase.KnowledgeBaseId} --data-source-id ${S3DataSource.DataSourceId}
+      3. Query: Use Retrieve or AgenticRetrieveStream API with KB ID ${ManagedKnowledgeBase.KnowledgeBaseId}

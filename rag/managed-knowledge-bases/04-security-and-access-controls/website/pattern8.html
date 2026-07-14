@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern 8: Full Governance Stack</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <div class="pattern-hero">
+    <div class="badge"><div class="dot" style="background:var(--cyan)"></div>Pattern 8</div>
+    <h1>Full Governance Stack</h1>
+    <p class="subtitle">The complete security model combining all layers: Cognito JWT for authentication, Cedar for authorization, Lambda interceptor for custom processing, and metadata filters for document-level scoping.</p>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Architecture — Five Security Layers</h4>
+    <div class="arch-flow">
+      <div class="arch-node" style="border-color:var(--green)"><div class="icon">🤖</div><div class="name">Agent</div><div class="sub">JWT Token</div></div>
+      <div class="arch-arrow"><div class="al">1. JWT</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="icon">🚪</div><div class="name">Gateway</div><div class="sub">2. Entry Point</div></div>
+      <div class="arch-arrow"><div class="al">3. Authorize</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--orange)"><div class="icon">🛡️</div><div class="name">Cedar</div><div class="sub">3. Authorization</div></div>
+      <div class="arch-arrow"><div class="al">4. Process</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--pink)"><div class="icon">⚡</div><div class="name">Interceptor</div><div class="sub">4. Custom Logic</div></div>
+      <div class="arch-arrow"><div class="al">5. Filter</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--cyan)"><div class="icon">📚</div><div class="name">KB Target</div><div class="sub">5. Metadata Filters</div></div>
+    </div>
+    <div class="arch-side">
+      <div class="arch-node" style="border-color:var(--orange)"><div class="icon">🔑</div><div class="name">Cognito JWT</div><div class="sub">1. Authentication</div></div>
+    </div>
+  </div>
+
+  <table class="ptable">
+    <tr><th>Layer</th><th>Component</th><th>Question Answered</th><th>Failure Mode</th></tr>
+    <tr><td style="color:var(--green)">1</td><td>JWT (Cognito)</td><td>Is this a valid, authenticated user?</td><td>401 Unauthorized</td></tr>
+    <tr><td style="color:var(--blue)">2</td><td>Gateway</td><td>Is the KB ID hidden from the caller?</td><td>KB ID never exposed</td></tr>
+    <tr><td style="color:var(--orange)">3</td><td>Cedar Policy</td><td>Is this user allowed to use this gateway?</td><td>403 Forbidden / logged</td></tr>
+    <tr><td style="color:var(--pink)">4</td><td>Lambda Interceptor</td><td>Should this specific request proceed?</td><td>Custom error / modified</td></tr>
+    <tr><td style="color:var(--cyan)">5</td><td>Metadata Filters</td><td>Which documents can this user see?</td><td>Empty results (filtered)</td></tr>
+  </table>
+
+  <div class="code-box">
+    <h4>Full Stack Gateway Creation</h4>
+    <pre>gw = ac.<span class="fn">create_gateway</span>(
+    name=<span class="str">"full-governance-gw"</span>,
+    roleArn=GW_ROLE_ARN,
+    protocolType=<span class="str">"MCP"</span>,
+    authorizerType=<span class="str">"CUSTOM_JWT"</span>,
+    authorizerConfiguration={<span class="str">"customJWTAuthorizer"</span>: {
+        <span class="str">"discoveryUrl"</span>: discovery_url,
+        <span class="str">"allowedAudience"</span>: [client_id],
+        <span class="str">"allowedClients"</span>: [client_id]
+    }},
+    policyEngineConfiguration={
+        <span class="str">"arn"</span>: pe_arn,
+        <span class="str">"mode"</span>: <span class="str">"LOG_ONLY"</span>
+    },
+    interceptorConfigurations=[{
+        <span class="str">"interceptor"</span>: {<span class="str">"lambda"</span>: {<span class="str">"arn"</span>: LAMBDA_ARN}},
+        <span class="str">"interceptionPoints"</span>: [<span class="str">"REQUEST"</span>, <span class="str">"RESPONSE"</span>],
+        <span class="str">"inputConfiguration"</span>: {<span class="str">"passRequestHeaders"</span>: <span class="kw">True</span>}
+    }]
+)</pre>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card" style="border-left:3px solid var(--cyan)">
+      <h4>End-to-End Flow</h4>
+      <ul>
+        <li>1. Client authenticates with Cognito → JWT</li>
+        <li>2. Client calls Gateway with Bearer token</li>
+        <li>3. Gateway validates JWT via OIDC</li>
+        <li>4. Cedar evaluates authorization</li>
+        <li>5. Lambda interceptor runs (REQUEST)</li>
+        <li>6. KB Target executes with metadata filters</li>
+        <li>7. Lambda interceptor runs (RESPONSE)</li>
+        <li>8. Results returned through Gateway</li>
+      </ul>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--cyan)">
+      <h4>Production Capabilities</h4>
+      <ul>
+        <li><span class="ck">✓</span> Multi-tenant document isolation</li>
+        <li><span class="ck">✓</span> Audit trails on every query</li>
+        <li><span class="ck">✓</span> Per-role document visibility</li>
+        <li><span class="ck">✓</span> Defense-in-depth security</li>
+        <li><span class="ck">✓</span> PII redaction capability</li>
+        <li><span class="ck">✓</span> Rate limiting support</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="use-case">
+    <h4>🎯 When to Use</h4>
+    <p>Multi-tenant SaaS with per-tenant document isolation. Regulated industries requiring audit trails on every query. Applications where different user roles see different document sets. Production deployments requiring defense-in-depth.</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="pattern7.html" class="prev"><span class="dir">← Previous</span>P7: Lambda Interceptor</a>
+    <a href="index.html" class="next"><span class="dir">Back to →</span>Overview</a>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>
