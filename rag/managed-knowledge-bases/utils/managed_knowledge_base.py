@@ -59,7 +59,7 @@ CONNECTOR_REQUIRED_FIELDS = {
     "WEB": ["seed_urls"],
     "CONFLUENCE": ["secret_arn"],
     "SHAREPOINT": ["secret_arn"],
-    "ONEDRIVE": ["secret_arn"],
+    "ONEDRIVE": ["secret_arn", "tenant_id", "auth_type"],
     "GOOGLEDRIVE": ["secret_arn"],
 }
 
@@ -190,6 +190,25 @@ def _validate_data_source_config(config: dict) -> None:
         if not config.get("secret_arn"):
             raise ValueError(
                 f"secret_arn is required for {connector_type} data source."
+            )
+
+    # ── ONEDRIVE-specific validation ──────────────────────────────────
+    if connector_type == "ONEDRIVE":
+        auth = config.get("auth_type")
+        if config.get("acl_enabled"):
+            if auth != "ENTRA_APP_ID":
+                raise ValueError("acl_enabled requires auth_type='ENTRA_APP_ID' for ONEDRIVE.")
+            if not config.get("certificate_s3_path"):
+                raise ValueError("acl_enabled requires certificate_s3_path (S3 location of .p12 bundle) for ONEDRIVE.")
+        if config.get("crawl_shared_with_me") and auth != "OAUTH2":
+            raise ValueError("crawl_shared_with_me is supported only with auth_type='OAUTH2' for ONEDRIVE.")
+        # Bedrock rejects DS if no crawl target is enabled — catch client-side.
+        crawl_personal = config.get("crawl_personal_drives", True)
+        crawl_shared   = config.get("crawl_shared_with_me", False)
+        if not crawl_personal and not crawl_shared:
+            raise ValueError(
+                "ONEDRIVE requires at least one of crawl_personal_drives or "
+                "crawl_shared_with_me to be True (crawl_shared_with_me is OAUTH2 only)."
             )
 
 
@@ -458,8 +477,50 @@ def _build_connector_params(config: dict, account_id: str) -> tuple:
         if config.get("filter_config"):
             connector_params["filterConfiguration"] = config["filter_config"]
 
+    elif connector_type == "ONEDRIVE":
+        connection_config = {
+            "secretArn": config["secret_arn"],
+            "tenantId": config.get("tenant_id") or config.get("connection_configuration", {}).get("tenantId", ""),
+            "authType": config.get("auth_type") or config.get("connection_configuration", {}).get("authType", "ENTRA_APP_ID"),
+        }
+        if config.get("acl_enabled") and config.get("certificate_s3_path"):
+            cert_path = config["certificate_s3_path"]
+            connection_config["certificateS3Path"] = {
+                "s3BucketName": cert_path["s3BucketName"],
+                "s3KeyName": cert_path["s3KeyName"],
+            }
+        connector_params = {
+            "type": "ONEDRIVE",
+            "version": "1",
+            "aclEnabled": bool(config.get("acl_enabled", False)),
+            "connectionConfiguration": connection_config,
+            "dataEntityConfiguration": {
+                "crawlPersonalDrives": config.get("crawl_personal_drives", True),
+            },
+            "deletionProtectionConfiguration": {"enableDeletionProtection": False},
+        }
+        if connection_config["authType"] == "OAUTH2" and "crawl_shared_with_me" in config:
+            connector_params["dataEntityConfiguration"]["crawlSharedWithMe"] = bool(config["crawl_shared_with_me"])
+        # Optional filter configuration
+        filter_config = {}
+        for src, dst in [
+            ("inclusion_user_email_addresses", "inclusionUserEmailAddresses"),
+            ("exclusion_user_email_addresses", "exclusionUserEmailAddresses"),
+            ("user_filter_path", "userFilterPath"),
+            ("inclusion_drive_items", "inclusionDriveItems"),
+            ("exclusion_drive_items", "exclusionDriveItems"),
+            ("include_mime_types", "includeMimeTypes"),
+            ("exclude_mime_types", "excludeMimeTypes"),
+            ("absolute_date_after", "absoluteDateAfter"),
+            ("absolute_date_before", "absoluteDateBefore"),
+        ]:
+            if config.get(src):
+                filter_config[dst] = config[src]
+        if filter_config:
+            connector_params["filterConfiguration"] = filter_config
+
     else:
-        # Generic authenticated connectors: ONEDRIVE, GOOGLEDRIVE
+        # Generic authenticated connectors: GOOGLEDRIVE
         connector_params = {
             "type": config["type"],
             "version": "1",
@@ -540,6 +601,7 @@ class ManagedKnowledgeBase:
         bucket_name: str = None,
         s3_prefix: str = "",
         embedding_model: str = None,
+        kb_description: str = None,
         enable_logging: bool = False,
         suffix: str = None,
         region_name: str = None,
@@ -597,6 +659,7 @@ class ManagedKnowledgeBase:
 
         # Config
         self.kb_name = kb_name
+        self.kb_description = kb_description
         self.embedding_model = embedding_model
         self.enable_logging = enable_logging
         self._data_source_configs = list(data_sources)
@@ -1116,16 +1179,22 @@ class ManagedKnowledgeBase:
             }
 
         try:
-            resp = self.bedrock_agent_client.create_knowledge_base(
-                name=self.kb_name,
-                roleArn=self.kb_role_arn,
-                knowledgeBaseConfiguration={
+            create_params = {
+                "name": self.kb_name,
+                "roleArn": self.kb_role_arn,
+                "knowledgeBaseConfiguration": {
                     "type": "MANAGED",
                     "managedKnowledgeBaseConfiguration": managed_config,
                 },
-            )
+            }
+            if self.kb_description:
+                create_params["description"] = self.kb_description
+
+            resp = self.bedrock_agent_client.create_knowledge_base(**create_params)
             self.kb_id = resp["knowledgeBase"]["knowledgeBaseId"]
             print(f"  Created KB: {self.kb_id}")
+            if self.kb_description:
+                print(f"  Description: {self.kb_description}")
         except self.bedrock_agent_client.exceptions.ConflictException:
             # KB with same name exists — find it
             kbs = self.bedrock_agent_client.list_knowledge_bases(maxResults=100)
@@ -1265,14 +1334,19 @@ class ManagedKnowledgeBase:
         return self._session.client("bedrock-agent-runtime", region_name=self.region_name)
 
     def retrieve(self, query: str, num_results: int = 5):
-        """Run a Retrieve API call against this KB."""
+        """Run a Retrieve API call against this KB.
+
+        For Managed KBs, current boto3 rejects ``managedSearchConfiguration``
+        (which the service wants) and the service rejects
+        ``vectorSearchConfiguration`` (which boto3 wants). Until the SDK
+        catches up, omit the config block and let Bedrock apply its default
+        (~5 chunks). ``num_results`` is currently accepted for API-symmetry
+        but not honored by this path; use a direct boto3 call to override.
+        """
         dp = self.get_runtime_client()
         return dp.retrieve(
             knowledgeBaseId=self.kb_id,
             retrievalQuery={"text": query},
-            retrievalConfiguration={
-                "managedSearchConfiguration": {"numberOfResults": num_results}
-            },
         )
 
     def retrieve_and_generate(self, query: str, model_arn: str, num_results: int = 5):
@@ -1471,6 +1545,30 @@ class ManagedKnowledgeBase:
             except Exception as e:
                 print(f"  Error deleting bucket {bucket_name}: {e}")
 
+    # ── Attach to an existing KB (no creation) ───────────────────────────
+
+    @classmethod
+    def from_existing(cls, kb_id: str, region_name: str = None):
+        """Build a handle to an already-created KB without running setup.
+
+        Useful when a prior run created the KB (e.g. restored via ``%store``) and
+        you only need the runtime/gateway methods — ``retrieve``, ``get_runtime_client``,
+        ``get_agentcore_client``, ``create_gateway``, ``create_gateway_kb_target``.
+        Attributes tied to creation (roles, data-source configs) are not populated.
+
+        Args:
+            kb_id: Existing knowledge base id.
+            region_name: AWS region. Defaults to the session default.
+
+        Returns:
+            ManagedKnowledgeBase handle with ``kb_id``, ``region_name``, and a session.
+        """
+        self = cls.__new__(cls)
+        self._session = _get_session(USE_PREVIEW_SDK)
+        self.region_name = region_name or boto3.Session().region_name
+        self.kb_id = kb_id
+        return self
+
     # ── Static cleanup (from KB ID only) ─────────────────────────────────
 
     @staticmethod
@@ -1571,22 +1669,74 @@ class ManagedKnowledgeBase:
         target_name: str = "kb-retrieve",
         num_results: int = 5,
         description: str = "Retrieve from managed KB via Gateway",
+        tool: str = "Retrieve",
+        orchestration_model_arn: str = None,
+        reranking_model_type: str = "MANAGED",
     ):
         """
         Create a Gateway Target that connects the Gateway to this KB.
 
-        Uses the bedrock-knowledge-bases connector with managedSearchConfiguration.
+        Uses the ``bedrock-knowledge-bases`` connector, which exposes two tools:
+        ``Retrieve`` (single hybrid search, returns per-chunk relevance ``score``)
+        and ``AgenticRetrieveStream`` (multi-step planning + rerank + synthesized
+        answer with citations, but NO per-chunk score).
 
         Args:
             gateway_id: The gateway ID to attach the target to.
             target_name: Name for the target.
-            num_results: Number of retrieval results.
+            num_results: Number of retrieval results (``Retrieve`` only).
             description: Description visible to agents.
+            tool: Which connector tool to expose — ``"Retrieve"`` (default) or
+                ``"AgenticRetrieveStream"``.
+            orchestration_model_arn: Optional foundation-model ARN for agentic
+                orchestration. When omitted, the service-managed model is used
+                (``foundationModelType="MANAGED"``). Agentic only.
+            reranking_model_type: ``"MANAGED"`` (default), ``"CUSTOM"``, or
+                ``"NONE"``. Agentic only.
 
         Returns:
             Dict with target_id and status.
+
+        Note:
+            The gateway execution role must allow the matching action:
+            ``bedrock:Retrieve`` (scoped to the KB) for ``Retrieve``, or
+            ``bedrock:AgenticRetrieveStream`` (must be granted on ``"*"`` — this
+            action is NOT resource-scopable) for ``AgenticRetrieveStream``. Both
+            paths also need ``bedrock:GetKnowledgeBase`` on the KB.
         """
         ac = self.get_agentcore_client()
+
+        if tool == "AgenticRetrieveStream":
+            agentic_cfg = {"rerankingModelType": reranking_model_type}
+            if orchestration_model_arn:
+                agentic_cfg["foundationModelType"] = "CUSTOM"
+                agentic_cfg["foundationModelConfiguration"] = {
+                    "type": "BEDROCK_FOUNDATION_MODEL",
+                    "bedrockFoundationModelConfiguration": {
+                        "modelConfiguration": {"modelArn": orchestration_model_arn}
+                    },
+                }
+            else:
+                agentic_cfg["foundationModelType"] = "MANAGED"
+            configurations = [{
+                "name": "AgenticRetrieveStream",
+                "parameterValues": {
+                    "retrievers": [{
+                        "configuration": {"knowledgeBase": {"knowledgeBaseId": self.kb_id}}
+                    }],
+                    "agenticRetrieveConfiguration": agentic_cfg,
+                },
+            }]
+        else:
+            configurations = [{
+                "name": "Retrieve",
+                "parameterValues": {
+                    "knowledgeBaseId": self.kb_id,
+                    "retrievalConfiguration": {
+                        "managedSearchConfiguration": {"numberOfResults": num_results}
+                    }
+                },
+            }]
 
         resp = ac.create_gateway_target(
             gatewayIdentifier=gateway_id,
@@ -1596,17 +1746,7 @@ class ManagedKnowledgeBase:
                 "mcp": {
                     "connector": {
                         "source": {"connectorId": "bedrock-knowledge-bases"},
-                        "configurations": [{
-                            "name": "Retrieve",
-                            "parameterValues": {
-                                "knowledgeBaseId": self.kb_id,
-                                "retrievalConfiguration": {
-                                    "managedSearchConfiguration": {
-                                        "numberOfResults": num_results
-                                    }
-                                }
-                            },
-                        }],
+                        "configurations": configurations,
                     }
                 }
             },

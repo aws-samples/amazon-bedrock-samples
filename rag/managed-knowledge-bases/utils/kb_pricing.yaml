@@ -1,0 +1,98 @@
+# Non-token price book for Amazon Bedrock **fully-managed** Knowledge Base (type="MANAGED")
+# cost components. Source: AWS Bedrock pricing page (https://aws.amazon.com/bedrock/pricing/),
+# on-demand, us-east-1. Hand-maintained — values are not API-discoverable; a YAML edit needs
+# no code change (utils/kb_cost.py loads this file; utils/pricing.py stays token-only).
+#
+# WHY A SEPARATE FILE FROM model_pricing.yaml: that file is per-1M-token pricing for LLM
+# invocations (the generation FM). This file holds ENTIRELY DIFFERENT dimensions — per-GB-month
+# storage, per-1,000-calls retrieval, per-1,000-queries reranking, per-page parsing, per-secret.
+# Mixing the two in one loader would conflate units. kb_cost.py delegates the token side
+# (generation FM) to pricing.compute_cost_usd().
+#
+# SCOPE: fully-managed KB ONLY. This type has a Bedrock-owned datastore — there is NO OpenSearch
+# Serverless / OCU line item (that only exists for customer-managed / bring-your-own-vector-store
+# KBs, which are out of scope). For a fully-managed KB, embedding and reranking are BUNDLED at $0
+# on the default path; the "custom_*" sections below are Phase-2 extension points (present so
+# kb_cost.py can detect + label them, NOT computed live in Phase 1).
+#
+# Values CONFIRMED against the AWS Bedrock pricing page + kb-build-managed doc (2026-07-09).
+# Regions other than us-east-1 may vary — override per engagement.
+
+_metadata:
+  updated: "2026-07-09"
+  region: "us-east-1"
+  kb_type: "MANAGED"           # fully-managed only; see scope note above
+  source: "https://aws.amazon.com/bedrock/pricing/"
+
+# ── Phase 1: the default fully-managed path (all live-computable) ──────────────
+
+index_storage:
+  price_per_gb_month: 5.00
+  unit: "GB-month"
+  metric_basis: "RawDataSize"  # AWS/Bedrock/KnowledgeBases, per KnowledgeBaseId — the billing basis
+  note: >
+    Replaces any OpenSearch/OCU cost. This is the ONLY standing (time-based) charge for a
+    fully-managed KB. Adding data raises it; deleting data lowers it.
+
+retrieve:
+  price_per_1k_requests: 1.00
+  unit: "per 1,000 Retrieve requests"
+  metric_basis: "Invocations (Operation=Retrieve)"
+  includes: ["query_embedding", "vector_search", "managed_reranking"]  # all bundled at $0
+
+agentic_retrieve_stream:
+  price_per_1k_calls: 4.00
+  unit: "per 1,000 AgenticRetrieveStream calls"
+  metric_basis: "Invocations (Operation=AgenticRetrieveStream)"
+  underlying_retrieve_price_per_1k: 1.00
+  underlying_metric_basis: "TotalIterationCount"   # each iteration ~= one internal Retrieve (MEDIUM confidence)
+  note: >
+    Top-level agentic call is $4/1k. It internally spawns underlying Retrieve calls (multi-hop),
+    billed additionally at $1/1k; TotalIterationCount is the proxy for that count.
+
+managed_embedding:
+  price_per_1m_input_tokens: 0.00   # bundled on the default fully-managed path
+  note: "Default managed embedding is free. Ingestion/sync incurs NO separate charge on this path."
+
+managed_reranking:
+  price_per_1k_queries: 0.00        # bundled on the default fully-managed path
+  note: "Default managed semantic reranker is free."
+
+# Customer's own resources — not Bedrock charges, included for the total picture.
+s3_source:
+  price_per_gb_month: 0.023
+  unit: "GB-month (S3 Standard)"
+  note: "Customer's own source bucket. Differs from RawDataSize (indexed size)."
+
+secrets_manager:
+  price_per_secret_month: 0.40
+  unit: "per secret-month"
+  note: "Only for non-S3 connectors (Confluence, SharePoint, OneDrive, GoogleDrive)."
+
+# ── Phase 2: extension points (detected + labeled, NOT computed live in Phase 1) ──
+# kb_cost.get_kb_config() detects whether these are active on a KB; when active but Phase 1,
+# the cost row is shown as "not computed — see Phase 2" rather than a guessed number. Each needs
+# its own live validation before it ships as a computed figure.
+
+custom_embedding:
+  # Only when a custom Bedrock embedding model is chosen instead of the managed default.
+  # Re-embeds changed docs at ingestion at per-token rates (see model_pricing.yaml for the model).
+  price_per_1m_input_tokens_example: 0.02   # e.g. Titan Text Embeddings V2 — verify per model
+  unit: "per 1M input tokens at ingestion"
+  phase: 2
+
+custom_reranking:
+  # Only when a custom reranker (e.g. Cohere Rerank 3.5) replaces the managed one.
+  cohere_rerank_v3_5:
+    price_per_1k_queries: 2.00
+    max_chunks_per_query: 100
+    unit: "per 1,000 rerank queries (<=100 chunks/query)"
+  phase: 2
+
+advanced_parsing:
+  # Only when smart parsing is enabled in the KB's chunking/parsing config.
+  bedrock_data_automation:
+    price_per_page: 0.010
+    unit: "per page (standard output)"
+  # FM parsing is token-based (input+output) at the parser model's rate — see model_pricing.yaml.
+  phase: 2

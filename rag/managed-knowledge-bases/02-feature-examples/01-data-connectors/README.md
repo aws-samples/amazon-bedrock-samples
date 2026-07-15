@@ -1,14 +1,27 @@
 # Data Connectors
 
-One notebook per connector type. Each covers: create KB, configure connector, ingest, query, cleanup.
+Connect your Managed Knowledge Base to various data sources.
 
-| # | Notebook | Connector | Auth |
-|---|----------|-----------|------|
-| 01 | [01-web-crawler-connector.ipynb](01-web-crawler-connector.ipynb) | Web Crawler | NO_AUTH / BASIC / FORM / SAML |
-| 02 | [02-confluence-connector.ipynb](02-confluence-connector.ipynb) | Confluence Cloud | Basic / OAuth2 |
-| 03 | [03-sharepoint-connector.ipynb](03-sharepoint-connector.ipynb) | SharePoint Online | OAuth2 / Entra ID |
-| 04 | 04-onedrive-connector-TBD.ipynb | OneDrive | Secrets Manager |
-| 05 | 05-googledrive-connector-TBD.ipynb | Google Drive | Secrets Manager |
-| 06 | 06-custom-connector-TBD.ipynb | Custom | Varies |
+| # | Notebook | Description |
+|---|----------|-------------|
+| 01 | `01-web-crawler-connector.ipynb` | Web Crawler connector — crawl and ingest web pages |
+| 03 | `03-sharepoint-connector.ipynb` | SharePoint connector — ingest from SharePoint sites |
+| 04 | `04-onedrive-connector.ipynb` | OneDrive connector — ingest from OneDrive |
+| 05 | `05-googledrive-connector.ipynb` | Google Drive connector — ingest from Google Drive | - Coming soon
 
-> S3 connector is covered in [01-getting-started/01-create-bmkb-s3.ipynb](../../01-getting-started/01-create-bmkb-s3.ipynb).
+## Supported connectors
+
+| Connector | Type | Auth required |
+|-----------|------|---------------|
+| S3 | `S3` | IAM (bucket policy) |
+| Web Crawler | `WEB` | Optional (basic, form, SAML) |
+| SharePoint | `SHAREPOINT` | OAuth2 / Entra ID (Secrets Manager) |
+| OneDrive | `ONEDRIVE` | OAuth2 (Secrets Manager) |
+| Google Drive | `GOOGLEDRIVE` | OAuth2 (Secrets Manager) |
+| Confluence | `CONFLUENCE` | OAuth2 (Secrets Manager) |
+| Custom | `CUSTOM` | Varies |
+
+## Documentation
+
+- [Connect a data source](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-managed-connect-ds.html)
+- [Supported data source connectors](https://docs.aws.amazon.com/bedrock/latest/userguide/data-source-connectors.html)

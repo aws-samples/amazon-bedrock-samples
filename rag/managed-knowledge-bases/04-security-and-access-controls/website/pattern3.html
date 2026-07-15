@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern 3: AgentCore Gateway + IAM</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <div class="pattern-hero">
+    <div class="badge"><div class="dot" style="background:var(--blue)"></div>Pattern 3</div>
+    <h1>AgentCore Gateway + IAM</h1>
+    <p class="subtitle">Add a Gateway layer between agents and the Knowledge Base. The Gateway hides the KB ID from agents and provides a standard MCP interface.</p>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Architecture</h4>
+    <div class="arch-flow">
+      <div class="arch-node" style="border-color:var(--green)"><div class="icon">🤖</div><div class="name">Agent</div><div class="sub">IAM Credentials</div></div>
+      <div class="arch-arrow"><div class="al">IAM Auth</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="icon">🚪</div><div class="name">AgentCore Gateway</div><div class="sub">MCP Protocol</div></div>
+      <div class="arch-arrow"><div class="al">Route</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--blue)"><div class="icon">🎯</div><div class="name">KB Target</div><div class="sub">bedrock-knowledge-bases</div></div>
+      <div class="arch-arrow"><div class="al">Retrieve</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--cyan)"><div class="icon">📚</div><div class="name">Managed KB</div><div class="sub">KB ID hidden</div></div>
+    </div>
+  </div>
+
+  <table class="ptable">
+    <tr><th>Without Gateway (P1)</th><th>With Gateway (P3)</th></tr>
+    <tr><td>Agent knows the KB ID</td><td>KB ID is hidden — only Gateway knows it</td></tr>
+    <tr><td>Agent calls Bedrock API directly</td><td>Agent calls Gateway URL (MCP protocol)</td></tr>
+    <tr><td>No centralized access point</td><td>Single Gateway URL for all agents</td></tr>
+    <tr><td>IAM policy per KB</td><td>IAM policy on the Gateway</td></tr>
+  </table>
+
+  <div class="code-box">
+    <h4>Create Gateway + KB Target</h4>
+    <pre><span class="cmt"># Create Gateway with IAM auth</span>
+gw = ac.<span class="fn">create_gateway</span>(
+    name=<span class="str">"my-gateway"</span>,
+    roleArn=GW_ROLE_ARN,
+    protocolType=<span class="str">"MCP"</span>,
+    authorizerType=<span class="str">"AWS_IAM"</span>
+)
+
+<span class="cmt"># Create KB Target — connects Gateway to Knowledge Base</span>
+target = ac.<span class="fn">create_gateway_target</span>(
+    gatewayIdentifier=gw_id,
+    name=<span class="str">"kb-retrieve"</span>,
+    targetConfiguration={
+        <span class="str">"mcp"</span>: {
+            <span class="str">"connector"</span>: {
+                <span class="str">"source"</span>: {<span class="str">"connectorId"</span>: <span class="str">"bedrock-knowledge-bases"</span>},
+                <span class="str">"configurations"</span>: [{
+                    <span class="str">"name"</span>: <span class="str">"Retrieve"</span>,
+                    <span class="str">"parameterValues"</span>: {
+                        <span class="str">"knowledgeBaseId"</span>: kb_id
+                    }
+                }]
+            }
+        }
+    }
+)</pre>
+  </div>
+
+  <div class="use-case">
+    <h4>🎯 When to Use</h4>
+    <p>When you need to hide KB IDs from agents and provide a centralized MCP interface. The Gateway acts as a reverse proxy — agents connect to the Gateway URL, and the Gateway routes requests to the configured KB target.</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="pattern2.html" class="prev"><span class="dir">← Previous</span>P2: Metadata Filters</a>
+    <a href="pattern4.html" class="next"><span class="dir">Next →</span>P4: Gateway + Cedar</a>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>
