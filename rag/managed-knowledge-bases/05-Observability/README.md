@@ -1,30 +1,28 @@
-# 08 — Observability
+# Observability
 
-Monitor, debug, and trace your BMKB and AgentCore Gateway.
+Monitor and observe your Managed Knowledge Base and AgentCore Gateway.
 
-| # | Notebook | Description | Status |
-|---|----------|-------------|--------|
-| 01 | `01-cloudwatch-metrics-TBD.ipynb` | KB metrics, dashboards, and alarms | TBD |
-| 02 | `02-agentcore-observability.ipynb` | Capture Layers 1–5 (KB metrics, ingestion logs, retrieval quality, Gateway metrics, spans) + a KB-focused dashboard | ✅ |
+| # | Notebook | Description |
+|---|----------|-------------|
+| 01 | `01-cloudwatch-metrics.ipynb` | CloudWatch metrics for Managed KBs (ingestion, retrieval, errors) |
+| 02 | `02-agentcore-observability.ipynb` | AgentCore Gateway observability — OTEL spans, vended logs |
 
-### Already covered
+## Observability components
 
-The flagship notebook `06-end-to-end-patterns/01-bmkb-with-agentcore-gateway.ipynb` already demonstrates:
-- **KB metrics** — `AWS/Bedrock/KnowledgeBases` namespace (Invocations, Errors, Throttles)
-- **Gateway metrics** — `AWS/Bedrock-AgentCore` namespace (Invocations, Latency, Errors, Throttles)
-- **OTEL spans** — `aws/spans` log group (per-operation traces with latency)
-- **Vended logs** — `/aws/vendedlogs/bedrock-agentcore/{gateway_id}` (request processing)
-- **Ingestion logs** — `/aws/vendedlogs/bedrock/knowledge-base/APPLICATION_LOGS/{kb_id}`
+| Component | What it provides |
+|-----------|-----------------|
+| **KB CloudWatch Metrics** | Ingestion success/failure, retrieval latency, document counts |
+| **KB Vended Logs** | Detailed ingestion logs per document |
+| **Gateway OTEL Spans** | Tool invocation traces (Initialize, ListTools, InvokeTool) |
+| **Gateway Vended Logs** | Request/response logs for each MCP call |
 
-These dedicated notebooks will provide deeper dives into dashboards, alarms, and advanced tracing patterns.
+## Key metric dimensions
 
-### Key namespaces
+- KB metrics namespace: `AWS/Bedrock/KnowledgeBases`
+- KB dimension: `knowledge-base/{kb_id}`
+- Gateway metrics namespace: `AWS/Bedrock-AgentCore`
 
-| Namespace | Metrics | Dimensions |
-|-----------|---------|------------|
-| `AWS/Bedrock/KnowledgeBases` | Invocations, ServerErrors, ClientErrors, Throttles, TotalIterationCount, RawDataSize | KnowledgeBaseId, Operation |
-| `AWS/Bedrock-AgentCore` | Invocations, Latency, SystemErrors, UserErrors, Throttles | Operation, Protocol, Resource, Method |
+## Documentation
 
-> **Note:** `NumberOfVectors` appears in CloudWatch but is undocumented and always shows 0 — it is filtered out in the notebooks.
-
-> **Note for contributors:** Reference the [AgentCore observability docs](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability.html) for Gateway observability details.
+- [Observability for managed KBs](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-managed-observability.html)
+- [AgentCore observability](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability.html)

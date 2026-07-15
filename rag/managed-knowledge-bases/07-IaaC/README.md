@@ -4,9 +4,9 @@ Deploy a complete Bedrock Managed Knowledge Base stack using CloudFormation or C
 
 ## Templates
 
-| Directory/File | Type | Description |
-|------|------|-------------|
-| `managed-kb-s3-cfn.yaml` | CloudFormation | Single YAML template — S3 + IAM + KB + data source |
+| Directory | Type | Description |
+|-----------|------|-------------|
+| `managed_kb_cfn/` | CloudFormation | Single YAML template — S3 + IAM + KB + data source |
 | `managed_kb_cdk/` | CDK (Python) | Python CDK app with configurable options |
 
 ## What it creates
@@ -32,7 +32,7 @@ Deploy a complete Bedrock Managed Knowledge Base stack using CloudFormation or C
 # Deploy (uses managed default embedding — no extra cost)
 aws cloudformation create-stack \
   --stack-name my-managed-kb \
-  --template-body file://managed-kb-s3-cfn.yaml \
+  --template-body file://managed_kb_cfn/managed-kb-s3-cfn.yaml \
   --parameters ParameterKey=KnowledgeBaseName,ParameterValue=my-bmkb \
   --capabilities CAPABILITY_NAMED_IAM \
   --region us-west-2
@@ -53,53 +53,13 @@ aws bedrock-agent start-ingestion-job --knowledge-base-id <kb-id> --data-source-
 
 ```bash
 cd managed_kb_cdk
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 
-# Set up virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-.venv/bin/pip install -r requirements.txt
-
-# Edit config.py with your account ID and region
-# Then validate the template synthesizes correctly
-cdk synth
-
-# Deploy
-cdk bootstrap   # one-time per account/region
+# Edit config.py with your account/region
+cdk bootstrap
 cdk deploy
 ```
-
-> **Note:** If `pip install` fails with an "externally-managed-environment" error, use
-> `.venv/bin/pip install -r requirements.txt` to bypass shell aliases pointing to the system pip.
-
-## End-to-End Test
-
-After deploying (via either CFN or CDK), verify the stack works:
-
-```bash
-# 1. Upload a test document
-aws s3 cp your-file.pdf s3://<bucket>/documents/
-
-# 2. Start ingestion
-aws bedrock-agent start-ingestion-job \
-  --knowledge-base-id <KB_ID> \
-  --data-source-id <DS_ID> \
-  --region us-west-2
-
-# 3. Check ingestion status (wait for COMPLETE)
-aws bedrock-agent get-ingestion-job \
-  --knowledge-base-id <KB_ID> \
-  --data-source-id <DS_ID> \
-  --ingestion-job-id <JOB_ID> \
-  --region us-west-2
-
-# 4. Query the knowledge base
-aws bedrock-agent-runtime retrieve \
-  --knowledge-base-id <KB_ID> \
-  --retrieval-query '{"text": "your query here"}' \
-  --region us-west-2
-```
-
-Replace `<bucket>`, `<KB_ID>`, `<DS_ID>`, and `<JOB_ID>` with values from the stack outputs and ingestion response.
 
 ## Parameters
 
@@ -146,13 +106,8 @@ aws cloudformation delete-stack --stack-name my-managed-kb
 # CDK
 cdk destroy
 aws s3 rb s3://<bucket> --force  # bucket retained by default
-deactivate
-rm -rf .venv
 ```
 
-## Terraform
-
-The Terraform AWS provider (`hashicorp/aws` v6.53) does not yet support `Type: MANAGED` for knowledge bases. Workaround: use `aws_cloudformation_stack` to deploy the CFN template via Terraform.
 
 ## Documentation
 
