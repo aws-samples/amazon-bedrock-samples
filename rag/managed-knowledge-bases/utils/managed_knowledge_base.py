@@ -519,8 +519,33 @@ def _build_connector_params(config: dict, account_id: str) -> tuple:
         if filter_config:
             connector_params["filterConfiguration"] = filter_config
 
+    elif connector_type == "GOOGLEDRIVE":
+        connector_params = {
+            "type": "GOOGLEDRIVE",
+            "version": "1",
+            "connectionConfiguration": {
+                "secretArn": config["secret_arn"],
+                "authType": config.get("auth_type", "OAUTH2"),
+                **config.get("connection_configuration", {}),
+            },
+            "dataEntityConfiguration": config.get("data_entity_config", {
+                "type": "DRIVE",
+                "crawlMyDrive": True,
+                "crawlSharedWithMe": True,
+                "crawlSharedDrives": True,
+            }),
+            "deletionProtectionConfiguration": {"enableDeletionProtection": False},
+        }
+        filter_config = config.get("filter_config", {})
+        if config.get("inclusion_filters"):
+            filter_config["inclusionFilters"] = config["inclusion_filters"]
+        if config.get("exclusion_filters"):
+            filter_config["exclusionFilters"] = config["exclusion_filters"]
+        if filter_config:
+            connector_params["filterConfiguration"] = filter_config
+
     else:
-        # Generic authenticated connectors: GOOGLEDRIVE
+        # Generic fallback for future connectors
         connector_params = {
             "type": config["type"],
             "version": "1",
