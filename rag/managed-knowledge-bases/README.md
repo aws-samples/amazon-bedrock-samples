@@ -26,12 +26,10 @@ Create a KB, ingest documents, and query with the Retrieve and AgenticRetrieveSt
 
 Focused examples for individual managed KB capabilities:
 
-- [01-data-connectors/](02-feature-examples/01-data-connectors/) — Web Crawler,  <span style="color:red">[ Confluence, SharePoint, OneDrive, Google Drive, Custom - coming soon]</span>
-- [02-chunking-and-parsing/](02-feature-examples/02-chunking-and-parsing/) — chunking strategies, Multi-modal RAG using Smart Parsing & advance indexing
+- [01-data-connectors/](02-feature-examples/01-data-connectors/) — Web Crawler, SharePoint, OneDrive, Google Drive
+- [02-chunking-and-parsing/](02-feature-examples/02-chunking-and-parsing/) — Chunking strategies, multi-modal RAG with Smart Parsing + Advanced Indexing
 - [03-retrieval-optimization/](02-feature-examples/03-retrieval-optimization/) — Hybrid search, metadata filtering, agentic retrieval deep dive
-- [04-rag-evaluation/](02-feature-examples/04-rag-evaluation/) — Synthetic Q&A generation, Bedrock evaluation jobs <span style="color:red">[coming soon]</span>
-- [05-observability/](02-feature-examples/05-observability/) — CloudWatch metrics, OTEL spans, vended logs <span style="color:red">[coming soon]</span>
-- [06-responsible-ai/](02-feature-examples/06-responsible-ai/) — Bedrock Guardrails integration <span style="color:red">[coming soon]</span>
+- [04-rag-evaluation/](02-feature-examples/04-rag-evaluation/) — AgentCore Evaluations, RAGAS framework
 
 ### 💡 [03-use-case-example/](03-use-case-example/)
 
@@ -40,6 +38,38 @@ Focused examples for individual managed KB capabilities:
 End-to-end patterns that combine multiple capabilities:
 
 - [01-end-to-end-example-with-ac-gateway/](03-use-case-example/01-end-to-end-example-with-ac-gateway/) — KB + AgentCore Gateway + Strands Agent + full-stack observability
+- [02-multi-kb-semantic-routing.ipynb](03-use-case-example/02-multi-kb-semantic-routing.ipynb) — Multi-KB routing via Gateway with transparent tool selection
+- [03-gateway-with-cedar-policies.ipynb](03-use-case-example/03-gateway-with-cedar-policies.ipynb) — Gateway + Cedar for multi-tenant access control
+
+### 🔐 [04-security-and-access-controls/](04-security-and-access-controls/)
+
+**Security & Access Control**
+
+Progressive security patterns from direct SDK access to full governance (8 notebooks):
+- Direct SDK with IAM, metadata filtering, AgentCore Gateway auth
+- Cedar Policy Engine, JWT/Cognito authentication, Lambda interceptors
+- Full governance stack (JWT + Cedar + Interceptor + metadata filters)
+
+### 📈 [05-Observability/](05-Observability/)
+
+**Monitoring & Observability**
+
+- CloudWatch metrics for Managed KBs
+- AgentCore Gateway observability (OTEL spans, vended logs)
+
+### 🛡️ [06-Responsible AI/](06-Responsible%20AI/)
+
+**Guardrails & Safety**
+
+- Bedrock Guardrails integration with Managed KBs
+- Contextual grounding checks to detect and block hallucinated responses
+
+### 🏗️ [07-IaaC/](07-IaaC/)
+
+**Infrastructure as Code**
+
+- CloudFormation template (single YAML)
+- CDK (Python) app with configurable options
 
 ## Quick Start
 

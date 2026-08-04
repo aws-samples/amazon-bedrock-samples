@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern 2: Access Control with Metadata Filters</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <div class="pattern-hero">
+    <div class="badge"><div class="dot" style="background:var(--blue)"></div>Pattern 2</div>
+    <h1>Access Control with Metadata Filters</h1>
+    <p class="subtitle">Tag documents with access control attributes (department, role, tenant ID), then filter at retrieval time so users only see documents they're authorized to access.</p>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Architecture</h4>
+    <div class="arch-flow">
+      <div class="arch-node" style="border-color:var(--green)"><div class="icon">👤</div><div class="name">Authenticated User</div><div class="sub">dept=engineering</div></div>
+      <div class="arch-arrow"><div class="al">App injects filter</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="icon">🔍</div><div class="name">Retrieve API</div><div class="sub">+ {dept: "engineering"}</div></div>
+      <div class="arch-arrow"><div class="al">Filtered Retrieve</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--cyan)"><div class="icon">📚</div><div class="name">Managed KB</div><div class="sub">Only eng docs returned</div></div>
+      <div class="arch-arrow dashed"><div class="al">Indexed Metadata</div><div class="ar">⇢</div></div>
+      <div class="arch-node" style="border-color:var(--orange)"><div class="icon">🪣</div><div class="name">S3 Docs</div><div class="sub">.metadata.json</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card" style="border-left:3px solid var(--blue)">
+      <h4>Sidecar Format</h4>
+      <pre style="font-size:0.75rem;color:var(--text-muted);font-family:monospace;white-space:pre-wrap">{
+  "metadataAttributes": {
+    "department": {
+      "value": {
+        "type": "STRING",
+        "stringValue": "engineering"
+      }
+    },
+    "access_level": {
+      "value": {
+        "type": "STRING",
+        "stringValue": "internal"
+      }
+    }
+  }
+}</pre>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--blue)">
+      <h4>Use Cases</h4>
+      <ul>
+        <li><span class="ck">✓</span> Multi-department chatbot (HR, eng, security)</li>
+        <li><span class="ck">✓</span> Multi-tenant SaaS (filter by tenant_id)</li>
+        <li><span class="ck">✓</span> Healthcare (patient_id per doctor)</li>
+        <li><span class="ck">✓</span> Compliance (classification levels)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-box">
+    <h4>Access Control Filter — Department Scoping</h4>
+    <pre><span class="cmt"># Filter injected by app based on authenticated user's department</span>
+authenticated_dept = jwt_claims[<span class="str">"custom:department"</span>]
+
+response = dp.<span class="fn">retrieve</span>(
+    knowledgeBaseId=kb_id,
+    retrievalQuery={<span class="str">"text"</span>: user_query},
+    retrievalConfiguration={
+        <span class="str">"managedSearchConfiguration"</span>: {
+            <span class="str">"numberOfResults"</span>: 5,
+            <span class="str">"filter"</span>: {
+                <span class="str">"equals"</span>: {<span class="str">"key"</span>: <span class="str">"department"</span>, <span class="str">"value"</span>: authenticated_dept}
+            }
+        }
+    }
+)</pre>
+  </div>
+
+  <div class="code-box">
+    <h4>Cross-Department Access — IN Filter</h4>
+    <pre><span class="cmt"># User with access to multiple departments</span>
+user_depts = [<span class="str">"engineering"</span>, <span class="str">"security"</span>]
+
+<span class="str">"filter"</span>: {
+    <span class="str">"in"</span>: {<span class="str">"key"</span>: <span class="str">"department"</span>, <span class="str">"value"</span>: user_depts}
+}</pre>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card" style="border-left:3px solid var(--green)">
+      <h4>Strengths</h4>
+      <ul>
+        <li><span class="ck">✓</span> No KB or data source changes needed</li>
+        <li><span class="ck">✓</span> Works with any auth system</li>
+        <li><span class="ck">✓</span> Flexible multi-attribute filtering</li>
+        <li><span class="ck">✓</span> Low latency — filtering in vector store</li>
+      </ul>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--orange)">
+      <h4>Limitations</h4>
+      <ul>
+        <li><span class="cx">✗</span> Caller knows the KB ID</li>
+        <li><span class="cx">✗</span> App must enforce filter injection</li>
+        <li><span class="cx">✗</span> No server-side enforcement</li>
+        <li><span class="cx">✗</span> Bypassing the app = sees everything</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="use-case">
+    <h4>🎯 When to Use</h4>
+    <p>Your application controls access and can reliably inject the correct filter for each authenticated user. Works well when combined with Cognito, SSO, or any identity provider that provides user attributes. For server-side enforcement, add a Gateway (Pattern 3+).</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="pattern1.html" class="prev"><span class="dir">← Previous</span>P1: Direct SDK</a>
+    <a href="pattern3.html" class="next"><span class="dir">Next →</span>P3: Gateway + IAM</a>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>

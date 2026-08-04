@@ -1,1 +1,0 @@
-# BMKB connector-specific utilities

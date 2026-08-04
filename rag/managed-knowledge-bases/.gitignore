@@ -5,3 +5,6 @@ __pycache__/
 .ipynb_checkpoints/
 evaluation_data/
 venv*/
+cdk.out/
+.venv/
+node_modules/

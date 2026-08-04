@@ -16,9 +16,17 @@ pypdf>=4.0.0
 tqdm>=4.60.0
 pandas>=2.0.0
 
+# Notebook display (pandas Styler tables; status output uses ANSI print)
+jinja2>=3.0.0
+
 # AgentCore Gateway (for end-to-end patterns)
 strands-agents>=0.1.0
 mcp-proxy-for-aws>=0.1.0
+
+# AgentCore Runtime deploy (evaluation notebook — deploys the agent that emits eval spans)
+bedrock-agentcore>=0.1.0
+bedrock-agentcore-starter-toolkit>=0.1.0
+pyyaml>=6.0
 
 # For RAGAS evaluation (optional)
 # ragas==0.1.21
