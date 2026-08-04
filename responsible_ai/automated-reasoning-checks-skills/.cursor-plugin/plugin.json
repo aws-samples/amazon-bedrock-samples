@@ -6,8 +6,8 @@
   "author": {
     "name": "Adewale Akinfaderin"
   },
-  "homepage": "https://github.com/akinfaa/amazon-bedrock-samples/tree/ar-checks-skills/responsible_ai/automated-reasoning-checks-skills",
-  "repository": "https://github.com/akinfaa/amazon-bedrock-samples",
+  "homepage": "https://github.com/aws-samples/amazon-bedrock-samples/tree/main/responsible_ai/automated-reasoning-checks-skills",
+  "repository": "https://github.com/aws-samples/amazon-bedrock-samples",
   "license": "Apache-2.0",
   "keywords": [
     "bedrock",

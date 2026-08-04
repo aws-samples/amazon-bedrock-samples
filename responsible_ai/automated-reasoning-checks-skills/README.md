@@ -6,16 +6,15 @@ to mathematically verify LLM outputs against an encoded policy.
 
 ![Six Agent Skills across the policy lifecycle](diagrams/02-lifecycle.png)
 
-> **Reviewing this?** Thanks for taking a look. It's a working draft shared for feedback before a PR
-> upstream. You can read everything right here (README, diagrams, and the `skills/*/SKILL.md` files);
-> nothing calls AWS until *you* run a script with your own credentials.
+> Nothing calls AWS until *you* run a script with your own credentials. You can read everything first:
+> this README, the diagrams, and the `skills/*/SKILL.md` files.
 
 ## Try it
 
 This suite lives in a subfolder of a larger repo, so start from a local clone:
 
 ```bash
-git clone --depth 1 -b ar-checks-skills https://github.com/akinfaa/amazon-bedrock-samples.git
+git clone --depth 1 https://github.com/aws-samples/amazon-bedrock-samples.git
 ```
 
 **In Claude Code**, point the marketplace at the suite folder and install any of the six plugins:
@@ -28,8 +27,8 @@ git clone --depth 1 -b ar-checks-skills https://github.com/akinfaa/amazon-bedroc
 **In other agents that support the open format** (Kiro, Cursor, Codex), install with `npx`:
 
 ```bash
-REPO=https://github.com/akinfaa/amazon-bedrock-samples
-npx skills add $REPO/tree/ar-checks-skills/responsible_ai/automated-reasoning-checks-skills --skill '*'
+REPO=https://github.com/aws-samples/amazon-bedrock-samples
+npx skills add $REPO/tree/main/responsible_ai/automated-reasoning-checks-skills --skill '*'
 ```
 
 Skills in the `automated-reasoning-skills` set: `ar-policy-builder`, `ar-policy-reviewer`,
