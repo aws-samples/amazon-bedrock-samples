@@ -1,0 +1,46 @@
+{
+  "name": "automated-reasoning-skills",
+  "owner": { "name": "Adewale Akinfaderin" },
+  "metadata": {
+    "description": "Agent Skills for Amazon Bedrock Automated Reasoning checks: build, review, test, debug, deploy, and validate AR policies.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "ar-policy-builder",
+      "source": "./skills/ar-policy-builder",
+      "skills": "./",
+      "description": "Create an Automated Reasoning policy from a source document (INGEST_CONTENT)."
+    },
+    {
+      "name": "ar-policy-reviewer",
+      "source": "./skills/ar-policy-reviewer",
+      "skills": "./",
+      "description": "Inspect a policy's quality + fidelity reports and produce a prioritized fix list."
+    },
+    {
+      "name": "ar-policy-tester",
+      "source": "./skills/ar-policy-tester",
+      "skills": "./",
+      "description": "Generate scenarios and run QnA tests against an AR policy."
+    },
+    {
+      "name": "ar-policy-debugger",
+      "source": "./skills/ar-policy-debugger",
+      "skills": "./",
+      "description": "Diagnose failing tests and repair policies via annotations / refinement workflows."
+    },
+    {
+      "name": "ar-guardrail-deployer",
+      "source": "./skills/ar-guardrail-deployer",
+      "skills": "./",
+      "description": "Version a policy and attach it to a Bedrock Guardrail for production."
+    },
+    {
+      "name": "ar-runtime-validator",
+      "source": "./skills/ar-runtime-validator",
+      "skills": "./",
+      "description": "Validate LLM outputs with ApplyGuardrail and run an iterative rewrite loop (Valid@N)."
+    }
+  ]
+}

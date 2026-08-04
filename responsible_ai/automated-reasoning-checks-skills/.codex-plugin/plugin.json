@@ -1,0 +1,43 @@
+{
+  "name": "automated-reasoning-skills",
+  "version": "0.1.0",
+  "description": "Agent Skills for Amazon Bedrock Automated Reasoning checks: build an AR policy from a document, review its quality and fidelity, generate and run tests, debug failures via annotations, deploy it to a guardrail, and validate LLM answers at runtime with a rewrite loop.",
+  "author": {
+    "name": "Adewale Akinfaderin",
+    "url": "https://github.com/aws-samples/amazon-bedrock-samples"
+  },
+  "homepage": "https://github.com/akinfaa/amazon-bedrock-samples/tree/ar-checks-skills/responsible_ai/automated-reasoning-checks-skills",
+  "repository": "https://github.com/akinfaa/amazon-bedrock-samples",
+  "license": "Apache-2.0",
+  "keywords": [
+    "bedrock",
+    "automated-reasoning",
+    "guardrails",
+    "responsible-ai",
+    "formal-verification",
+    "smt",
+    "hallucination",
+    "compliance",
+    "aws"
+  ],
+  "skills": "skills",
+  "interface": {
+    "displayName": "Automated Reasoning Checks",
+    "shortDescription": "Build, test, deploy, and validate Amazon Bedrock Automated Reasoning policies.",
+    "longDescription": "Six focused skills covering the full Automated Reasoning lifecycle on Amazon Bedrock: turn a policy document into formal logic rules, review the quality and fidelity reports, generate scenarios and run Q&A tests, diagnose failures with the translate-vs-validate triage and repair via annotations, version and attach the policy to a guardrail, and validate LLM answers at runtime with an iterative rewrite loop.",
+    "defaultPrompt": [
+      "Create an Automated Reasoning policy from this policy document.",
+      "Review my AR policy's quality and fidelity reports.",
+      "My AR test is failing \u2014 help me debug and fix the policy.",
+      "Validate this chatbot answer against my AR guardrail."
+    ],
+    "developerName": "Adewale Akinfaderin",
+    "category": "AI",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://aws.amazon.com/bedrock/guardrails/",
+    "brandColor": "#FF9900"
+  }
+}
