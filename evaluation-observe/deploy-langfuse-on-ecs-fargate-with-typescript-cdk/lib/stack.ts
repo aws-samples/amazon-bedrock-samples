@@ -12,14 +12,16 @@ export interface ILangfuseDemoStackProps extends cdk.StackProps {
   /**
    * Source container image (including version) for ClickHouse
    *
-   * To avoid rate limit issues for customers without Docker Hub credentials, we use Bitnami's
-   * distribution of ClickHouse on Amazon ECR Public by default. If you configure Docker Hub tokens
-   * in the environment where you run 'cdk deploy', you could switch to e.g. 'clickhouse:25'.
-   * 
+   * We use Altinity's stable ClickHouse distribution on Amazon ECR Public by default to avoid
+   * Docker Hub rate limits for customers without Docker Hub credentials. (Bitnami's distribution,
+   * previously used here, is no longer published on ECR Public.) You can also use the official
+   * Docker Hub image (e.g. 'clickhouse/clickhouse-server:25') if you configure Docker Hub
+   * credentials in the environment where you run 'cdk deploy'.
+   *
    * Note that this construct actually builds a custom (ECR Private) image from the base you
    * specify here, to configure logging for the target ECS environment.
-   * 
-   * @default 'public.ecr.aws/bitnami/clickhouse:25'
+   *
+   * @default 'public.ecr.aws/altinity/clickhouse/clickhouse-server:25.8.28'
    */
   clickHouseImage?: string;
   /**
@@ -27,7 +29,7 @@ export interface ILangfuseDemoStackProps extends cdk.StackProps {
    *
    * We use GitHub Container Registry by default, but you could also consider Docker Hub with e.g.
    * 'langfuse/langfuse:3'
-   * 
+   *
    * @default 'ghcr.io/langfuse/langfuse:3'
    */
   langfuseWebImage?: string;
@@ -36,7 +38,7 @@ export interface ILangfuseDemoStackProps extends cdk.StackProps {
    *
    * We use GitHub Container Registry by default, but you could also consider Docker Hub with e.g.
    * 'langfuse/langfuse-worker:3'
-   * 
+   *
    * @default 'ghcr.io/langfuse/langfuse-worker:3'
    */
   langfuseWorkerImage?: string;
