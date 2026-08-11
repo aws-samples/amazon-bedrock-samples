@@ -23,7 +23,7 @@ Parameters:
 
   ClickHouseContainerImage:
     Type: String
-    Default: 'public.ecr.aws/bitnami/clickhouse:25'
+    Default: 'public.ecr.aws/altinity/clickhouse/clickhouse-server:25.8.28'
     Description: >-
       Source container image (including version) for ClickHouse OLAP (a dependency of Langfuse).
 
@@ -51,7 +51,7 @@ Parameters:
     Default: main
     Description: >-
       Branch (or commit hash) of the repository to deploy from. Ignored if CodeRepo is not a git URL
-  
+
   CodeRepoFolder:
     Type: String
     Default: evaluation-observe/deploy-langfuse-on-ecs-fargate-with-typescript-cdk

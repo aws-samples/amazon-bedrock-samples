@@ -51,15 +51,17 @@ export interface IClickHouseDeploymentProps {
   environment?: { [key: string]: string };
   /**
    * Source image (including version tag) of ClickHouse to build & deploy from
-   * 
-   * To avoid rate limit issues for customers without Docker Hub credentials, we use Bitnami's
-   * distribution of ClickHouse on Amazon ECR Public by default. If you configure Docker Hub tokens
-   * in the environment where you run 'cdk deploy', you could switch to e.g. 'clickhouse:25'.
-   * 
+   *
+   * We use Altinity's stable ClickHouse distribution on Amazon ECR Public by default to avoid
+   * Docker Hub rate limits for customers without Docker Hub credentials. (Bitnami's distribution,
+   * previously used here, is no longer published on ECR Public.) You can also use the official
+   * Docker Hub image (e.g. 'clickhouse/clickhouse-server:25') if you configure Docker Hub
+   * credentials in the environment where you run 'cdk deploy'.
+   *
    * Note that this construct actually builds a custom (ECR Private) image from the base you
    * specify here, to configure logging for the target ECS environment.
-   * 
-   * @default 'public.ecr.aws/bitnami/clickhouse:25'
+   *
+   * @default 'public.ecr.aws/altinity/clickhouse/clickhouse-server:25.8.28'
    */
   image?: string;
   /**
@@ -83,10 +85,10 @@ export interface IClickHouseDeploymentProps {
   /**
    * Which packaging variant of ClickHouse is provided by `image`
    *
-   * This construct supports both the vanilla ClickHouse container (distributed via Docker Hub) and
-   * Bitnami's custom distribution (available on Amazon ECR Public). However, the two need slightly
-   * different deployment setups. If it's not clear from your `image` URI, you can use this prop to
-   * explicitly specify which distribution your chosen source is based on.
+   * This construct supports both the vanilla ClickHouse container layout (as used by the official
+   * Docker Hub images and Altinity's ECR Public builds) and Bitnami's custom distribution, which
+   * need slightly different deployment setups. If it's not clear from your `image` URI, you can use
+   * this prop to explicitly specify which layout your chosen source is based on.
    *
    * @default - Inferred based on whether `image` contains 'bitnami'
    */
@@ -230,8 +232,13 @@ export class ClickHouseDeployment extends Construct {
     const cpu = props.cpu || 1024;
     const memoryLimitMiB = props.memoryLimitMiB || 8192;
     const serviceName = props.serviceName || "clickhouse";
-    const image = props.image || "public.ecr.aws/bitnami/clickhouse:25";
-    const variant = props.variant || image.includes("bitnami") ? "bitnami" : "default";
+    const image =
+      props.image ||
+      "public.ecr.aws/altinity/clickhouse/clickhouse-server:25.8.28";
+    // Note the parentheses: without them, `||` binds tighter than `?:` and an explicitly-passed
+    // `props.variant` of "default" would be coerced to a truthy test and yield "bitnami".
+    const variant =
+      props.variant || (image.includes("bitnami") ? "bitnami" : "default");
 
     this.secret = new secretsmanager.Secret(this, "Secret", {
       generateSecretString: {
