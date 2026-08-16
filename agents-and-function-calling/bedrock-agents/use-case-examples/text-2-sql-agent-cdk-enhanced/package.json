@@ -1,13 +1,25 @@
 {
+    "name": "text-2-sql-agent-cdk-enhanced",
+    "version": "1.0.0",
+    "description": "Text to SQL Bedrock Agent with CDK Enhanced",
+    "main": "app.py",
+    "scripts": {
+        "build": "cdk synth",
+        "deploy": "cdk deploy",
+        "destroy": "cdk destroy"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
     "peerDependencies": {
-      "aws-cdk-lib": "^2.166.0",
-      "constructs": "^10.0.0"
+        "aws-cdk-lib": "^2.200.0",
+        "constructs": "^10.0.0"
     },
     "devDependencies": {
-      "aws-cdk-lib": "2.166.0"
+        "aws-cdk-lib": "^2.200.0"
     },
     "dependencies": {
-        "aws-cdk-lib": "^2.166.0",
+        "aws-cdk-lib": "^2.200.0",
         "constructs": "^10.0.0"
-      }
-  }
+    }
+}

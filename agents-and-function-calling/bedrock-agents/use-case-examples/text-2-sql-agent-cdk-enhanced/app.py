@@ -1,31 +1,19 @@
-from aws_cdk import App, Stack, RemovalPolicy
+from aws_cdk import App, Stack, RemovalPolicy, Duration
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_glue as glue
 from aws_cdk import aws_iam as iam
-from aws_cdk.aws_s3_deployment import BucketDeployment, Source
-import aws_cdk as cdk
-from aws_cdk.aws_lambda import Runtime
-from aws_cdk.aws_lambda_python_alpha import PythonFunction
-from cdklabs.generative_ai_cdk_constructs import (
-    bedrock)
-
-from cdklabs.generative_ai_cdk_constructs.bedrock import (
-    Agent, ApiSchema, BedrockFoundationModel,AgentActionGroup
-)
 from aws_cdk import aws_events as events
 from aws_cdk import aws_cloudformation as cfn
-
 from aws_cdk import aws_events_targets as events_targets
-# from aws_cdk import custom_resources
-#from aws_cdk import core as cdk
-from aws_cdk import Duration  # Import Duration directly
-from cdklabs.generative_ai_cdk_constructs.bedrock import ActionGroupExecutor
+from aws_cdk.aws_s3_deployment import BucketDeployment, Source
+from aws_cdk.aws_lambda import Runtime
+from aws_cdk.aws_lambda_python_alpha import PythonFunction
+import aws_cdk as cdk
 
-
+from cdklabs.generative_ai_cdk_constructs import bedrock
 from constructs import Construct
-from agent_instruction_generator import analyze_csv_files,generate_instruction,invoke_claude_3_with_text
-
+from agent_instruction_generator import analyze_csv_files, generate_instruction, invoke_claude_3_with_text
 from Prep_Data import prep_data
 
 class MyStack(Stack):
@@ -47,7 +35,7 @@ class MyStack(Stack):
         agent_role_name = f'AmazonBedrockExecutionRoleForAgents_{suffix}'
         lambda_name = f'{agent_name}-{suffix}'
     
-        foundation_model = BedrockFoundationModel('anthropic.claude-3-sonnet-20240229-v1:0', supports_agents=True)
+        foundation_model = bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_3_5_SONNET_V1_0
         
         
         prep_data(data_folder_name)
@@ -178,34 +166,35 @@ class MyStack(Stack):
         agent_instruction=invoke_claude_3_with_text(question)    
         print(agent_instruction)
         
-        api_schema = ApiSchema.from_asset("./text_to_sql_openapi_schema.json")
-        agent = Agent(
+        api_schema = bedrock.ApiSchema.from_local_asset("./text_to_sql_openapi_schema.json")
+        agent = bedrock.Agent(
             self,
             "MyAgent",
             foundation_model=foundation_model,
             instruction=agent_instruction,
             description="Agent for performing sql queries.",
-            should_prepare_agent=True
-          
+            should_prepare_agent=True,
+            user_input_enabled=True,  # Allow the agent to prompt for additional information
+            code_interpreter_enabled=False,  # Disable code interpreter as it's not needed for SQL queries
+           
         )
-        # agent.add_alias(self, 'ProdAlias', 
+        # Create an agent alias for production use
+        # from cdklabs.generative_ai_cdk_constructs.bedrock import AgentAlias
+        # agent_alias = AgentAlias(self, 'ProdAlias',
+        #     agent=agent,
         #     alias_name='prod',
-        #     agent_version='1'
-        #     )   
+        #     description="Production alias for the SQL query agent"
+        # )
         
       
 
-        action_group = AgentActionGroup(
-            self,
-            "MyActionGroup",
-            action_group_name="QueryAthenaActionGroup",
+        action_group = bedrock.AgentActionGroup(
+            name="QueryAthenaActionGroup",
             description="Actions for getting the database schema and querying the Athena database for sample data or final query.",
-            action_group_executor=ActionGroupExecutor(lambda_=action_group_function),  
-            action_group_state="ENABLED",
+            executor=bedrock.ActionGroupExecutor.fromlambda_function(action_group_function), 
+            enabled=True,
             api_schema=api_schema
         )
-        
-       
         
         agent.add_action_group(action_group)
        
