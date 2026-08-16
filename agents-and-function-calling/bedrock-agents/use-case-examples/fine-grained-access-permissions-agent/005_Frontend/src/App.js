@@ -62,7 +62,8 @@ const parseJwtToken = (tokenType) => {
   };
   
   const generateSessionId = () => {
-    const newSessionId = Math.random().toString(36).substring(2, 15); // Generate a new session ID
+    // Use cryptographically secure random UUID instead of Math.random()
+    const newSessionId = crypto.randomUUID();
     setSessionId(newSessionId);
   };  
   
@@ -121,8 +122,9 @@ function callAPIGW(accessToken, idToken, inputPrompt, setIsLoading, sessionId) {
     .get(apiGatewayUrl, { headers: headers })
     .then((response) => {
       console.log(response.data);
-      document.getElementById('apiresponse').innerHTML =
-        '<b>Response</b><br>' + JSON.stringify(response.data, null, 2);
+      // Use textContent instead of innerHTML to prevent XSS attacks
+      const apiResponseElement = document.getElementById('apiresponse');
+      apiResponseElement.textContent = 'Response\n' + JSON.stringify(response.data, null, 2);
       setIsLoading(false); // Set isLoading to false after receiving the response
         
     })
