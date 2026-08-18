@@ -1,0 +1,550 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Stack 03 — Instrumented Strands agent on AgentCore Runtime. CodeBuild
+  builds the agent container (OTEL auto-instrumented via aws-opentelemetry-distro),
+  a custom resource triggers + waits for the build, then a Runtime hosts the agent.
+  The agent connects to the Stack 02 Gateway (SigV4) and calls the per-KB
+  AgenticRetrieveStream tools. Vended logs + traces are delivered to CloudWatch/X-Ray,
+  which feed the 7-layer observability + KB dashboards (Layer 6 = agentic spans).
+  Native L1 CFN + two operational custom resources (image build). Imports the Gateway
+  from Stack 02a.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: bmkb-obs
+    Description: Must match Stack 01/02a ProjectName (drives the imports).
+  ModelId:
+    Type: String
+    Default: us.anthropic.claude-haiku-4-5-20251001-v1:0
+    Description: Bedrock model the Strands agent reasons with (agent's own FM — Layer 6 spend).
+  ImageTag:
+    Type: String
+    Default: latest
+    Description: Container image tag.
+  NetworkMode:
+    Type: String
+    Default: PUBLIC
+    AllowedValues: [PUBLIC, VPC]
+    Description: Runtime network mode.
+
+Resources:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # ECR — holds the agent image. Emptied + deleted with the stack.
+  # ──────────────────────────────────────────────────────────────────────────
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      RepositoryName: !Sub "${ProjectName}-agent"
+      ImageTagMutability: MUTABLE
+      EmptyOnDelete: true
+      ImageScanningConfiguration:
+        ScanOnPush: true
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # IAM — agent execution role (assumed by AgentCore Runtime), CodeBuild role,
+  # custom-resource role.
+  # ──────────────────────────────────────────────────────────────────────────
+  AgentExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-agent-exec-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock-agentcore.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:*"
+      Policies:
+        - PolicyName: agent-exec
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ECRImageAccess
+                Effect: Allow
+                Action:
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchCheckLayerAvailability
+                Resource: !GetAtt ECRRepository.Arn
+              - Sid: ECRTokenAccess
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: CloudWatchLogs
+                Effect: Allow
+                Action:
+                  - logs:DescribeLogStreams
+                  - logs:CreateLogGroup
+                  - logs:DescribeLogGroups
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Sid: XRayTracing
+                Effect: Allow
+                Action:
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                  - xray:GetSamplingRules
+                  - xray:GetSamplingTargets
+                Resource: "*"
+              - Sid: CloudWatchMetrics
+                Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: bedrock-agentcore
+              - Sid: GetAgentAccessToken
+                Effect: Allow
+                Action:
+                  - bedrock-agentcore:GetWorkloadAccessToken
+                  - bedrock-agentcore:GetWorkloadAccessTokenForJWT
+                  - bedrock-agentcore:GetWorkloadAccessTokenForUserId
+                Resource:
+                  - !Sub "arn:aws:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:workload-identity-directory/default"
+                  - !Sub "arn:aws:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:workload-identity-directory/default/workload-identity/*"
+              - Sid: BedrockModelInvocation
+                Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: "*"
+              - Sid: InvokeGatewayMcp
+                Effect: Allow
+                Action:
+                  - bedrock-agentcore:InvokeGateway
+                Resource:
+                  - !Sub
+                    - "arn:aws:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:gateway/${GwId}"
+                    - GwId: !ImportValue
+                        Fn::Sub: "${ProjectName}-gateway-id"
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-codebuild-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: codebuild
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CloudWatchLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+              - Sid: ECRAccess
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:GetAuthorizationToken
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                Resource:
+                  - !GetAtt ECRRepository.Arn
+                  - "*"
+
+  CustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-cr-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: cr-codebuild
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CodeBuildAccess
+                Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - codebuild:BatchGetProjects
+                Resource: !GetAtt AgentImageBuildProject.Arn
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # CodeBuild — builds the agent container inline (no source). The buildspec bakes
+  # requirements.txt + agent.py + an OTEL-instrumented Dockerfile, then pushes.
+  # OTEL: aws-opentelemetry-distro + `opentelemetry-instrument` entrypoint make the
+  # Runtime emit gen_ai spans (Layer 6) with no code changes to the agent.
+  # ──────────────────────────────────────────────────────────────────────────
+  AgentImageBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${ProjectName}-agent-build"
+      Description: Build the instrumented Strands agent image.
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: ARM_CONTAINER
+        ComputeType: BUILD_GENERAL1_LARGE
+        Image: aws/codebuild/amazonlinux2-aarch64-standard:3.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref AWS::AccountId
+          - Name: IMAGE_REPO_NAME
+            Value: !Ref ECRRepository
+          - Name: IMAGE_TAG
+            Value: !Ref ImageTag
+      Source:
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - echo Logging in to Amazon ECR...
+                - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+            build:
+              commands:
+                - echo Build started on `date`
+                # requirements.txt — Strands + SigV4 MCP client + OTEL distro
+                - |
+                  cat > requirements.txt << 'EOF'
+                  strands-agents
+                  strands-agents-tools
+                  boto3
+                  bedrock-agentcore
+                  mcp-proxy-for-aws
+                  aws-opentelemetry-distro>=0.10.1
+                  EOF
+                # agent.py — env-driven, KB-agnostic Strands agent behind the MCP Gateway
+                - |
+                  cat > agent.py << 'EOF'
+                  # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+                  # SPDX-License-Identifier: MIT-0
+                  """Strands agent on AgentCore Runtime — answers via managed KBs behind an
+                  AgentCore Gateway (MCP). KB-agnostic: Gateway URL + model come from env vars,
+                  so one image serves every KB. OTEL spans are emitted by the Runtime sidecar."""
+                  import os
+                  from bedrock_agentcore.runtime import BedrockAgentCoreApp
+                  from strands import Agent
+                  from strands.models.bedrock import BedrockModel
+                  from strands.tools.mcp import MCPClient
+                  from mcp_proxy_for_aws.client import aws_iam_streamablehttp_client
+
+                  app = BedrockAgentCoreApp()
+                  REGION = os.environ["AWS_REGION"]
+                  GATEWAY_URL = os.environ["GATEWAY_URL"]
+                  MODEL_ID = os.environ["MODEL_ID"]
+                  model = BedrockModel(model_id=MODEL_ID, region_name=REGION)
+
+                  @app.entrypoint
+                  def invoke(payload):
+                      prompt = payload.get("prompt", "")
+                      mcp_client = MCPClient(lambda: aws_iam_streamablehttp_client(
+                          endpoint=GATEWAY_URL, aws_region=REGION, aws_service="bedrock-agentcore"))
+                      with mcp_client:
+                          agent = Agent(model=model, tools=mcp_client.list_tools_sync(),
+                                        system_prompt=("Answer using the knowledge base tools. "
+                                                       "Pick the tool matching the question's topic. Cite sources."))
+                          return agent(prompt).message["content"][0]["text"]
+
+                  if __name__ == "__main__":
+                      app.run()
+                  EOF
+                # OTEL-instrumented Dockerfile (ARM64, non-root, port 8080)
+                - |
+                  cat > Dockerfile << 'EOF'
+                  FROM public.ecr.aws/docker/library/python:3.11-slim
+                  WORKDIR /app
+                  COPY requirements.txt requirements.txt
+                  RUN pip install -r requirements.txt
+                  RUN useradd -m -u 1000 bedrock_agentcore
+                  USER bedrock_agentcore
+                  EXPOSE 8080
+                  COPY . .
+                  CMD ["opentelemetry-instrument", "python", "-m", "agent"]
+                  EOF
+                - echo Building ARM64 image...
+                - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+                - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+            post_build:
+              commands:
+                - echo Pushing image...
+                - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+                - echo Done.
+
+  CodeBuildTriggerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-codebuild-trigger"
+      Description: Triggers + waits for the agent image build (custom resource).
+      Handler: index.handler
+      Role: !GetAtt CustomResourceRole.Arn
+      # python3.13. NOTE: Lambda only auto-injects the `cfnresponse` helper for inline
+      # ZipFile code on runtimes <= 3.11, so we vendor the CFN response via urllib
+      # (same approach as Stack 01's ingest Lambda) — works on any runtime.
+      Runtime: python3.13
+      Timeout: 900
+      Code:
+        ZipFile: |
+          import boto3, json, logging, time, urllib.request
+          logger = logging.getLogger(); logger.setLevel(logging.INFO)
+
+          def send(event, context, status, data=None, reason=None):
+              body = json.dumps({
+                  "Status": status,
+                  "Reason": reason or f"See CloudWatch: {context.log_stream_name}",
+                  "PhysicalResourceId": event.get("PhysicalResourceId") or context.log_stream_name,
+                  "StackId": event["StackId"], "RequestId": event["RequestId"],
+                  "LogicalResourceId": event["LogicalResourceId"], "Data": data or {},
+              }).encode("utf-8")
+              req = urllib.request.Request(event["ResponseURL"], data=body, method="PUT",
+                  headers={"content-type": "", "content-length": str(len(body))})
+              urllib.request.urlopen(req)  # nosec B310 - fixed https CFN response URL
+
+          def handler(event, context):
+              logger.info('event: %s', json.dumps(event))
+              # Delete is ALWAYS idempotent SUCCESS — nothing to clean up (the image lives
+              # in ECR, deleted with the repo). Never let a Delete send FAILED or hang, or
+              # the whole stack delete waits ~1h on the CR callback.
+              if event['RequestType'] == 'Delete':
+                  send(event, context, "SUCCESS"); return
+              try:
+                  project = event['ResourceProperties']['ProjectName']
+                  cb = boto3.client('codebuild')
+                  build_id = cb.start_build(projectName=project)['build']['id']
+                  logger.info('started build %s', build_id)
+                  # Leave a margin before the Lambda's own timeout so we always respond.
+                  deadline = context.get_remaining_time_in_millis() / 1000 - 40
+                  start = time.time()
+                  while True:
+                      if time.time() - start > deadline:
+                          send(event, context, "FAILED", reason=f'build {build_id} timed out'); return
+                      status = cb.batch_get_builds(ids=[build_id])['builds'][0]['buildStatus']
+                      if status == 'SUCCEEDED':
+                          send(event, context, "SUCCESS", {'BuildId': build_id, 'Status': status}); return
+                      if status in ('FAILED', 'FAULT', 'STOPPED', 'TIMED_OUT'):
+                          send(event, context, "FAILED", reason=f'build {build_id} {status}'); return
+                      logger.info('build %s: %s', build_id, status)
+                      time.sleep(30)
+              except Exception as e:
+                  logger.error('error: %s', e)
+                  send(event, context, "FAILED", reason=str(e))
+
+  TriggerImageBuild:
+    Type: Custom::CodeBuildTrigger
+    DependsOn:
+      - ECRRepository
+      - AgentImageBuildProject
+      - CodeBuildTriggerFunction
+    Properties:
+      ServiceToken: !GetAtt CodeBuildTriggerFunction.Arn
+      ProjectName: !Ref AgentImageBuildProject
+      # Bump this to force a rebuild on stack update.
+      BuildVersion: "1"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Runtime — hosts the instrumented agent. Env wires the Gateway URL (from 02a)
+  # + model. ProtocolConfiguration HTTP (invoke via InvokeAgentRuntime).
+  # ──────────────────────────────────────────────────────────────────────────
+  AgentRuntime:
+    Type: AWS::BedrockAgentCore::Runtime
+    DependsOn: TriggerImageBuild
+    Properties:
+      AgentRuntimeName: !Join ["_", !Split ["-", !Sub "${ProjectName}_agent"]]
+      AgentRuntimeArtifact:
+        ContainerConfiguration:
+          ContainerUri: !Sub "${ECRRepository.RepositoryUri}:${ImageTag}"
+      RoleArn: !GetAtt AgentExecutionRole.Arn
+      NetworkConfiguration:
+        NetworkMode: !Ref NetworkMode
+      ProtocolConfiguration: HTTP
+      Description: !Sub "Instrumented Strands agentic-RAG agent for ${ProjectName}."
+      EnvironmentVariables:
+        AWS_REGION: !Ref AWS::Region
+        GATEWAY_URL: !ImportValue
+          Fn::Sub: "${ProjectName}-gateway-url"
+        MODEL_ID: !Ref ModelId
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Observability wiring — vended logs → CWL, traces → X-Ray. Feeds the dashboards.
+  # ──────────────────────────────────────────────────────────────────────────
+  AgentLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/vendedlogs/bedrock-agentcore/${AgentRuntime.AgentRuntimeId}"
+      RetentionInDays: 14
+
+  LogsDeliverySource:
+    Type: AWS::Logs::DeliverySource
+    DependsOn: AgentRuntime
+    Properties:
+      Name: !Sub "${AgentRuntime.AgentRuntimeId}-logs-source"
+      LogType: APPLICATION_LOGS
+      ResourceArn: !GetAtt AgentRuntime.AgentRuntimeArn
+
+  LogsDeliveryDestination:
+    Type: AWS::Logs::DeliveryDestination
+    Properties:
+      Name: !Sub "${AgentRuntime.AgentRuntimeId}-logs-destination"
+      DeliveryDestinationType: CWL
+      DestinationResourceArn: !GetAtt AgentLogGroup.Arn
+
+  LogsDelivery:
+    Type: AWS::Logs::Delivery
+    DependsOn:
+      - LogsDeliverySource
+      - LogsDeliveryDestination
+    Properties:
+      DeliverySourceName: !Ref LogsDeliverySource
+      DeliveryDestinationArn: !GetAtt LogsDeliveryDestination.Arn
+
+  TracesDeliverySource:
+    Type: AWS::Logs::DeliverySource
+    DependsOn: AgentRuntime
+    Properties:
+      Name: !Sub "${AgentRuntime.AgentRuntimeId}-traces-source"
+      LogType: TRACES
+      ResourceArn: !GetAtt AgentRuntime.AgentRuntimeArn
+
+  TracesDeliveryDestination:
+    Type: AWS::Logs::DeliveryDestination
+    Properties:
+      Name: !Sub "${AgentRuntime.AgentRuntimeId}-traces-destination"
+      DeliveryDestinationType: XRAY
+
+  TracesDelivery:
+    Type: AWS::Logs::Delivery
+    DependsOn:
+      - TracesDeliverySource
+      - TracesDeliveryDestination
+    Properties:
+      DeliverySourceName: !Ref TracesDeliverySource
+      DeliveryDestinationArn: !GetAtt TracesDeliveryDestination.Arn
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Online evaluation — CONTINUOUS scoring of live agent traffic (distinct from the
+  # driver notebook's on-demand evaluate()). This is what populates the console
+  # GenAI Observability → Bedrock AgentCore → Evaluations tab. AgentCore samples the
+  # agent's session spans from its runtime log group and runs the built-in evaluators.
+  # ──────────────────────────────────────────────────────────────────────────
+  EvalExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-eval-exec-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock-agentcore.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: eval-exec
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CloudWatchLogRead
+                Effect: Allow
+                Action:
+                  - logs:StartQuery
+                  - logs:GetQueryResults
+                  - logs:DescribeLogStreams
+                  - logs:DescribeLogGroups
+                  - cloudwatch:GenerateQueryResultsSummary
+                  - cloudwatch:GenerateQuery
+                Resource: "*"
+              - Sid: CloudWatchIndexPolicy
+                Effect: Allow
+                Action:
+                  - logs:PutIndexPolicy
+                  - logs:DescribeIndexPolicies
+                Resource: "*"
+              - Sid: EvalResultsLogWrite
+                Effect: Allow
+                Action:
+                  - logs:PutLogEvents
+                  - logs:GetLogEvents
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/evaluations/*"
+              - Sid: InvokeJudgeModel
+                Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: "*"
+
+  OnlineEvaluationConfig:
+    Type: AWS::BedrockAgentCore::OnlineEvaluationConfig
+    DependsOn: AgentRuntime
+    Properties:
+      OnlineEvaluationConfigName: !Join ["_", !Split ["-", !Sub "${ProjectName}_online_eval"]]
+      Description: Continuous quality scoring of the agentic-RAG agent's live sessions.
+      EvaluationExecutionRoleArn: !GetAtt EvalExecutionRole.Arn
+      ExecutionStatus: ENABLED
+      Rule:
+        SamplingConfig:
+          SamplingPercentage: 100
+        SessionConfig:
+          SessionTimeoutMinutes: 30
+      DataSourceConfig:
+        CloudWatchLogs:
+          LogGroupNames:
+            - !Sub "/aws/bedrock-agentcore/runtimes/${AgentRuntime.AgentRuntimeId}-DEFAULT"
+          ServiceNames:
+            # Service name = the runtime name + ".DEFAULT" (verified live in aws/spans).
+            - !Join ["", [!Join ["_", !Split ["-", !Sub "${ProjectName}_agent"]], ".DEFAULT"]]
+      Evaluators:
+        - EvaluatorId: Builtin.Correctness
+        - EvaluatorId: Builtin.Faithfulness
+        - EvaluatorId: Builtin.ToolSelectionAccuracy
+        - EvaluatorId: Builtin.ResponseRelevance
+
+Outputs:
+  AgentRuntimeId:
+    Description: AgentCore Runtime ID.
+    Value: !GetAtt AgentRuntime.AgentRuntimeId
+    Export:
+      Name: !Sub "${ProjectName}-agent-runtime-id"
+  AgentRuntimeArn:
+    Description: AgentCore Runtime ARN (invoke target).
+    Value: !GetAtt AgentRuntime.AgentRuntimeArn
+    Export:
+      Name: !Sub "${ProjectName}-agent-runtime-arn"
+  AgentLogGroup:
+    Description: Vended application-log group for the agent.
+    Value: !Ref AgentLogGroup
+  EcrRepositoryUri:
+    Description: Agent image repository URI.
+    Value: !GetAtt ECRRepository.RepositoryUri
+  OnlineEvaluationConfigId:
+    Description: AgentCore online evaluation config (populates the console Evaluations tab).
+    Value: !Ref OnlineEvaluationConfig

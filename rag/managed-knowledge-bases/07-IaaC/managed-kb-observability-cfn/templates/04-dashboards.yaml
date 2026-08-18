@@ -1,0 +1,164 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Stack 04 — Two native CloudWatch dashboards for the agentic-RAG stack.
+  Dashboard A: 7-layer observability (KB metrics, retrieval quality, Gateway, spans,
+  agentic token usage, eval scores). Dashboard B: usage & cost drivers — the
+  operational quantities that determine spend (index size, retrieve calls, agentic
+  tool-calls, session token usage). Both read metrics the live stack already
+  emits; they render empty until the driver notebook sends traffic (that is the intended
+  narrative). Fully native AWS::CloudWatch::Dashboard — no custom resource.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: bmkb-obs
+  FinancialKbId:
+    Type: String
+    Description: Financial KB id (raw, e.g. CTYLQCHXA1) — imported value passed at deploy.
+  WeatherKbId:
+    Type: String
+    Description: Weather KB id (raw, e.g. N1S9RHAFVR).
+  GatewayArn:
+    Type: String
+    Description: AgentCore Gateway ARN (from Stack 02a) — dimension value for Gateway metrics.
+
+Resources:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Dashboard A — 7-layer observability.
+  # L1 KB metrics · L2 note (ingestion lives in Logs Insights) · L3 retrieval quality ·
+  # L4 Gateway · L5 spans · L6 agentic token usage (BMKB/Cost) · L7 eval.
+  # ──────────────────────────────────────────────────────────────────────────
+  ObservabilityDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "${ProjectName}-agentic-observability"
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {"type":"text","x":0,"y":0,"width":24,"height":5,"properties":{"markdown":
+              "# ${ProjectName} — Agentic RAG Observability (7 layers)\nOne agent → one Gateway → per-KB `AgenticRetrieveStream` targets (financial + weather). Widgets fill as the driver notebook sends traffic. **L2 ingestion** detail lives in Logs Insights (ingestion-job API), not a metric widget.\n\n**Each layer counts a different thing — the gaps are the agentic loop made visible.** For *N* user queries you'll see roughly: **N** agent invocations · **~2N** KB retrievals · **~3N** LLM `chat` calls (L6 token usage) · **~5N** Gateway MCP ops (L4 `Invocations` — it counts every MCP op: Initialize + ListTools + NotificationsInitialized + InvokeTool). So **L4 `Invocations` ≠ query count**, and only the `chat` spans carry tokens (L6). **L1** = the KB's own Retrieve counters (no `Latency` here — KB latency is in the spans, L5). **L6** = per-session token usage from `gen_ai.usage.*` spans → `BMKB/Cost`."}},
+
+            {"type":"metric","x":0,"y":5,"width":12,"height":6,"properties":{
+              "title":"L1 — KB metrics (Retrieve, per KB)","region":"${AWS::Region}","stat":"Sum","period":300,
+              "metrics":[
+                ["AWS/Bedrock/KnowledgeBases","Invocations","Operation","Retrieve","KnowledgeBaseId","knowledge-base/${FinancialKbId}",{"label":"financial Invocations"}],
+                ["AWS/Bedrock/KnowledgeBases","Invocations","Operation","Retrieve","KnowledgeBaseId","knowledge-base/${WeatherKbId}",{"label":"weather Invocations"}],
+                ["AWS/Bedrock/KnowledgeBases","ClientErrors","Operation","Retrieve","KnowledgeBaseId","knowledge-base/${FinancialKbId}",{"label":"financial ClientErrors"}],
+                ["AWS/Bedrock/KnowledgeBases","ServerErrors","Operation","Retrieve","KnowledgeBaseId","knowledge-base/${WeatherKbId}",{"label":"weather ServerErrors"}],
+                ["AWS/Bedrock/KnowledgeBases","Throttles","Operation","Retrieve","KnowledgeBaseId","knowledge-base/${FinancialKbId}",{"label":"financial Throttles"}]
+              ]}},
+
+            {"type":"metric","x":12,"y":5,"width":12,"height":6,"properties":{
+              "title":"L4 — Gateway metrics (MCP)","region":"${AWS::Region}","stat":"Sum","period":300,
+              "metrics":[
+                ["AWS/Bedrock-AgentCore","Invocations","Resource","${GatewayArn}","Operation","InvokeGateway","Method","tools/call","Protocol","MCP",{"label":"tools/call Invocations"}],
+                ["AWS/Bedrock-AgentCore","SystemErrors","Resource","${GatewayArn}","Operation","InvokeGateway","Method","tools/call","Protocol","MCP",{"label":"SystemErrors"}],
+                ["AWS/Bedrock-AgentCore","UserErrors","Resource","${GatewayArn}","Operation","InvokeGateway","Method","tools/call","Protocol","MCP",{"label":"UserErrors"}],
+                ["AWS/Bedrock-AgentCore","Throttles","Resource","${GatewayArn}","Operation","InvokeGateway","Method","tools/call","Protocol","MCP",{"label":"Throttles"}]
+              ]}},
+
+            {"type":"metric","x":0,"y":11,"width":12,"height":6,"properties":{
+              "title":"L4 — Gateway latency (ms)","region":"${AWS::Region}","stat":"Average","period":300,
+              "metrics":[
+                ["AWS/Bedrock-AgentCore","Latency","Resource","${GatewayArn}","Operation","InvokeGateway","Method","tools/call","Protocol","MCP",{"label":"tools/call Latency"}]
+              ]}},
+
+            {"type":"metric","x":12,"y":11,"width":12,"height":6,"properties":{
+              "title":"L6 — Token usage per session (BMKB/Cost SessionQuotaTokens, per KB)","region":"${AWS::Region}","stat":"Sum","period":300,
+              "metrics":[
+                ["BMKB/Cost","SessionQuotaTokens","KnowledgeBaseId","${FinancialKbId}",{"label":"financial tokens"}],
+                ["BMKB/Cost","SessionQuotaTokens","KnowledgeBaseId","${WeatherKbId}",{"label":"weather tokens"}]
+              ]}},
+
+            {"type":"text","x":0,"y":17,"width":24,"height":7,"properties":{"markdown":
+              "### L3 · Agentic retrieval quality — what we compute, and what it means\nThe agent's KB tool is **`AgenticRetrieveStream`** (not plain `Retrieve`), which reranks internally and returns a synthesized, cited answer — **no per-chunk relevance `score`**. So Layer 3 shifts from *“how relevant is each chunk”* to *“how much of what we retrieved did the answer use, and how well is it grounded.”* All signals are **reference-free** (no ground truth, no LLM-judge). The two widgets below plot the three headline ratios per KB; the full family (counts + context budget) is published to `BMKB/RetrievalQuality` and queryable there.\n\n| Metric (plotted) | From | Meaning |\n|---|---|---|\n| `retrieval_utilization` | `cited_chunks / chunk_count` | **precision proxy** — low = retriever over-fetched (0.2 = only 2 of 10 chunks used) |\n| `grounded_coverage` | cited answer-span chars / answer chars | **reference-free faithfulness** — fraction of the answer backed by a citation (near 1.0 = well-grounded, low hallucination risk) |\n| `duplicate_rate` | `1 − distinct_chunks / chunk_count` | redundant retrieval (same chunk returned twice) |\n\n*Also emitted to the namespace (not plotted):* `chunk_count`, `distinct_docs`, `distinct_chunks`, `avg_chunk_chars`, `total_context_chars` (retrieval-set) · `num_citations`, `cited_chunks`, `answer_chars` (grounding)."}},
+
+            {"type":"metric","x":0,"y":24,"width":12,"height":6,"properties":{
+              "title":"L3 · Financial KB — agentic quality (reference-free, 0–1)","region":"${AWS::Region}","stat":"Average","period":300,
+              "metrics":[
+                ["BMKB/RetrievalQuality","retrieval_utilization","KnowledgeBaseId","${FinancialKbId}",{"label":"retrieval_utilization (precision proxy)"}],
+                ["BMKB/RetrievalQuality","grounded_coverage","KnowledgeBaseId","${FinancialKbId}",{"label":"grounded_coverage (faithfulness proxy)"}],
+                ["BMKB/RetrievalQuality","duplicate_rate","KnowledgeBaseId","${FinancialKbId}",{"label":"duplicate_rate (redundancy)"}]
+              ]}},
+
+            {"type":"metric","x":12,"y":24,"width":12,"height":6,"properties":{
+              "title":"L3 · Weather KB — agentic quality (reference-free, 0–1)","region":"${AWS::Region}","stat":"Average","period":300,
+              "metrics":[
+                ["BMKB/RetrievalQuality","retrieval_utilization","KnowledgeBaseId","${WeatherKbId}",{"label":"retrieval_utilization (precision proxy)"}],
+                ["BMKB/RetrievalQuality","grounded_coverage","KnowledgeBaseId","${WeatherKbId}",{"label":"grounded_coverage (faithfulness proxy)"}],
+                ["BMKB/RetrievalQuality","duplicate_rate","KnowledgeBaseId","${WeatherKbId}",{"label":"duplicate_rate (redundancy)"}]
+              ]}},
+
+            {"type":"metric","x":0,"y":30,"width":24,"height":6,"properties":{
+              "title":"L7 — Eval scores (BMKB/Evaluation, 0–1, per KB)","region":"${AWS::Region}","stat":"Average","period":300,
+              "metrics":[
+                ["BMKB/Evaluation","Correctness","KnowledgeBaseId","${FinancialKbId}",{"label":"financial Correctness"}],
+                ["BMKB/Evaluation","Correctness","KnowledgeBaseId","${WeatherKbId}",{"label":"weather Correctness"}]
+              ]}},
+
+            {"type":"log","x":0,"y":36,"width":24,"height":6,"properties":{
+              "title":"L5 — OTEL spans (aws/spans, gen_ai leaf calls)","region":"${AWS::Region}","view":"table",
+              "query":"SOURCE 'aws/spans' | fields @timestamp, name, kind, durationNano, attributes.gen_ai.usage.input_tokens, attributes.gen_ai.usage.output_tokens, attributes.gen_ai.request.model | filter attributes.gen_ai.request.model like /claude/ | sort @timestamp desc | limit 20"}}
+          ]
+        }
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Dashboard B — BMKB observability. The Knowledge-Base-focused operational signals
+  # (per KB): index size, retrieve volume, agentic tool-calls, session token usage,
+  # model token usage — the quantities that also determine spend.
+  # ──────────────────────────────────────────────────────────────────────────
+  KbObservabilityDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "${ProjectName}-kb-observability"
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {"type":"text","x":0,"y":0,"width":24,"height":7,"properties":{"markdown":
+              "# ${ProjectName} — BMKB Observability (per KB)\nKnowledge-Base-focused operational signals — the quantities that also determine spend on a fully-managed KB. Fully-managed KB → **no OpenSearch/OCU line item** (the vector store is bundled). Values are point-in-time snapshots; `setPeriodToTimeRange` keeps the bars visible across the window.\n\n| Widget | Metric · source | How it's computed / what it means |\n|---|---|---|\n| Index size | `SourceBytesMB` · `BMKB/Cost` | summed S3 **source bytes** per KB (each KB owns a prefix), in MB. Published by the driver — a reliable, immediate stand-in for the KB's native `RawDataSize`, which emits only sporadically |\n| Retrieve calls | `Invocations` (Op=Retrieve) · `AWS/Bedrock/KnowledgeBases` | count of retrieval requests hitting each KB |\n| Agentic tool-calls | `Invocations` (Method=tools/call) · `AWS/Bedrock-AgentCore` | Gateway MCP tool invocations — the `AgenticRetrieveStream` calls that drive spend |\n| Session token usage | `SessionQuotaTokens` · `BMKB/Cost` | per-session tokens (input + output×burndown) from the agent's `chat` spans, published by the driver notebook |\n| Generation by model | span `gen_ai.usage.*_tokens` · `aws/spans` | input/output tokens + LLM-call count, grouped by model — the leaf `chat` calls that carry cost |\n\n**Embedding / Reranking** are bundled into Retrieve on the default managed path → no separate signal. The KB's internal agentic-orchestration model runs server-side (**Model Invocation Logging**, not these metrics)."}},
+
+            {"type":"metric","x":0,"y":7,"width":8,"height":6,"properties":{
+              "title":"Index size — source bytes (MB, per KB)","region":"${AWS::Region}","stat":"Maximum","period":300,"view":"singleValue","sparkline":true,"setPeriodToTimeRange":true,
+              "metrics":[
+                ["BMKB/Cost","SourceBytesMB","KnowledgeBaseId","${FinancialKbId}",{"label":"financial MB"}],
+                ["BMKB/Cost","SourceBytesMB","KnowledgeBaseId","${WeatherKbId}",{"label":"weather MB"}]
+              ]}},
+
+            {"type":"metric","x":8,"y":7,"width":8,"height":6,"properties":{
+              "title":"Retrieve calls — Invocations count (per KB)","region":"${AWS::Region}","stat":"Sum","period":300,"view":"bar","setPeriodToTimeRange":true,
+              "metrics":[
+                ["AWS/Bedrock/KnowledgeBases","Invocations","Operation","Retrieve","KnowledgeBaseId","knowledge-base/${FinancialKbId}",{"label":"financial"}],
+                ["AWS/Bedrock/KnowledgeBases","Invocations","Operation","Retrieve","KnowledgeBaseId","knowledge-base/${WeatherKbId}",{"label":"weather"}]
+              ]}},
+
+            {"type":"metric","x":16,"y":7,"width":8,"height":6,"properties":{
+              "title":"Agentic tool-calls — Gateway Invocations count","region":"${AWS::Region}","stat":"Sum","period":300,"view":"bar","setPeriodToTimeRange":true,
+              "metrics":[
+                ["AWS/Bedrock-AgentCore","Invocations","Resource","${GatewayArn}","Operation","InvokeGateway","Method","tools/call","Protocol","MCP",{"label":"tools/call (both KBs)"}]
+              ]}},
+
+            {"type":"metric","x":0,"y":13,"width":8,"height":6,"properties":{
+              "title":"Token usage — SessionQuotaTokens (per KB)","region":"${AWS::Region}","stat":"Sum","period":300,"view":"bar","setPeriodToTimeRange":true,
+              "metrics":[
+                ["BMKB/Cost","SessionQuotaTokens","KnowledgeBaseId","${FinancialKbId}",{"label":"financial"}],
+                ["BMKB/Cost","SessionQuotaTokens","KnowledgeBaseId","${WeatherKbId}",{"label":"weather"}]
+              ]}},
+
+            {"type":"log","x":8,"y":13,"width":16,"height":6,"properties":{
+              "title":"Generation (agent model) — token usage by model (aws/spans)","region":"${AWS::Region}","view":"table",
+              "query":"SOURCE 'aws/spans' | fields attributes.gen_ai.request.model as model, attributes.gen_ai.usage.input_tokens as in_tok, attributes.gen_ai.usage.output_tokens as out_tok | filter ispresent(in_tok) | stats sum(in_tok) as input_tokens, sum(out_tok) as output_tokens, count(*) as llm_calls by model"}}
+          ]
+        }
+
+Outputs:
+  ObservabilityDashboardName:
+    Value: !Ref ObservabilityDashboard
+  KbObservabilityDashboardName:
+    Value: !Ref KbObservabilityDashboard
+  ObservabilityDashboardUrl:
+    Description: Console URL for Dashboard A (end-to-end agentic observability).
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-agentic-observability"
+  KbObservabilityDashboardUrl:
+    Description: Console URL for Dashboard B (per-KB observability).
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-kb-observability"
