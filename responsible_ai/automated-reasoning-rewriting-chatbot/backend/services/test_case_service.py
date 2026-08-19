@@ -72,13 +72,17 @@ class TestCaseService:
                 for test_case in test_cases:
                     test_case_id = test_case.get("testCaseId")
                     query_content = self._extract_query_content(test_case)
+                    guard_content = test_case.get("guardContent", "")
                     
-                    # Only include test cases with valid query_content
-                    if test_case_id and query_content:
-                        result.append({
+                    # Only include test cases with valid query_content or guard_content
+                    if test_case_id and (query_content or guard_content):
+                        entry = {
                             "test_case_id": test_case_id,
                             "guard_content": query_content  # Keep the field name for API compatibility
-                        })
+                        }
+                        if guard_content:
+                            entry["expected_answer"] = guard_content
+                        result.append(entry)
                     elif test_case_id:
                         logger.warning(f"Test case {test_case_id} has no query_content, skipping")
                 

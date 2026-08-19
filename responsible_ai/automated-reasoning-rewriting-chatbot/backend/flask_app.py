@@ -370,11 +370,15 @@ def get_test_cases(policy_arn: str):
 # Chat Routes
 # ============================================================================
 
-def _process_thread_sync(thread_id: str) -> None:
+def _process_thread_sync(thread_id: str, user_provided_answer: str = None) -> None:
     """Process a thread synchronously. Used in testing mode."""
     llm_service = service_container.get_llm_service()
     validation_service = service_container.get_validation_service()
     policy_service = service_container.get_policy_service()
+    
+    # Get thread to check for RAG content override
+    thread = service_container.thread_manager.get_thread(thread_id)
+    rag_context_override = thread.rag_content if thread else None
     
     process_thread(
         thread_id,
@@ -383,13 +387,31 @@ def _process_thread_sync(thread_id: str) -> None:
         validation_service,
         service_container.audit_logger,
         policy_service,
-        config_manager
+        config_manager,
+        user_provided_answer=user_provided_answer,
+        rag_context_override=rag_context_override
     )
 
 
 @api_bp.route('/chat', methods=['POST'])
 def create_chat():
-    """Submit a new chat prompt and create a thread."""
+    """
+    Submit a new chat prompt and create a thread.
+    
+    Request body:
+    {
+        "prompt": "user question",
+        "answer": "optional user-provided answer",
+        "rag_content": "optional markdown RAG content to override policy context"
+    }
+    
+    When an answer is provided, the system skips LLM generation and
+    enters directly into the validation/rewriting loop with the
+    user-provided answer.
+    
+    When rag_content is provided, it replaces the policy-derived context
+    in all LLM prompts (initial generation and rewriting) for this thread.
+    """
     data = request.get_json()
     
     if not data:
@@ -399,12 +421,32 @@ def create_chat():
         )
     
     prompt = data.get('prompt')
+    user_provided_answer = data.get('answer')
+    rag_content = data.get('rag_content')
     
     if not prompt:
         raise BadRequestError(
             "Missing required field",
             details="prompt field is required"
         )
+    
+    # Validate answer if provided
+    if user_provided_answer is not None:
+        if not isinstance(user_provided_answer, str) or not user_provided_answer.strip():
+            raise BadRequestError(
+                "Invalid answer field",
+                details="answer must be a non-empty string when provided"
+            )
+        user_provided_answer = user_provided_answer.strip()
+    
+    # Validate rag_content if provided
+    if rag_content is not None:
+        if not isinstance(rag_content, str) or not rag_content.strip():
+            raise BadRequestError(
+                "Invalid rag_content field",
+                details="rag_content must be a non-empty string when provided"
+            )
+        rag_content = rag_content.strip()
     
     # Get current configuration
     current_config = config_manager.get_current_config()
@@ -416,26 +458,26 @@ def create_chat():
     
     try:
         # Create thread
-        thread = service_container.thread_manager.create_thread(prompt, current_config.model_id)
+        thread = service_container.thread_manager.create_thread(prompt, current_config.model_id, rag_content=rag_content)
         thread_id = thread.thread_id
         
         # In testing mode, process synchronously for deterministic tests
         if current_app.config.get('TESTING'):
             logger.info(f"Testing mode: processing thread {thread_id} synchronously")
-            _process_thread_sync(thread_id)
+            _process_thread_sync(thread_id, user_provided_answer=user_provided_answer)
         else:
             # Spawn a daemon thread to allow immediate response to client.
             # Flask request threads are non-daemon and would block shutdown if long-running.
             def process_in_background():
                 try:
-                    _process_thread_sync(thread_id)
+                    _process_thread_sync(thread_id, user_provided_answer=user_provided_answer)
                 except Exception as e:
                     logger.error(f"Error in background processing for thread {thread_id}: {e}", exc_info=True)
             
             background_thread = threading.Thread(target=process_in_background, daemon=True)
             background_thread.start()
         
-        logger.info(f"Created thread {thread_id} and started processing")
+        logger.info(f"Created thread {thread_id} and started processing (user_provided_answer: {user_provided_answer is not None}, rag_content: {rag_content is not None})")
         
         return jsonify({"thread_id": thread_id}), 200
         

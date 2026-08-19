@@ -44,6 +44,7 @@ class ThreadProcessor:
     - Validation handling
     - Rewriting loop execution
     - Follow-up question handling
+    - User-provided answer validation (skips LLM generation)
     """
     
     def __init__(
@@ -54,7 +55,9 @@ class ThreadProcessor:
         validation_service: ValidationService,
         audit_logger: AuditLogger,
         policy_service: Optional[PolicyService] = None,
-        config_manager=None
+        config_manager=None,
+        user_provided_answer: Optional[str] = None,
+        rag_context_override: Optional[str] = None
     ):
         self.thread = thread
         self.thread_manager = thread_manager
@@ -63,6 +66,8 @@ class ThreadProcessor:
         self.audit_logger = audit_logger
         self.policy_service = policy_service
         self.config_manager = config_manager
+        self.user_provided_answer = user_provided_answer
+        self.rag_context_override = rag_context_override
         
         # Shared utilities
         self.parser = LLMResponseParser()
@@ -114,15 +119,49 @@ class ThreadProcessor:
                 logger.info(f"Loaded max_iterations from config: {max_iterations}")
         
         self.thread.max_iterations = max_iterations
+        
+        # If a per-thread RAG override is set, override the LLM service's policy context
+        # so rewriting prompts also use the custom RAG content
+        if self.rag_context_override:
+            self._original_llm_policy_context = self.llm_service.policy_context
+            self.llm_service.policy_context = self.rag_context_override
+            logger.info(f"Thread {self.thread_id} - Overriding LLM service policy context with RAG content")
+        
+        # If a user-provided answer was given, skip LLM generation
+        # and go directly to validation
+        if self.user_provided_answer:
+            logger.info(f"Thread {self.thread_id} - Using user-provided answer, skipping LLM generation")
+            self.current_response = self.user_provided_answer
+            self._wrapped_prompt = ""
+            return ProcessingState.VALIDATE
+        
         return ProcessingState.GENERATE_INITIAL
+    
+    def _get_policy_context(self) -> str:
+        """
+        Get the policy context for prompt rendering.
+        
+        Uses the per-thread RAG content override if set, otherwise
+        falls back to the policy service's formatted context.
+        
+        Returns:
+            Policy context string for prompt inclusion
+        """
+        if self.rag_context_override:
+            return self.rag_context_override
+        
+        if self.policy_service:
+            return self.policy_service.format_policy_context()
+        
+        return ""
     
     def _handle_generate_initial(self) -> ProcessingState:
         """Generate initial LLM response."""
         logger.info(f"Thread {self.thread_id} - Generating initial response")
         
-        policy_context = ""
-        if self.policy_service:
-            policy_context = self.policy_service.format_policy_context()
+        policy_context = self._get_policy_context()
+        if self.rag_context_override:
+            logger.info(f"Thread {self.thread_id} - Using per-thread RAG content override ({len(self.rag_context_override)} chars)")
         
         initial_template = self.template_manager.load_template_by_name("initial_response")
         wrapped_prompt = self.template_manager.render_template(
@@ -205,8 +244,9 @@ class ThreadProcessor:
             return ProcessingState.COMPLETED
         
         if output == "TOO_COMPLEX":
-            self._handle_too_complex()
-            return ProcessingState.ERROR
+            logger.info(f"Thread {self.thread_id} requires rewriting (output: {output})")
+            self.thread.current_findings = self.enriched_findings
+            return ProcessingState.REWRITING_LOOP
         
         # Invalid cases: proceed to rewriting
         logger.info(f"Thread {self.thread_id} requires rewriting (output: {output})")
@@ -273,8 +313,8 @@ class ThreadProcessor:
         self.audit_logger.log_valid_response(self.thread, self.enriched_findings)
     
     def _handle_too_complex(self) -> None:
-        """Handle TOO_COMPLEX validation result."""
-        logger.info(f"Thread {self.thread_id} received TOO_COMPLEX response")
+        """Handle TOO_COMPLEX validation result after rewriting attempts are exhausted."""
+        logger.info(f"Thread {self.thread_id} received TOO_COMPLEX after rewriting attempts")
         error_message = (
             "Your request is too complex for the automated reasoning system to handle. "
             "Please try simplifying your question or breaking it into smaller parts."
@@ -483,12 +523,25 @@ def process_thread(
     validation_service: ValidationService,
     audit_logger: AuditLogger,
     policy_service: Optional[PolicyService] = None,
-    config_manager=None
+    config_manager=None,
+    user_provided_answer: Optional[str] = None,
+    rag_context_override: Optional[str] = None
 ) -> None:
     """
     Process a thread through validation and rewriting iterations.
     
     This is the main entry point for thread processing.
+    
+    Args:
+        thread_id: The thread to process
+        thread_manager: Thread manager instance
+        llm_service: LLM service instance
+        validation_service: Validation service instance
+        audit_logger: Audit logger instance
+        policy_service: Optional policy service instance
+        config_manager: Optional config manager instance
+        user_provided_answer: Optional user-provided answer to skip LLM generation
+        rag_context_override: Optional markdown RAG content to override policy context
     """
     thread = thread_manager.get_thread(thread_id)
     if thread is None:
@@ -502,7 +555,9 @@ def process_thread(
         validation_service=validation_service,
         audit_logger=audit_logger,
         policy_service=policy_service,
-        config_manager=config_manager
+        config_manager=config_manager,
+        user_provided_answer=user_provided_answer,
+        rag_context_override=rag_context_override
     )
     processor.process()
 
@@ -565,6 +620,9 @@ def resume_thread_with_answers(
     
     original_response = last_iteration.original_answer
     
+    # Determine policy context (use per-thread RAG override if available)
+    rag_policy_context = thread.rag_content or ""
+    
     # Generate regeneration prompt
     if not skipped and context_augmentation:
         clarification_template = template_manager.load_template_by_name("clarification_regeneration")
@@ -572,14 +630,16 @@ def resume_thread_with_answers(
             clarification_template,
             user_prompt=thread.user_prompt,
             original_response=original_response,
-            context_augmentation=context_augmentation
+            context_augmentation=context_augmentation,
+            policy_context=rag_policy_context
         )
     else:
         skipped_template = template_manager.load_template_by_name("clarification_skipped")
         regeneration_prompt = template_manager.render_template(
             skipped_template,
             user_prompt=thread.user_prompt,
-            original_response=original_response
+            original_response=original_response,
+            policy_context=rag_policy_context
         )
     
     # Get new response
@@ -635,7 +695,8 @@ def resume_thread_with_answers(
         validation_service=validation_service,
         audit_logger=audit_logger,
         policy_service=policy_service,
-        config_manager=config_manager
+        config_manager=config_manager,
+        rag_context_override=thread.rag_content
     )
     processor.current_response = new_response
     processor.current_validation = new_validation

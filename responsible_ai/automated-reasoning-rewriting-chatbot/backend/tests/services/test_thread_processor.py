@@ -77,7 +77,7 @@ def test_property_valid_responses_are_returned(prompt, response, model_id):
 
 
 def test_too_complex_handling():
-    """Test that TOO_COMPLEX validation results in error without rewriting."""
+    """Test that TOO_COMPLEX validation triggers a rewriting loop to simplify the response."""
     # Setup
     thread_manager = ThreadManager()
     llm_service = Mock(spec=LLMService)
@@ -91,15 +91,21 @@ def test_too_complex_handling():
     thread = thread_manager.create_thread(prompt, model_id)
     thread_id = thread.thread_id
     
-    # Mock LLM response
-    llm_service.generate_response.return_value = response
+    # Mock LLM initial response
+    llm_service.generate_response.side_effect = [
+        response,  # Initial response
+        "DECISION: REWRITE\nANSWER: Simplified response"  # Rewrite after TOO_COMPLEX
+    ]
     
-    # Mock validation to return TOO_COMPLEX
-    validation_result = ValidationResult(
-        output="TOO_COMPLEX",
-        findings=[]
-    )
-    validation_service.validate.return_value = validation_result
+    # Mock LLM rewriting prompt generation
+    llm_service.generate_rewriting_prompt.return_value = "Simplify your response"
+    
+    # First validation returns TOO_COMPLEX, second returns VALID
+    too_complex_finding = Finding(validation_output="TOO_COMPLEX", details={})
+    validation_service.validate.side_effect = [
+        ValidationResult(output="TOO_COMPLEX", findings=[too_complex_finding]),
+        ValidationResult(output="VALID", findings=[])
+    ]
     
     # Process thread
     process_thread(
@@ -110,17 +116,15 @@ def test_too_complex_handling():
         audit_logger=audit_logger
     )
     
-    # Verify thread is in ERROR state
+    # Verify thread completed successfully after rewriting
     processed_thread = thread_manager.get_thread(thread_id)
-    assert processed_thread.status == ThreadStatus.ERROR
-    assert "too complex" in processed_thread.final_response.lower()
+    assert processed_thread.status == ThreadStatus.COMPLETED
     
-    # Verify no rewriting attempts (only one LLM call)
-    assert llm_service.generate_response.call_count == 1
+    # Verify the LLM was called twice (initial + rewrite)
+    assert llm_service.generate_response.call_count == 2
     
-    # Verify no audit logging
-    assert not audit_logger.log_valid_response.called
-    assert not audit_logger.log_max_iterations.called
+    # Verify a rewriting prompt was generated for the TOO_COMPLEX finding
+    assert llm_service.generate_rewriting_prompt.call_count == 1
 
 
 def test_no_translations_single_finding():

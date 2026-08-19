@@ -19,10 +19,12 @@ interface AppState {
   testPromptsError: string | null;
   testPromptBrowserOpen: boolean;
   prefilledMessage: string;
+  prefilledAnswer: string;
   currentInputMessage: string;
   confirmationDialog: {
     isOpen: boolean;
     pendingPrompt: string;
+    pendingAnswer: string;
   };
   testCasesAbortController: AbortController | null;
 }
@@ -39,10 +41,12 @@ function App() {
     testPromptsError: null,
     testPromptBrowserOpen: false,
     prefilledMessage: '',
+    prefilledAnswer: '',
     currentInputMessage: '',
     confirmationDialog: {
       isOpen: false,
       pendingPrompt: '',
+      pendingAnswer: '',
     },
     testCasesAbortController: null,
   });
@@ -148,10 +152,10 @@ function App() {
     }
   };
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, answer?: string, ragContent?: string) => {
     try {
       setState(prev => ({ ...prev, chatError: null, currentInputMessage: '' }));
-      const threadId = await apiClient.sendMessage(message);
+      const threadId = await apiClient.sendMessage(message, answer, ragContent);
       // Create a placeholder thread while we wait for the actual data
       const newThread: Thread = {
         thread_id: threadId,
@@ -358,7 +362,7 @@ function App() {
     debouncedFetchTestCases(policyArn);
   };
 
-  const handleTestPromptSelect = (prompt: string) => {
+  const handleTestPromptSelect = (prompt: string, answer?: string) => {
     // Check if there's unsent text in the chat input
     if (state.currentInputMessage.trim()) {
       // Show confirmation dialog
@@ -367,6 +371,7 @@ function App() {
         confirmationDialog: {
           isOpen: true,
           pendingPrompt: prompt,
+          pendingAnswer: answer || '',
         },
       }));
     } else {
@@ -374,6 +379,7 @@ function App() {
       setState(prev => ({
         ...prev,
         prefilledMessage: prompt,
+        prefilledAnswer: answer || '',
       }));
     }
   };
@@ -383,9 +389,11 @@ function App() {
     setState(prev => ({
       ...prev,
       prefilledMessage: prev.confirmationDialog.pendingPrompt,
+      prefilledAnswer: prev.confirmationDialog.pendingAnswer,
       confirmationDialog: {
         isOpen: false,
         pendingPrompt: '',
+        pendingAnswer: '',
       },
     }));
   };
@@ -397,6 +405,7 @@ function App() {
       confirmationDialog: {
         isOpen: false,
         pendingPrompt: '',
+        pendingAnswer: '',
       },
     }));
   };
@@ -456,6 +465,7 @@ function App() {
           onSubmitAnswers={handleSubmitAnswers}
           error={state.chatError}
           prefilledMessage={state.prefilledMessage}
+          prefilledAnswer={state.prefilledAnswer}
           onMessageChange={handleMessageChange}
         />
       </div>
