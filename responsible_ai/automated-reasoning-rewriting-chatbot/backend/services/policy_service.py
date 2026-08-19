@@ -5,13 +5,15 @@ This service consolidates policy-related functionality from:
 - finding_processor.py (sorting, selection, question allowance)
 - finding_enricher.py (enrichment with rule content)
 - policy_context_formatter.py (policy context formatting)
+- source document retrieval (RAG content for LLM prompts)
 """
+import base64
 import json
 import logging
 import boto3
 from botocore.exceptions import ClientError
 from typing import List, Optional, Set, Tuple, Dict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from backend.models.thread import Finding
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,25 @@ class ARPolicy:
     arn: str
     name: str
     description: Optional[str] = None
+
+
+@dataclass
+class SourceDocument:
+    """
+    Represents a source document retrieved from a policy build workflow.
+    
+    Attributes:
+        name: The document filename
+        content_type: MIME type (pdf or txt)
+        text_content: Extracted text content (decoded from base64 for txt documents)
+        description: Optional description of the document
+        document_hash: SHA-256 hash for integrity verification
+    """
+    name: str
+    content_type: str
+    text_content: str
+    description: Optional[str] = None
+    document_hash: Optional[str] = None
 
 
 class PolicyService:
@@ -60,7 +81,8 @@ class PolicyService:
     def __init__(
         self,
         policy_definition: Optional[Dict] = None,
-        region_name: str = "us-west-2"
+        region_name: str = "us-west-2",
+        source_documents: Optional[List['SourceDocument']] = None
     ):
         """
         Initialize the policy service.
@@ -68,9 +90,11 @@ class PolicyService:
         Args:
             policy_definition: The policy definition containing rules and variables
             region_name: AWS region for Bedrock client
+            source_documents: Optional list of source documents for RAG context
         """
         self.policy_definition = policy_definition
         self.region_name = region_name
+        self.source_documents = source_documents or []
         self.bedrock_client = boto3.client(
             service_name="bedrock",
             region_name=region_name
@@ -194,6 +218,202 @@ class PolicyService:
             raise Exception(f"Failed to parse policy definition: {str(e)}")
         except Exception as e:
             raise Exception(f"Failed to retrieve policy definition: {str(e)}")
+    
+    def _find_latest_successful_build(self, policy_arn: str) -> Tuple[str, str]:
+        """
+        Find the latest successful build workflow for a policy.
+        
+        Args:
+            policy_arn: The ARN of the AR policy
+            
+        Returns:
+            Tuple of (build_workflow_id, policy_arn)
+            
+        Raises:
+            Exception: If no successful build is found
+        """
+        list_response = self.bedrock_client.list_automated_reasoning_policy_build_workflows(
+            policyArn=policy_arn,
+            maxResults=10
+        )
+        
+        workflows = list_response.get("automatedReasoningPolicyBuildWorkflowSummaries", [])
+        if not workflows:
+            raise Exception(f"No build workflows found for policy: {policy_arn}")
+        
+        for workflow in workflows:
+            if workflow.get("status") == "COMPLETED":
+                build_id = workflow.get("buildWorkflowId") or workflow.get("buildId")
+                if build_id:
+                    return build_id
+        
+        raise Exception(f"No successful build workflow found for policy: {policy_arn}")
+    
+    def get_source_documents(self, policy_arn: str) -> List['SourceDocument']:
+        """
+        Retrieve source documents from a policy's build workflow assets.
+        
+        This method:
+        1. Finds the latest successful build workflow
+        2. Fetches the asset manifest to discover source document IDs
+        3. Fetches each source document by its asset ID
+        4. Decodes text documents from base64
+        
+        Args:
+            policy_arn: The ARN of the AR policy
+            
+        Returns:
+            List of SourceDocument objects
+            
+        Raises:
+            Exception: If the API calls fail
+        """
+        try:
+            build_id = self._find_latest_successful_build(policy_arn)
+            logger.info(f"Fetching source documents from build: {build_id}")
+            
+            # Step 1: Fetch the asset manifest
+            manifest_response = self.bedrock_client.get_automated_reasoning_policy_build_workflow_result_assets(
+                policyArn=policy_arn,
+                buildWorkflowId=build_id,
+                assetType="ASSET_MANIFEST"
+            )
+            
+            manifest = manifest_response.get("buildWorkflowAssets", {}).get("assetManifest", {})
+            entries = manifest.get("entries", [])
+            
+            # Filter for SOURCE_DOCUMENT entries
+            source_doc_entries = [
+                entry for entry in entries
+                if entry.get("assetType") == "SOURCE_DOCUMENT"
+            ]
+            
+            if not source_doc_entries:
+                logger.info(f"No source documents found in build {build_id}")
+                return []
+            
+            logger.info(f"Found {len(source_doc_entries)} source document(s) in manifest")
+            
+            # Step 2: Fetch each source document
+            documents = []
+            for entry in source_doc_entries:
+                asset_id = entry.get("assetId")
+                asset_name = entry.get("assetName", "unknown")
+                
+                if not asset_id:
+                    logger.warning(f"Source document entry missing assetId: {entry}")
+                    continue
+                
+                try:
+                    doc_response = self.bedrock_client.get_automated_reasoning_policy_build_workflow_result_assets(
+                        policyArn=policy_arn,
+                        buildWorkflowId=build_id,
+                        assetType="SOURCE_DOCUMENT",
+                        assetId=asset_id
+                    )
+                    
+                    doc_data = doc_response.get("buildWorkflowAssets", {}).get("document", {})
+                    
+                    content_type = doc_data.get("documentContentType", "txt")
+                    doc_name = doc_data.get("documentName", asset_name)
+                    doc_description = doc_data.get("documentDescription")
+                    doc_hash = doc_data.get("documentHash")
+                    raw_content = doc_data.get("document", "")
+                    
+                    # Decode base64 content
+                    if isinstance(raw_content, bytes):
+                        decoded_bytes = raw_content
+                    else:
+                        decoded_bytes = base64.b64decode(raw_content) if raw_content else b""
+                    
+                    # Extract text content
+                    if content_type == "txt":
+                        text_content = decoded_bytes.decode("utf-8", errors="replace")
+                    elif content_type == "pdf":
+                        # For PDFs, attempt basic text extraction
+                        # Fall back to noting it's a PDF if extraction isn't possible
+                        text_content = self._extract_pdf_text(decoded_bytes, doc_name)
+                    else:
+                        text_content = decoded_bytes.decode("utf-8", errors="replace")
+                    
+                    documents.append(SourceDocument(
+                        name=doc_name,
+                        content_type=content_type,
+                        text_content=text_content,
+                        description=doc_description,
+                        document_hash=doc_hash
+                    ))
+                    
+                    logger.info(f"Retrieved source document: {doc_name} ({content_type}, {len(text_content)} chars)")
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to fetch source document {asset_id}: {e}")
+                    continue
+            
+            logger.info(f"Successfully retrieved {len(documents)} source document(s)")
+            return documents
+            
+        except ClientError as e:
+            raise Exception(f"Failed to retrieve source documents: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Failed to retrieve source documents: {str(e)}")
+    
+    def _extract_pdf_text(self, pdf_bytes: bytes, doc_name: str) -> str:
+        """
+        Attempt to extract text from PDF bytes.
+        
+        Falls back to a placeholder message if PDF parsing libraries
+        are not available.
+        
+        Args:
+            pdf_bytes: Raw PDF content
+            doc_name: Document name for logging
+            
+        Returns:
+            Extracted text or placeholder message
+        """
+        try:
+            import PyPDF2
+            import io
+            reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
+            pages = []
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    pages.append(text)
+            if pages:
+                return "\n\n".join(pages)
+            else:
+                return f"[PDF document '{doc_name}' - text extraction yielded no content]"
+        except ImportError:
+            logger.warning("PyPDF2 not available for PDF text extraction")
+            return f"[PDF document '{doc_name}' - install PyPDF2 for text extraction]"
+        except Exception as e:
+            logger.warning(f"Failed to extract text from PDF '{doc_name}': {e}")
+            return f"[PDF document '{doc_name}' - text extraction failed: {e}]"
+    
+    def get_mock_source_documents(self) -> List['SourceDocument']:
+        """
+        Get mock source documents for testing.
+        
+        Returns:
+            List of mock SourceDocument objects
+        """
+        return [
+            SourceDocument(
+                name="security_policy.txt",
+                content_type="txt",
+                text_content=(
+                    "Company Security Policy\n\n"
+                    "1. All employees must have a valid badge to enter the building.\n"
+                    "2. All visitors must be accompanied by an escort at all times.\n"
+                    "3. All contractors must have security clearance before accessing restricted areas.\n"
+                    "4. Badge access is revoked immediately upon termination.\n"
+                    "5. Visitors must sign in at the front desk and receive a temporary badge.\n"
+                ),
+                description="Main security policy document"
+            )
+        ]
     
     def get_mock_policy_definition(self) -> Dict:
         """
@@ -428,11 +648,65 @@ class PolicyService:
         self._rule_map = self._build_rule_map()
         logger.info("Policy definition updated and rule map rebuilt")
     
+    def update_source_documents(self, source_documents: List['SourceDocument']):
+        """
+        Update the source documents used for RAG context.
+        
+        Args:
+            source_documents: List of SourceDocument objects
+        """
+        self.source_documents = source_documents
+        logger.info(f"Source documents updated: {len(source_documents)} document(s)")
+    
     # === Policy Context Formatting (from policy_context_formatter.py) ===
     
     def format_policy_context(self) -> str:
         """
         Format the policy context as a string for prompt inclusion.
+        
+        Uses source documents as RAG content when available. Falls back to
+        the formal logic policy definition (rules and variables) if no
+        source documents are loaded.
+        
+        Returns:
+            Formatted policy context string, or empty string if nothing available.
+        """
+        # Prefer source documents as RAG content
+        if self.source_documents:
+            return self._format_source_document_context()
+        
+        # Fall back to formal logic rules/variables
+        return self._format_rules_context()
+    
+    def _format_source_document_context(self) -> str:
+        """
+        Format source documents as RAG context for LLM prompts.
+        
+        Returns:
+            Formatted string with source document content
+        """
+        sections = []
+        sections.append("## Reference Documents")
+        sections.append("")
+        sections.append(
+            "The following source documents define the policy. "
+            "Use them as your primary reference when answering questions."
+        )
+        
+        for doc in self.source_documents:
+            sections.append(f"\n### {doc.name}")
+            if doc.description:
+                sections.append(f"*{doc.description}*")
+            sections.append("")
+            sections.append(doc.text_content)
+        
+        return "\n".join(sections)
+    
+    def _format_rules_context(self) -> str:
+        """
+        Format the formal logic policy definition (rules and variables) as context.
+        
+        This is the legacy format used when source documents are not available.
         
         Returns:
             Formatted policy context string with rules and variables sections,

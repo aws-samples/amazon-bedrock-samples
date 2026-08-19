@@ -233,6 +233,7 @@ class Thread:
     processed_finding_indices: set = field(default_factory=set)  # NEW - track which findings have been processed
     current_findings: List[Finding] = field(default_factory=list)  # NEW - current findings from latest validation
     all_clarifications: List[QuestionAnswerExchange] = field(default_factory=list)  # NEW - all Q&A exchanges from clarifications
+    rag_content: Optional[str] = None  # Per-thread RAG content override (markdown)
     schema_version: str = "2.0"  # NEW - for migration support
     created_at: datetime = field(default_factory=datetime_utc)
     completed_at: Optional[datetime] = None
@@ -253,6 +254,7 @@ class Thread:
             "processed_finding_indices": list(self.processed_finding_indices),
             "current_findings": [f.to_dict() for f in self.current_findings],
             "all_clarifications": [qa.to_dict() for qa in self.all_clarifications],
+            "rag_content": self.rag_content,
             "schema_version": self.schema_version,
             "created_at": self.created_at.isoformat(),
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
@@ -282,6 +284,7 @@ class Thread:
             processed_finding_indices=set(data.get("processed_finding_indices", [])),
             current_findings=[Finding.from_dict(f) for f in data.get("current_findings", [])],
             all_clarifications=[QuestionAnswerExchange.from_dict(qa) for qa in data.get("all_clarifications", [])],
+            rag_content=data.get("rag_content"),
             schema_version=data.get("schema_version", "2.0"),
             created_at=dt.fromisoformat(data["created_at"]),
             completed_at=dt.fromisoformat(data["completed_at"]) if data.get("completed_at") else None,

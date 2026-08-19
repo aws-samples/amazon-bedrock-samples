@@ -58,17 +58,22 @@ class ServiceContainer:
         Get or create PolicyService instance.
         
         Returns:
-            PolicyService instance if policy definition is available, None otherwise
+            PolicyService instance if policy definition or source documents are available,
+            None otherwise
         """
         current_config = self.config.get_current_config()
         
-        if not current_config or not current_config.policy_definition:
-            logger.debug("No policy definition available - PolicyService not initialized")
+        if not current_config or (not current_config.policy_definition and not current_config.source_documents):
+            logger.debug("No policy definition or source documents available - PolicyService not initialized")
             return None
         
         if self._policy_service is None:
-            logger.info("Initializing PolicyService with policy definition")
-            self._policy_service = PolicyService(current_config.policy_definition)
+            logger.info("Initializing PolicyService with policy definition and source documents")
+            source_docs = current_config.source_documents if isinstance(current_config.source_documents, list) else None
+            self._policy_service = PolicyService(
+                current_config.policy_definition,
+                source_documents=source_docs
+            )
         
         return self._policy_service
     

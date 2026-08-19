@@ -130,6 +130,7 @@ export function isClarificationIteration(iteration: TypedIteration): iteration i
 export interface TestPrompt {
   test_case_id: string;
   guard_content: string;
+  expected_answer?: string;
 }
 
 export interface Thread {
@@ -171,8 +172,15 @@ class APIClient {
     await this.client.post('/config', config);
   }
 
-  async sendMessage(message: string): Promise<string> {
-    const response = await this.client.post('/chat', { prompt: message });
+  async sendMessage(message: string, answer?: string, ragContent?: string): Promise<string> {
+    const payload: { prompt: string; answer?: string; rag_content?: string } = { prompt: message };
+    if (answer) {
+      payload.answer = answer;
+    }
+    if (ragContent) {
+      payload.rag_content = ragContent;
+    }
+    const response = await this.client.post('/chat', payload);
     return response.data.thread_id;
   }
 

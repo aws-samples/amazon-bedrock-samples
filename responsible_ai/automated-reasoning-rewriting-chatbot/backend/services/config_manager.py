@@ -10,7 +10,7 @@ from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 import boto3
 from botocore.exceptions import ClientError
-from backend.services.policy_service import ARPolicy, PolicyService
+from backend.services.policy_service import ARPolicy, PolicyService, SourceDocument
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ class Config:
         guardrail_id: The ID of the Bedrock Guardrail (set after ensure_guardrail)
         guardrail_version: The version of the Guardrail (default: DRAFT)
         policy_definition: The policy definition containing rules (loaded from AWS)
+        source_documents: Source documents for RAG context (loaded from build workflow)
         max_iterations: Maximum number of rewriting iterations allowed (default: 5)
         requires_inference_profile: Whether the model requires an inference profile (default: False)
     """
@@ -34,6 +35,7 @@ class Config:
     guardrail_id: Optional[str] = None
     guardrail_version: str = "DRAFT"
     policy_definition: Optional[Dict] = None
+    source_documents: Optional[List[SourceDocument]] = None
     max_iterations: int = 5
     requires_inference_profile: bool = False
 
@@ -195,11 +197,14 @@ class ConfigManager:
         
         # Try to load the policy definition (optional feature)
         policy_definition = None
+        source_documents = None
         
         if use_mock_policy:
             # Use mock policy for testing
             logger.info("Using mock policy definition for testing")
             policy_definition = self.policy_service.get_mock_policy_definition()
+            mock_docs = self.policy_service.get_mock_source_documents()
+            source_documents = mock_docs if isinstance(mock_docs, list) else None
         else:
             try:
                 policy_definition = self.policy_service.get_policy_definition(policy_arn)
@@ -208,20 +213,39 @@ class ConfigManager:
                 logger.warning(f"Could not load policy definition (feature may not be available): {e}")
                 logger.info("Continuing without policy definition - rule enrichment will be disabled")
                 logger.info("TIP: Set USE_MOCK_POLICY=true environment variable to test with mock data")
+            
+            # Fetch source documents for RAG context
+            try:
+                source_documents = self.policy_service.get_source_documents(policy_arn)
+                if source_documents and isinstance(source_documents, list):
+                    logger.info(f"Successfully loaded {len(source_documents)} source document(s) from AWS")
+                else:
+                    source_documents = None
+                    logger.info("No source documents found for policy")
+            except Exception as e:
+                source_documents = None
+                logger.warning(f"Could not load source documents: {e}")
+                logger.info("Continuing without source documents - RAG context will fall back to policy rules")
         
-        # Update PolicyService with new definition
+        # Update PolicyService with new definition and source documents
         if policy_definition:
             self.policy_service.update_policy_definition(policy_definition)
+        if source_documents:
+            self.policy_service.update_source_documents(source_documents)
         
         self._current_config = Config(
             model_id=model_id,
             policy_arn=policy_arn,
             policy_definition=policy_definition,
+            source_documents=source_documents,
             max_iterations=max_iterations,
             requires_inference_profile=requires_inference_profile
         )
         
         logger.info(f"Configuration updated: model_id={model_id}, policy_arn={policy_arn}, max_iterations={max_iterations}, requires_inference_profile={requires_inference_profile}")
+        if source_documents and isinstance(source_documents, list):
+            doc_names = [d.name for d in source_documents]
+            logger.info(f"Source documents loaded for RAG context: {doc_names}")
         if policy_definition:
             rules_count = len(policy_definition.get("rules", []))
             logger.info(f"Policy definition loaded with {rules_count} rules - enrichment ENABLED")

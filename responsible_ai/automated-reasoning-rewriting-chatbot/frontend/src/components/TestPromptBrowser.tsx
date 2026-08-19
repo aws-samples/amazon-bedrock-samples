@@ -10,7 +10,7 @@ interface TestPromptBrowserProps {
   isLoading: boolean;
   error: string | null;
   onToggle: () => void;
-  onPromptSelect: (prompt: string) => void;
+  onPromptSelect: (prompt: string, answer?: string) => void;
   onRetry?: () => void;
 }
 
@@ -38,15 +38,15 @@ const TestPromptBrowser: React.FC<TestPromptBrowserProps> = ({
     }
   }, [testPrompts.length]);
 
-  const handlePromptClick = (testCaseId: string, guardContent: string) => {
+  const handlePromptClick = (testCaseId: string, guardContent: string, expectedAnswer?: string) => {
     setSelectedPromptId(testCaseId);
-    onPromptSelect(guardContent);
+    onPromptSelect(guardContent, expectedAnswer);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, testCaseId: string, guardContent: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, testCaseId: string, guardContent: string, expectedAnswer?: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      handlePromptClick(testCaseId, guardContent);
+      handlePromptClick(testCaseId, guardContent, expectedAnswer);
     }
   };
 
@@ -102,8 +102,8 @@ const TestPromptBrowser: React.FC<TestPromptBrowserProps> = ({
       <div
         key={testPrompt.test_case_id}
         className={`prompt-item ${isSelected ? 'selected' : ''}`}
-        onClick={() => handlePromptClick(testPrompt.test_case_id, testPrompt.guard_content)}
-        onKeyDown={(e) => handleKeyDown(e, testPrompt.test_case_id, testPrompt.guard_content)}
+        onClick={() => handlePromptClick(testPrompt.test_case_id, testPrompt.guard_content, testPrompt.expected_answer)}
+        onKeyDown={(e) => handleKeyDown(e, testPrompt.test_case_id, testPrompt.guard_content, testPrompt.expected_answer)}
         tabIndex={0}
         role="button"
         aria-pressed={isSelected}
@@ -111,6 +111,11 @@ const TestPromptBrowser: React.FC<TestPromptBrowserProps> = ({
       >
         <div className="prompt-content">
           <div className="prompt-text">{displayText}</div>
+          {testPrompt.expected_answer && (
+            <div className="prompt-answer-preview">
+              <span className="prompt-answer-label">Answer:</span> {truncateText(testPrompt.expected_answer, 80).truncated}
+            </div>
+          )}
           {isTruncated && (
             <button
               className="expand-button"

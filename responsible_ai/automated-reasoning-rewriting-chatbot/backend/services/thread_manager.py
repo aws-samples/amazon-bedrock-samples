@@ -23,13 +23,14 @@ class ThreadManager:
         self._threads: Dict[str, Thread] = {}
         self._lock = Lock()
     
-    def create_thread(self, prompt: str, model_id: str) -> Thread:
+    def create_thread(self, prompt: str, model_id: str, rag_content: Optional[str] = None) -> Thread:
         """
         Create a new conversation thread.
         
         Args:
             prompt: The user's prompt that initiates the thread
             model_id: The LLM model ID to use for this thread
+            rag_content: Optional markdown RAG content to override policy context
             
         Returns:
             The newly created Thread object
@@ -41,6 +42,7 @@ class ThreadManager:
                 user_prompt=prompt,
                 model_id=model_id,
                 status=ThreadStatus.PROCESSING,
+                rag_content=rag_content,
                 created_at=dt.now(datetime.UTC)
             )
             self._threads[thread_id] = thread
