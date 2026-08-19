@@ -23,7 +23,7 @@ from policy_engine import create_test_scenarios
 GUARDRAIL_ID = os.getenv("GUARDRAIL_ID")
 GUARDRAIL_VERSION = os.getenv("GUARDRAIL_VERSION", "DRAFT")
 KNOWLEDGE_BASE_ID = os.getenv("KNOWLEDGE_BASE_ID")
-MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-sonnet-4-20250514-v1:0")
+MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-sonnet-4-6")
 AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION")
 
 # Get the current region
@@ -49,7 +49,7 @@ if 'conversation_history' not in st.session_state:
 
 def main():
     st.title("🛫 Airport Lounge Access Agent with Automated Reasoning")
-    st.markdown("### AWS re:Invent 2025 Workshop Demo")
+    st.markdown("### AWS Automated Reasoning Workshop Demo")
     
     # Sidebar for navigation and configuration
     with st.sidebar:

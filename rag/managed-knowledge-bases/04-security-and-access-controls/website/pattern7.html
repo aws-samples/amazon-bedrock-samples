@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern 7: Lambda Interceptor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <div class="pattern-hero">
+    <div class="badge"><div class="dot" style="background:var(--pink)"></div>Pattern 7</div>
+    <h1>Lambda Interceptor</h1>
+    <p class="subtitle">Add a Lambda function as a request/response interceptor on the Gateway. Runs before and after each tool invocation for custom logic like dynamic filter injection, audit logging, rate limiting, or result redaction.</p>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Architecture</h4>
+    <div class="arch-flow">
+      <div class="arch-node" style="border-color:var(--green)"><div class="icon">🤖</div><div class="name">Agent</div><div class="sub">IAM Auth</div></div>
+      <div class="arch-arrow"><div class="al">Request</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="icon">🚪</div><div class="name">Gateway</div><div class="sub">MCP Protocol</div></div>
+      <div class="arch-arrow"><div class="al">Pre/Post</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--pink)"><div class="icon">⚡</div><div class="name">Lambda Interceptor</div><div class="sub">REQUEST / RESPONSE</div></div>
+      <div class="arch-arrow"><div class="al">Modified</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--cyan)"><div class="icon">📚</div><div class="name">KB Target</div><div class="sub">Managed KB</div></div>
+    </div>
+  </div>
+
+  <table class="ptable">
+    <tr><th>Use Case</th><th>Point</th><th>What Lambda Does</th></tr>
+    <tr><td>Dynamic filter injection</td><td>REQUEST</td><td>Read user identity, inject metadata filters by dept/role</td></tr>
+    <tr><td>Audit logging</td><td>BOTH</td><td>Log who queried what, when, and what was returned</td></tr>
+    <tr><td>Rate limiting</td><td>REQUEST</td><td>Check DynamoDB counter, reject if over limit</td></tr>
+    <tr><td>Result redaction</td><td>RESPONSE</td><td>Strip PII, redact sensitive fields</td></tr>
+    <tr><td>Query rewriting</td><td>REQUEST</td><td>Modify query text, add context, translate</td></tr>
+    <tr><td>Response enrichment</td><td>RESPONSE</td><td>Add metadata, citations, confidence scores</td></tr>
+  </table>
+
+  <div class="code-box">
+    <h4>Interceptor Configuration</h4>
+    <pre>gw = ac.<span class="fn">create_gateway</span>(
+    name=<span class="str">"interceptor-gw"</span>,
+    roleArn=GW_ROLE_ARN,
+    protocolType=<span class="str">"MCP"</span>,
+    authorizerType=<span class="str">"AWS_IAM"</span>,
+    interceptorConfigurations=[{
+        <span class="str">"interceptor"</span>: {<span class="str">"lambda"</span>: {<span class="str">"arn"</span>: LAMBDA_ARN}},
+        <span class="str">"interceptionPoints"</span>: [<span class="str">"REQUEST"</span>, <span class="str">"RESPONSE"</span>],
+        <span class="str">"inputConfiguration"</span>: {<span class="str">"passRequestHeaders"</span>: <span class="kw">True</span>}
+    }]
+)</pre>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Interceptor Event Format</h4>
+    <pre style="font-size:0.78rem;font-family:'JetBrains Mono',monospace;color:#c9d1d9">{
+  "interceptionPoint": "REQUEST" | "RESPONSE",
+  "gatewayId": "gw-abc123",
+  "targetId": "tgt-xyz789",
+  "requestHeaders": { ... },
+  "toolName": "Retrieve",
+  "toolInput": { ... },   // REQUEST events
+  "toolOutput": { ... }   // RESPONSE events
+}</pre>
+  </div>
+
+  <div class="use-case">
+    <h4>🎯 When to Use</h4>
+    <p>When you need custom pre/post processing on every Gateway request. The <code>passRequestHeaders: true</code> setting forwards HTTP headers to Lambda — essential for reading JWT claims or custom headers for identity-based logic.</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="pattern6.html" class="prev"><span class="dir">← Previous</span>P6: JWT + Cedar</a>
+    <a href="pattern8.html" class="next"><span class="dir">Next →</span>P8: Full Governance</a>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>

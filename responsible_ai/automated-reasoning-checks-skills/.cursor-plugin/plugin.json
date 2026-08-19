@@ -1,0 +1,23 @@
+{
+  "name": "automated-reasoning-skills",
+  "skills": "skills",
+  "description": "Agent Skills for Amazon Bedrock Automated Reasoning checks: build a policy from a document, review its quality, test it, debug failures, deploy it to a guardrail, and validate LLM answers at runtime.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Adewale Akinfaderin"
+  },
+  "homepage": "https://github.com/aws-samples/amazon-bedrock-samples/tree/main/responsible_ai/automated-reasoning-checks-skills",
+  "repository": "https://github.com/aws-samples/amazon-bedrock-samples",
+  "license": "Apache-2.0",
+  "keywords": [
+    "bedrock",
+    "automated-reasoning",
+    "guardrails",
+    "responsible-ai",
+    "formal-verification",
+    "smt",
+    "hallucination",
+    "compliance",
+    "aws"
+  ]
+}

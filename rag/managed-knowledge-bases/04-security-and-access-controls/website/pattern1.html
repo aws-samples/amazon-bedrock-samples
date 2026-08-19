@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern 1: Direct SDK Access</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav id="main-nav"></nav>
+<div class="page">
+  <div class="pattern-hero">
+    <div class="badge"><div class="dot" style="background:var(--green)"></div>Pattern 1</div>
+    <h1>Direct SDK Access</h1>
+    <p class="subtitle">The simplest pattern — IAM-authenticated SDK calls to create a managed Knowledge Base, ingest S3 documents, and retrieve results. No Gateway layer.</p>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Architecture</h4>
+    <div class="arch-flow">
+      <div class="arch-node" style="border-color:var(--green)"><div class="icon">👤</div><div class="name">Client App</div><div class="sub">IAM Credentials</div></div>
+      <div class="arch-arrow"><div class="al">IAM Auth</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="icon">🧠</div><div class="name">Bedrock Agent API</div><div class="sub">Retrieve / R&amp;G / Agentic</div></div>
+      <div class="arch-arrow"><div class="al">Retrieve</div><div class="ar">→</div></div>
+      <div class="arch-node" style="border-color:var(--cyan)"><div class="icon">📚</div><div class="name">Managed KB</div><div class="sub">Vector Store</div></div>
+      <div class="arch-arrow dashed"><div class="al">Ingest</div><div class="ar">⇢</div></div>
+      <div class="arch-node" style="border-color:var(--orange)"><div class="icon">🪣</div><div class="name">S3 Bucket</div><div class="sub">Documents</div></div>
+    </div>
+  </div>
+
+  <!-- Three Retrieval APIs -->
+  <div class="diagram-box">
+    <h4>Three Retrieval APIs</h4>
+    <table class="ptable" style="margin:0">
+      <tr><th>API</th><th>Returns</th><th>Use When</th></tr>
+      <tr><td>Retrieve</td><td>Raw chunks with scores</td><td>You want source chunks for a custom RAG pipeline</td></tr>
+      <tr><td>RetrieveAndGenerate</td><td>Generated answer + citations</td><td>You want end-to-end RAG with managed generation</td></tr>
+      <tr><td>AgenticRetrieveStream</td><td>Deduplicated chunks (streaming)</td><td>Complex/multi-part queries, multi-KB retrieval</td></tr>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card" style="border-left:3px solid var(--green)">
+      <h4>What You Get</h4>
+      <ul>
+        <li><span class="ck">✓</span> Basic RAG pipeline</li>
+        <li><span class="ck">✓</span> IAM authentication</li>
+        <li><span class="ck">✓</span> CloudTrail audit logging</li>
+        <li><span class="ck">✓</span> Managed vector store</li>
+        <li><span class="ck">✓</span> All 3 retrieval APIs</li>
+      </ul>
+    </div>
+    <div class="info-card" style="border-left:3px solid var(--red)">
+      <h4>What You Don't Get</h4>
+      <ul>
+        <li><span class="cx">✗</span> Per-user scoping</li>
+        <li><span class="cx">✗</span> KB ID hidden from agents</li>
+        <li><span class="cx">✗</span> Centralized access control</li>
+        <li><span class="cx">✗</span> Fine-grained authorization</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-box">
+    <h4>Retrieve API — Raw Chunks</h4>
+    <pre><span class="cmt"># Returns raw source chunks with relevance scores</span>
+response = dp.<span class="fn">retrieve</span>(
+    knowledgeBaseId=kb_id,
+    retrievalQuery={<span class="str">"text"</span>: <span class="str">"What is Amazon Bedrock?"</span>},
+    retrievalConfiguration={
+        <span class="str">"managedSearchConfiguration"</span>: {
+            <span class="str">"numberOfResults"</span>: 5
+        }
+    }
+)</pre>
+  </div>
+
+  <div class="code-box">
+    <h4>RetrieveAndGenerate API — Managed RAG</h4>
+    <pre><span class="cmt"># Returns generated answer with citations back to source documents</span>
+response = dp.<span class="fn">retrieve_and_generate</span>(
+    input={<span class="str">"text"</span>: <span class="str">"What is Amazon Bedrock and what are its key features?"</span>},
+    retrieveAndGenerateConfiguration={
+        <span class="str">"type"</span>: <span class="str">"KNOWLEDGE_BASE"</span>,
+        <span class="str">"knowledgeBaseConfiguration"</span>: {
+            <span class="str">"knowledgeBaseId"</span>: kb_id,
+            <span class="str">"modelArn"</span>: GENERATION_MODEL,
+            <span class="str">"retrievalConfiguration"</span>: {
+                <span class="str">"managedSearchConfiguration"</span>: {<span class="str">"numberOfResults"</span>: 5}
+            }
+        }
+    }
+)</pre>
+  </div>
+
+  <div class="code-box">
+    <h4>AgenticRetrieveStream API — Multi-KB Streaming</h4>
+    <pre><span class="cmt"># Decomposes complex queries, runs multiple retrievals, streams deduplicated chunks</span>
+response = dp.<span class="fn">agentic_retrieve_stream</span>(
+    messages=[{
+        <span class="str">"role"</span>: <span class="str">"user"</span>,
+        <span class="str">"content"</span>: {<span class="str">"text"</span>: <span class="str">"What are the main topics covered?"</span>}
+    }],
+    retrievers=[{
+        <span class="str">"configuration"</span>: {
+            <span class="str">"knowledgeBase"</span>: {
+                <span class="str">"knowledgeBaseId"</span>: kb_id,
+                <span class="str">"retrievalOverrides"</span>: {<span class="str">"maxNumberOfResults"</span>: 10}
+            }
+        }
+    }],
+    agenticRetrieveConfiguration={
+        <span class="str">"foundationModel"</span>: {<span class="str">"bedrock"</span>: {<span class="str">"modelArn"</span>: GENERATION_MODEL}},
+        <span class="str">"maxAgentIteration"</span>: 3
+    }
+)</pre>
+  </div>
+
+  <div class="diagram-box">
+    <h4>Key Differences</h4>
+    <ul style="list-style:none;font-size:0.84rem;line-height:1.8">
+      <li>• <code>Retrieve</code>: <code>managedSearchConfiguration</code> — returns raw chunks, you build the prompt</li>
+      <li>• <code>RetrieveAndGenerate</code>: <code>knowledgeBaseConfiguration</code> with <code>modelArn</code> — returns generated text + citations</li>
+      <li>• <code>AgenticRetrieveStream</code>: <code>messages</code> + <code>retrievers</code> — streaming, multi-KB, query decomposition</li>
+    </ul>
+    <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.8rem">Note: <code>messages[0].content</code> in AgenticRetrieveStream is a struct <code>{"text": "..."}</code>, not a list. The <code>s3Location.uri</code> in results is an HTTPS URL, not an <code>s3://</code> URI.</p>
+  </div>
+
+  <table class="ptable">
+    <tr><th>Feature</th><th>Status</th></tr>
+    <tr><td>Authentication</td><td>IAM only</td></tr>
+    <tr><td>Authorization</td><td>IAM policies</td></tr>
+    <tr><td>Per-user scoping</td><td>No</td></tr>
+    <tr><td>KB ID hidden</td><td>No</td></tr>
+    <tr><td>Audit logging</td><td>CloudTrail only</td></tr>
+  </table>
+
+  <div class="use-case">
+    <h4>🎯 When to Use</h4>
+    <p>Internal tools, prototypes, single-tenant apps where IAM is sufficient. Great for getting started quickly with a managed RAG pipeline.</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="index.html" class="prev"><span class="dir">← Back</span>Overview</a>
+    <a href="pattern2.html" class="next"><span class="dir">Next →</span>P2: Metadata Filters</a>
+  </div>
+</div>
+<footer><p>Managed Knowledge Bases — Security Patterns · Amazon Bedrock</p></footer>
+<script src="nav.js"></script>
+</body>
+</html>

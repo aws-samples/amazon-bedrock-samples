@@ -1,0 +1,8 @@
+Look at the image carefully and solve the following problem step by step.
+
+{question}
+
+Show your reasoning, then provide your final answer on the last line in the format:
+The answer is <your answer>
+
+For multiple-choice questions, give the answer text (not just the letter).

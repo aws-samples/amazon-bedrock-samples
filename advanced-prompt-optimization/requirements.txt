@@ -1,0 +1,5 @@
+boto3==1.43.8
+jupyter
+ipython
+ipywidgets
+tqdm

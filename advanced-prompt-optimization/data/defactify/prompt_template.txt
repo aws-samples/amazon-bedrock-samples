@@ -1,0 +1,7 @@
+Look at the image carefully and determine whether it is a real photograph taken by a camera or an AI-generated image.
+
+Caption: {caption}
+
+Analyze visual artifacts, texture consistency, lighting, and anatomical accuracy. Then provide your final answer.
+
+The answer is <Real or AI-Generated>

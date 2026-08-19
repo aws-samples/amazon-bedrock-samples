@@ -6,6 +6,7 @@ Examples to help you learn the basics of the Bedrock service.
 
 - [bedrock_apis](./bedrock_apis) - Examples with Bedrock Invoke API.
 - [converse_api](./converse_api) - Examples with Bedrock Converse API.
+- [prompt-caching](./prompt-caching) - Prompt caching examples organized by API type (Converse API, InvokeModel API) and model family.
 
 
 ## Contributing
