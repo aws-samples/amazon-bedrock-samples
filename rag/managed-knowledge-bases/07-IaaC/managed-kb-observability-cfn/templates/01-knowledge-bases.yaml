@@ -1,0 +1,299 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Stack 01 — Two fully-managed Amazon Bedrock Knowledge Bases (financial + weather)
+  backed by a single S3 bucket, with an ingestion custom resource that uploads the bundled
+  corpora and runs the initial sync. All resources are native CloudFormation L1;
+  the managed KB has NO OpenSearch/OCU vector store. Data: financial = synthetic (Octank, CC0),
+  weather = public-domain U.S. CRS report (IF12695) — see README.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: bmkb-obs
+    Description: Prefix for resource names and tags. Must match the KB name pattern.
+    AllowedPattern: "^([0-9a-zA-Z][_-]?){1,50}$"
+  FinancialPrefix:
+    Type: String
+    Default: financial/
+    Description: S3 key prefix scoping the financial KB's data source.
+  WeatherPrefix:
+    Type: String
+    Default: weather/
+    Description: S3 key prefix scoping the weather KB's data source.
+
+Resources:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Shared source bucket. One bucket, two prefixes (financial/, weather/) — the
+  # data sources are isolated by inclusionPrefixes so each KB indexes only its own.
+  # ──────────────────────────────────────────────────────────────────────────
+  SourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-kb-src-${AWS::AccountId}-${AWS::Region}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Sample
+          Value: bmkb-observability
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Execution role assumed by the Bedrock Knowledge Base service. Scoped to this
+  # account's KBs (SourceArn) and to the source bucket + KB CloudWatch namespace.
+  # Managed default embedding needs no bedrock:InvokeModel grant (bundled).
+  # ──────────────────────────────────────────────────────────────────────────
+  KnowledgeBaseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-kb-role"
+      Description: !Sub "Execution role for ${ProjectName} managed knowledge bases"
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*"
+      Policies:
+        - PolicyName: kb-cloudwatch
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CloudWatchWrite
+                Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: AWS/Bedrock/KnowledgeBases
+        - PolicyName: kb-s3-source
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: S3ListBucket
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt SourceBucket.Arn
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref AWS::AccountId
+              - Sid: S3GetObject
+                Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub "${SourceBucket.Arn}/*"
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref AWS::AccountId
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # KB A — Financial (Octank 10-K, synthetic). Type: MANAGED, managed embedding.
+  # ──────────────────────────────────────────────────────────────────────────
+  FinancialKnowledgeBase:
+    Type: AWS::Bedrock::KnowledgeBase
+    Properties:
+      Name: !Sub "${ProjectName}-financial"
+      Description: Synthetic financial corpus (Octank 10-K). Managed KB.
+      RoleArn: !GetAtt KnowledgeBaseRole.Arn
+      KnowledgeBaseConfiguration:
+        Type: MANAGED
+        ManagedKnowledgeBaseConfiguration:
+          # ── Embedding model (customer-configurable) ──────────────────────────
+          # EmbeddingModelType selects how the KB embeds your data. Allowed values:
+          #   MANAGED  (default here) — Bedrock picks & operates a service-managed
+          #            embedding model. No model access to enable, no ARN to supply,
+          #            and embedding is BUNDLED at no extra cost. This is what you get
+          #            if you omit embedding config entirely.
+          #   CUSTOM   — you bring your own Bedrock embedding model. To override,
+          #            switch to CUSTOM and add the two lines shown below:
+          #
+          #     EmbeddingModelType: CUSTOM
+          #     EmbeddingModelArn: !Sub "arn:aws:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed-text-v2:0"
+          #     # EmbeddingModelConfiguration:            # optional, CUSTOM only
+          #     #   BedrockEmbeddingModelConfiguration:
+          #     #     Dimensions: 1024                    # e.g. Titan v2 supports 256/512/1024
+          #     #     EmbeddingDataType: FLOAT32
+          #
+          #   Notes: EmbeddingModelArn must be a DIRECT foundation-model ARN
+          #   (inference profiles / CRIS ARNs are rejected), the model needs Bedrock
+          #   model access enabled, custom embedding is billed per-token at ingestion,
+          #   and changing embedding config REPLACES the KB (re-embeds all data).
+          # ── Reranking ────────────────────────────────────────────────────────
+          # Reranking is NOT a KB (CloudFormation) property. A MANAGED KB reranks at
+          # retrieve time using a bundled managed reranker (no extra cost, no config).
+          # To use a CUSTOM reranker (e.g. Cohere Rerank 3.5, billed per query), pass
+          # rerankingConfiguration at QUERY time on Retrieve/RetrieveAndGenerate — or,
+          # for this solution, via the Gateway target's agenticRetrieveConfiguration
+          # (see rerankingModelType in templates/02-agentic-gateway.yaml).
+          EmbeddingModelType: MANAGED
+      Tags:
+        Project: !Ref ProjectName
+        Theme: financial
+
+  FinancialDataSource:
+    Type: AWS::Bedrock::DataSource
+    Properties:
+      Name: !Sub "${ProjectName}-financial-s3"
+      KnowledgeBaseId: !Ref FinancialKnowledgeBase
+      DataDeletionPolicy: DELETE
+      DataSourceConfiguration:
+        Type: MANAGED_KNOWLEDGE_BASE_CONNECTOR
+        ManagedKnowledgeBaseConnectorConfiguration:
+          ConnectorParameters:
+            type: S3
+            version: "1"
+            connectionConfiguration:
+              bucketName: !Ref SourceBucket
+              bucketOwnerAccountId: !Ref AWS::AccountId
+            filterConfiguration:
+              inclusionPrefixes:
+                - !Ref FinancialPrefix
+            deletionProtectionConfiguration:
+              enableDeletionProtection: false
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # KB B — Weather (tornadoes report, public U.S. CRS IF12695). Type: MANAGED, managed embedding.
+  # ──────────────────────────────────────────────────────────────────────────
+  WeatherKnowledgeBase:
+    Type: AWS::Bedrock::KnowledgeBase
+    Properties:
+      Name: !Sub "${ProjectName}-weather"
+      Description: Public U.S. CRS weather corpus (tornadoes report, IF12695). Managed KB.
+      RoleArn: !GetAtt KnowledgeBaseRole.Arn
+      KnowledgeBaseConfiguration:
+        Type: MANAGED
+        ManagedKnowledgeBaseConfiguration:
+          # Defaults to the service-managed embedding model (bundled, no extra cost).
+          # To bring your own embedding model, set EmbeddingModelType: CUSTOM plus an
+          # EmbeddingModelArn (and optional EmbeddingModelConfiguration) — see the fully
+          # commented example on FinancialKnowledgeBase above. Reranking is configured at
+          # query time (see 02-agentic-gateway.yaml), not as a KB property.
+          EmbeddingModelType: MANAGED
+      Tags:
+        Project: !Ref ProjectName
+        Theme: weather
+
+  WeatherDataSource:
+    Type: AWS::Bedrock::DataSource
+    Properties:
+      Name: !Sub "${ProjectName}-weather-s3"
+      KnowledgeBaseId: !Ref WeatherKnowledgeBase
+      DataDeletionPolicy: DELETE
+      DataSourceConfiguration:
+        Type: MANAGED_KNOWLEDGE_BASE_CONNECTOR
+        ManagedKnowledgeBaseConnectorConfiguration:
+          ConnectorParameters:
+            type: S3
+            version: "1"
+            connectionConfiguration:
+              bucketName: !Ref SourceBucket
+              bucketOwnerAccountId: !Ref AWS::AccountId
+            filterConfiguration:
+              inclusionPrefixes:
+                - !Ref WeatherPrefix
+            deletionProtectionConfiguration:
+              enableDeletionProtection: false
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Ingestion custom resource. On Create/Update: uploads the bundled corpora
+  # PDFs (packaged with the Lambda) to their prefixes, then StartIngestionJob on
+  # each data source and polls to COMPLETE. On Delete: empties the bucket so the
+  # stack can delete it. This is an operational glue resource, not a native gap.
+  # ──────────────────────────────────────────────────────────────────────────
+  IngestSyncRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-ingest-sync-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ingest-sync
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: S3Write
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:DeleteObject
+                  - s3:ListBucketVersions
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !GetAtt SourceBucket.Arn
+                  - !Sub "${SourceBucket.Arn}/*"
+              - Sid: BedrockIngestion
+                Effect: Allow
+                Action:
+                  - bedrock:StartIngestionJob
+                  - bedrock:GetIngestionJob
+                  - bedrock:ListIngestionJobs
+                Resource:
+                  - !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*"
+
+  IngestSyncFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-ingest-sync"
+      Description: Uploads bundled corpora and runs initial KB ingestion.
+      Runtime: python3.13
+      Handler: index.handler
+      Timeout: 900
+      MemorySize: 256
+      Role: !GetAtt IngestSyncRole.Arn
+      Code: ../build/ingest_sync
+
+  IngestSync:
+    Type: Custom::IngestSync
+    Properties:
+      ServiceToken: !GetAtt IngestSyncFunction.Arn
+      BucketName: !Ref SourceBucket
+      # Each entry: <kbId>|<dataSourceId>|<s3Prefix>. Ref on a DataSource returns
+      # "<kbId>|<dsId>"; we append the prefix the Lambda uploads the bundled docs to.
+      Ingestions:
+        - !Sub "${FinancialDataSource}|${FinancialPrefix}"
+        - !Sub "${WeatherDataSource}|${WeatherPrefix}"
+
+Outputs:
+  SourceBucketName:
+    Description: S3 bucket holding both KB corpora.
+    Value: !Ref SourceBucket
+    Export:
+      Name: !Sub "${ProjectName}-source-bucket"
+  FinancialKnowledgeBaseId:
+    Description: Financial (Octank 10-K) managed KB ID.
+    Value: !Ref FinancialKnowledgeBase
+    Export:
+      Name: !Sub "${ProjectName}-financial-kb-id"
+  WeatherKnowledgeBaseId:
+    Description: Weather (tornadoes) managed KB ID.
+    Value: !Ref WeatherKnowledgeBase
+    Export:
+      Name: !Sub "${ProjectName}-weather-kb-id"
+  KnowledgeBaseRoleArn:
+    Description: Shared KB execution role ARN.
+    Value: !GetAtt KnowledgeBaseRole.Arn

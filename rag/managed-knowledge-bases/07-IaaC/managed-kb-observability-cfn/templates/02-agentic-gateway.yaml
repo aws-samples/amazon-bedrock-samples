@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Stack 02a — AgentCore Gateway (AWS_IAM auth, MCP) exposing each managed
+  Knowledge Base's AgenticRetrieveStream as an MCP tool through the native
+  "bedrock-knowledge-bases" connector. One gateway, N per-KB targets (semantic
+  routing). No Lambda, no container — the connector runs the agentic retrieval
+  server-side. Imports the KB IDs from Stack 01. All resources are native L1 CFN.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: bmkb-obs
+    Description: Must match the ProjectName used for Stack 01 (drives the import names).
+  Stack01Name:
+    Type: String
+    Default: bmkb-obs-kb
+    Description: Informational — Stack 01's exports are referenced by ProjectName.
+
+Resources:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Gateway execution role. The gateway assumes this to call the Bedrock KB APIs
+  # on the caller's behalf (CredentialProviderType: GATEWAY_IAM_ROLE on each
+  # target). AgenticRetrieveStream is NOT resource-scopable → must be on "*";
+  # Retrieve + GetKnowledgeBase are scoped to the two imported KBs.
+  # ──────────────────────────────────────────────────────────────────────────
+  GatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-gateway-role"
+      Description: !Sub "Execution role for ${ProjectName} AgentCore gateway KB targets"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock-agentcore.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:*"
+      Policies:
+        - PolicyName: gateway-kb-retrieval
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AgenticRetrieveStreamUnscoped
+                Effect: Allow
+                Action: bedrock:AgenticRetrieveStream
+                Resource: "*"
+              - Sid: RetrieveAndDescribeScoped
+                Effect: Allow
+                Action:
+                  - bedrock:Retrieve
+                  - bedrock:GetKnowledgeBase
+                Resource:
+                  - !Sub
+                    - "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/${KbId}"
+                    - KbId: !ImportValue
+                        Fn::Sub: "${ProjectName}-financial-kb-id"
+                  - !Sub
+                    - "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/${KbId}"
+                    - KbId: !ImportValue
+                        Fn::Sub: "${ProjectName}-weather-kb-id"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Gateway — AWS_IAM inbound auth (callers sign with SigV4; no Cognito needed),
+  # MCP protocol with semantic tool search.
+  # ──────────────────────────────────────────────────────────────────────────
+  AgenticGateway:
+    Type: AWS::BedrockAgentCore::Gateway
+    Properties:
+      Name: !Sub "${ProjectName}-gateway"
+      AuthorizerType: AWS_IAM
+      RoleArn: !GetAtt GatewayRole.Arn
+      ProtocolType: MCP
+      ProtocolConfiguration:
+        Mcp:
+          SearchType: SEMANTIC
+      Description: Agentic RAG gateway routing to per-theme managed KBs.
+      Tags:
+        Project: !Ref ProjectName
+        Sample: bmkb-observability
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # KB target A — Financial. Exposes AgenticRetrieveStream over the financial KB.
+  # ParameterValues shape is byte-for-byte the proven SDK payload:
+  #   retrievers[].configuration.knowledgeBase.knowledgeBaseId +
+  #   agenticRetrieveConfiguration{foundationModelType, rerankingModelType}=MANAGED
+  # ──────────────────────────────────────────────────────────────────────────
+  FinancialTarget:
+    Type: AWS::BedrockAgentCore::GatewayTarget
+    Properties:
+      GatewayIdentifier: !Ref AgenticGateway
+      Name: financial-agentic
+      Description: Agentic retrieval over the synthetic financial (Octank 10-K) KB. (Octank is a fictional company; corpus is model-generated CC0 sample data.)
+      TargetConfiguration:
+        Mcp:
+          Connector:
+            Source:
+              ConnectorId: bedrock-knowledge-bases
+            Enabled:
+              - AgenticRetrieveStream
+            Configurations:
+              - Name: AgenticRetrieveStream
+                ParameterValues:
+                  retrievers:
+                    - configuration:
+                        knowledgeBase:
+                          knowledgeBaseId: !ImportValue
+                            Fn::Sub: "${ProjectName}-financial-kb-id"
+                  agenticRetrieveConfiguration:
+                    foundationModelType: MANAGED
+                    rerankingModelType: MANAGED
+      CredentialProviderConfigurations:
+        - CredentialProviderType: GATEWAY_IAM_ROLE
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # KB target B — Weather. Exposes AgenticRetrieveStream over the weather KB.
+  # ──────────────────────────────────────────────────────────────────────────
+  WeatherTarget:
+    Type: AWS::BedrockAgentCore::GatewayTarget
+    Properties:
+      GatewayIdentifier: !Ref AgenticGateway
+      Name: weather-agentic
+      Description: Agentic retrieval over the public U.S. CRS weather (tornadoes, IF12695) KB.
+      TargetConfiguration:
+        Mcp:
+          Connector:
+            Source:
+              ConnectorId: bedrock-knowledge-bases
+            Enabled:
+              - AgenticRetrieveStream
+            Configurations:
+              - Name: AgenticRetrieveStream
+                ParameterValues:
+                  retrievers:
+                    - configuration:
+                        knowledgeBase:
+                          knowledgeBaseId: !ImportValue
+                            Fn::Sub: "${ProjectName}-weather-kb-id"
+                  agenticRetrieveConfiguration:
+                    foundationModelType: MANAGED
+                    rerankingModelType: MANAGED
+      CredentialProviderConfigurations:
+        - CredentialProviderType: GATEWAY_IAM_ROLE
+
+Outputs:
+  GatewayId:
+    Description: Gateway identifier.
+    Value: !Ref AgenticGateway
+    Export:
+      Name: !Sub "${ProjectName}-gateway-id"
+  GatewayUrl:
+    Description: MCP endpoint URL (consumed by the Runtime agent as GATEWAY_URL).
+    Value: !GetAtt AgenticGateway.GatewayUrl
+    Export:
+      Name: !Sub "${ProjectName}-gateway-url"
+  GatewayArn:
+    Description: Gateway ARN.
+    Value: !GetAtt AgenticGateway.GatewayArn
+  GatewayRoleArn:
+    Description: Gateway execution role ARN.
+    Value: !GetAtt GatewayRole.Arn

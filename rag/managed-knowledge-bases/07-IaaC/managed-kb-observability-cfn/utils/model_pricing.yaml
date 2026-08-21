@@ -1,0 +1,39 @@
+# Per-model pricing + quota metadata, keyed by Bedrock model / inference-profile id.
+# Source: AWS Bedrock pricing page (https://aws.amazon.com/bedrock/pricing/).
+# Hand-maintained — values are not API-discoverable; a YAML edit needs no code change.
+#
+# Fields:
+#   input_per_1m / output_per_1m = USD per 1,000,000 tokens. These are the ONLY cost
+#     inputs. compute_cost_usd uses exactly these; nothing else affects the dollar figure.
+#   quota_burndown = TPM/TPD throttling multiplier applied to OUTPUT tokens. QUOTA ONLY —
+#     it does NOT affect billing (AWS: "You're only billed for your actual token usage").
+#     Used by quota_consumed(), NOT by compute_cost_usd. Per-model, from the AWS token-
+#     burndown doc: Claude v4.8 = 15x, Claude Sonnet 5 = 10x, Claude v4.7 and below = 5x,
+#     all non-Anthropic = 1x.
+#
+# Keys are the version-agnostic model family. compute_cost_usd normalizes a live
+# inference-profile id (e.g. "us.anthropic.claude-haiku-4-5-20251001-v1:0") to its
+# family key before lookup — stripping BOTH the region prefix (us./eu./apac./global.)
+# and the trailing "-<date>-vN" suffix.
+#
+# Values CONFIRMED against the AWS Bedrock pricing page (per 1,000,000 tokens, on-demand).
+anthropic.claude-sonnet-4-6:
+  input_per_1m: 3.00
+  output_per_1m: 15.00
+  quota_burndown: 5      # v4.7-and-below tier
+anthropic.claude-opus-4-8:
+  input_per_1m: 5.00
+  output_per_1m: 25.00
+  quota_burndown: 15     # v4.8 tier
+anthropic.claude-sonnet-5:
+  input_per_1m: 3.00
+  output_per_1m: 15.00
+  quota_burndown: 10     # Sonnet 5 tier
+anthropic.claude-haiku-4-5:
+  input_per_1m: 1.00
+  output_per_1m: 5.00
+  quota_burndown: 5      # v4.7-and-below tier
+anthropic.claude-fable-5:
+  input_per_1m: 10.00
+  output_per_1m: 50.00
+  quota_burndown: 5
