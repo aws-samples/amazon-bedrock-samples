@@ -18,6 +18,7 @@ plugins:
   - tags:
       tags: false
       tags_allowed:
+        - API-Usage-Example
         - Agents
         - Multi-Agent-Collaboration 
         - Knowledge-Bases
@@ -107,6 +108,7 @@ nav:
     - Intro to Amazon Bedrock:
       - API Usage: 
         - Invoke Model API Example : './introduction-to-bedrock/bedrock_apis/01_invoke_api.md'
+        - OpenAI Responses API with Bedrock Mantle: './introduction-to-bedrock/bedrock-mantle-openai-responses-api/bedrock_mantle_openai_responses_api.md'
         - Agents API Example: './introduction-to-bedrock/bedrock_apis/04_agents_api.md'
         - Knowledge Bases API Example: './introduction-to-bedrock/bedrock_apis/03_knowledgebases_api.md'
         - Guardrail API Example: './introduction-to-bedrock/bedrock_apis/02_guardrails_api.md'
