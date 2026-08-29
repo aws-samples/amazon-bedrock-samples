@@ -50,7 +50,7 @@ Clone the repository to your local machine or AWS environment, set up a virtual 
 
 ```bash
 git clone https://github.com/aws-samples/amazon-bedrock-samples.git
-cd ./amazon-bedrock-samples/agents-and-function-calling-for-bedrock/use-case-examples/text-2-sql-agent-cdk-enhanced
+cd ./amazon-bedrock-samples/agents-and-function-calling/bedrock-agents/use-case-examples/text-2-sql-agent-cdk-enhanced
 export AWS_PROFILE=XXX
 python3.9 -m venv .venv
 source .venv/bin/activate
@@ -64,7 +64,7 @@ Deploy the stack using the AWS CDK.
 If you want to run this with sample data, use the data provided as an example, which is "EV_WA.zip" in the "Data" directory. This is public data from [Electric Vehicle Population Data](https://catalog.data.gov/dataset/electric-vehicle-population-data). This dataset shows the Battery Electric Vehicles (BEVs) and Plug-in Hybrid Electric Vehicles (PHEVs) that are currently registered through the Washington State Department of Licensing (DOL). For the purpose of this repository, the data was split into 4 CSV files by the author. 
 
 ```bash
-cdk bootstrap --profile XXX --context zip_file_name=EV_WA.zip
+cdk bootstrap --profile XXX --context zip_file_name=EV_WA.zip --context region=us-east-1
 cdk deploy --profile XXX --context zip_file_name=EV_WA.zip --context region=us-east-1
 ```
 
