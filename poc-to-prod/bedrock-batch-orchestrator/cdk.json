@@ -17,8 +17,12 @@
     ]
   },
   "context": {
+    "_comment_maxSubmittedAndInProgressJobs": "Maximum number of concurrent batch inference jobs (default: 20)",
     "maxSubmittedAndInProgressJobs": 20,
+    "_comment_bedrockBatchInferenceTimeoutHours": "Timeout in hours for batch inference jobs (default: 24)",
     "bedrockBatchInferenceTimeoutHours": 24,
+    "_comment_notificationEmails": "Optional: Array of email addresses to receive pipeline completion notifications. Example: [\"user1@example.com\", \"user2@example.com\"]",
+    "notificationEmails": [],
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
