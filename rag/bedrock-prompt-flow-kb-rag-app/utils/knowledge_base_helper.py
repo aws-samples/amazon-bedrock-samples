@@ -103,7 +103,10 @@ class KnowledgeBasesForAmazonBedrock:
         """
         kb_id = None
         ds_id = None
-        policy_suffix = policy_suffix or kb_name.lower()
+        policy_suffix = policy_suffix or str(self.suffix)
+        # OSS security policy names must be <= 32 chars. Pattern is "{prefix}-sp-{suffix}" (4 chars overhead).
+        # Truncate kb_name prefix used in policy names only; the actual KB name passed to Bedrock is unchanged.
+        kb_name_prefix = kb_name[:32 - 4 - len(policy_suffix)]
         kbs_available = self.bedrock_agent_client.list_knowledge_bases(
             maxResults=100,
         )
@@ -133,9 +136,9 @@ class KnowledgeBasesForAmazonBedrock:
                 valid_embeddings_str = str(valid_embedding_models)
                 raise ValueError(f"Invalid embedding model. Your embedding model should be one of {valid_embeddings_str}")
             # self.embedding_model = embedding_model
-            encryption_policy_name = f"{kb_name}-sp-{policy_suffix}"
-            network_policy_name = f"{kb_name}-np-{policy_suffix}"
-            access_policy_name = f'{kb_name}-ap-{policy_suffix}'
+            encryption_policy_name = f"{kb_name_prefix}-sp-{policy_suffix}"
+            network_policy_name = f"{kb_name_prefix}-np-{policy_suffix}"
+            access_policy_name = f'{kb_name_prefix}-ap-{policy_suffix}'
             kb_execution_role_name = f'AmazonBedrockExecutionRoleForKnowledgeBase_{policy_suffix}'
             fm_policy_name = f'AmazonBedrockFoundationModelPolicyForKnowledgeBase_{policy_suffix}'
             s3_policy_name = f'AmazonBedrockS3PolicyForKnowledgeBase_{policy_suffix}'
