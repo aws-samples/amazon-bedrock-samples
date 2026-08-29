@@ -1,0 +1,10 @@
+/* Dark theme support using Cloudscape design tokens */
+[data-theme="dark"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+[data-theme="dark"] img,
+[data-theme="dark"] video,
+[data-theme="dark"] iframe {
+  filter: invert(1) hue-rotate(180deg);
+}

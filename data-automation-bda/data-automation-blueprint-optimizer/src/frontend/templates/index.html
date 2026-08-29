@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Bedrock Data Automation Optimizer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .instruction-block {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .title-banner {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .title-banner h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 2.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="title-banner">
+            <h1>Amazon Bedrock Data Automation Optimizer</h1>
+        </div>
+        
+        <h2 class="mb-4">Configuration</h2>
+        
+        <form id="configForm" class="mb-4">
+            <div class="mb-3">
+                <label class="form-label">Project ARN <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="project_arn" value="{{ config.project_arn }}" placeholder="ARN of a DataAutomationProject" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Blueprint ID <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="blueprint_id" value="{{ config.blueprint_id }}" placeholder="ID of the blueprint to optimize" required>
+                    <button type="button" class="btn btn-primary" onclick="fetchBlueprint()">Fetch Blueprint</button>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Document Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="document_name" value="{{ config.document_name }}" placeholder="Name of the document being processed" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Data Automation Profile ARN <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="dataAutomation_profilearn" value="{{ config.dataAutomation_profilearn }}" placeholder="ARN of the Data Automation profile" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Project Stage <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="project_stage" value="{{ config.project_stage }}" placeholder="Stage of the project (default: LIVE)" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Input Document <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="input_document" value="{{ config.input_document }}" placeholder="Path or S3 URI to the input document" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">BDA S3 Output Location <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="bda_s3_output_location" value="{{ config.bda_s3_output_location }}" placeholder="S3 location for BDA output" required>
+            </div>
+            
+            <h3 class="mt-4 mb-3">Optimizer Settings</h3>
+            <div class="row mb-4">
+                <div class="col-md-2">
+                    <label class="form-label">Threshold</label>
+                    <input type="number" class="form-control" id="threshold" value="0.6" step="0.1" min="0" max="1">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Max Iterations</label>
+                    <input type="number" class="form-control" id="maxIterations" value="2" min="1" max="10">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Model</label>
+                    <select class="form-select" id="model">
+                        <optgroup label="Anthropic">
+                            <option value="anthropic.claude-3-sonnet-20240229-v1:0" selected>Claude 3 Sonnet</option>
+                            <option value="anthropic.claude-3-haiku-20240307-v1:0">Claude 3 Haiku</option>
+                            <option value="anthropic.claude-3-opus-20240229-v1:0">Claude 3 Opus</option>
+                            <option value="anthropic.claude-3-5-sonnet-20241022-v2:0">Claude 3.5 Sonnet</option>
+                            <option value="anthropic.claude-3-7-sonnet-20250219-v1:0">Claude 3.7 Sonnet</option>
+                            <option value="anthropic.claude-3-5-haiku-20241022-v1:0">Claude 3.5 Haiku</option>
+                            <option value="anthropic.claude-opus-4-20250514-v1:0">Claude 4 Opus</option>
+                            <option value="anthropic.claude-sonnet-4-20250514-v1:0">Claude 4 Sonnet</option>
+                        </optgroup>
+                        <optgroup label="Amazon">
+                            <option value="amazon.nova-premier-v1:0">Nova Premier</option>
+                            <option value="amazon.nova-pro-v1:0">Nova Pro</option>
+                            <option value="amazon.nova-lite-v1:0">Nova Lite</option>
+                            <option value="amazon.nova-micro-v1:0">Nova Micro</option>
+                        </optgroup>
+                        <optgroup label="Meta">
+                            <option value="meta.llama3-8b-instruct-v1:0">Llama 3 8B</option>
+                            <option value="meta.llama3-70b-instruct-v1:0">Llama 3 70B</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="useDoc" checked>
+                        <label class="form-check-label">Use document strategy</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="clean" checked>
+                        <label class="form-check-label">Clean previous runs</label>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 class="mt-4 mb-3">Instructions</h3>
+            <div id="instructionsContainer">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Field Name</th>
+                            <th>Instruction</th>
+                            <th>Inference Type</th>
+                            <th>Expected Output</th>
+                        </tr>
+                    </thead>
+                    <tbody id="instructionsTableBody">
+                        {% for instruction in config.inputs %}
+                        <tr class="instruction-row">
+                            <td>
+                                <textarea class="form-control" name="field_name" rows="2" readonly>{{ instruction.field_name }}</textarea>
+                            </td>
+                            <td>
+                                <textarea class="form-control" name="instruction" rows="2" readonly>{{ instruction.instruction }}</textarea>
+                            </td>
+                            <td>
+                                <textarea class="form-control" name="inference_type" rows="2" readonly>{{ instruction.inference_type|default('explicit') }}</textarea>
+                            </td>
+                            <td>
+                                <textarea class="form-control" name="expected_output" rows="2">{{ instruction.expected_output }}</textarea>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-primary w-100" onclick="saveConfig()">Save Configuration</button>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-success w-100" id="runBtn" onclick="runOptimizer()">Run Optimizer</button>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-danger w-100" id="stopBtn" onclick="stopOptimizer()" disabled>Stop Optimizer</button>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h3>Optimizer Log</h3>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <select id="logFileSelect" class="form-select" onchange="loadLogFile()">
+                                    <option value="">Select a log file...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="refreshLogFiles()">Refresh</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="viewCurrentLog()">View Current Log</button>
+                                <button type="button" class="btn btn-info btn-sm" id="tailLogBtn" onclick="toggleTailLog()">Tail Log</button>
+                                <button type="button" class="btn btn-warning btn-sm" onclick="cleanLogs()">Clean Logs</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <pre id="optimizerLog" class="bg-dark text-light p-3" style="height: 400px; overflow-y: auto;">Logs will appear here when you run the optimizer...</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h3>Final Schema</h3>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <span>Schema generated after optimization</span>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="loadFinalSchema()">Refresh Schema</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <pre id="finalSchema" class="bg-dark text-light p-3" style="height: 400px; overflow-y: auto;">Final schema will appear here after optimizer completes...</pre>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        async function fetchBlueprint() {
+            try {
+                // Get the project ARN and blueprint ID from the form
+                const form = document.getElementById('configForm');
+                const projectArn = form.querySelector('[name="project_arn"]').value;
+                const blueprintId = form.querySelector('[name="blueprint_id"]').value;
+                const projectStage = form.querySelector('[name="project_stage"]').value || 'LIVE';
+                
+                if (!projectArn || !blueprintId) {
+                    alert('Please enter both Project ARN and Blueprint ID');
+                    return;
+                }
+                
+                // Show loading message
+                const logElement = document.getElementById('optimizerLog');
+                logElement.textContent = `Fetching blueprint with ID: ${blueprintId}...\n`;
+                
+                // Call the API to fetch the blueprint
+                const response = await fetch('/fetch-blueprint', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        project_arn: projectArn,
+                        blueprint_id: blueprintId,
+                        project_stage: projectStage
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    logElement.textContent += `Blueprint fetched successfully!\n`;
+                    logElement.textContent += `Blueprint Name: ${result.blueprint_name}\n`;
+                    logElement.textContent += `Schema saved to: ${result.output_path}\n\n`;
+                    
+                    // Clear existing instructions safely
+                    const tableBody = document.getElementById('instructionsTableBody');
+                    while (tableBody.firstChild) {
+                        tableBody.removeChild(tableBody.firstChild);
+                    }
+                    
+                    // Add new instructions from the blueprint properties
+                    if (result.properties && result.properties.length > 0) {
+                        logElement.textContent += `Adding ${result.properties.length} fields from blueprint...\n`;
+                        
+                        result.properties.forEach(prop => {
+                            const newRow = document.createElement('tr');
+                            newRow.className = 'instruction-row';
+                            
+                            // Create cells safely without innerHTML
+                            const fieldNameCell = document.createElement('td');
+                            const fieldNameTextarea = document.createElement('textarea');
+                            fieldNameTextarea.className = 'form-control';
+                            fieldNameTextarea.name = 'field_name';
+                            fieldNameTextarea.rows = 2;
+                            fieldNameTextarea.readOnly = true;
+                            fieldNameTextarea.textContent = prop.field_name || '';
+                            fieldNameCell.appendChild(fieldNameTextarea);
+                            
+                            const instructionCell = document.createElement('td');
+                            const instructionTextarea = document.createElement('textarea');
+                            instructionTextarea.className = 'form-control';
+                            instructionTextarea.name = 'instruction';
+                            instructionTextarea.rows = 2;
+                            instructionTextarea.readOnly = true;
+                            instructionTextarea.textContent = prop.instruction || '';
+                            instructionCell.appendChild(instructionTextarea);
+                            
+                            const inferenceTypeCell = document.createElement('td');
+                            const inferenceTypeTextarea = document.createElement('textarea');
+                            inferenceTypeTextarea.className = 'form-control';
+                            inferenceTypeTextarea.name = 'inference_type';
+                            inferenceTypeTextarea.rows = 2;
+                            inferenceTypeTextarea.readOnly = true;
+                            inferenceTypeTextarea.textContent = prop.inference_type || 'explicit';
+                            inferenceTypeCell.appendChild(inferenceTypeTextarea);
+                            
+                            const expectedOutputCell = document.createElement('td');
+                            const expectedOutputTextarea = document.createElement('textarea');
+                            expectedOutputTextarea.className = 'form-control';
+                            expectedOutputTextarea.name = 'expected_output';
+                            expectedOutputTextarea.rows = 2;
+                            expectedOutputTextarea.value = prop.expected_output || '';
+                            expectedOutputCell.appendChild(expectedOutputTextarea);
+                            
+                            // Append cells to row
+                            newRow.appendChild(fieldNameCell);
+                            newRow.appendChild(instructionCell);
+                            newRow.appendChild(inferenceTypeCell);
+                            newRow.appendChild(expectedOutputCell);
+                            
+                            tableBody.appendChild(newRow);
+                        });
+                        
+                        // Save the updated configuration without showing a popup
+                        await saveConfigSilently();
+                        
+                        logElement.textContent += `Fields added successfully!\n`;
+                        
+                        // Show popup message for blueprint fetch completion
+                        alert('Blueprint fetched successfully!');
+                    } else {
+                        logElement.textContent += `No properties found in the blueprint.\n`;
+                    }
+                } else {
+                    logElement.textContent += `Error fetching blueprint: ${result.detail}\n`;
+                    alert('Error fetching blueprint: ' + result.detail);
+                }
+            } catch (error) {
+                console.error('Error fetching blueprint:', error);
+                const logElement = document.getElementById('optimizerLog');
+                logElement.textContent += `\nERROR: ${error}\n`;
+                alert('Error fetching blueprint: ' + error);
+            }
+        }
+        
+        function addInstruction() {
+            const tableBody = document.getElementById('instructionsTableBody');
+            const newRow = document.createElement('tr');
+            newRow.className = 'instruction-row';
+            
+            // Create cells safely without innerHTML
+            const fieldNameCell = document.createElement('td');
+            const fieldNameTextarea = document.createElement('textarea');
+            fieldNameTextarea.className = 'form-control';
+            fieldNameTextarea.name = 'field_name';
+            fieldNameTextarea.rows = 2;
+            fieldNameTextarea.readOnly = true;
+            fieldNameCell.appendChild(fieldNameTextarea);
+            
+            const instructionCell = document.createElement('td');
+            const instructionTextarea = document.createElement('textarea');
+            instructionTextarea.className = 'form-control';
+            instructionTextarea.name = 'instruction';
+            instructionTextarea.rows = 2;
+            instructionTextarea.readOnly = true;
+            instructionCell.appendChild(instructionTextarea);
+            
+            const inferenceTypeCell = document.createElement('td');
+            const inferenceTypeTextarea = document.createElement('textarea');
+            inferenceTypeTextarea.className = 'form-control';
+            inferenceTypeTextarea.name = 'inference_type';
+            inferenceTypeTextarea.rows = 2;
+            inferenceTypeTextarea.readOnly = true;
+            inferenceTypeTextarea.textContent = 'explicit';
+            inferenceTypeCell.appendChild(inferenceTypeTextarea);
+            
+            const expectedOutputCell = document.createElement('td');
+            const expectedOutputTextarea = document.createElement('textarea');
+            expectedOutputTextarea.className = 'form-control';
+            expectedOutputTextarea.name = 'expected_output';
+            expectedOutputTextarea.rows = 2;
+            expectedOutputCell.appendChild(expectedOutputTextarea);
+            
+            // Append cells to row
+            newRow.appendChild(fieldNameCell);
+            newRow.appendChild(instructionCell);
+            newRow.appendChild(inferenceTypeCell);
+            newRow.appendChild(expectedOutputCell);
+            
+            tableBody.appendChild(newRow);
+        }
+
+        function gatherFormData() {
+            const form = document.getElementById('configForm');
+            const instructionRows = document.querySelectorAll('.instruction-row');
+            
+            const config = {
+                project_arn: form.querySelector('[name="project_arn"]').value,
+                blueprint_id: form.querySelector('[name="blueprint_id"]').value,
+                document_name: form.querySelector('[name="document_name"]').value,
+                dataAutomation_profilearn: form.querySelector('[name="dataAutomation_profilearn"]').value,
+                project_stage: form.querySelector('[name="project_stage"]').value,
+                input_document: form.querySelector('[name="input_document"]').value,
+                bda_s3_output_location: form.querySelector('[name="bda_s3_output_location"]').value,
+                inputs: []
+            };
+            
+            instructionRows.forEach(row => {
+                config.inputs.push({
+                    field_name: row.querySelector('[name="field_name"]').value,
+                    instruction: row.querySelector('[name="instruction"]').value,
+                    expected_output: row.querySelector('[name="expected_output"]').value,
+                    inference_type: row.querySelector('[name="inference_type"]').value,
+                    data_point_in_document: true
+                });
+            });
+            
+            return config;
+        }
+
+        async function saveConfigSilently() {
+            try {
+                const config = gatherFormData();
+                const response = await fetch('/update-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                if (!response.ok) {
+                    console.error('Error saving configuration:', result.detail);
+                }
+                return response.ok;
+            } catch (error) {
+                console.error('Error saving configuration:', error);
+                return false;
+            }
+        }
+        
+        async function saveConfig() {
+            try {
+                const config = gatherFormData();
+                const response = await fetch('/update-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Configuration saved successfully!');
+                } else {
+                    alert('Error saving configuration: ' + result.detail);
+                }
+            } catch (error) {
+                alert('Error saving configuration: ' + error);
+            }
+        }
+
+        // Store the optimizer process ID
+        let optimizerProcessId = null;
+        
+        // Store the current log file
+        let currentLogFile = null;
+        
+        // Tail log interval
+        let tailLogInterval = null;
+        let isTailing = false;
+        
+        // Status check interval
+        let statusCheckInterval = null;
+        
+        // Toggle tail log
+        function toggleTailLog() {
+            const tailBtn = document.getElementById('tailLogBtn');
+            
+            if (isTailing) {
+                // Stop tailing
+                if (tailLogInterval) {
+                    clearInterval(tailLogInterval);
+                    tailLogInterval = null;
+                }
+                tailBtn.textContent = 'Tail Log';
+                tailBtn.classList.remove('btn-danger');
+                tailBtn.classList.add('btn-info');
+                isTailing = false;
+            } else {
+                // Start tailing
+                if (currentLogFile) {
+                    tailBtn.textContent = 'Stop Tailing';
+                    tailBtn.classList.remove('btn-info');
+                    tailBtn.classList.add('btn-danger');
+                    isTailing = true;
+                    
+                    // Update log immediately
+                    tailCurrentLog();
+                    
+                    // Set interval to update log every 2 seconds
+                    tailLogInterval = setInterval(tailCurrentLog, 2000);
+                } else {
+                    alert('No log file is currently being tailed.');
+                }
+            }
+        }
+        
+        // Tail the current log file
+        async function tailCurrentLog() {
+            if (!currentLogFile) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/view-log/${currentLogFile}`);
+                const result = await response.json();
+                
+                const logElement = document.getElementById('optimizerLog');
+                logElement.textContent = result.content;
+                
+                // Scroll to bottom
+                logElement.scrollTop = logElement.scrollHeight;
+            } catch (error) {
+                console.error('Error tailing log file:', error);
+                // If there's an error, stop tailing
+                toggleTailLog();
+            }
+        }
+        
+        // Load available log files
+        async function refreshLogFiles() {
+            try {
+                const response = await fetch('/list-logs');
+                const result = await response.json();
+                
+                const selectElement = document.getElementById('logFileSelect');
+                
+                // Save current selection
+                const currentSelection = selectElement.value;
+                
+                // Clear options safely
+                selectElement.textContent = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select a log file...';
+                selectElement.appendChild(defaultOption);
+                
+                // Add log files
+                if (result.log_files && result.log_files.length > 0) {
+                    result.log_files.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file;
+                        option.textContent = file;
+                        selectElement.appendChild(option);
+                    });
+                    
+                    // Restore selection if possible
+                    if (currentSelection && result.log_files.includes(currentSelection)) {
+                        selectElement.value = currentSelection;
+                    } else {
+                        // Select the first log file
+                        selectElement.value = result.log_files[0];
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading log files:', error);
+            }
+        }
+        
+        // Load a specific log file
+        async function loadLogFile() {
+            const selectElement = document.getElementById('logFileSelect');
+            const logFile = selectElement.value;
+            
+            if (!logFile) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/view-log/${logFile}`);
+                const result = await response.json();
+                
+                const logElement = document.getElementById('optimizerLog');
+                logElement.textContent = result.content;
+                
+                // Scroll to bottom
+                logElement.scrollTop = logElement.scrollHeight;
+            } catch (error) {
+                console.error('Error loading log file:', error);
+            }
+        }
+        
+        // View the current log file
+        function viewCurrentLog() {
+            if (currentLogFile) {
+                const selectElement = document.getElementById('logFileSelect');
+                selectElement.value = currentLogFile;
+                loadLogFile();
+            }
+        }
+        
+        // Load log files on page load
+        document.addEventListener('DOMContentLoaded', refreshLogFiles);
+        
+        async function runOptimizer() {
+            try {
+                // Validate required fields
+                const form = document.getElementById('configForm');
+                const requiredFields = [
+                    'project_arn',
+                    'blueprint_id',
+                    'document_name',
+                    'dataAutomation_profilearn',
+                    'project_stage',
+                    'input_document',
+                    'bda_s3_output_location'
+                ];
+                
+                let missingFields = [];
+                requiredFields.forEach(field => {
+                    const value = form.querySelector(`[name="${field}"]`).value.trim();
+                    if (!value) {
+                        missingFields.push(field.replace(/_/g, ' '));
+                    }
+                });
+                
+                if (missingFields.length > 0) {
+                    alert(`Please fill in the following required fields:\n- ${missingFields.join('\n- ')}`);
+                    return;
+                }
+                
+                // Clear previous logs
+                const logElement = document.getElementById('optimizerLog');
+                logElement.textContent = "Starting optimizer...\n";
+                
+                // Disable run button and enable stop button
+                document.getElementById('runBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+                // Get optimizer settings from form
+                const settings = {
+                    threshold: document.getElementById('threshold').value,
+                    maxIterations: document.getElementById('maxIterations').value,
+                    model: document.getElementById('model').value,
+                    useDoc: document.getElementById('useDoc').checked,
+                    clean: document.getElementById('clean').checked
+                };
+                
+                // Add model info to log
+                logElement.textContent += `Using model: ${settings.model}\n`;
+                logElement.textContent += `Threshold: ${settings.threshold}\n`;
+                logElement.textContent += `Max iterations: ${settings.maxIterations}\n`;
+                logElement.textContent += `Use document strategy: ${settings.useDoc}\n`;
+                logElement.textContent += `Clean previous runs: ${settings.clean}\n\n`;
+                
+                // Start the optimizer
+                const response = await fetch('/run-optimizer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(settings)
+                });
+                
+                const result = await response.json();
+                
+                // Store the log file name
+                if (result.log_file) {
+                    currentLogFile = result.log_file.split('/').pop();
+                    
+                    // Start tailing the log if not already tailing
+                    if (!isTailing) {
+                        toggleTailLog();
+                    }
+                }
+                
+                if (response.ok) {
+                    // Store the log file name
+                    if (result.log_file) {
+                        currentLogFile = result.log_file;
+                        
+                        // Start tailing the log if not already tailing
+                        if (!isTailing) {
+                            toggleTailLog();
+                        }
+                    }
+                    
+                    // Refresh log files list
+                    refreshLogFiles();
+                    
+                    // Keep the stop button enabled while the optimizer is running
+                    if (result.status === "running") {
+                        document.getElementById('runBtn').disabled = true;
+                        document.getElementById('stopBtn').disabled = false;
+                        
+                        // Start checking the optimizer status
+                        startStatusCheck();
+                    } else {
+                        // Reset button states if completed
+                        document.getElementById('runBtn').disabled = false;
+                        document.getElementById('stopBtn').disabled = true;
+                        
+                        // Show success message
+                        alert('Optimizer completed successfully!');
+                    }
+                } else {
+                    // Reset button states
+                    document.getElementById('runBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    
+                    // Refresh log files list
+                    refreshLogFiles();
+                    
+                    alert('Error running optimizer: ' + result.message);
+                }
+            } catch (error) {
+                // Reset button states on error
+                document.getElementById('runBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                
+                // Update log with error
+                const logElement = document.getElementById('optimizerLog');
+                logElement.textContent += `\nERROR: ${error}\n`;
+                
+                alert('Error running optimizer: ' + error);
+            }
+        }
+        
+        async function stopOptimizer() {
+            try {
+                // Disable the stop button to prevent multiple clicks
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('stopBtn').textContent = 'Stopping...';
+                
+                // Stop checking status
+                if (statusCheckInterval) {
+                    clearInterval(statusCheckInterval);
+                    statusCheckInterval = null;
+                }
+                
+                const response = await fetch('/stop-optimizer', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                // Reset button states
+                document.getElementById('runBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('stopBtn').textContent = 'Stop Optimizer';
+                
+                if (response.ok) {
+                    // Update the log to show it was stopped
+                    if (isTailing) {
+                        // Force an update of the log
+                        await tailCurrentLog();
+                    } else {
+                        // If not tailing, update the log manually
+                        const logElement = document.getElementById('optimizerLog');
+                        logElement.textContent += "\n\nOptimizer process was manually stopped by user.\n";
+                        logElement.scrollTop = logElement.scrollHeight;
+                    }
+                    
+                    alert('Optimizer stopped successfully!');
+                } else {
+                    alert('Error stopping optimizer: ' + result.detail);
+                }
+            } catch (error) {
+                // Reset button state
+                document.getElementById('runBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('stopBtn').textContent = 'Stop Optimizer';
+                
+                alert('Error stopping optimizer: ' + error);
+            }
+        }
+        
+        async function cleanLogs() {
+            try {
+                if (confirm('Are you sure you want to delete all log files?')) {
+                    const response = await fetch('/clean-logs', {
+                        method: 'POST'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        // Clear the log display
+                        document.getElementById('optimizerLog').textContent = 'Logs have been cleaned.';
+                        
+                        // Reset the log file selector safely
+                        const logSelect = document.getElementById('logFileSelect');
+                        logSelect.textContent = '';
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = 'Select a log file...';
+                        logSelect.appendChild(defaultOption);
+                        
+                        // Reset current log file
+                        currentLogFile = null;
+                        
+                        // Stop tailing if active
+                        if (isTailing) {
+                            toggleTailLog();
+                        }
+                        
+                        alert('All logs cleaned successfully!');
+                    } else {
+                        alert('Error cleaning logs: ' + result.detail);
+                    }
+                }
+            } catch (error) {
+                alert('Error cleaning logs: ' + error);
+            }
+        }
+        
+        // Start checking the optimizer status
+        function startStatusCheck() {
+            // Clear any existing interval
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+            
+            // Check status immediately
+            checkOptimizerStatus();
+            
+            // Set interval to check status every 5 seconds
+            statusCheckInterval = setInterval(checkOptimizerStatus, 5000);
+        }
+        
+        // Check if the optimizer is still running
+        async function checkOptimizerStatus() {
+            try {
+                const response = await fetch('/optimizer-status');
+                const result = await response.json();
+                
+                if (result.status === "not_running" || result.status === "completed") {
+                    // Optimizer has completed or is not running
+                    
+                    // Stop checking status
+                    if (statusCheckInterval) {
+                        clearInterval(statusCheckInterval);
+                        statusCheckInterval = null;
+                    }
+                    
+                    // Reset button states
+                    document.getElementById('runBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    
+                    // Update the log to show completion
+                    const logElement = document.getElementById('optimizerLog');
+                    
+                    // Only add completion message if it doesn't already contain it
+                    if (!logElement.textContent.includes("Optimizer process completed")) {
+                        logElement.textContent += "\n\nOptimizer process completed automatically.\n";
+                        logElement.scrollTop = logElement.scrollHeight;
+                        
+                        // Load the final schema
+                        loadFinalSchema();
+                        
+                        // Show completion message
+                        alert('Optimizer completed successfully!');
+                    }
+                }
+                // If still running, continue checking
+            } catch (error) {
+                console.error('Error checking optimizer status:', error);
+            }
+        }
+        
+        // Load the final schema
+        async function loadFinalSchema() {
+            try {
+                const response = await fetch('/final-schema');
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Display the schema in the UI
+                    const schemaElement = document.getElementById('finalSchema');
+                    
+                    if (result.schema) {
+                        // Format the JSON for better display
+                        const formattedSchema = JSON.stringify(JSON.parse(result.schema), null, 2);
+                        schemaElement.textContent = formattedSchema;
+                    } else {
+                        schemaElement.textContent = "No final schema found. The optimizer may not have completed successfully.";
+                    }
+                } else {
+                    const schemaElement = document.getElementById('finalSchema');
+                    schemaElement.textContent = "Error loading final schema. The optimizer may not have completed successfully.";
+                }
+            } catch (error) {
+                console.error('Error loading final schema:', error);
+                const schemaElement = document.getElementById('finalSchema');
+                schemaElement.textContent = `Error loading final schema: ${error}`;
+            }
+        }
+        
+        function deleteInstruction(button) {
+            // Get the row that contains the button and remove it
+            const row = button.closest('tr');
+            row.parentNode.removeChild(row);
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
