@@ -342,7 +342,7 @@ messages = [
     ]
 ```
 
-Let's use the Titan Text Large model: 
+Let's use the Anthropic's Claude 3 Sonnet model:
 
 
 ```python
