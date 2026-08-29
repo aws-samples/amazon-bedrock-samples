@@ -1,0 +1,10 @@
+Source code deploys a chatbot using by Streamlit and AWS Bedrock Nova Micro FM
+
+To run, download the 2 files into a common directory & run the following cmd. from the cmd. line:
+
+streamlit run chatbot_frontend.py
+
+Prerequisites:
+
+Enable the FM in your Bedrock account (amazon.nova-micro-v1:0)
+Ensure your uid that runs in VSCode Studio, has admin access to Bedrock
