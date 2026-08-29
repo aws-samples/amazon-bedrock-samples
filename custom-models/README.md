@@ -24,6 +24,7 @@ Before creating a custom model job (fine-tuning or distillation) in Amazon Bedro
 - [Fine-Tuning](./bedrock-fine-tuning) - Exmaple showing how different LLMs can be fine tuned onto Amazon Bedrock.
 - [Model Distillation](./model_distillation) - Exmaple showing how different  LLMs can be distilled onto Amazon Bedrock.
 - [import_models](./import_models) - Exmaple showing how different Opensource LLMs can be imported onto Amazon Bedrock.
+- [Structured Output with CMI](./structured_output_with_cmi.ipynb) - Example showing how to constrain imported model outputs to a JSON schema using `response_format`.
 
 
 ## Contributing
