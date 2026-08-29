@@ -1,0 +1,18 @@
+{
+  "vpc": {
+    "cidr_block": "10.11.0.0/16",
+    "subnet_cidrs": ["10.11.1.0/24", "10.11.2.0/24", "10.11.3.0/24"]
+  },
+  "aurora": {
+    "cluster_identifier": "aurora-text2sql-cluster",
+    "instance_identifier": "aurora-text2sql-instance",
+    "database_name": "text2sql",
+    "master_username": "postgres",
+    "min_capacity": 1,
+    "max_capacity": 16
+  },
+  "resources": {
+    "security_group_name": "aurora-sg",
+    "subnet_group_name": "aurora-subnet-group"
+  }
+}
