@@ -1,0 +1,9 @@
+Synthetic data for 10k reports by Amazon.com, Inc. or its affiliates.
+SPDX-License-Identifier: CC0-1.0
+
+@article{Mixtral-8x7B modelcard,
+title={Mixtral-8x7B-Instruct-v0.1 Model Card},
+author={Mistral AI Team},
+year={2024},
+url = {https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1}
+}
