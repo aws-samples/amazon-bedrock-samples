@@ -8,7 +8,7 @@ The agent integrates with the knowledge base **without an explicit association**
 
 ## Dataset
 
-This example uses the [amazon reviews 2018 dataset](https://jmcauley.ucsd.edu/data/amazon_v2/categoryFilesSmall/All_Beauty_5.json.gz) with these fields - review (string), rating (number), timestamp (number), reviewers (string list).
+This example uses the [amazon reviews 2018 dataset](https://mcauleylab.ucsd.edu/public_datasets/data/amazon_v2/categoryFilesSmall/All_Beauty_5.json.gz) with these fields - review (string), rating (number), timestamp (number), reviewers (string list).
 
 We create the following metadata file for each of the text chunks (review) in the knowledge base.
 
