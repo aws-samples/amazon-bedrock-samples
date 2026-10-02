@@ -17,25 +17,30 @@ import os
 logging.basicConfig(format='[%(asctime)s] p%(process)s {%(filename)s:%(lineno)d} %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# getting boto3 clients for required AWS services
-sts_client = boto3.client('sts')
-iam_client = boto3.client('iam')
-s3_client = boto3.client('s3')
-lambda_client = boto3.client('lambda')
-bedrock_agent_client = boto3.client('bedrock-agent')
-bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime')
-s3 = boto3.client('s3')
-glue = boto3.client('glue')
-athena = boto3.client('athena')
-sts = boto3.client('sts')
-iam_client = boto3.client('iam')
-
-
+# Resolve the Region before constructing clients, ARNs, or resource names.
+from security_config import require_aws_region
 
 session = boto3.session.Session()
-region = session.region_name
+region = require_aws_region(session.region_name)
+
+
+def aws_client(service_name):
+    """Create a regional AWS client through the configured session."""
+    return session.client(service_name, region_name=region)
+
+
+# getting boto3 clients for required AWS services
+sts_client = aws_client('sts')
+iam_client = aws_client('iam')
+s3_client = aws_client('s3')
+lambda_client = aws_client('lambda')
+bedrock_agent_client = aws_client('bedrock-agent')
+bedrock_agent_runtime_client = aws_client('bedrock-agent-runtime')
+s3 = s3_client
+glue = aws_client('glue')
+athena = aws_client('athena')
+sts = sts_client
 account_id = sts_client.get_caller_identity()["Account"]
-region, account_id
 
 # assign variables
 suffix = f"{region}-{account_id}"
@@ -49,11 +54,18 @@ bedrock_agent_bedrock_allow_policy_name = f"{agent_name}-allow-{suffix}"
 bedrock_agent_s3_allow_policy_name = f"{agent_name}-s3-allow-{suffix}"
 lambda_role_name = f'{agent_name}-lambda-role-{suffix}'
 agent_role_name = f'AmazonBedrockExecutionRoleForAgents_{suffix}'
+lambda_query_policy_name = f'{agent_name}-lambda-query-{suffix}'
+glue_data_policy_name = f'{agent_name}-glue-data-{suffix}'
 lambda_code_path = "lambda_function.py"
+query_guard_path = "query_guard.py"
 lambda_name = f'{agent_name}-{suffix}'
 glue_database_name = 'thehistoryofbaseball'
 glue_crawler_name = 'TheHistoryOfBaseball'
-glue_role_name="AWSGlueServiceRole"
+glue_role_name = f'{agent_name}-glue-role-{suffix}'
+athena_workgroup_name = f'{agent_name}-workgroup-{suffix}'
+athena_bytes_scanned_cutoff = 100_000_000
+query_timeout_seconds = 120
+max_result_rows = 100
 athena_result_loc = "s3://" + bucket_name + "/athena_result/" 
 s3_loc = "s3://" + bucket_name + "/" + bucket_key
 s3_bucket=bucket_name
