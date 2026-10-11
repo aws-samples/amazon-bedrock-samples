@@ -17,6 +17,14 @@ Optimize how documents are processed during ingestion.
 
 > **Note:** Semantic and Hierarchical chunking are only available for Customer-managed KBs.
 
+Explicit chunking settings, including fixed-size and no chunking, require a custom
+embedding model rather than the managed default. The chunking comparison notebook
+uses `amazon.titan-embed-text-v2:0` for both KBs so only the chunking strategy differs.
+Custom embeddings incur additional charges; ensure the model is available in your Region.
+
+Run the offline notebook configuration regressions from this directory with
+`python -m unittest discover -s tests -v` (no AWS credentials or extra packages required).
+
 ## Advanced Indexing (Media Extraction)
 
 | Toggle | File types | What gets indexed |
