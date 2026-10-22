@@ -62,6 +62,7 @@ agents-and-function-calling/bedrock-agents/agent-blueprint-templates/.package-lo
 agents-and-function-calling/bedrock-agents/agent-blueprint-templates/yarn.lock
 
 config.py
+!rag/managed-knowledge-bases/07-IaaC/managed-kb-observability-cdk/config.py
 
 # ignore hypothesis and pytest cache directories
 **/.pytest_cache/
