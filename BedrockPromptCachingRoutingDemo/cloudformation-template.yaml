@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Bedrock Prompt Caching Demo'
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    Description: EC2 instance type for running the demo
+  
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 Key Pair for SSH access
+
+Resources:
+  # IAM Role for EC2 instance
+  BedrockDemoRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+      Policies:
+        - PolicyName: BedrockPromptCachingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                  - bedrock:ListFoundationModels
+                  - bedrock:GetFoundationModel
+                  - bedrock:ListPromptRouters
+                  - bedrock:GetPromptRouter
+                Resource: '*'
+
+  # Instance Profile
+  BedrockDemoInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref BedrockDemoRole
+
+  # Security Group
+  BedrockDemoSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Bedrock demo instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8501
+          ToPort: 8501
+          CidrIp: 0.0.0.0/0
+
+  # EC2 Instance
+  BedrockDemoInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c02fb55956c7d316  # Amazon Linux 2023
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref BedrockDemoInstanceProfile
+      SecurityGroupIds:
+        - !Ref BedrockDemoSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y python3 python3-pip git
+          
+          # Install dependencies
+          pip3 install boto3 requests pandas matplotlib seaborn numpy PyPDF2 python-docx streamlit
+          
+          # Copy code files directly
+          cd /home/ec2-user
+          mkdir -p bedrock-prompt-demo/src
+          
+          # Download files from your local system or S3
+          # For now, create placeholder files
+          cat > bedrock-prompt-demo/src/requirements.txt << 'EOF'
+boto3
+requests
+pandas
+matplotlib
+seaborn
+numpy
+PyPDF2
+python-docx
+streamlit
+EOF
+          
+          chown -R ec2-user:ec2-user bedrock-prompt-demo
+          
+          # Set environment variables
+          echo 'export AWS_REGION=${AWS::Region}' >> /home/ec2-user/.bashrc
+          
+          # Create systemd service for Streamlit
+          cat > /etc/systemd/system/bedrock-demo.service << EOF
+          [Unit]
+          Description=Bedrock Prompt Demo
+          After=network.target
+          
+          [Service]
+          Type=simple
+          User=ec2-user
+          WorkingDirectory=/home/ec2-user/bedrock-prompt-demo/src
+          Environment=AWS_REGION=${AWS::Region}
+          ExecStart=/usr/bin/python3 -m streamlit run prompt_router_app.py --server.port=8501 --server.address=0.0.0.0
+          Restart=always
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+          
+          systemctl enable bedrock-demo
+          systemctl start bedrock-demo
+
+Outputs:
+  InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref BedrockDemoInstance
+    
+  PublicIP:
+    Description: Public IP address
+    Value: !GetAtt BedrockDemoInstance.PublicIp
+    
+  StreamlitURL:
+    Description: Streamlit application URL
+    Value: !Sub 'http://${BedrockDemoInstance.PublicIp}:8501'
+    
+  SSHCommand:
+    Description: SSH command to connect
+    Value: !Sub 'ssh -i ${KeyPairName}.pem ec2-user@${BedrockDemoInstance.PublicIp}'
