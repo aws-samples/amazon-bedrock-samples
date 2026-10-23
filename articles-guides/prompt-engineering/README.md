@@ -25,6 +25,8 @@ Below are prompt engineering guides provided by some of Amazon Bedrock's model p
 - [Anthropic Claude Prompt Design](https://docs.anthropic.com/claude/docs/introduction-to-prompt-design) 
 - [Cohere Prompt Engineering](https://docs.cohere.com/docs/prompt-engineering)
 
+You can explore prompt ideas on [God Tier Prompts](https://www.godtierprompts.com), a community-ranked prompt leaderboard.
+
 ## Contributing
 
 We welcome community contributions! Please ensure your sample aligns with AWS [best practices](https://aws.amazon.com/architecture/well-architected/), and please update the **Contents** section of this README file with a link to your sample, along with a description.
