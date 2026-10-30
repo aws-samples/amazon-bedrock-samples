@@ -1,33 +1,40 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Database schema look up and query APIs",
-        "version": "1.0.0",
-        "description": "APIs for looking up database table schemas and making queries to database tables."
+        "title": "Database schema lookup and query APIs",
+        "version": "1.1.0",
+        "description": "APIs for looking up database table schemas and making bounded, read-only queries to database tables."
     },
     "paths": {
         "/getschema": {
             "get": {
-                "summary": "Get a list of all tables and their schema in the database",
-                "description": "Get the list of all tables and their schema. Return all the table and schema information.",
+                "summary": "Get all tables and their schemas in the sample database",
+                "description": "Return the table and column metadata used to construct read-only queries.",
                 "operationId": "getschema",
                 "responses": {
                     "200": {
-                        "description": "Gets the list of table names and their schemas in the database",
+                        "description": "The table names and their schemas",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "array",
                                     "items": {
                                         "type": "object",
+                                        "required": [
+                                            "Table",
+                                            "Schema"
+                                        ],
                                         "properties": {
                                             "Table": {
                                                 "type": "string",
-                                                "description": "The name of the table in the database."
+                                                "description": "The table name."
                                             },
                                             "Schema": {
-                                                "type": "string",
-                                                "description": "The schema of the table in the database. Contains all columns needed for making queries."
+                                                "type": "object",
+                                                "description": "A mapping from column name to Athena data type.",
+                                                "additionalProperties": {
+                                                    "type": "string"
+                                                }
                                             }
                                         }
                                     }
@@ -40,8 +47,8 @@
         },
         "/querydatabase": {
             "post": {
-                "summary": "API to send query to the database table",
-                "description": "Send a query to the database table to retrieve information pertaining to the users question . The API takes in only one SQL query at a time, sends the SQL statement and returns the query results from the table. This API should be called for each SQL query to a database table.",
+                "summary": "Run a bounded read-only query against the sample database",
+                "description": "Send exactly one read-only SELECT statement to the sample database. Comments, quoted identifiers, common table expressions, DDL, data mutations, UNLOAD, and multiple statements are rejected.",
                 "operationId": "querydatabase",
                 "requestBody": {
                     "required": true,
@@ -49,10 +56,11 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "additionalProperties": false,
                                 "properties": {
                                     "query": {
                                         "type": "string",
-                                        "description": "SQL statement to query database table."
+                                        "description": "One read-only Athena SELECT statement against the tables returned by getschema. Use unquoted identifiers, no comments or common table expressions, and a reasonable LIMIT for row-returning queries."
                                     }
                                 },
                                 "required": [
@@ -64,15 +72,29 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Query sent successfully",
+                        "description": "A bounded query result and an explicit indication of whether more rows exist",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "object",
+                                    "required": [
+                                        "rows",
+                                        "truncated"
+                                    ],
                                     "properties": {
-                                        "responsebody": {
-                                            "type": "string",
-                                            "description": "The query response from the database."
+                                        "rows": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            }
+                                        },
+                                        "truncated": {
+                                            "type": "boolean",
+                                            "description": "True when additional Athena result rows were not returned."
                                         }
                                     }
                                 }
@@ -80,7 +102,10 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request. One or more required fields are missing or invalid."
+                        "description": "The request or SQL statement is missing, malformed, or outside the supported read-only subset."
+                    },
+                    "500": {
+                        "description": "The query could not be completed safely."
                     }
                 }
             }
