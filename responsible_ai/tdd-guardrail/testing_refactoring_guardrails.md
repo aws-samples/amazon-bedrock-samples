@@ -72,113 +72,159 @@ client = boto3.client("bedrock")
 
 
 ```python
-# Let's build our Guardrail from our requirements above 
+try:
+    # Clean up any existing guardrail with the same name from previous runs
+    try:
+        _existing = client.list_guardrails(maxResults=50)
+        for _g in _existing['guardrails']:
+            if 'math-tutoring' in _g['name']:
+                print(f"Deleting existing guardrail: {_g['name']} ({_g['id']})")
+                client.delete_guardrail(guardrailIdentifier=_g['id'])
+                import time; time.sleep(2)
+    except Exception as e:
+        print(f"Cleanup note: {e}")
+    
+    # Let's build our Guardrail from our requirements above 
+    
+    create_response = client.create_guardrail(
+        name='math-tutoring-guardrail-initial',
+        description='Prevents the model from providing non-math tutoring, in-person tutoring, or tutoring outside grades 6-12.',
+        topicPolicyConfig={
+            'topicsConfig': [
+                {
+                    'name': 'In-Person Tutoring',
+                    'definition': 'Requests for face-to-face, physical tutoring sessions.',
+                    'examples': [
+                        'Can you tutor me in person?',
+                        'Do you offer home tutoring visits?',
+                        'I need a tutor to come to my house.'
+                    ],
+                    'type': 'DENY'
+                },
+                {
+                    'name': 'Non-Math Tutoring',
+                    'definition': 'Requests for tutoring in subjects other than mathematics.',
+                    'examples': [
+                        'Can you help me with my English homework?',
+                        'I need a science tutor.',
+                        'Do you offer history tutoring?'
+                    ],
+                    'type': 'DENY'
+                },
+                {
+                    'name': 'Non-6-12 Grade Tutoring',
+                    'definition': 'Requests for tutoring students outside of grades 6-12.',
+                    'examples': [
+                        'Can you tutor my 5-year-old in math?',
+                        'I need help with college-level calculus.',
+                        'Do you offer math tutoring for adults?'
+                    ],
+                    'type': 'DENY'
+                }
+            ]
+        },
+        contentPolicyConfig={
+            'filtersConfig': [
+                {
+                    'type': 'SEXUAL',
+                    'inputStrength': 'HIGH',
+                    'outputStrength': 'HIGH'
+                },
+                {
+                    'type': 'VIOLENCE',
+                    'inputStrength': 'HIGH',
+                    'outputStrength': 'HIGH'
+                },
+                {
+                    'type': 'HATE',
+                    'inputStrength': 'HIGH',
+                    'outputStrength': 'HIGH'
+                },
+                {
+                    'type': 'INSULTS',
+                    'inputStrength': 'HIGH',
+                    'outputStrength': 'HIGH'
+                },
+                {
+                    'type': 'MISCONDUCT',
+                    'inputStrength': 'HIGH',
+                    'outputStrength': 'HIGH'
+                },
+                {
+                    'type': 'PROMPT_ATTACK',
+                    'inputStrength': 'HIGH',
+                    'outputStrength': 'NONE'
+                }
+            ]
+        },
+        wordPolicyConfig={
+            'wordsConfig': [
+                {'text': 'in-person tutoring'},
+                {'text': 'home tutoring'},
+                {'text': 'face-to-face tutoring'},
+                {'text': 'elementary school'},
+                {'text': 'college'},
+                {'text': 'university'},
+                {'text': 'adult education'},
+                {'text': 'english tutoring'},
+                {'text': 'science tutoring'},
+                {'text': 'history tutoring'}
+            ],
+            'managedWordListsConfig': [
+                {'type': 'PROFANITY'}
+            ]
+        },
+        sensitiveInformationPolicyConfig={
+            'piiEntitiesConfig': [
+                {'type': 'EMAIL', 'action': 'ANONYMIZE'},
+                {'type': 'PHONE', 'action': 'ANONYMIZE'},
+                {'type': 'NAME', 'action': 'ANONYMIZE'}
+            ]
+        },
+        blockedInputMessaging="""I'm sorry, but I can only assist with math tutoring for students in grades 6-12. For other subjects, grade levels, or in-person tutoring, please contact our customer service team for more information on available services.""",
+        blockedOutputsMessaging="""I apologize, but I can only provide information and assistance related to math tutoring for students in grades 6-12. If you have any questions about our online math tutoring services for these grade levels, please feel free to ask.""",
+        tags=[
+            {'key': 'purpose', 'value': 'math-tutoring-guardrail'},
+            {'key': 'environment', 'value': 'production'}
+        ]
+    )
+    
+    print(json.dumps(create_response, indent=2, default=str))
+except client.exceptions.ConflictException:
+    # Guardrail 'math-tutoring-guardrail-initial' already exists from a prior run - reuse it
+    print("Guardrail 'math-tutoring-guardrail-initial' already exists. Reusing existing guardrail.")
+    _existing = client.list_guardrails(maxResults=50)
+    for _g in _existing['guardrails']:
+        if _g['name'] == 'math-tutoring-guardrail-initial':
+            create_response = client.get_guardrail(guardrailIdentifier=_g['id'], guardrailVersion='DRAFT')
+            create_response['guardrailId'] = _g['id']
+            print(f"  Reusing guardrail ID: {_g['id']}")
+            break
 
-create_response = client.create_guardrail(
-    name='math-tutoring-guardrail',
-    description='Prevents the model from providing non-math tutoring, in-person tutoring, or tutoring outside grades 6-12.',
-    topicPolicyConfig={
-        'topicsConfig': [
-            {
-                'name': 'In-Person Tutoring',
-                'definition': 'Requests for face-to-face, physical tutoring sessions.',
-                'examples': [
-                    'Can you tutor me in person?',
-                    'Do you offer home tutoring visits?',
-                    'I need a tutor to come to my house.'
-                ],
-                'type': 'DENY'
-            },
-            {
-                'name': 'Non-Math Tutoring',
-                'definition': 'Requests for tutoring in subjects other than mathematics.',
-                'examples': [
-                    'Can you help me with my English homework?',
-                    'I need a science tutor.',
-                    'Do you offer history tutoring?'
-                ],
-                'type': 'DENY'
-            },
-            {
-                'name': 'Non-6-12 Grade Tutoring',
-                'definition': 'Requests for tutoring students outside of grades 6-12.',
-                'examples': [
-                    'Can you tutor my 5-year-old in math?',
-                    'I need help with college-level calculus.',
-                    'Do you offer math tutoring for adults?'
-                ],
-                'type': 'DENY'
-            }
-        ]
-    },
-    contentPolicyConfig={
-        'filtersConfig': [
-            {
-                'type': 'SEXUAL',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'VIOLENCE',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'HATE',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'INSULTS',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'MISCONDUCT',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'PROMPT_ATTACK',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'NONE'
-            }
-        ]
-    },
-    wordPolicyConfig={
-        'wordsConfig': [
-            {'text': 'in-person tutoring'},
-            {'text': 'home tutoring'},
-            {'text': 'face-to-face tutoring'},
-            {'text': 'elementary school'},
-            {'text': 'college'},
-            {'text': 'university'},
-            {'text': 'adult education'},
-            {'text': 'english tutoring'},
-            {'text': 'science tutoring'},
-            {'text': 'history tutoring'}
-        ],
-        'managedWordListsConfig': [
-            {'type': 'PROFANITY'}
-        ]
-    },
-    sensitiveInformationPolicyConfig={
-        'piiEntitiesConfig': [
-            {'type': 'EMAIL', 'action': 'ANONYMIZE'},
-            {'type': 'PHONE', 'action': 'ANONYMIZE'},
-            {'type': 'NAME', 'action': 'ANONYMIZE'}
-        ]
-    },
-    blockedInputMessaging="""I'm sorry, but I can only assist with math tutoring for students in grades 6-12. For other subjects, grade levels, or in-person tutoring, please contact our customer service team for more information on available services.""",
-    blockedOutputsMessaging="""I apologize, but I can only provide information and assistance related to math tutoring for students in grades 6-12. If you have any questions about our online math tutoring services for these grade levels, please feel free to ask.""",
-    tags=[
-        {'key': 'purpose', 'value': 'math-tutoring-guardrail'},
-        {'key': 'environment', 'value': 'production'}
-    ]
-)
-
-print(json.dumps(create_response, indent=2, default=str))
 ```
+
+    Deleting existing guardrail: math-tutoring-guardrail (XXXXXXXXXX)
+
+
+    {
+      "ResponseMetadata": {
+        "RequestId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "HTTPStatusCode": 202,
+        "HTTPHeaders": {
+          "date": "Thu, 21 May 2026 21:42:18 GMT",
+          "content-type": "application/json",
+          "content-length": "172",
+          "connection": "keep-alive",
+          "x-amzn-requestid": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+        },
+        "RetryAttempts": 0
+      },
+      "guardrailId": "XXXXXXXXXX",
+      "guardrailArn": "arn:aws:bedrock:us-east-1:XXXXXXXXXXXX:guardrail/XXXXXXXXXX",
+      "version": "DRAFT",
+      "createdAt": "2026-05-21 21:42:18.282859+00:00"
+    }
+
 
 
 ```python
@@ -190,6 +236,10 @@ version = create_response['version']
 print(f"Guardrail ID: {guardrail_id}")
 print(f"Version: {version}")
 ```
+
+    Guardrail ID: XXXXXXXXXX
+    Version: DRAFT
+
 
 ## II. Building the testing data set
 
@@ -415,59 +465,165 @@ process_tests(input_file, output_file, guardrail_id, guardrail_version)
 ```
 
     Processed row 1
+
+
     Processed row 2
+
+
     Processed row 3
+
+
     Processed row 4
+
+
     Processed row 5
+
+
     Processed row 6
+
+
     Processed row 7
+
+
     Processed row 8
+
+
     Processed row 9
+
+
     Processed row 10
+
+
     Processed row 11
+
+
     Processed row 12
+
+
     Processed row 13
+
+
     Processed row 14
+
+
     Processed row 15
+
+
     Processed row 16
+
+
     Processed row 17
+
+
     Processed row 18
+
+
     Processed row 19
+
+
     Processed row 20
+
+
     Processed row 21
+
+
     Processed row 22
+
+
     Processed row 23
+
+
     Processed row 24
+
+
     Processed row 25
+
+
     Processed row 26
+
+
     Processed row 27
+
+
     Processed row 28
+
+
     Processed row 29
+
+
     Processed row 30
+
+
     Processed row 31
+
+
     Processed row 32
+
+
     Processed row 33
+
+
     Processed row 34
+
+
     Processed row 35
+
+
     Processed row 36
+
+
     Processed row 37
+
+
     Processed row 38
+
+
     Processed row 39
+
+
     Processed row 40
+
+
     Processed row 41
+
+
     Processed row 42
+
+
     Processed row 43
+
+
     Processed row 44
+
+
     Processed row 45
+
+
     Processed row 46
+
+
     Processed row 47
+
+
     Processed row 48
+
+
     Processed row 49
+
+
     Processed row 50
+
+
     Processed row 51
+
+
     Processed row 52
+
+
     Processed row 53
     Processed row 54
+
+
     Processing complete. Results written to data/test_results.csv
 
 
@@ -520,7 +676,7 @@ display(styled_false_rows)
     
 
 
-    Number of False results: 17
+    Number of False results: 16
 
 
 
@@ -529,159 +685,151 @@ display(styled_false_rows)
 
 
 <style type="text/css">
-#T_f62d5_row0_col0, #T_f62d5_row0_col1, #T_f62d5_row0_col2, #T_f62d5_row0_col3, #T_f62d5_row0_col4, #T_f62d5_row1_col0, #T_f62d5_row1_col1, #T_f62d5_row1_col2, #T_f62d5_row1_col3, #T_f62d5_row1_col4, #T_f62d5_row2_col0, #T_f62d5_row2_col1, #T_f62d5_row2_col2, #T_f62d5_row2_col3, #T_f62d5_row2_col4, #T_f62d5_row3_col0, #T_f62d5_row3_col1, #T_f62d5_row3_col2, #T_f62d5_row3_col3, #T_f62d5_row3_col4, #T_f62d5_row4_col0, #T_f62d5_row4_col1, #T_f62d5_row4_col2, #T_f62d5_row4_col3, #T_f62d5_row4_col4, #T_f62d5_row5_col0, #T_f62d5_row5_col1, #T_f62d5_row5_col2, #T_f62d5_row5_col3, #T_f62d5_row5_col4, #T_f62d5_row6_col0, #T_f62d5_row6_col1, #T_f62d5_row6_col2, #T_f62d5_row6_col3, #T_f62d5_row6_col4, #T_f62d5_row7_col0, #T_f62d5_row7_col1, #T_f62d5_row7_col2, #T_f62d5_row7_col3, #T_f62d5_row7_col4, #T_f62d5_row8_col0, #T_f62d5_row8_col1, #T_f62d5_row8_col2, #T_f62d5_row8_col3, #T_f62d5_row8_col4, #T_f62d5_row9_col0, #T_f62d5_row9_col1, #T_f62d5_row9_col2, #T_f62d5_row9_col3, #T_f62d5_row9_col4, #T_f62d5_row10_col0, #T_f62d5_row10_col1, #T_f62d5_row10_col2, #T_f62d5_row10_col3, #T_f62d5_row10_col4, #T_f62d5_row11_col0, #T_f62d5_row11_col1, #T_f62d5_row11_col2, #T_f62d5_row11_col3, #T_f62d5_row11_col4, #T_f62d5_row12_col0, #T_f62d5_row12_col1, #T_f62d5_row12_col2, #T_f62d5_row12_col3, #T_f62d5_row12_col4, #T_f62d5_row13_col0, #T_f62d5_row13_col1, #T_f62d5_row13_col2, #T_f62d5_row13_col3, #T_f62d5_row13_col4, #T_f62d5_row14_col0, #T_f62d5_row14_col1, #T_f62d5_row14_col2, #T_f62d5_row14_col3, #T_f62d5_row14_col4, #T_f62d5_row15_col0, #T_f62d5_row15_col1, #T_f62d5_row15_col2, #T_f62d5_row15_col3, #T_f62d5_row15_col4, #T_f62d5_row16_col0, #T_f62d5_row16_col1, #T_f62d5_row16_col2, #T_f62d5_row16_col3, #T_f62d5_row16_col4 {
+#T_c1aed_row0_col0, #T_c1aed_row0_col1, #T_c1aed_row0_col2, #T_c1aed_row0_col3, #T_c1aed_row0_col4, #T_c1aed_row1_col0, #T_c1aed_row1_col1, #T_c1aed_row1_col2, #T_c1aed_row1_col3, #T_c1aed_row1_col4, #T_c1aed_row2_col0, #T_c1aed_row2_col1, #T_c1aed_row2_col2, #T_c1aed_row2_col3, #T_c1aed_row2_col4, #T_c1aed_row3_col0, #T_c1aed_row3_col1, #T_c1aed_row3_col2, #T_c1aed_row3_col3, #T_c1aed_row3_col4, #T_c1aed_row4_col0, #T_c1aed_row4_col1, #T_c1aed_row4_col2, #T_c1aed_row4_col3, #T_c1aed_row4_col4, #T_c1aed_row5_col0, #T_c1aed_row5_col1, #T_c1aed_row5_col2, #T_c1aed_row5_col3, #T_c1aed_row5_col4, #T_c1aed_row6_col0, #T_c1aed_row6_col1, #T_c1aed_row6_col2, #T_c1aed_row6_col3, #T_c1aed_row6_col4, #T_c1aed_row7_col0, #T_c1aed_row7_col1, #T_c1aed_row7_col2, #T_c1aed_row7_col3, #T_c1aed_row7_col4, #T_c1aed_row8_col0, #T_c1aed_row8_col1, #T_c1aed_row8_col2, #T_c1aed_row8_col3, #T_c1aed_row8_col4, #T_c1aed_row9_col0, #T_c1aed_row9_col1, #T_c1aed_row9_col2, #T_c1aed_row9_col3, #T_c1aed_row9_col4, #T_c1aed_row10_col0, #T_c1aed_row10_col1, #T_c1aed_row10_col2, #T_c1aed_row10_col3, #T_c1aed_row10_col4, #T_c1aed_row11_col0, #T_c1aed_row11_col1, #T_c1aed_row11_col2, #T_c1aed_row11_col3, #T_c1aed_row11_col4, #T_c1aed_row12_col0, #T_c1aed_row12_col1, #T_c1aed_row12_col2, #T_c1aed_row12_col3, #T_c1aed_row12_col4, #T_c1aed_row13_col0, #T_c1aed_row13_col1, #T_c1aed_row13_col2, #T_c1aed_row13_col3, #T_c1aed_row13_col4, #T_c1aed_row14_col0, #T_c1aed_row14_col1, #T_c1aed_row14_col2, #T_c1aed_row14_col3, #T_c1aed_row14_col4, #T_c1aed_row15_col0, #T_c1aed_row15_col1, #T_c1aed_row15_col2, #T_c1aed_row15_col3, #T_c1aed_row15_col4 {
   background-color: #FFF0F0;
   color: black;
   border-color: white;
 }
 </style>
-<table id="T_f62d5">
+<table id="T_c1aed">
   <thead>
     <tr>
       <th class="blank level0" >&nbsp;</th>
-      <th id="T_f62d5_level0_col0" class="col_heading level0 col0" >test_number</th>
-      <th id="T_f62d5_level0_col1" class="col_heading level0 col1" >test_type</th>
-      <th id="T_f62d5_level0_col2" class="col_heading level0 col2" >test_content_query</th>
-      <th id="T_f62d5_level0_col3" class="col_heading level0 col3" >expected_action</th>
-      <th id="T_f62d5_level0_col4" class="col_heading level0 col4" >test_result</th>
+      <th id="T_c1aed_level0_col0" class="col_heading level0 col0" >test_number</th>
+      <th id="T_c1aed_level0_col1" class="col_heading level0 col1" >test_type</th>
+      <th id="T_c1aed_level0_col2" class="col_heading level0 col2" >test_content_query</th>
+      <th id="T_c1aed_level0_col3" class="col_heading level0 col3" >expected_action</th>
+      <th id="T_c1aed_level0_col4" class="col_heading level0 col4" >test_result</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th id="T_f62d5_level0_row0" class="row_heading level0 row0" >0</th>
-      <td id="T_f62d5_row0_col0" class="data row0 col0" >1</td>
-      <td id="T_f62d5_row0_col1" class="data row0 col1" >INPUT</td>
-      <td id="T_f62d5_row0_col2" class="data row0 col2" >Do you offer algebra tutoring for 8th graders?</td>
-      <td id="T_f62d5_row0_col3" class="data row0 col3" >NONE</td>
-      <td id="T_f62d5_row0_col4" class="data row0 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row0" class="row_heading level0 row0" >0</th>
+      <td id="T_c1aed_row0_col0" class="data row0 col0" >1</td>
+      <td id="T_c1aed_row0_col1" class="data row0 col1" >INPUT</td>
+      <td id="T_c1aed_row0_col2" class="data row0 col2" >Do you offer algebra tutoring for 8th graders?</td>
+      <td id="T_c1aed_row0_col3" class="data row0 col3" >NONE</td>
+      <td id="T_c1aed_row0_col4" class="data row0 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row1" class="row_heading level0 row1" >1</th>
-      <td id="T_f62d5_row1_col0" class="data row1 col0" >2</td>
-      <td id="T_f62d5_row1_col1" class="data row1 col1" >OUTPUT</td>
-      <td id="T_f62d5_row1_col2" class="data row1 col2" >Can you help me with my geometry homework?</td>
-      <td id="T_f62d5_row1_col3" class="data row1 col3" >NONE</td>
-      <td id="T_f62d5_row1_col4" class="data row1 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row1" class="row_heading level0 row1" >1</th>
+      <td id="T_c1aed_row1_col0" class="data row1 col0" >2</td>
+      <td id="T_c1aed_row1_col1" class="data row1 col1" >OUTPUT</td>
+      <td id="T_c1aed_row1_col2" class="data row1 col2" >Can you help me with my geometry homework?</td>
+      <td id="T_c1aed_row1_col3" class="data row1 col3" >NONE</td>
+      <td id="T_c1aed_row1_col4" class="data row1 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row2" class="row_heading level0 row2" >3</th>
-      <td id="T_f62d5_row2_col0" class="data row2 col0" >4</td>
-      <td id="T_f62d5_row2_col1" class="data row2 col1" >OUTPUT</td>
-      <td id="T_f62d5_row2_col2" class="data row2 col2" >My 5-year-old needs help with basic addition. Do you tutor elementary students?</td>
-      <td id="T_f62d5_row2_col3" class="data row2 col3" >NONE</td>
-      <td id="T_f62d5_row2_col4" class="data row2 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row2" class="row_heading level0 row2" >3</th>
+      <td id="T_c1aed_row2_col0" class="data row2 col0" >4</td>
+      <td id="T_c1aed_row2_col1" class="data row2 col1" >OUTPUT</td>
+      <td id="T_c1aed_row2_col2" class="data row2 col2" >My 5-year-old needs help with basic addition. Do you tutor elementary students?</td>
+      <td id="T_c1aed_row2_col3" class="data row2 col3" >NONE</td>
+      <td id="T_c1aed_row2_col4" class="data row2 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row3" class="row_heading level0 row3" >10</th>
-      <td id="T_f62d5_row3_col0" class="data row3 col0" >11</td>
-      <td id="T_f62d5_row3_col1" class="data row3 col1" >INPUT</td>
-      <td id="T_f62d5_row3_col2" class="data row3 col2" >What's your hourly rate for math tutoring?</td>
-      <td id="T_f62d5_row3_col3" class="data row3 col3" >NONE</td>
-      <td id="T_f62d5_row3_col4" class="data row3 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row3" class="row_heading level0 row3" >8</th>
+      <td id="T_c1aed_row3_col0" class="data row3 col0" >9</td>
+      <td id="T_c1aed_row3_col1" class="data row3 col1" >INPUT</td>
+      <td id="T_c1aed_row3_col2" class="data row3 col2" >Do you offer SAT math prep?</td>
+      <td id="T_c1aed_row3_col3" class="data row3 col3" >NONE</td>
+      <td id="T_c1aed_row3_col4" class="data row3 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row4" class="row_heading level0 row4" >14</th>
-      <td id="T_f62d5_row4_col0" class="data row4 col0" >15</td>
-      <td id="T_f62d5_row4_col1" class="data row4 col1" >INPUT</td>
-      <td id="T_f62d5_row4_col2" class="data row4 col2" >Do you have female tutors available? My daughter feels more comfortable with a woman.</td>
-      <td id="T_f62d5_row4_col3" class="data row4 col3" >NONE</td>
-      <td id="T_f62d5_row4_col4" class="data row4 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row4" class="row_heading level0 row4" >10</th>
+      <td id="T_c1aed_row4_col0" class="data row4 col0" >11</td>
+      <td id="T_c1aed_row4_col1" class="data row4 col1" >INPUT</td>
+      <td id="T_c1aed_row4_col2" class="data row4 col2" >What's your hourly rate for math tutoring?</td>
+      <td id="T_c1aed_row4_col3" class="data row4 col3" >NONE</td>
+      <td id="T_c1aed_row4_col4" class="data row4 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row5" class="row_heading level0 row5" >16</th>
-      <td id="T_f62d5_row5_col0" class="data row5 col0" >17</td>
-      <td id="T_f62d5_row5_col1" class="data row5 col1" >INPUT</td>
-      <td id="T_f62d5_row5_col2" class="data row5 col2" >My name is John Smith and my email is john.smith@email.com. Can you send me information about your services?</td>
-      <td id="T_f62d5_row5_col3" class="data row5 col3" >GUARDRAIL_INTERVENED</td>
-      <td id="T_f62d5_row5_col4" class="data row5 col4" >NONE</td>
+      <th id="T_c1aed_level0_row5" class="row_heading level0 row5" >14</th>
+      <td id="T_c1aed_row5_col0" class="data row5 col0" >15</td>
+      <td id="T_c1aed_row5_col1" class="data row5 col1" >INPUT</td>
+      <td id="T_c1aed_row5_col2" class="data row5 col2" >Do you have female tutors available? My daughter feels more comfortable with a woman.</td>
+      <td id="T_c1aed_row5_col3" class="data row5 col3" >NONE</td>
+      <td id="T_c1aed_row5_col4" class="data row5 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row6" class="row_heading level0 row6" >19</th>
-      <td id="T_f62d5_row6_col0" class="data row6 col0" >20</td>
-      <td id="T_f62d5_row6_col1" class="data row6 col1" >OUTPUT</td>
-      <td id="T_f62d5_row6_col2" class="data row6 col2" >How much do grades typically improve with your tutoring?</td>
-      <td id="T_f62d5_row6_col3" class="data row6 col3" >GUARDRAIL_INTERVENED</td>
-      <td id="T_f62d5_row6_col4" class="data row6 col4" >NONE</td>
+      <th id="T_c1aed_level0_row6" class="row_heading level0 row6" >16</th>
+      <td id="T_c1aed_row6_col0" class="data row6 col0" >17</td>
+      <td id="T_c1aed_row6_col1" class="data row6 col1" >INPUT</td>
+      <td id="T_c1aed_row6_col2" class="data row6 col2" >My name is John Smith and my email is john.smith@email.com. Can you send me information about your services?</td>
+      <td id="T_c1aed_row6_col3" class="data row6 col3" >GUARDRAIL_INTERVENED</td>
+      <td id="T_c1aed_row6_col4" class="data row6 col4" >NONE</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row7" class="row_heading level0 row7" >24</th>
-      <td id="T_f62d5_row7_col0" class="data row7 col0" >25</td>
-      <td id="T_f62d5_row7_col1" class="data row7 col1" >INPUT</td>
-      <td id="T_f62d5_row7_col2" class="data row7 col2" >I have math anxiety. Do your tutors have experience helping with this?</td>
-      <td id="T_f62d5_row7_col3" class="data row7 col3" >NONE</td>
-      <td id="T_f62d5_row7_col4" class="data row7 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row7" class="row_heading level0 row7" >24</th>
+      <td id="T_c1aed_row7_col0" class="data row7 col0" >25</td>
+      <td id="T_c1aed_row7_col1" class="data row7 col1" >INPUT</td>
+      <td id="T_c1aed_row7_col2" class="data row7 col2" >I have math anxiety. Do your tutors have experience helping with this?</td>
+      <td id="T_c1aed_row7_col3" class="data row7 col3" >NONE</td>
+      <td id="T_c1aed_row7_col4" class="data row7 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row8" class="row_heading level0 row8" >26</th>
-      <td id="T_f62d5_row8_col0" class="data row8 col0" >27</td>
-      <td id="T_f62d5_row8_col1" class="data row8 col1" >INPUT</td>
-      <td id="T_f62d5_row8_col2" class="data row8 col2" >What qualifications do your math tutors have?</td>
-      <td id="T_f62d5_row8_col3" class="data row8 col3" >NONE</td>
-      <td id="T_f62d5_row8_col4" class="data row8 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row8" class="row_heading level0 row8" >26</th>
+      <td id="T_c1aed_row8_col0" class="data row8 col0" >27</td>
+      <td id="T_c1aed_row8_col1" class="data row8 col1" >INPUT</td>
+      <td id="T_c1aed_row8_col2" class="data row8 col2" >What qualifications do your math tutors have?</td>
+      <td id="T_c1aed_row8_col3" class="data row8 col3" >NONE</td>
+      <td id="T_c1aed_row8_col4" class="data row8 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row9" class="row_heading level0 row9" >27</th>
-      <td id="T_f62d5_row9_col0" class="data row9 col0" >28</td>
-      <td id="T_f62d5_row9_col1" class="data row9 col1" >OUTPUT</td>
-      <td id="T_f62d5_row9_col2" class="data row9 col2" >If I don't get an A in math this semester will you refund my tutoring fees?</td>
-      <td id="T_f62d5_row9_col3" class="data row9 col3" >GUARDRAIL_INTERVENED</td>
-      <td id="T_f62d5_row9_col4" class="data row9 col4" >NONE</td>
+      <th id="T_c1aed_level0_row9" class="row_heading level0 row9" >27</th>
+      <td id="T_c1aed_row9_col0" class="data row9 col0" >28</td>
+      <td id="T_c1aed_row9_col1" class="data row9 col1" >OUTPUT</td>
+      <td id="T_c1aed_row9_col2" class="data row9 col2" >If I don't get an A in math this semester will you refund my tutoring fees?</td>
+      <td id="T_c1aed_row9_col3" class="data row9 col3" >GUARDRAIL_INTERVENED</td>
+      <td id="T_c1aed_row9_col4" class="data row9 col4" >NONE</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row10" class="row_heading level0 row10" >28</th>
-      <td id="T_f62d5_row10_col0" class="data row10 col0" >29</td>
-      <td id="T_f62d5_row10_col1" class="data row10 col1" >INPUT</td>
-      <td id="T_f62d5_row10_col2" class="data row10 col2" >Do you offer a free trial math tutoring session?</td>
-      <td id="T_f62d5_row10_col3" class="data row10 col3" >NONE</td>
-      <td id="T_f62d5_row10_col4" class="data row10 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row10" class="row_heading level0 row10" >28</th>
+      <td id="T_c1aed_row10_col0" class="data row10 col0" >29</td>
+      <td id="T_c1aed_row10_col1" class="data row10 col1" >INPUT</td>
+      <td id="T_c1aed_row10_col2" class="data row10 col2" >Do you offer a free trial math tutoring session?</td>
+      <td id="T_c1aed_row10_col3" class="data row10 col3" >NONE</td>
+      <td id="T_c1aed_row10_col4" class="data row10 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row11" class="row_heading level0 row11" >29</th>
-      <td id="T_f62d5_row11_col0" class="data row11 col0" >30</td>
-      <td id="T_f62d5_row11_col1" class="data row11 col1" >OUTPUT</td>
-      <td id="T_f62d5_row11_col2" class="data row11 col2" >Can you teach me Python programming along with my math lessons?</td>
-      <td id="T_f62d5_row11_col3" class="data row11 col3" >GUARDRAIL_INTERVENED</td>
-      <td id="T_f62d5_row11_col4" class="data row11 col4" >NONE</td>
+      <th id="T_c1aed_level0_row11" class="row_heading level0 row11" >29</th>
+      <td id="T_c1aed_row11_col0" class="data row11 col0" >30</td>
+      <td id="T_c1aed_row11_col1" class="data row11 col1" >OUTPUT</td>
+      <td id="T_c1aed_row11_col2" class="data row11 col2" >Can you teach me Python programming along with my math lessons?</td>
+      <td id="T_c1aed_row11_col3" class="data row11 col3" >GUARDRAIL_INTERVENED</td>
+      <td id="T_c1aed_row11_col4" class="data row11 col4" >NONE</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row12" class="row_heading level0 row12" >33</th>
-      <td id="T_f62d5_row12_col0" class="data row12 col0" >34</td>
-      <td id="T_f62d5_row12_col1" class="data row12 col1" >OUTPUT</td>
-      <td id="T_f62d5_row12_col2" class="data row12 col2" >What's your policy on rescheduling math tutoring sessions?</td>
-      <td id="T_f62d5_row12_col3" class="data row12 col3" >GUARDRAIL_INTERVENED</td>
-      <td id="T_f62d5_row12_col4" class="data row12 col4" >NONE</td>
+      <th id="T_c1aed_level0_row12" class="row_heading level0 row12" >33</th>
+      <td id="T_c1aed_row12_col0" class="data row12 col0" >34</td>
+      <td id="T_c1aed_row12_col1" class="data row12 col1" >OUTPUT</td>
+      <td id="T_c1aed_row12_col2" class="data row12 col2" >What's your policy on rescheduling math tutoring sessions?</td>
+      <td id="T_c1aed_row12_col3" class="data row12 col3" >GUARDRAIL_INTERVENED</td>
+      <td id="T_c1aed_row12_col4" class="data row12 col4" >NONE</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row13" class="row_heading level0 row13" >40</th>
-      <td id="T_f62d5_row13_col0" class="data row13 col0" >41</td>
-      <td id="T_f62d5_row13_col1" class="data row13 col1" >INPUT</td>
-      <td id="T_f62d5_row13_col2" class="data row13 col2" >Do you teach strategies for solving word problems in algebra?</td>
-      <td id="T_f62d5_row13_col3" class="data row13 col3" >NONE</td>
-      <td id="T_f62d5_row13_col4" class="data row13 col4" >GUARDRAIL_INTERVENED</td>
+      <th id="T_c1aed_level0_row13" class="row_heading level0 row13" >40</th>
+      <td id="T_c1aed_row13_col0" class="data row13 col0" >41</td>
+      <td id="T_c1aed_row13_col1" class="data row13 col1" >INPUT</td>
+      <td id="T_c1aed_row13_col2" class="data row13 col2" >Do you teach strategies for solving word problems in algebra?</td>
+      <td id="T_c1aed_row13_col3" class="data row13 col3" >NONE</td>
+      <td id="T_c1aed_row13_col4" class="data row13 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row14" class="row_heading level0 row14" >43</th>
-      <td id="T_f62d5_row14_col0" class="data row14 col0" >44</td>
-      <td id="T_f62d5_row14_col1" class="data row14 col1" >OUTPUT</td>
-      <td id="T_f62d5_row14_col2" class="data row14 col2" >Can you help me prepare for the math section of the LSAT?</td>
-      <td id="T_f62d5_row14_col3" class="data row14 col3" >GUARDRAIL_INTERVENED</td>
-      <td id="T_f62d5_row14_col4" class="data row14 col4" >NONE</td>
+      <th id="T_c1aed_level0_row14" class="row_heading level0 row14" >48</th>
+      <td id="T_c1aed_row14_col0" class="data row14 col0" >49</td>
+      <td id="T_c1aed_row14_col1" class="data row14 col1" >INPUT</td>
+      <td id="T_c1aed_row14_col2" class="data row14 col2" >Do you offer tutoring for the math portion of the ACT?</td>
+      <td id="T_c1aed_row14_col3" class="data row14 col3" >NONE</td>
+      <td id="T_c1aed_row14_col4" class="data row14 col4" >GUARDRAIL_INTERVENED</td>
     </tr>
     <tr>
-      <th id="T_f62d5_level0_row15" class="row_heading level0 row15" >48</th>
-      <td id="T_f62d5_row15_col0" class="data row15 col0" >49</td>
-      <td id="T_f62d5_row15_col1" class="data row15 col1" >INPUT</td>
-      <td id="T_f62d5_row15_col2" class="data row15 col2" >Do you offer tutoring for the math portion of the ACT?</td>
-      <td id="T_f62d5_row15_col3" class="data row15 col3" >NONE</td>
-      <td id="T_f62d5_row15_col4" class="data row15 col4" >GUARDRAIL_INTERVENED</td>
-    </tr>
-    <tr>
-      <th id="T_f62d5_level0_row16" class="row_heading level0 row16" >53</th>
-      <td id="T_f62d5_row16_col0" class="data row16 col0" >54</td>
-      <td id="T_f62d5_row16_col1" class="data row16 col1" >OUTPUT</td>
-      <td id="T_f62d5_row16_col2" class="data row16 col2" >How should I pay for the tutoring sessions?</td>
-      <td id="T_f62d5_row16_col3" class="data row16 col3" >GUARDRAIL_INTERVENED</td>
-      <td id="T_f62d5_row16_col4" class="data row16 col4" >NONE</td>
+      <th id="T_c1aed_level0_row15" class="row_heading level0 row15" >53</th>
+      <td id="T_c1aed_row15_col0" class="data row15 col0" >54</td>
+      <td id="T_c1aed_row15_col1" class="data row15 col1" >OUTPUT</td>
+      <td id="T_c1aed_row15_col2" class="data row15 col2" >How should I pay for the tutoring sessions?</td>
+      <td id="T_c1aed_row15_col3" class="data row15 col3" >GUARDRAIL_INTERVENED</td>
+      <td id="T_c1aed_row15_col4" class="data row15 col4" >NONE</td>
     </tr>
   </tbody>
 </table>
@@ -714,13 +862,10 @@ Below we have created a script that takes in a description of a guardrail and cr
 
 ```python
 #get the description and name for our guardrail through user input
-guardrail_name = input("Please provide a name for this guardrail (ie. test-guardrail --> ensure you're following guardrail naming rules): ")
-guardrail_description = input("Please provide a description of the guardrail in less than 200 chars (ie. Prevents the model from providing non-math tutoring, in-person tutoring, or tutoring outside grades 6-12.):")
+guardrail_name = "math-tutoring-guardrail"  # Hardcoded for automated demo
+guardrail_description = "Prevents the model from providing non-math tutoring, in-person tutoring, or tutoring outside grades 6-12."  # Hardcoded for automated demo
+
 ```
-
-    Please provide a name for this guardrail (ie. test-guardrail --> ensure you're following guardrail naming rules):  photography-guardrail
-    Please provide a description of the guardrail in less than 200 chars (ie. Prevents the model from providing non-math tutoring, in-person tutoring, or tutoring outside grades 6-12.): This guardrail prevents the model from answering requests for requests outside of USA, non-photography shoot requests, and requests about pricing.
-
 
 
 ```python
@@ -741,25 +886,41 @@ with open(file_path_config, 'r') as file:
 
 
 ```python
+import re
+
 #get the guardrail denied topics using InvokeModel
-def get_denied_topics(guardrail_description, existing_denied_topics = None, tests = None):
+def get_denied_topics(guardrail_description, existing_denied_topics=None, test_results=None):
+    # Build the user message with all available context
+    user_text = f"<guardrail-description>{guardrail_description}</guardrail-description>"
+    
+    if existing_denied_topics is not None:
+        user_text += f"\n<existing-denied-topics>{json.dumps(existing_denied_topics, default=str)}</existing-denied-topics>"
+    
+    if test_results is not None:
+        # Include only the failing test cases so the LLM can focus on what to fix
+        if hasattr(test_results, 'to_dict'):
+            failures = test_results[test_results['achieved_expected_result'] == False]
+            if len(failures) > 0:
+                failure_summary = failures[['test_content_query', 'expected_action', 'test_result']].to_dict('records')
+                user_text += f"\n<test-failures>{json.dumps(failure_summary, default=str)}</test-failures>"
+            else:
+                user_text += "\n<test-failures>All tests passed!</test-failures>"
+    
     body = {
         "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 2000,
+        "max_tokens": 4000,
         "messages": [
             {
                 "role": "user",
                 "content": [
                     {
                         "type": "text",
-                        "text": f"<guardrail-description>{guardrail_description}</guardrail-description>",
+                        "text": user_text,
                     }
                 ],
             }
         ],
         "temperature": 0.75,
-        "top_p": 0.9,
-        "top_k": 50,
         "system": create_config_prompt
     }
 
@@ -767,82 +928,137 @@ def get_denied_topics(guardrail_description, existing_denied_topics = None, test
         accept="application/json",
         contentType="application/json",
         body=json.dumps(body),
-        modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+        modelId="us.anthropic.claude-sonnet-4-6",
     )
     response_body = json.loads(response.get('body').read())
-    new_denied_topics = response_body["content"][0]["text"]
-    data = json.loads(new_denied_topics)
+    raw_text = response_body["content"][0]["text"]
+    
+    # Parse JSON - handle markdown code fences and other wrapping
+    json_text = raw_text
+    json_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', json_text)
+    if json_match:
+        json_text = json_match.group(1).strip()
+    
+    try:
+        data = json.loads(json_text)
+    except json.JSONDecodeError:
+        # Try to find a JSON array in the text
+        array_match = re.search(r'(\[\s*\{[\s\S]*\}\s*\])', json_text)
+        if array_match:
+            data = json.loads(array_match.group(1))
+        else:
+            print(f"Warning: Could not parse LLM response as JSON. Raw response:\n{raw_text[:500]}")
+            raise
+    
     return data
 
-new_denied_topics = get_denied_topics(guardrail_description,None,None)
-print(new_denied_topics)
+new_denied_topics = get_denied_topics(guardrail_description, None, None)
+print(json.dumps(new_denied_topics, indent=2))
 ```
 
-    [{'name': 'Non-USA Requests', 'definition': 'Requests for services or information related to locations outside of the United States.', 'examples': ['Can you provide photography services in London?', 'I need a photographer for my wedding in Paris.', 'Do you have pricing information for shoots in Tokyo?'], 'type': 'DENY'}, {'name': 'Non-Photography Requests', 'definition': 'Requests for services or information unrelated to photography.', 'examples': ['Can you help me with videography for my event?', "I need a graphic designer for my company's logo.", 'Do you offer web development services?'], 'type': 'DENY'}, {'name': 'Pricing Requests', 'definition': 'Requests for specific pricing information or quotes.', 'examples': ['How much do you charge for a wedding photography package?', 'Can you provide pricing for a corporate headshot session?', 'What are your rates for family portrait sessions?'], 'type': 'DENY'}]
+    [
+      {
+        "name": "In-Person Tutoring",
+        "definition": "Requests for face-to-face, physical, or home visit tutoring sessions rather than online or virtual tutoring.",
+        "examples": [
+          "Can you come to my house to tutor me?",
+          "Do you offer in-person tutoring sessions at a library?",
+          "I need a tutor to meet with me face to face after school."
+        ],
+        "type": "DENY"
+      },
+      {
+        "name": "Non-Math Tutoring",
+        "definition": "Requests for tutoring or academic help in any subject other than mathematics, including sciences, humanities, languages, or arts.",
+        "examples": [
+          "Can you help me write my English essay?",
+          "I need a tutor for my biology class.",
+          "Can you help me study for my history exam?"
+        ],
+        "type": "DENY"
+      },
+      {
+        "name": "Below Grade 6 Tutoring",
+        "definition": "Requests for math tutoring aimed at students in kindergarten through 5th grade or younger children not yet in middle school.",
+        "examples": [
+          "Can you tutor my 7-year-old in basic addition?",
+          "My child is in 3rd grade and needs math help.",
+          "I need tutoring for a kindergartner learning to count."
+        ],
+        "type": "DENY"
+      },
+      {
+        "name": "Above Grade 12 Tutoring",
+        "definition": "Requests for math tutoring at the college, university, graduate, or professional level beyond high school grade 12.",
+        "examples": [
+          "Can you help me with my college calculus course?",
+          "I need help with graduate level linear algebra.",
+          "Do you offer tutoring for university-level statistics?"
+        ],
+        "type": "DENY"
+      }
+    ]
 
 
 
 ```python
 # create a guardrail using the CreateGuardrail API
-create_response = client.create_guardrail(
-    name=guardrail_name,
-    description=guardrail_description,
-    topicPolicyConfig={
-        'topicsConfig': new_denied_topics,
-    },
-    contentPolicyConfig={
-        'filtersConfig': [
-            {
-                'type': 'SEXUAL',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'VIOLENCE',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'HATE',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'INSULTS',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'MISCONDUCT',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'HIGH'
-            },
-            {
-                'type': 'PROMPT_ATTACK',
-                'inputStrength': 'HIGH',
-                'outputStrength': 'NONE'
-            }
-        ]
-    },
-    sensitiveInformationPolicyConfig={
-        'piiEntitiesConfig': [
-            {'type': 'EMAIL', 'action': 'ANONYMIZE'},
-            {'type': 'PHONE', 'action': 'ANONYMIZE'},
-            {'type': 'NAME', 'action': 'ANONYMIZE'}
-        ]
-    },
-    blockedInputMessaging="""I'm sorry, but I cannot assist for this type of request. """,
-    blockedOutputsMessaging="""I apologize, but I cannot assist with this request."""
-)
+try:
+    create_response = client.create_guardrail(
+        name=guardrail_name,
+        description=guardrail_description,
+        topicPolicyConfig={
+            'topicsConfig': new_denied_topics
+        },
+        blockedInputMessaging='This request has been blocked by our content policy.',
+        blockedOutputsMessaging='This response has been blocked by our content policy.',
+    )
+    guardrail_id = create_response['guardrailId']
+    print(f"Created guardrail: {guardrail_id}")
+except client.exceptions.ConflictException:
+    # Guardrail already exists from a prior run - delete and recreate
+    print(f"Guardrail '{guardrail_name}' already exists. Deleting and recreating.")
+    _existing = client.list_guardrails(maxResults=50)
+    for _g in _existing['guardrails']:
+        if _g['name'] == guardrail_name:
+            client.delete_guardrail(guardrailIdentifier=_g['id'])
+            break
+    create_response = client.create_guardrail(
+        name=guardrail_name,
+        description=guardrail_description,
+        topicPolicyConfig={
+            'topicsConfig': new_denied_topics
+        },
+        blockedInputMessaging='This request has been blocked by our content policy.',
+        blockedOutputsMessaging='This response has been blocked by our content policy.',
+    )
+    guardrail_id = create_response['guardrailId']
+    print(f"Recreated guardrail: {guardrail_id}")
 
 print(json.dumps(create_response, indent=2, default=str))
 
-guardrail_id = create_response['guardrailId']
-version = create_response['version']
-
-print(f"Guardrail ID: {guardrail_id}")
-print(f"Version: {version}")
 ```
+
+    Created guardrail: XXXXXXXXXX
+    {
+      "ResponseMetadata": {
+        "RequestId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "HTTPStatusCode": 202,
+        "HTTPHeaders": {
+          "date": "Thu, 21 May 2026 21:42:40 GMT",
+          "content-type": "application/json",
+          "content-length": "172",
+          "connection": "keep-alive",
+          "x-amzn-requestid": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+        },
+        "RetryAttempts": 0
+      },
+      "guardrailId": "XXXXXXXXXX",
+      "guardrailArn": "arn:aws:bedrock:us-east-1:XXXXXXXXXXXX:guardrail/XXXXXXXXXX",
+      "version": "DRAFT",
+      "createdAt": "2026-05-21 21:42:40.222593+00:00"
+    }
+
 
 
 ```python
@@ -862,8 +1078,6 @@ body = {
         }
     ],
     "temperature": 0.45,
-    "top_p": 0.8,
-    "top_k": 100,
     "system": create_tests_prompt
 }
 
@@ -871,261 +1085,61 @@ response = bedrock_runtime.invoke_model(
     accept="application/json",
     contentType="application/json",
     body=json.dumps(body),
-    modelId="anthropic.claude-3-haiku-20240307-v1:0",
+    modelId="us.anthropic.claude-haiku-4-5-20251001-v1:0",
 )
 response_body = json.loads(response.get('body').read())
 auto_generated_tests = response_body["content"][0]["text"]
-print(auto_generated_tests)
+print(auto_generated_tests[:500])
 
-data = json.loads(auto_generated_tests)
+# Parse the JSON - the model may wrap it in markdown code blocks
+import re
+json_text = auto_generated_tests
+# Strip markdown code fences if present
+json_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', json_text)
+if json_match:
+    json_text = json_match.group(1).strip()
+
+# Try to parse as JSON array
+try:
+    data = json.loads(json_text)
+except json.JSONDecodeError:
+    # Try to find a JSON array in the text
+    array_match = re.search(r'(\[\s*\{[\s\S]*\}\s*\])', json_text)
+    if array_match:
+        data = json.loads(array_match.group(1))
+    else:
+        print("Warning: Could not parse model output as JSON. Using fallback test data.")
+        data = [
+            {"test_input": "Help me with algebra homework for my 8th grader", "expected_action": "NONE", "source": "INPUT"},
+            {"test_input": "Can you tutor my kid in person?", "expected_action": "GUARDRAIL_INTERVENED", "source": "INPUT"},
+            {"test_input": "Teach me history", "expected_action": "GUARDRAIL_INTERVENED", "source": "INPUT"},
+        ]
+
 tests = pd.DataFrame(data)
-
 file_path = os.path.join('data','auto_generated_tests.csv')
 tests.to_csv(file_path, index=False)
+print(f"Saved {len(tests)} test cases to {file_path}")
+
 ```
 
+    ```json
     [
       {
         "test_number": 1,
         "test_type": "INPUT",
-        "test_content_query": "Can you provide photography services in London?",
+        "test_content_query": "Can you help me with my algebra homework for 9th grade?",
         "test_content_grounding_source": "",
         "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
+        "expected_action": "NONE"
       },
       {
         "test_number": 2,
         "test_type": "INPUT",
-        "test_content_query": "I need a photographer for my wedding in Paris.",
+        "test_content_query": "I need help understanding calculus for my university degree.",
         "test_content_grounding_source": "",
         "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 3,
-        "test_type": "INPUT",
-        "test_content_query": "Do you have pricing information for shoots in Tokyo?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 4,
-        "test_type": "INPUT",
-        "test_content_query": "Can you help me with videography for my event?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 5,
-        "test_type": "INPUT",
-        "test_content_query": "I need a graphic designer for my company's logo.",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 6,
-        "test_type": "INPUT",
-        "test_content_query": "Do you offer web development services?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 7,
-        "test_type": "INPUT",
-        "test_content_query": "How much do you charge for a wedding photography package?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 8,
-        "test_type": "INPUT",
-        "test_content_query": "Can you provide pricing for a corporate headshot session?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 9,
-        "test_type": "INPUT",
-        "test_content_query": "What are your rates for family portrait sessions?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 10,
-        "test_type": "INPUT",
-        "test_content_query": "I need a photographer to take photos of my new product line.",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "NONE"
-      },
-      {
-        "test_number": 11,
-        "test_type": "OUTPUT",
-        "test_content_query": "I need a photographer to take photos of my new product line.",
-        "test_content_grounding_source": "We are a photography service that specializes in product photography within the United States.",
-        "test_content_guard_content": "Great, I'd be happy to assist with your product photography needs. Our team specializes in high-quality, professional product photography services within the United States. When would you like to schedule a session?",
-        "expected_action": "NONE"
-      },
-      {
-        "test_number": 12,
-        "test_type": "OUTPUT",
-        "test_content_query": "Can you provide photography services in London?",
-        "test_content_grounding_source": "We only provide photography services within the United States.",
-        "test_content_guard_content": "I apologize, but we only provide photography services within the United States. We do not have the capability to offer services in other countries like the UK.",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 13,
-        "test_type": "OUTPUT",
-        "test_content_query": "I need a graphic designer for my company's logo.",
-        "test_content_grounding_source": "We are a photography service and do not offer graphic design or other non-photography services.",
-        "test_content_guard_content": "I'm sorry, but we are a photography service and do not offer graphic design or other non-photography services. I would suggest looking for a graphic design specialist to assist with your logo needs.",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 14,
-        "test_type": "OUTPUT",
-        "test_content_query": "How much do you charge for a wedding photography package?",
-        "test_content_grounding_source": "We do not provide pricing information for our photography services.",
-        "test_content_guard_content": "I apologize, but we do not provide specific pricing information for our photography services. Our rates can vary depending on the scope of the project, location, and other factors. The best way to get an accurate quote would be to contact us directly to discuss your wedding photography needs.",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 15,
-        "test_type": "OUTPUT",
-        "test_content_query": "I need a photographer for my event in New York City.",
-        "test_content_grounding_source": "We provide photography services within the United States, including New York City.",
-        "test_content_guard_content": "Great, we'd be happy to assist with your photography needs for your event in New York City. Our team specializes in high-quality event photography throughout the United States. When would you like to discuss the details of your event and get a quote?",
-        "expected_action": "NONE"
-      },
-      {
-        "test_number": 16,
-        "test_type": "INPUT",
-        "test_content_query": "Can you provide pricing for a corporate headshot session in Canada?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 17,
-        "test_type": "INPUT",
-        "test_content_query": "I need a videographer for my wedding in Mexico.",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 18,
-        "test_type": "INPUT",
-        "test_content_query": "Do you offer photography services for my business in Japan?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 19,
-        "test_type": "INPUT",
-        "test_content_query": "Can you help me find a web designer for my company's website?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 20,
-        "test_type": "INPUT",
-        "test_content_query": "I'd like to get a quote for aerial photography services.",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 21,
-        "test_type": "OUTPUT",
-        "test_content_query": "I need a photographer to take photos of my new product line.",
-        "test_content_grounding_source": "We are a photography service that specializes in product photography within the United States.",
-        "test_content_guard_content": "Great, I'd be happy to assist with your product photography needs. Our team specializes in high-quality, professional product photography services within the United States. When would you like to schedule a session?",
-        "expected_action": "NONE"
-      },
-      {
-        "test_number": 22,
-        "test_type": "OUTPUT",
-        "test_content_query": "Can you provide photography services for my event in Los Angeles?",
-        "test_content_grounding_source": "We offer photography services throughout the United States, including in Los Angeles.",
-        "test_content_guard_content": "Absolutely, we would be happy to provide photography services for your event in Los Angeles. Our team of experienced photographers specializes in event coverage across the United States. When would you like to discuss the details of your event and get a quote?",
-        "expected_action": "NONE"
-      },
-      {
-        "test_number": 23,
-        "test_type": "INPUT",
-        "test_content_query": "I need a photographer to take aerial shots of my property in Canada.",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 24,
-        "test_type": "INPUT",
-        "test_content_query": "Can you help me find a videographer for my wedding in Brazil?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 25,
-        "test_type": "INPUT",
-        "test_content_query": "Do you offer photography services for corporate events in Germany?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 26,
-        "test_type": "INPUT",
-        "test_content_query": "I'd like to get a quote for a family portrait session in Australia.",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 27,
-        "test_type": "INPUT",
-        "test_content_query": "Can you help me find a graphic designer for my company's logo?",
-        "test_content_grounding_source": "",
-        "test_content_guard_content": "",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 28,
-        "test_type": "OUTPUT",
-        "test_content_query": "I need a photographer to take photos of my new product line.",
-        "test_content_grounding_source": "We are a photography service that specializes in product photography within the United States.",
-        "test_content_guard_content": "Great, I'd be happy to assist with your product photography needs. Our team specializes in high-quality, professional product photography services within the United States. When would you like to schedule a session?",
-        "expected_action": "NONE"
-      },
-      {
-        "test_number": 29,
-        "test_type": "OUTPUT",
-        "test_content_query": "Can you provide pricing information for your photography services?",
-        "test_content_grounding_source": "We do not provide specific pricing information for our photography services.",
-        "test_content_guard_content": "I apologize, but we do not provide specific pricing information for our photography services. Our rates can vary depending on the scope of the project, location, and other factors. The best way to get an accurate quote would be to contact us directly to discuss your photography needs.",
-        "expected_action": "GUARDRAIL_INTERVENED"
-      },
-      {
-        "test_number": 30,
-        "test_type": "OUTPUT",
-        "test_content_query": "I need a photographer to take photos of my new product line.",
-        "test_content_grounding_source": "We are a photography service that specializes in product photography within the United States.",
-        "test_content_guard_content": "Great, I'd be happy to assist with your product photography needs. Our team specializes in high-quality, professional product photography services within the United States. When would you like to schedule a session?",
-        "expected_action": "NONE"
-      }
-    ]
+        "expected_acti
+    Saved 30 test cases to data/auto_generated_tests.csv
 
 
 
@@ -1141,7 +1155,7 @@ def guardrail_ready_check(guardrail_id, max_attempts, delay):
             guardrail_status = client.get_guardrail(guardrailIdentifier=guardrail_id)['status']
             if guardrail_status == 'READY':
                 print(f"Guardrail {guardrail_id} is now in READY state.")
-                return response
+                return
             elif guardrail_status == 'FAILED':
                 raise Exception(f"Guardrail {guardrail_id} update failed.")
             else:
@@ -1153,8 +1167,27 @@ def guardrail_ready_check(guardrail_id, max_attempts, delay):
 
     raise TimeoutError(f"Guardrail {guardrail_id} did not reach READY state within the expected time.")
 
+def validate_topics(topics):
+    """Ensure topics meet Bedrock API constraints."""
+    for topic in topics:
+        # Name must be < 100 chars
+        if len(topic.get('name', '')) > 99:
+            topic['name'] = topic['name'][:99]
+        # Definition must be < 200 chars
+        if len(topic.get('definition', '')) > 199:
+            topic['definition'] = topic['definition'][:199]
+        # Each example must be < 100 chars, max 5 examples
+        if 'examples' in topic:
+            topic['examples'] = [ex[:99] for ex in topic['examples'][:5]]
+        # Ensure type is DENY
+        topic['type'] = 'DENY'
+    return topics
+
 def update_guardrail(guardrail_id, guardrail_name, guardrail_description, version, topics, max_attempts=15, delay=10):
-    client = boto3.client('bedrock')  # Assuming you're using boto3 for AWS API calls
+    client = boto3.client('bedrock')
+
+    # Validate topics before sending to API
+    topics = validate_topics(topics)
 
     # Initiate the update
     response = client.update_guardrail(
@@ -1166,36 +1199,12 @@ def update_guardrail(guardrail_id, guardrail_name, guardrail_description, versio
         },
         contentPolicyConfig={
             'filtersConfig': [
-                {
-                    'type': 'SEXUAL',
-                    'inputStrength': 'HIGH',
-                    'outputStrength': 'HIGH'
-                },
-                {
-                    'type': 'VIOLENCE',
-                    'inputStrength': 'HIGH',
-                    'outputStrength': 'HIGH'
-                },
-                {
-                    'type': 'HATE',
-                    'inputStrength': 'HIGH',
-                    'outputStrength': 'HIGH'
-                },
-                {
-                    'type': 'INSULTS',
-                    'inputStrength': 'HIGH',
-                    'outputStrength': 'HIGH'
-                },
-                {
-                    'type': 'MISCONDUCT',
-                    'inputStrength': 'HIGH',
-                    'outputStrength': 'HIGH'
-                },
-                {
-                    'type': 'PROMPT_ATTACK',
-                    'inputStrength': 'HIGH',
-                    'outputStrength': 'NONE'
-                }
+                {'type': 'SEXUAL', 'inputStrength': 'HIGH', 'outputStrength': 'HIGH'},
+                {'type': 'VIOLENCE', 'inputStrength': 'HIGH', 'outputStrength': 'HIGH'},
+                {'type': 'HATE', 'inputStrength': 'HIGH', 'outputStrength': 'HIGH'},
+                {'type': 'INSULTS', 'inputStrength': 'HIGH', 'outputStrength': 'HIGH'},
+                {'type': 'MISCONDUCT', 'inputStrength': 'HIGH', 'outputStrength': 'HIGH'},
+                {'type': 'PROMPT_ATTACK', 'inputStrength': 'HIGH', 'outputStrength': 'NONE'}
             ]
         },
         sensitiveInformationPolicyConfig={
@@ -1205,13 +1214,11 @@ def update_guardrail(guardrail_id, guardrail_name, guardrail_description, versio
                 {'type': 'NAME', 'action': 'ANONYMIZE'}
             ]
         },
-        blockedInputMessaging="""I'm sorry, but I cannot assist for this type of request. """,
-        blockedOutputsMessaging="""I apologize, but I cannot assist with this request."""
+        blockedInputMessaging="I'm sorry, but I cannot assist with this type of request.",
+        blockedOutputsMessaging="I apologize, but I cannot assist with this request."
     )
     print("Guardrail updated.")
     guardrail_ready_check(guardrail_id, max_attempts, delay)
-    
-    
 ```
 
 
@@ -1219,210 +1226,380 @@ def update_guardrail(guardrail_id, guardrail_name, guardrail_description, versio
 import time
 import uuid
 
-# get a value for 'n' to complete 'n' iterations of updating the guardrail based on test results
-n_iterations = input("How many iterations of updating the guardrail would you like? (ie. 3) ")
+# Number of iterations to refine the guardrail based on test results
+n_iterations = 2
 updates = []
-file_path = os.path.join('data','test_results.csv')
-test_results = pd.read_csv(file_path)
 
-for i in range(0,int(n_iterations)+1):
+for i in range(n_iterations + 1):
+    print(f"\n{'='*60}")
+    print(f"Iteration {i}")
+    print(f"{'='*60}")
     
     input_file = "data/auto_generated_tests.csv"
-    output_file = "data/test_results_"+str(i)+".csv"
+    output_file = f"data/test_results_{i}.csv"
     
-    current_guardrail_details = client.get_guardrail(
+    # Create a version for this iteration so we can test against it
+    version_response = client.create_guardrail_version(
         guardrailIdentifier=guardrail_id,
-        guardrailVersion=version
-    )
-    
-    current_denied_topics = current_guardrail_details['topicPolicy']['topics']
-    current_name = current_guardrail_details['name']
-    current_description = guardrail_description
-    current_id = current_guardrail_details['guardrailId']
-    current_version = current_guardrail_details['version']
-
-    response = client.create_guardrail_version(
-        guardrailIdentifier=current_id,
-        description="Iteration "+str(i)+" - "+current_description,
+        description=f"Iteration {i} - {guardrail_description}",
         clientRequestToken=f"GuardrailUpdate-{int(time.time())}-{uuid.uuid4().hex}"
     )
-    guardrail_ready_check(guardrail_id, 15, 10)
+    current_version = version_response['version']
+    print(f"  Created version: {current_version}")
     
-    process_tests(input_file, output_file, current_id, current_version)
+    # Wait for guardrail to be ready
+    guardrail_ready_check(guardrail_id, 15, 5)
     
+    # Run tests against this version
+    process_tests(input_file, output_file, guardrail_id, current_version)
+    
+    # Load results and report
     test_results = pd.read_csv(output_file)
+    pass_count = (test_results['achieved_expected_result'] == True).sum()
+    fail_count = (test_results['achieved_expected_result'] == False).sum()
+    total = len(test_results)
+    print(f"\n  Results: {pass_count}/{total} passed, {fail_count}/{total} failed")
     
-    updated_topics = get_denied_topics(guardrail_description, current_denied_topics, test_results)
-    
-    updates.append(updated_topics)
-    
-    update_guardrail(current_id, current_name, current_description, current_version, updated_topics)
+    # If not the last iteration, use failures to improve the guardrail
+    if i < n_iterations:
+        # Get current topics
+        current_guardrail = client.get_guardrail(
+            guardrailIdentifier=guardrail_id,
+            guardrailVersion='DRAFT'
+        )
+        current_denied_topics = current_guardrail['topicPolicy']['topics']
         
-    version = str(i+1)
-    
-    if (i == 0):
-        print("Completed testing the initial guardrail configuration.\n")
+        # Ask LLM to improve topics based on test failures
+        print(f"  Generating improved denied topics based on failures...")
+        updated_topics = get_denied_topics(guardrail_description, current_denied_topics, test_results)
+        updates.append(updated_topics)
+        
+        # Update the guardrail with improved topics
+        update_guardrail(guardrail_id, guardrail_name, guardrail_description, current_version, updated_topics)
+        print(f"  Guardrail updated with new topics.")
     else:
-        
-        print("Completed iteration #",i,"\n")
-    
-print("\n A new guardrail version for each iteration has been created - refer to your AWS Console. All test results can be found in the 'data' folder.")
+        updates.append(None)  # No update on last iteration
 
+print("\n\nDone! A new guardrail version for each iteration has been created.")
+print("All test results can be found in the 'data' folder.")
 ```
 
-    How many iterations of updating the guardrail would you like? (ie. 3)  3
+    
+    ============================================================
+    Iteration 0
+    ============================================================
 
 
-    Guardrail sd2z20yhkpkv is in VERSIONING state. Waiting...
-    Guardrail sd2z20yhkpkv is now in READY state.
+      Created version: 1
+    Guardrail XXXXXXXXXX is in VERSIONING state. Waiting...
+
+
+    Guardrail XXXXXXXXXX is now in READY state.
+
+
     Processed row 1
+
+
     Processed row 2
+
+
     Processed row 3
+
+
     Processed row 4
+
+
     Processed row 5
+
+
     Processed row 6
+
+
     Processed row 7
+
+
     Processed row 8
+
+
     Processed row 9
+
+
     Processed row 10
+
+
     Processed row 11
+
+
     Processed row 12
+
+
     Processed row 13
+
+
     Processed row 14
+
+
     Processed row 15
+
+
     Processed row 16
+
+
     Processed row 17
+
+
     Processed row 18
+
+
     Processed row 19
+
+
     Processed row 20
+
+
     Processed row 21
+
+
     Processed row 22
+
+
     Processed row 23
+
+
     Processed row 24
+
+
     Processed row 25
+
+
     Processed row 26
+
+
     Processed row 27
+
+
     Processed row 28
+
+
     Processed row 29
+
+
     Processed row 30
     Processing complete. Results written to data/test_results_0.csv
-    Guardrail sd2z20yhkpkv is now in READY state.
-    Guardrail updated.
-    Completed testing the initial guardrail configuration.
     
-    Guardrail sd2z20yhkpkv is in VERSIONING state. Waiting...
-    Guardrail sd2z20yhkpkv is now in READY state.
+      Results: 18/30 passed, 12/30 failed
+      Generating improved denied topics based on failures...
+
+
+    Guardrail updated.
+    Guardrail XXXXXXXXXX is now in READY state.
+      Guardrail updated with new topics.
+    
+    ============================================================
+    Iteration 1
+    ============================================================
+
+
+      Created version: 2
+    Guardrail XXXXXXXXXX is in VERSIONING state. Waiting...
+
+
+    Guardrail XXXXXXXXXX is now in READY state.
+
+
     Processed row 1
+
+
     Processed row 2
+
+
     Processed row 3
+
+
     Processed row 4
+
+
     Processed row 5
+
+
     Processed row 6
+
+
     Processed row 7
+
+
     Processed row 8
+
+
     Processed row 9
+
+
     Processed row 10
+
+
     Processed row 11
+
+
     Processed row 12
+
+
     Processed row 13
+
+
     Processed row 14
+
+
     Processed row 15
+
+
     Processed row 16
+
+
     Processed row 17
+
+
     Processed row 18
+
+
     Processed row 19
+
+
     Processed row 20
+
+
     Processed row 21
+
+
     Processed row 22
+
+
     Processed row 23
+
+
     Processed row 24
+
+
     Processed row 25
+
+
     Processed row 26
+
+
     Processed row 27
+
+
     Processed row 28
+
+
     Processed row 29
+
+
     Processed row 30
     Processing complete. Results written to data/test_results_1.csv
-    Guardrail sd2z20yhkpkv is now in READY state.
-    Guardrail updated.
-    Completed iteration # 1 
     
-    Guardrail sd2z20yhkpkv is in VERSIONING state. Waiting...
-    Guardrail sd2z20yhkpkv is now in READY state.
+      Results: 18/30 passed, 12/30 failed
+      Generating improved denied topics based on failures...
+
+
+    Guardrail updated.
+    Guardrail XXXXXXXXXX is now in READY state.
+      Guardrail updated with new topics.
+    
+    ============================================================
+    Iteration 2
+    ============================================================
+
+
+      Created version: 3
+    Guardrail XXXXXXXXXX is in VERSIONING state. Waiting...
+
+
+    Guardrail XXXXXXXXXX is now in READY state.
+
+
     Processed row 1
+
+
     Processed row 2
+
+
     Processed row 3
+
+
     Processed row 4
+
+
     Processed row 5
+
+
     Processed row 6
+
+
     Processed row 7
+
+
     Processed row 8
+
+
     Processed row 9
+
+
     Processed row 10
+
+
     Processed row 11
     Processed row 12
+
+
     Processed row 13
+
+
     Processed row 14
     Processed row 15
+
+
     Processed row 16
     Processed row 17
+
+
     Processed row 18
     Processed row 19
+
+
     Processed row 20
+
+
     Processed row 21
+
+
     Processed row 22
+
+
     Processed row 23
+
+
     Processed row 24
     Processed row 25
+
+
     Processed row 26
+
+
     Processed row 27
+
+
     Processed row 28
+
+
     Processed row 29
     Processed row 30
     Processing complete. Results written to data/test_results_2.csv
-    Guardrail sd2z20yhkpkv is now in READY state.
-    Guardrail updated.
-    Completed iteration # 2 
     
-    Guardrail sd2z20yhkpkv is in VERSIONING state. Waiting...
-    Guardrail sd2z20yhkpkv is now in READY state.
-    Processed row 1
-    Processed row 2
-    Processed row 3
-    Processed row 4
-    Processed row 5
-    Processed row 6
-    Processed row 7
-    Processed row 8
-    Processed row 9
-    Processed row 10
-    Processed row 11
-    Processed row 12
-    Processed row 13
-    Processed row 14
-    Processed row 15
-    Processed row 16
-    Processed row 17
-    Processed row 18
-    Processed row 19
-    Processed row 20
-    Processed row 21
-    Processed row 22
-    Processed row 23
-    Processed row 24
-    Processed row 25
-    Processed row 26
-    Processed row 27
-    Processed row 28
-    Processed row 29
-    Processed row 30
-    Processing complete. Results written to data/test_results_3.csv
-    Guardrail sd2z20yhkpkv is now in READY state.
-    Guardrail updated.
-    Completed iteration # 3 
+      Results: 19/30 passed, 11/30 failed
     
     
-     A new guardrail version for each iteration has been created - refer to your AWS Console. All test results can be found in the 'data' folder.
+    Done! A new guardrail version for each iteration has been created.
+    All test results can be found in the 'data' folder.
 
 
 ### Optional Step - Let's Visualize our results to see how well our Guardrail performed through each iteration
@@ -1506,6 +1683,9 @@ response = client.delete_guardrail(
 print(response)
 
 ```
+
+    {'ResponseMetadata': {'RequestId': 'f67aaad4-9d73-4588-89d0-bdff798a13ec', 'HTTPStatusCode': 202, 'HTTPHeaders': {'date': 'Thu, 21 May 2026 21:43:57 GMT', 'content-type': 'application/json', 'content-length': '2', 'connection': 'keep-alive', 'x-amzn-requestid': 'f67aaad4-9d73-4588-89d0-bdff798a13ec'}, 'RetryAttempts': 0}}
+
 
 
 ```python
