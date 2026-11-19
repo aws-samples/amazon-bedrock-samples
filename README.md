@@ -7,7 +7,7 @@ This repository contains pre-built examples to help customers get started with t
 ## Contents
 
 - [Introduction to Bedrock](introduction-to-bedrock) - Learn the basics of the Bedrock service
-- [Prompt Engineering ](articles-guides) - Tips for crafting effective prompts 
+- [Prompt Engineering ](prompt-engineering) - Tips for crafting effective prompts 
 - [Agents](agents-and-function-calling) - Ways to implement Generative AI Agents and its components.
 - [Custom Model Import](custom-models) - Import custom models into Bedrock
 - [Multimodal](multi-modal) - Working with multimodal data using Amazon Bedrock
@@ -52,7 +52,7 @@ To grant Bedrock access to your identity, you can:
 
 > ⚠️ **Note 2:** For top level folder changes, please reach out to the GitHub mainterners.
 
-For more information on the fine-grained action and resource permissions in Bedrock, check out the Bedrock Developer Guide.
+For more information on fine-grained action and resource permissions in Bedrock, check out the Bedrock Developer Guide.
 
 ## Contributing
 
