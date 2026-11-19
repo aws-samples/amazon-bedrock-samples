@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aim317-travel-agent"
+version = "0.1.0"
+description = "AnyCompany travel assistant as a Strands agent on Amazon Bedrock AgentCore Runtime"
+requires-python = ">=3.10"
+dependencies = [
+    "aws-opentelemetry-distro ~= 0.18.0",
+    "bedrock-agentcore >= 1.9.1",
+    "boto3 >= 1.43.98",
+    "strands-agents >= 1.15.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
