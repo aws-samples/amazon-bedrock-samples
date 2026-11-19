@@ -154,7 +154,12 @@ class BedrockLogs:
                             item['trace'] = trace  # Update the 'trace' dictionary in the original item
 
         return output_data
-
+    
+    def custom_serializer(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return obj
+        
     def watch(self, capture_input: bool = True, capture_output: bool = True, call_type: Optional[str] = None):
         def wrapper(func):
             def inner(*args, **kwargs):
@@ -248,7 +253,7 @@ class BedrockLogs:
                     firehose_response = self.firehose_client.put_record(
                         DeliveryStreamName=self.delivery_stream_name,
                         Record={
-                            'Data': json.dumps(metadata)
+                            'Data': json.dumps(metadata, default=self.custom_serializer)
                         }
                     )
                     if self.feedback_variables:
