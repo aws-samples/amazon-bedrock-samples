@@ -906,6 +906,10 @@ class BedrockKnowledgeBase:
                         }
                 }
             
+            custom_data_source_congiguration = {
+                "type": "CUSTOM"
+            }
+            
             confluence_data_source_congiguration = {
                 "confluenceConfiguration": {
                     "sourceConfiguration": {
@@ -1066,7 +1070,11 @@ class BedrockKnowledgeBase:
                 webcrawler_data_source_congiguration['webConfiguration']['crawlerConfiguration']['exclusionFilters'] = ds['exclusionFilters']
                 # print(webcrawler_data_source_congiguration)
                 data_source_configuration = webcrawler_data_source_congiguration
-                
+
+            if ds['type'] == "CUSTOM":
+                print(f'{idx +1 } data source: CUSTOM')
+                ds_name = f'{kb_id}-custom'
+                data_source_configuration = custom_data_source_congiguration                
 
             # Create a DataSource in KnowledgeBase 
             chunking_strategy_configuration = self.create_chunking_strategy_config(self.chunking_strategy)
