@@ -12,5 +12,5 @@ In this workshop you will learn how to build a Retrieval Augmented Generation (R
 6. Combine the power of large language models with semantic search to create a RAG application
 7. Combine the power of large language models with APIs to create a RAG application which interacts with APIs
 
-Go ahead and open [this notebook](./notebooks/01_workshop_setup.ipynb) to get started building with Amazon Bedrock!
+Go ahead and open [this notebook](./01_workshop_setup.ipynb) to get started building with Amazon Bedrock!
 
