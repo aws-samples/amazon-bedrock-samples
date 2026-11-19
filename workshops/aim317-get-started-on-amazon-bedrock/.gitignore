@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.egg-info
+.venv
+venv/
+env/
+*.ipynb_checkpoints/
+.ipynb_checkpoints
+
+# Environment and credentials
+.env
+AWS Credentials*
+.aws-sam/
+
+# IDEs
+.idea/
+.vscode/
+
+# Operating systems
+.DS_Store

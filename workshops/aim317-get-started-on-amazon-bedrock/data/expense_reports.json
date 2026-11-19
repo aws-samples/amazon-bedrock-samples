@@ -1,0 +1,145 @@
+[
+  {
+    "id": "EXP-001",
+    "employee": "Priya Raman",
+    "trip": "Chicago, 2 nights, sales kickoff",
+    "items": [
+      {
+        "type": "hotel",
+        "description": "2 nights, downtown hotel",
+        "amount": 460.0
+      },
+      {
+        "type": "meals",
+        "description": "Meals over 2 days",
+        "amount": 120.0
+      },
+      {
+        "type": "flight",
+        "description": "Economy, Seattle to Chicago (4 hours)",
+        "amount": 380.0
+      }
+    ],
+    "expected": "APPROVED",
+    "expected_with_policy": "APPROVED"
+  },
+  {
+    "id": "EXP-002",
+    "employee": "Marcus Chen",
+    "trip": "New York, 3 nights, conference",
+    "items": [
+      {
+        "type": "hotel",
+        "description": "3 nights, Midtown hotel",
+        "amount": 960.0
+      },
+      {
+        "type": "meals",
+        "description": "Meals over 3 days",
+        "amount": 180.0
+      }
+    ],
+    "expected": "FLAGGED",
+    "expected_with_policy": "APPROVED"
+  },
+  {
+    "id": "EXP-003",
+    "employee": "Sofia Alvarez",
+    "trip": "Denver, day trip, site visit",
+    "items": [
+      {
+        "type": "flight",
+        "description": "Business class, Seattle to Denver (2.5 hours)",
+        "amount": 890.0
+      },
+      {
+        "type": "meals",
+        "description": "Lunch",
+        "amount": 32.0
+      }
+    ],
+    "expected": "FLAGGED",
+    "expected_with_policy": "FLAGGED"
+  },
+  {
+    "id": "EXP-004",
+    "employee": "James Okafor",
+    "trip": "Austin, 1 night, team offsite",
+    "items": [
+      {
+        "type": "hotel",
+        "description": "1 night",
+        "amount": 210.0
+      },
+      {
+        "type": "meals",
+        "description": "Meals for 1 day, including own share of team dinner",
+        "amount": 95.0
+      }
+    ],
+    "expected": "FLAGGED",
+    "expected_with_policy": "FLAGGED"
+  },
+  {
+    "id": "EXP-005",
+    "employee": "Hannah Weber",
+    "trip": "London, 3 nights, office visit",
+    "items": [
+      {
+        "type": "flight",
+        "description": "Business class, New York to London (7 hours)",
+        "amount": 3200.0
+      },
+      {
+        "type": "hotel",
+        "description": "3 nights",
+        "amount": 720.0
+      },
+      {
+        "type": "meals",
+        "description": "Meals over 3 days",
+        "amount": 210.0
+      }
+    ],
+    "expected": "APPROVED",
+    "expected_with_policy": "APPROVED"
+  },
+  {
+    "id": "EXP-006",
+    "employee": "Diego Santos",
+    "trip": "Boston, 4 nights, training",
+    "items": [
+      {
+        "type": "hotel",
+        "description": "4 nights",
+        "amount": 1000.0
+      },
+      {
+        "type": "meals",
+        "description": "Meals over 4 days",
+        "amount": 300.0
+      }
+    ],
+    "expected": "APPROVED",
+    "expected_with_policy": "APPROVED"
+  },
+  {
+    "id": "EXP-007",
+    "employee": "Aiko Tanaka",
+    "trip": "San Francisco, 3 nights, partner summit",
+    "items": [
+      {
+        "type": "hotel",
+        "description": "3 nights",
+        "amount": 780.0
+      },
+      {
+        "type": "meals",
+        "description": "Meals over 3 days",
+        "amount": 150.0
+      }
+    ],
+    "expected": "FLAGGED",
+    "expected_with_policy": "FLAGGED"
+  }
+]

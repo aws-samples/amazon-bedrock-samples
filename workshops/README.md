@@ -4,6 +4,7 @@
 ## Contents
 
 - [open-source-l200](./open-source-l200) - Examples of Open source libraries leveraging Amazon Bedrock. 
+- [aim317-get-started-on-amazon-bedrock](./aim317-get-started-on-amazon-bedrock) - re:Invent 2026 AIM317: from a first Amazon Bedrock API call to a deployed, monitored application (Managed Knowledge Bases, Guardrails, service tiers, Lambda, CloudWatch).
 
 
 ## Contributing
