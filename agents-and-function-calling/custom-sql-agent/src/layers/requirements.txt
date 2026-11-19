@@ -1,0 +1,3 @@
+pymysql
+sqlalchemy
+psycopg2-binary
