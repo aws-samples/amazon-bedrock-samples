@@ -1,0 +1,13 @@
+{
+    "app": "npx ts-node bin/main.ts",
+    "context": {
+        "defaultProject": "rag-project",
+        "defaultRegion": "us-east-1",
+        "defaultAccount": "533267284022",
+        "defaultEnvironment": "QA",
+        "prodAccount": "533267284022",
+        "prodRegion": "us-west-2",
+        "bedrockModelID": "anthropic.claude-3-haiku-20240307-v1:0",
+        "@aws-cdk/customresources:installLatestAwsSdkDefault": false
+    }
+}
