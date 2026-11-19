@@ -1041,8 +1041,8 @@ Resources:
           FSI-TextractProcessingFunction-b6054c5e-0286-4cfb-a2f3-55d408a9972c.zip
         - FSI-KeyPhrasesDetection-BedrockAgent-21b0f3b8-f981-4db6-a0ce-606a13e9c35f.zip
         - FSI-SentimentDetecttion-BedrockAgent-6aebee60-d2df-464c-b652-b93e2aef7b3a.zip
-        - agents-and-function-calling-layer-porfolio.zip
-        - agents-and-function-calling-layer-stock-query.zip
+        - agents-layer-porfolio.zip
+        - agents-layer-stock-query.zip
         - FSI-PortfolioTool-BedrockAgent-9a4cdb9f-14b9-4658-9720-537735bf2b1c.zip
         - FSI-StockQuery-BedrockAgent-4bed2482-a84f-4d9b-b53c-37220fd4b9bb.zip
         - FSI-Transcribe-66a4860d-390a-4af5-aa1b-05fb469be7ac.zip
