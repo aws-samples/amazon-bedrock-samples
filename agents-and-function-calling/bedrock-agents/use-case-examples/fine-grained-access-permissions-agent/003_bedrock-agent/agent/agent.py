@@ -14,6 +14,50 @@ logger.addHandler(handler)
 
 verified_permissions_client = boto3.client("verifiedpermissions")
 
+# Server-side source of truth for claims, keyed by claim id.
+# Authorization attributes (owner, region) MUST come from this store, never from
+# the caller's token or request, otherwise the per-resource ownership check in the
+# AVP policies is meaningless.
+# TODO: Replace this in-memory store with a lookup against your claims database (e.g. DynamoDB).
+CLAIMS_STORE = {
+    1: {
+        "id": 1,
+        "claimAmount": 1000.0,
+        "claimDescription": "Dummy claim 1",
+        "claimStatus": "approved",
+        "region": "northeast",
+        "owner": "claims-app-adjuster"
+    },
+    2: {
+        "id": 2,
+        "claimAmount": 2500.75,
+        "claimDescription": "Dummy claim 2",
+        "claimStatus": "pending",
+        "region": "northwest",
+        "owner": "claims-app-adjuster-northwest"
+    }
+}
+
+
+def get_stored_claim(claim_id):
+    """Return the stored claim for claim_id, or None if it does not exist."""
+    claim = CLAIMS_STORE.get(claim_id)
+    return dict(claim) if claim else None
+
+
+def to_response(claim):
+    """Return the claim as exposed through the API, without internal authorization attributes."""
+    return {k: v for k, v in claim.items() if k != "owner"}
+
+
+def parse_claim_id(event):
+    """Return the requested claimId as an int, or None if missing or malformed."""
+    try:
+        return int(get_named_parameter(event, 'claimId'))
+    except (StopIteration, KeyError, TypeError, ValueError):
+        return None
+
+
 def get_named_parameter(event, name):
     logger.info(f"Retrieving parameter: {name} from event")
     value = next(item for item in event['parameters'] if item['name'] == name)['value']
@@ -25,22 +69,7 @@ def list_claims(event, user_info):
     # TODO: Implement logic to retrieve and return a list of claims from DynamoDB.
     # For now, we'll use dummy claims for demonstration purposes.
     logger.info(f"Entering list_claims function with user_info: {user_info}")
-    dummy_claims = [
-        {
-            "id": 1,
-            "claimAmount": 1000.0,
-            "claimDescription": "Dummy claim 1",
-            "claimStatus": "approved",
-            "region": "northeast"
-        },
-        {
-            "id": 2,
-            "claimAmount": 2500.75,
-            "claimDescription": "Dummy claim 2",
-            "claimStatus": "pending",
-            "region": "northwest"
-        }
-    ]
+    dummy_claims = [dict(claim) for claim in CLAIMS_STORE.values()]
     logger.info(f"Retrieved dummy claims: {dummy_claims}")
     
     user_role = user_info.get('role')
@@ -52,27 +81,23 @@ def list_claims(event, user_info):
         logger.info("Filtering claims for adjuster role")
         filtered_claims = [claim for claim in dummy_claims if claim['region'] == user_region]
         logger.info(f"Filtered claims count: {len(filtered_claims)}")
-        return filtered_claims
+        return [to_response(claim) for claim in filtered_claims]
     else:
         # Non-adjusters (assumed to be admins) can access all claims
         logger.info("Returning all claims for admin role")
-        return dummy_claims
+        return [to_response(claim) for claim in dummy_claims]
 
 def get_claim(event, user_info):
     # This function retrieves a claim by ID and applies role-based access control.
     logger.info(f"Entering get_claim function with user_info: {user_info}")
-    claim_id = int(get_named_parameter(event, 'claimId'))
+    claim_id = parse_claim_id(event)
     logger.info(f"Retrieving claim with ID: {claim_id}")
 
-    # TODO: Implement logic to retrieve a claim by ID from DynamoDB.
-    # For now, we'll use a dummy claim for demonstration purposes.
-    dummy_claim = {
-        "id": claim_id,
-        "claimAmount": 1000.0,
-        "claimDescription": "Dummy claim 1",
-        "claimStatus": "approved",
-        "region": "northeast"
-    }
+    # Retrieve the same stored claim that was used for the AVP authorization decision.
+    dummy_claim = get_stored_claim(claim_id)
+    if dummy_claim is None:
+        logger.warning("Claim not found")
+        return None
     logger.info(f"Retrieved dummy claim: {dummy_claim}")
 
     user_role = user_info.get('role')
@@ -83,42 +108,32 @@ def get_claim(event, user_info):
         # Adjusters can only access claims in their assigned region
         if dummy_claim['region'] == user_region:
             logger.info("Access granted: Claim region matches adjuster region")
-            return dummy_claim
+            return to_response(dummy_claim)
         else:
             logger.warning("Access denied: Claim region does not match adjuster region")
             return None
     else:
         # Non-adjusters (assumed to be admins) can access all claims
         logger.info("Access granted: Admin role")
-        return dummy_claim
-
-
-    # TODO: Implement error handling for cases where the claim doesn't exist
+        return to_response(dummy_claim)
 
 
 def update_claim(event, user_info):
-    # This method allows adjusters to update claims they are managing.
-    # It assumes any calling method has already validated the adjuster's region.
+    # This method allows adjusters to update claims they own.
+    # Ownership is enforced by AVP in handle_is_authorized, using the stored claim's owner.
     logger.info(f"Entering update_claim function with user_info: {user_info}")
     
-    claim_id = int(get_named_parameter(event, 'claimId'))
+    claim_id = parse_claim_id(event)
     logger.info(f"Updating claim with ID: {claim_id}")
 
-    # Using dummy claim data for demonstration purpose (to be replaced by database retrieval).
-    dummy_claim = {
-        "id": claim_id,
-        "claimAmount": 3000.0,
-        "claimDescription": "Updated dummy claim",
-        "claimStatus": "approved",
-        "region": "northeast"
-    }
-
-    # Here we would normally retrieve the existing claim from the database but for now, we use the dummy claim.
-    existing_claim = dummy_claim  # Placeholder: Replace this with actual database retrieval logic.
+    # Retrieve the same stored claim that was used for the AVP authorization decision.
+    existing_claim = get_stored_claim(claim_id)
+    if existing_claim is None:
+        logger.warning("Claim not found")
+        return None
     logger.info(f"Retrieved existing claim: {existing_claim}")
 
-    # Since the adjuster's region is already validated in the calling method,
-    # we can proceed to update the claim data. Assuming we're updating to some new values:
+    # Assuming we're updating to some new values:
     updated_claim = {
         "id": existing_claim['id'],
         "claimAmount": existing_claim['claimAmount'] + 500.0,  # Example update
@@ -145,7 +160,7 @@ def lambda_handler(event, context):
         action_id = getActionID(api_path, http_method)
         logger.info(f"Processing request - Path: {api_path}, Method: {http_method}, Action ID: {action_id}")
 
-        user_info, auth, reason = verifyAccess(sessionAttributes, action_id)
+        user_info, auth, reason = verifyAccess(sessionAttributes, action_id, event)
         logger.info(f"Access verification result - Auth: {auth}, Reason: {reason}")
 
         if auth == "ALLOW":
@@ -190,7 +205,7 @@ def lambda_handler(event, context):
         raise
 
 
-def verifyAccess(sessionAttributes, action_id):
+def verifyAccess(sessionAttributes, action_id, event):
     # Initialize variables
     auth = "DENY"
     reason = ""
@@ -210,8 +225,8 @@ def verifyAccess(sessionAttributes, action_id):
                 reason = "Invalid or expired Token"
             else:
                 # Check if the user is authorized for the given action
-                is_authorized = handle_is_authorized(user_info, action_id)
-                print("is_authorized=",is_authorized)
+                is_authorized = handle_is_authorized(user_info, action_id, event)
+                logger.info(f"is_authorized={is_authorized}")
                 decision = is_authorized.get('decision')
                 if decision == "ALLOW":
                     auth = "ALLOW"
@@ -268,7 +283,7 @@ def getActionID(api_path, http_method):
     return action_id
 
 
-def handle_is_authorized(user_info, action_id):
+def handle_is_authorized(user_info, action_id, event):
     
     operation_mapping = {
         "ListClaims": "application",
@@ -279,11 +294,17 @@ def handle_is_authorized(user_info, action_id):
     #Derive the Resource type based on the action; If List Claims, we get list of all claims from resource type Application; If GetClaim/UpdateClaim, resource type is claim
     resource_type = operation_mapping[action_id]
 
-     # 1. Construct the authorization request   
-    authz_request = construct_authz_request_from_token(user_info, action_id, resource_type)
+    # For claim-level actions, load the requested claim from the server-side store so that
+    # the resource entity id, owner and region reflect the real claim, not the caller.
+    claim = None
+    if resource_type == "claim":
+        claim = get_stored_claim(parse_claim_id(event))
+        if claim is None:
+            logger.warning("Authorization denied: requested claim does not exist or claimId is invalid")
+            return {"decision": "DENY"}
 
-    # authz_request = construct_authz_request_from_token(user_info, action_id)
-    # authz_request = construct_authz_request_from_token_claim(user_info, action_id)
+    # 1. Construct the authorization request
+    authz_request = construct_authz_request_from_token(user_info, action_id, resource_type, claim)
     
     logger.info(f"Authorization request: {authz_request}")
 
@@ -293,27 +314,45 @@ def handle_is_authorized(user_info, action_id):
 
     return avp_response
     
-def construct_authz_request_from_token(user_info, action_id, resource_type):
-    resource_mapping = {
-        "application": {
-            "entity_type": "avp::claim::app::Application",
-            "entity_id": "application-attrs",
-            "resource": {
-                "entityType": "avp::claim::app::Application",
-                "entityId": "application-attrs"
-            }
-        },
-        "claim": {
-            "entity_type": "avp::claim::app::Claim",
-            "entity_id": "custom-attr-1",
-            "resource": {
-                "entityType": "avp::claim::app::Claim",
-                "entityId": "custom-attr-1"
+def construct_authz_request_from_token(user_info, action_id, resource_type, claim=None):
+    if resource_type == "claim":
+        if claim is None:
+            raise ValueError("A stored claim is required to authorize claim-level actions")
+        # The resource is the requested claim; its owner and region come from the stored claim.
+        resource_identifier = {
+            "entityType": "avp::claim::app::Claim",
+            "entityId": str(claim["id"])
+        }
+        resource_attributes = {
+            "owner": {
+                "entityIdentifier": {
+                    "entityType": "avp::claim::app::User",
+                    "entityId": claim["owner"]
+                }
+            },
+            "region": {
+                "string": claim["region"]
+            },
+            "custom-attr-1": {
+                "string": str(claim["id"])
             }
         }
-    }
-
-    resource_entity = resource_mapping.get(resource_type, {})
+    else:
+        resource_identifier = {
+            "entityType": "avp::claim::app::Application",
+            "entityId": "application-attrs"
+        }
+        resource_attributes = {
+            "owner": {
+                "entityIdentifier": {
+                    "entityType": "avp::claim::app::User",
+                    "entityId": user_info["username"]
+                }
+            },
+            "region": {
+                "string": user_info["region"]
+            }
+        }
 
     entities = [
         {
@@ -338,21 +377,8 @@ def construct_authz_request_from_token(user_info, action_id, resource_type):
             ]
         },
         {
-            "identifier": {
-                "entityType": resource_entity.get("entity_type", ""),
-                "entityId": resource_entity.get("entity_id", "")
-            },
-            "attributes": {
-                "owner": {
-                    "entityIdentifier": {
-                        "entityType": "avp::claim::app::User",
-                        "entityId": user_info["username"]
-                    }
-                },
-                "region": {
-                    "string": user_info["region"]
-                }
-            },
+            "identifier": resource_identifier,
+            "attributes": resource_attributes,
             "parents": []
         }
     ]
@@ -367,6 +393,6 @@ def construct_authz_request_from_token(user_info, action_id, resource_type):
             "actionType": "avp::claim::app::Action",
             "actionId": action_id
         },
-        "resource": resource_entity.get("resource", {}),
+        "resource": resource_identifier,
         "entities": {"entityList": entities}
     }
