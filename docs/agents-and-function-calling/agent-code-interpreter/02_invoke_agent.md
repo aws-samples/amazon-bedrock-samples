@@ -122,11 +122,7 @@ def invoke(inputText, qid, showTrace=False, endSession=False):
 
     try:
         # To upload files to the agent, for use in the sandbox use sessionState:
-        import base64
         from pathlib import Path
-        fname = 'nyc_taxi_subset.csv'
-        #data = base64.b64encode(bytes(Path(fname).read_text(), 'utf-8')) # bytes
-        data = bytes(Path(fname).read_text(), 'utf-8')
         sessionState = {
                 "files": [
                     {
